@@ -1,0 +1,52 @@
+name: Deploy osmanx.world
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "assets/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osmanx-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/osmanx_deploy
+          chmod 600 ~/.ssh/osmanx_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Validate target and sync static site
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test "$DEPLOY_USER" = "deploy-osmanx"
+          ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'test -d /var/www/osmanx.world && test -w /var/www/osmanx.world'
+          rsync -az --delete --chmod=D2755,F0644             -e "ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes"             --include='/index.html' --include='/assets/***' --exclude='*'             ./ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/"
+          ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'test -s /var/www/osmanx.world/index.html'
+
+      - name: Remove temporary key
+        if: always()
+        run: rm -f ~/.ssh/osmanx_deploy ~/.ssh/known_hosts
