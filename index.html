@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101311">
+  <meta name="description" content="Осман — разработка сайтов и мобильных приложений для бизнеса. От идеи и дизайна до запуска.">
+  <title>Osman — цифровые продукты для бизнеса</title>
+  <style>
+    :root{color-scheme:dark;--bg:#101311;--panel:#181c19;--text:#f4f3ed;--muted:#a9ada4;--line:#303630;--gold:#d8b77a;--green:#b9c6a7}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 Inter,Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:inherit;text-decoration:none}.wrap{width:min(1160px,calc(100% - 40px));margin:auto}
+    header{height:78px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+    .nav{display:flex;justify-content:space-between;align-items:center;width:100%}.brand{font-weight:700;letter-spacing:.12em;font-size:15px}.brand span{color:var(--gold)}
+    nav{display:flex;gap:30px;color:var(--muted);font-size:14px}nav a:hover{color:var(--text)}
+    .hero{min-height:680px;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:64px;padding:90px 0}
+    .eyebrow{color:var(--gold);font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:650}
+    h1{font-size:clamp(48px,7vw,86px);line-height:.99;letter-spacing:-.055em;margin:24px 0 26px;max-width:760px}
+    .lead{font-size:19px;line-height:1.55;color:#c2c5bd;max-width:570px}
+    .actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:36px}
+    .button{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border:1px solid #bba16e;background:var(--gold);color:#171712;font-weight:650;border-radius:2px;transition:transform .2s,background .2s}
+    .button:hover{transform:translateY(-2px);background:#e4c991}.button.secondary{background:transparent;color:var(--text);border-color:var(--line)}.button.secondary:hover{border-color:var(--gold)}
+    .visual{position:relative;min-height:420px;background:radial-gradient(ellipse at 50% 40%,#384139 0,#242b25 35%,#171c18 70%);overflow:hidden;border:1px solid #353c34}
+    .visual:before,.visual:after{content:"";position:absolute;border:1px solid rgba(216,183,122,.45);border-radius:50%;width:300px;height:300px;left:50%;top:50%;transform:translate(-50%,-50%)}
+    .visual:after{width:420px;height:420px;border-color:rgba(216,183,122,.17)}
+    .orb{position:absolute;width:174px;height:174px;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 32% 26%,#d9c08e,#887754 42%,#32392f 74%);box-shadow:0 0 90px #c7a15b55}
+    .visual-label{position:absolute;bottom:24px;left:24px;color:#c7c9c1;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+    section{padding:100px 0;border-top:1px solid var(--line)}h2{font-size:clamp(34px,4.5vw,56px);letter-spacing:-.04em;line-height:1.05;margin:14px 0 20px}
+    .section-intro{color:var(--muted);max-width:620px;font-size:17px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:42px}
+    .card{padding:28px;border:1px solid var(--line);background:linear-gradient(145deg,#191e1a,#141815);min-height:220px}
+    .num{color:var(--gold);font-size:12px;letter-spacing:.12em}.card h3{font-size:22px;margin:35px 0 10px}.card p{margin:0;color:var(--muted)}
+    .process{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:42px}
+    .step{border-top:1px solid var(--gold);padding-top:16px}.step b{font-size:15px}.step p{color:var(--muted);font-size:14px}
+    .contact{display:flex;justify-content:space-between;align-items:end;gap:40px;padding-bottom:110px}
+    .contact p{max-width:540px;color:var(--muted);font-size:18px}
+    footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:13px}
+    @media(max-width:800px){.hero{grid-template-columns:1fr;gap:42px;min-height:auto;padding:76px 0}.visual{min-height:330px}.grid{grid-template-columns:1fr}.process{grid-template-columns:1fr 1fr}.contact{display:block}nav{gap:14px;font-size:12px}}
+    @media(max-width:480px){.wrap{width:min(100% - 28px,1160px)}header{height:66px}nav a:nth-child(2){display:none}.hero{padding:58px 0}.lead{font-size:17px}.visual{min-height:270px}section{padding:72px 0}.process{grid-template-columns:1fr}.actions .button{width:100%}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+  </style>
+</head>
+<body>
+<header><div class="wrap nav"><a class="brand" href="#">OSMAN<span>X</span></a><nav aria-label="Основная навигация"><a href="#services">Услуги</a><a href="#approach">Подход</a><a href="#contact">Контакт</a></nav></div></header>
+<main>
+  <div class="wrap hero">
+    <div><div class="eyebrow">Цифровая разработка · Дизайн · Запуск</div><h1>Идея,<br>которая становится продуктом.</h1><p class="lead">Создаю сайты и мобильные приложения для бизнеса: продумываю структуру, проектирую интерфейс и довожу решение до запуска.</p><div class="actions"><a class="button" href="#contact">Обсудить проект</a><a class="button secondary" href="#services">Что я делаю</a></div></div>
+    <div class="visual" role="img" aria-label="Абстрактная композиция в тёплых золотистых тонах"><div class="orb"></div><div class="visual-label">От замысла до работающего продукта</div></div>
+  </div>
+  <section id="services"><div class="wrap"><div class="eyebrow">Направления</div><h2>Полный цикл<br>цифрового продукта.</h2><p class="section-intro">Один ответственный ведёт проект от первой схемы до публикации, чтобы идея не терялась между дизайном и разработкой.</p><div class="grid">
+    <article class="card"><div class="num">01 / WEB</div><h3>Сайты и платформы</h3><p>Корпоративные сайты, сервисы и веб-продукты с понятной структурой и адаптацией под мобильные устройства.</p></article>
+    <article class="card"><div class="num">02 / MOBILE</div><h3>Мобильные приложения</h3><p>Приложения для iOS и Android, которые упрощают взаимодействие клиентов с вашим бизнесом.</p></article>
+    <article class="card"><div class="num">03 / PRODUCT</div><h3>Дизайн и запуск</h3><p>Исследование задачи, прототип, интерфейс, разработка, проверка и подготовка к запуску.</p></article>
+  </div></div></section>
+  <section id="approach"><div class="wrap"><div class="eyebrow">Рабочий процесс</div><h2>Чётко по этапам.</h2><div class="process">
+    <div class="step"><b>Понять задачу</b><p>Цели, аудитория, ограничения и критерии результата.</p></div>
+    <div class="step"><b>Спроектировать</b><p>Структура и интерактивный прототип до основной разработки.</p></div>
+    <div class="step"><b>Собрать продукт</b><p>Дизайн и функциональность проверяются вместе на каждом шаге.</p></div>
+    <div class="step"><b>Запустить</b><p>Финальная проверка, публикация и передача проекта.</p></div>
+  </div></div></section>
+  <section id="contact"><div class="wrap contact"><div><div class="eyebrow">Следующий шаг</div><h2>Расскажите,<br>что хотите создать.</h2><p>Опишите задачу и ожидаемый результат. Вместе определим первый реалистичный этап и объём работ.</p></div><a class="button" href="mailto:hello@osmanx.world">Написать по проекту</a></div></section>
+</main>
+<footer><div class="wrap">© <span id="year"></span> OSMANX · Цифровые продукты для бизнеса</div></footer>
+<script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+</body></html>
