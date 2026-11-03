@@ -1,0 +1,1310 @@
+{
+  "source": "OSGARD_R134_TO_R135_SOURCE_DELTA.zip:OVERLAY_MANIFEST.json",
+  "files": [
+    {
+      "path": "Main.gd",
+      "sha256": "801df2c38568f36c0844ef17dc0a64ff943fe52c80823a7d5024e89e7e2ff6b3",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "Main.tscn",
+      "sha256": "f370cf0e3b901b2fedd276ae295acd5b982e6e87ba9e6e88edf6b57a90d728b2",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "ModelStreaming.gd",
+      "sha256": "7a6e7f5e7fddea505d71e7933b9e271250ff7b6da8a8028e2b5e715c8826f9d8",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R132DetailDirector.gd",
+      "sha256": "a3750f7376c5e6813bd0f40ca3c76405c23beab94f7d2c3c6259fe772c1eb5b5",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R132Sweep.gd",
+      "sha256": "5b372a1160a83f35b870dadf391b305285c3121fc932a6ede18932821d9ec22a",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R133HardwareSweep.gd",
+      "sha256": "9908f5fd670e970ff83907c88a79a2d1ad0320b15ae63c71845faa2c6430d06e",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R133SceneDirector.gd",
+      "sha256": "0e76393d5c3b601aff8564a794f019549091d201d03fafa96086fbe7d0030206",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R134HardwareSweep.gd",
+      "sha256": "ca514156afd9dfeb01ab2a85d447849fff68d6d71683142b9a243ededb44aa80",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R134WorldDirector.gd",
+      "sha256": "e1271d3bf490353168baec9d9ff66745a78308e94793f12626c6e6da45a9bde8",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R134_SOURCE_MANIFEST.json",
+      "sha256": "d665be75f659f0b44db181a80240d8300e51a71fa67dea62b605736912d3816a",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "R135HardwareSweep.gd",
+      "sha256": "80cbca53b59e58b03d89d59afca0c1cb617ae32071f514653b18dbe6abe84b78",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "R135ServiceDirector.gd",
+      "sha256": "6d56cb516ea34688d215193f7ecee7d3855da481eb943c38f0453698a8e5e8c7",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "R135_SOURCE_PROVENANCE.json",
+      "sha256": "d1d4338cb0bc5ebfb6d89717a479218c66d3dd1084bbc4da59b8e4f605369f54",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "README.md",
+      "sha256": "485b91490843594930367a3e9cbd695f0f124788c557bfa7074b125729c9f704",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "README_R133_RU.md",
+      "sha256": "0a59e5af4455ce7ab9de001b0c0169359825ca920d364f06fe5fdb6d1272584e",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "README_R134.md",
+      "sha256": "735fc05ea6569080bb452d77d6e4c26a2a3f69cc35ef4532f0a9f747765da25f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "README_R135.md",
+      "sha256": "1091d02c229b64a9d6a6d23360fb8612a625541dc06ef9131db911f0f58df060",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "docs/OSGARD_R134_ENGINEERING_REPORT_RU.md",
+      "sha256": "a3f00c38a6dd9c1365e4ce5227a785d4cd67485301938d08523c33f72e60b68e",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "docs/OSGARD_R134_START_HERE_RU.md",
+      "sha256": "5c1d04364287a0ef816b80d64d32fd34e030ee19ac8ec210c37b2989dca3f3ad",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "docs/OSGARD_R135_ENGINEERING_REPORT_RU.md",
+      "sha256": "6d2ef480535d1898793252b7ae0c183412dc6ebe4d4f6d5c9992b61909e2fcaf",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "docs/OSGARD_R135_HARDWARE_BENCHMARK_GUIDE_RU.md",
+      "sha256": "d053fe64f656a6f92f3421d1703e4dbf280d8facb477c27cba32df7acef8b58b",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "docs_R134_START_HERE_RU.md",
+      "sha256": "5c1d04364287a0ef816b80d64d32fd34e030ee19ac8ec210c37b2989dca3f3ad",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "evidence/r135/actual_local_gpu_probe.json",
+      "sha256": "10f152c08743ae9e5fe2191a3f533509fcd4170200df68dff554d58d502e2a40",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/all_selected_pytest.log",
+      "sha256": "57eba368599ca39ed89cb45d7b1aaf50d10ebbd2aa980c0d39702c427e138572",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/build_eco.json",
+      "sha256": "8a8bac815d43b4af66343da7234d5f6a0bc3e6dc98e40747700d95485ba3d96c",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/build_hero.json",
+      "sha256": "2568646da6b6464c004c97a84a301bf59886e36e2b10fc790aafe886abc3e56d",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/cpu_bench_stdout.log",
+      "sha256": "82376b61e4e502df455ed4ed8100928d396265ff361db56778e62252c411aaf2",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/cpu_import_benchmark.json",
+      "sha256": "d1736b9b63d0a75d2143927e8a030d177b0d487303801fa74ab95b687d70ecf9",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/hero_rebuild_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/hero_rebuild_stdout.log",
+      "sha256": "2568646da6b6464c004c97a84a301bf59886e36e2b10fc790aafe886abc3e56d",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/hero_rebuild_success.log",
+      "sha256": "aa542b82706e08360a6854d93f8a5b53df10e29334f38fac383e0aa43f269a76",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/native_render_macro.log",
+      "sha256": "a25065600c9b9d31b5f18b0a604f815f1a1144c2da90dd163018850ec09cea90",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/native_render_service.log",
+      "sha256": "9e2e0367aae46b4c31d53dd12a5106b0316245432cca23e77a9694ec183710e0",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/test_r135_first.log",
+      "sha256": "2ca0ad88e001899ddb974f7eac31fa55d0717a9b63840d506f1969d7bbbef914",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "evidence/r135/test_r135_pass.log",
+      "sha256": "22ae2143890e7553ee89bb45cac5659c7cd17c2cf912cfd7346d9bc7cdf35423",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "models/eco/precision_cooling.glb",
+      "sha256": "69fab0a4c0b9f7ecd7a36fe9aae69254739cbab7060f01d975c761c603cabd60",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/eco/rack_compute.glb",
+      "sha256": "2f14a5af5f562b855bf908bdd44d3087423c80ade73ae0936547083e6da875af",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/eco/rack_network.glb",
+      "sha256": "85e2d9f9a9d1c2b4967130b333d5cb662174f5b14008303309b0e5637c2dfd69",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/eco/rack_power_ups.glb",
+      "sha256": "c38f7d52d450fae0e9e589df8df9da568bee27a7c103517845d888c9dbd57abd",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/eco/rack_robotic_backup.glb",
+      "sha256": "dcc641a94dc5256ff2566043a2cfc3a74812e2631ddf242f25c5e11350e25d88",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/eco/rack_storage.glb",
+      "sha256": "ee908411b549031619e54dcce37d561e240e055929da6f67bda61ca95efb6666",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/facility_architecture_r131.glb",
+      "sha256": "a34e2a0adc3cb8c8cad09e94f01d3efbe7003e3537aff6e772497f62d362b827",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/facility_architecture_r131.manifest.json",
+      "sha256": "0b7fa767fda557b383409ca3794a6752986f904e4f9b6034b6eccbf090d85bd9",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/facility_detail_overlay_r132.glb",
+      "sha256": "eb43f1d78bdd1b11ed068c24433b66793d72abb321c04675c21d0ad9015f9f83",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/facility_detail_overlay_r132.manifest.json",
+      "sha256": "0741a98927765a27809ea4d4fac8fddcc13e7819203a54bc3e3ec1981858a403",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/facility_environment.glb",
+      "sha256": "81e09244d011aa97de56d3965e50020f2d6a80dd8c818dc5ad7f36a3d12a77c3",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/precision_cooling.glb",
+      "sha256": "4c46d6e9d8eee0802e714a6c1468b736ceec8cc73a365b8ac47a0d1407ae83fc",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r133/service_bay_r133_eco.glb",
+      "sha256": "4e3ba3930c86f9bfcbaacbefd3e9826b71acf4233cba56df80b2b9b7a604f8e8",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r133/service_bay_r133_eco.manifest.json",
+      "sha256": "8e59139b97da02f3d292acfea5dd318ef68ed809e69851edccfe451ec8316b74",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r133/service_bay_r133_hero.glb",
+      "sha256": "8d007cf5a253aa5415e28ba793e18da657507e5277fad46aa6bab5e4d2c590ec",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r133/service_bay_r133_hero.manifest.json",
+      "sha256": "67c350aebd6c87a45cdc93d52e66abaef73b70127cb9c052a24350cdc1237723",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r134/r134_machine_room_eco.glb",
+      "sha256": "6bfc29982e41e6c02dbf7d9fb0abb9cba7bc5b5396e2853c7f308e0611bd0d35",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r134/r134_machine_room_eco.manifest.json",
+      "sha256": "ad387eed935e06d7ebb7fdd12e27fa124b7110c0c3c59537b3e8539168fbca71",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r134/r134_machine_room_hero.glb",
+      "sha256": "8e703b7df30d0413d7174d1492734333b59a240fd71022e5b8f134fd20f45679",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r134/r134_machine_room_hero.manifest.json",
+      "sha256": "3349d06d6deaae615196650433be9bcf5543ea5001ce060c481765761b1527db",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/r135/service_spine_eco.glb",
+      "sha256": "c6bbc41c53e596d5048371e639a662cd2a75d58a02f75c9df93ffced7685533b",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "models/r135/service_spine_eco.manifest.json",
+      "sha256": "f1b9a43a06def47941a2554e5b41eb15964147aae5c675f8b98386f438f2f7d9",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "models/r135/service_spine_hero.glb",
+      "sha256": "8ef33e28534c7c41d4adaceee4e479e38da92287a99bbd5fd53b9fc9318c0078",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "models/r135/service_spine_hero.manifest.json",
+      "sha256": "f5bf51d0251831dd36e507dc4541abdd7afda3dc005290a516b37a3aef7d872f",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "models/rack_compute.glb",
+      "sha256": "7b4a64eaf5e3ff5799b66d1cf3d91ddea300ef879199942a5e096c0060b5b950",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/rack_network.glb",
+      "sha256": "c19c8f40b284ce7cec99c5ab86515288b03ad26adda14eeef20e72c970910a8b",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/rack_power_ups.glb",
+      "sha256": "7df7bb42ca6d65ed3acd3414147664f55a8cf9e694a6b4e0cd74db6c4dfcf5b9",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/rack_robotic_backup.glb",
+      "sha256": "5d045b768f6f89969daf417128d19278f141f5602a50e425f2ff310d57939f85",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "models/rack_storage.glb",
+      "sha256": "1b8bacedf0a7e146290533cb7a53f61f1b148d3bc245f7b7f783da320c0c5d86",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "project.godot",
+      "sha256": "9c225bf4a0d6d4befe49811c7c27b5b7240ac1b9ed52187d587a281af7a1da63",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "shaders/inspection_panel.gdshader",
+      "sha256": "87fa4aac30ba1647a12592619942f9fbb7a72c852c781a044227c64a6c6bb1aa",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "shaders/r132_film_grade.gdshader",
+      "sha256": "e42ef077f409d457f7560a81d5580563a997e60c33af69f93fee3a9abff88cdd",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "shaders/r133_filmlab.gdshader",
+      "sha256": "34458dfe5d72e6676e0a07e5c56bdd33fa60ce5cbc3bddcb195ec409d353d35c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "shaders/r134_optical_grade.gdshader",
+      "sha256": "af3212c3270bdaa45fc1ff63e92fae43bf63c077e1c75c382ce5f121e0c72a0d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "shaders/r135_cinematic_grade.gdshader",
+      "sha256": "c41f62529290e5655d61aa0fd03ef46228e8c1ed474d371abec66155a06c17b7",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "tests/r132_asset_fingerprints.json",
+      "sha256": "36cf35e58446d3bf94f94bebd168cb7c2dc1043e97cab48b6608ba1e7257ffb6",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tests/test_r132.py",
+      "sha256": "e5d543e4573a0a5bb58e0b41290de9156a33b56e9a282b09c0f340d001c34be6",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tests/test_r133.py",
+      "sha256": "f88922309945bba2f7e928f19a75392daf4eb7e6508f0185c482a2f37d6dea32",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tests/test_r134.py",
+      "sha256": "96be843f881f58e1b1ba900da88e0296ff57330781f61ef68f916638687cf73d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tests/test_r135.py",
+      "sha256": "ba10793f233e5aa6631423807ce741dda08d392c8d356da97f5715976241544a",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/aluminium_base.png",
+      "sha256": "ee7ba367ba05719a613a80b2d5073dfdd9e8d12782af608ca705def35f9c9012",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/aluminium_normal.png",
+      "sha256": "d13378577c7b3d5bdff16eb40aafab81c5e1c0c30d7013cb6047d243ee3fef34",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/aluminium_orm.png",
+      "sha256": "a3189180ea88f5b0591e67611f8e68737a82a1fec1878548988ad420df213c3d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/caution_base.png",
+      "sha256": "abe59970108f7acf3fdc7f8cfbddf408c42a2e4dc60b94a81297ab65c18e5c3b",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/caution_normal.png",
+      "sha256": "b46149004732b3767a96528ed1fef164bffac21a6d1917b6b9a1f75322981df6",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/caution_orm.png",
+      "sha256": "437b72ac6d52bb33be3ec5b5d364520cb820f0a2597fc8f0bca54ab429439f58",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/concrete_base.png",
+      "sha256": "23e3f38eb79a036a11c9fbdba9b106aee4e3bd91b96924951cf4beb7e061250f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/concrete_normal.png",
+      "sha256": "c9cb84f1c5e96280753c0d1197a44c77a8df5a38403115beddca788199454e6c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/concrete_orm.png",
+      "sha256": "70555b0330770e2dd5d40a72ba7c8bfed153361274381b2ad6595078bd128c3c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/copper_base.png",
+      "sha256": "85d8bbbc38783cf02c3a69a1f38269909550e757be7c4dccda1caf466d57aa29",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/copper_normal.png",
+      "sha256": "3973124f97f19c8e4f423d544ae26a4a960dfe6336863160e05195908b7905ae",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/copper_orm.png",
+      "sha256": "03265d877aa9fa239c3c932c81dfbee435bbffea4abc1f76190cad77e2427e0d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/cyan_emissive_base.png",
+      "sha256": "b8d32edea81892701c8cffb910021411e94b52aef4fd091bea1bb7301727c2ad",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/cyan_emissive_normal.png",
+      "sha256": "8ac57f0bd0e05851dfed3a3092531e59ff6b9187889cd8e129dfdcdac7ea9b53",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/cyan_emissive_orm.png",
+      "sha256": "f2f9a4566888a117e6dba84542cdcd841aebcc838d1c4990fd2a406e1a5af303",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/floor_base.png",
+      "sha256": "e73f7815bf3141f365960ce9ecb5d70036c8a4711bcb6c2fb751e93d5f78836b",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/floor_normal.png",
+      "sha256": "5594280cc5235e0773be230e1317784a71ae563f4f42c6f0a0cba506a96451d8",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/floor_orm.png",
+      "sha256": "b7c393d9e7b27252d525aa32a07745d5faf5b6e6e64c7dab5417eca9c895b175",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/graphite_base.png",
+      "sha256": "d058fcc2a56998813c3e856766af6825ee7bbf18a40e736bee2c0aeb61e4f6a5",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/graphite_normal.png",
+      "sha256": "43acec97f6039ab8940872691fc30022cdb06e0535f934f901407ecfd37139c6",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/graphite_orm.png",
+      "sha256": "dd4beb5c9fe1d49a09d08884e7f5fd04e9a0955162a6bc25dde1748a728fe89c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/optic_base.png",
+      "sha256": "15207dcd0db59577790ff9676e48dd5f11eeedb61c5b00eb6ea0b8bb40519c30",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/optic_normal.png",
+      "sha256": "9f8b1a09ce0018d8636ddb5fb57c94d3ad5d1717e02601d4826d6ef81192e7c3",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/optic_orm.png",
+      "sha256": "b1d78e76640e31aa075783cc9c21169877634c2669df39b95c5addd0879e6432",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/anti_slip_grip_albedo.png",
+      "sha256": "a17f60f1126e8d03aebbe56273964d968395d7328eff256d614ed6ab724058a6",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/anti_slip_grip_normal.png",
+      "sha256": "8ddb0bc5c4051e9c394f6e0d8d874868ed7adb51d58284ec761319d2b08fd691",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/anti_slip_grip_orm.png",
+      "sha256": "07e46621d919ac63735f5882348fe2ef22018d4ef385d98fabf1bd0fc0fe15ba",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/brushed_titanium_albedo.png",
+      "sha256": "1ebbcda5c28ef9c04b9d94dbc9acf466d2c9df53c071165ccfc083ea9eeebbbb",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/brushed_titanium_normal.png",
+      "sha256": "0fc5f619411f9d80ed9cc57be66f1fea758828ab29bf950a312eefbf75293a06",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/brushed_titanium_orm.png",
+      "sha256": "db98e89702635e7ce244318010c7781e3303189826ec4e2b8d0131beed12e53c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/carbon_matrix_albedo.png",
+      "sha256": "66d80932a130bb7d5b0ff42d3fa3671d0271392f29182ce5a3855d130f3dea10",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/carbon_matrix_normal.png",
+      "sha256": "2f667a7ad0e838247f21e8ff64540fdb859ace8b1c734ab708269f8c06622b30",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/carbon_matrix_orm.png",
+      "sha256": "6875309a3ab9c43833b548fcac4d68690fbcd71ea0fbb475a8d991d2402df9a3",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/ceramic_white_albedo.png",
+      "sha256": "b436cb6e3c9ce3a14e1191a9bab75cd8fc282ef69715eabb6ddb73c6275d165a",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/ceramic_white_normal.png",
+      "sha256": "33028c463ae2d77ab10e1518df8ac612134c67961351f4134feb1106ab60e439",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/ceramic_white_orm.png",
+      "sha256": "79d23040d40b6347e5748c1e93b3c34ed0d9ea8dc809ec4969dacafd2dee998f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/fiber_optic_albedo.png",
+      "sha256": "06382d89598cd74e99eccf91c0956ee9fcd3859353a6d3c278743ec6d81bb53d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/fiber_optic_normal.png",
+      "sha256": "b1dad48ba7b7f22d257f355ac734530e1416676f10e670ddc1d0c2e1811e7321",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/fiber_optic_orm.png",
+      "sha256": "cfea1ebf277d06f19e07ce4b64f81ac5efcaea5e3646810f5d2817d37e75fa12",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/laminated_glass_albedo.png",
+      "sha256": "41c72ccdf1a4430e653abd5e78ba7f5f73d408d12507bb259015e92a37080c52",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/laminated_glass_normal.png",
+      "sha256": "02d7a35cff7d130b3af7c485d315aaa427ee1e45775da3fee421290ccd0133da",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/laminated_glass_orm.png",
+      "sha256": "dca516a113ae1bc8523b423c9cea156ee1d00a0dc716854d1ab3991a6c1d65da",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/powder_coat_albedo.png",
+      "sha256": "56e59fd1a5b5e942a03aa556d7bfd1b0da5e7e12a38003475384ad696525baa2",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/powder_coat_normal.png",
+      "sha256": "c49dc8964f6b6f24a037477689fbf9d42be4dd132d2739f33f604d60893ed2d3",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/powder_coat_orm.png",
+      "sha256": "e7264c93cbb146a240db312667293ffecb6e33825395076d610d37866c851967",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/warning_enamel_albedo.png",
+      "sha256": "4e6cdd8f43e9a701c9b054a873e7aa7755540189f60a925779b2bebf4845dd4c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/warning_enamel_normal.png",
+      "sha256": "3110c6787cee0582ea6ae86bdc9ee6a1128adf455c5440bb8b17af926cbb7c6b",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/warning_enamel_orm.png",
+      "sha256": "7f0c4a55ae5e5ab2ecfdea9ef01265213b53c47614be181aae81d8a5a1ceb0ca",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/worn_copper_albedo.png",
+      "sha256": "911126ab53effe5dd664333293e2f4817cc2300f68e4b87b72240e662fd76e73",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/worn_copper_normal.png",
+      "sha256": "2733949d3dbe1db71aeb70cbfc25d71c18d43f50816acca16b733564f5d959cb",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r132/worn_copper_orm.png",
+      "sha256": "b1ed03cf50d922c836db64b3ee51a15305676e8ea5a96c5d769c2d4f234ad1a9",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/brushed_steel_albedo.png",
+      "sha256": "3dec5a8ee3f2ecd8cd824270cb69967ed1dc6924f52da37f46c61bd72f9eb09b",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/brushed_steel_normal.png",
+      "sha256": "974412fc63cd09083d23a806ff89b827aeaf2095060b36b21e8d284ea87b5ba5",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/brushed_steel_orm.png",
+      "sha256": "591f52335e439908a7a34816a08eea2e0eaa05215921e966a63ed37dfea3f8bd",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/ceramic_insulation_albedo.png",
+      "sha256": "dc459eda22f2da6369646904edc18de100ef3c84ac00671816c54f72bde35632",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/ceramic_insulation_normal.png",
+      "sha256": "1675c5cd9e4f073b93eca8e9051e821cc988ac2f61faed31f9f55d8ae14366e8",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/ceramic_insulation_orm.png",
+      "sha256": "73201c8ce037158352b381bfb85a00419b837a4de0d63c69fbc0e712fa0e8a0f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/dark_anodized_albedo.png",
+      "sha256": "964a3e7a3bea8fb8a84d55712ad7735e6c95643152fd548a2135d75c2a828248",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/dark_anodized_normal.png",
+      "sha256": "ae92836cb14e9e95cefe363e25efbc65e1062a4d498f30c9cf6481dd312a3171",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/dark_anodized_orm.png",
+      "sha256": "76543cdc0585a03b8a642466f31fbe8b76c94173868891fcddb132c576019528",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/laminated_glass_albedo.png",
+      "sha256": "cfb7607642002dd4729e6d07f0bb8851a8b9044ed7cd231ec4a8332cf2ac98b4",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/laminated_glass_normal.png",
+      "sha256": "acdef1070e440c5e0a9b5ddfb5eb565d084052a119b923267c5c739f1a8ef2ce",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/laminated_glass_orm.png",
+      "sha256": "52bb48c5ca742d779453cd619cbe5d582bf02eafa1811963e2a4f21d4cd88a00",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/optic_guide_albedo.png",
+      "sha256": "e502162b0b663e0ae2ac5152b0e7c63d0c5807bb4b7decfe88fe670571cf1dda",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/optic_guide_normal.png",
+      "sha256": "12759fbeb36fa9eba6cc4fc537d229f8694a5ae69440b0ea48708a2428b8c75d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/optic_guide_orm.png",
+      "sha256": "965e0563cd8d82740b5d06231fea772b237e2e36c5575486b49cc37409908f8e",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/oxidized_copper_albedo.png",
+      "sha256": "35a626347225475081f222c70dbabe691dd1bb949a79650e3dc83b892cfcfa8a",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/oxidized_copper_normal.png",
+      "sha256": "36fe9f1df24ed89d2b43cb0e041c8f5389c6cabd53b1a64c025fe9ce634bab84",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/oxidized_copper_orm.png",
+      "sha256": "9a670e892a1f8586bd0b19a2b3ed3d489a96c78212823380ee0f6cb962a59365",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/polymer_albedo.png",
+      "sha256": "c10d7077e342cfd549cd9866e48b0b5f772d23c8f6b661fcfd6440e9fec637cc",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/polymer_normal.png",
+      "sha256": "ae8344da646096f1606b2347004269e99c3793b49a93443f6e98a5e470136501",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/polymer_orm.png",
+      "sha256": "61cb3f7a8b36f5b2877245f81bd27788e245c46576e71f11c76c41324c4a8f92",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/safety_enamel_albedo.png",
+      "sha256": "683621957472f90e78d41383c9f78ace496f7e46ecc0b869f02d8d0253952d7e",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/safety_enamel_normal.png",
+      "sha256": "54118cb6aaae787991a6fc4bed3cf204c6a307def1e1b028d44e6281dce69a33",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/safety_enamel_orm.png",
+      "sha256": "da997fb77d38917f95d0becbd7fc49ee6433974b88c93401c1e516af3d863e2f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/titanium_albedo.png",
+      "sha256": "2a06702d1a4e819d5db0b3c54c54c561d91ace8efa0f614d8df5d4fcc7f3438c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/titanium_normal.png",
+      "sha256": "38bd4462c8cae5b982c82af1f678451ecf237b35d69dce7d8330b5f3dcce375a",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r133/titanium_orm.png",
+      "sha256": "e50aeafc0d5d545836f2f9554dda729dbcfd18b06a31c01d15f88e7d387e9abe",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/aged_copper_albedo.png",
+      "sha256": "4774983bac850418a8e966db62c3032b57edffa9ba71f786caa60490c69db309",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/aged_copper_normal.png",
+      "sha256": "caefb2c9d0bca1d3f6371e8a91e332b2ee661d1b4b1ec190ac25bfb6081100c2",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/aged_copper_orm.png",
+      "sha256": "0b16550afa9920d73648248043f9d16f5a52bd327584f2605268744df1a6e24b",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/anti_slip_grate_albedo.png",
+      "sha256": "93c459e70b468955230c0623882672ba059aabc754cf331032226565fe7ceebd",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/anti_slip_grate_normal.png",
+      "sha256": "d36646c0820a1d6f2ffd6d467e54b5d7897ac37c61a258432c47e804f37b8a6f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/anti_slip_grate_orm.png",
+      "sha256": "99249bbc4c64e589765cdbe0692b14a6926bb8902b0b216b9e818f18d8b7b41a",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/caution_enamel_albedo.png",
+      "sha256": "15bff8cfaec23c20e53446fee7bb82b80ea2ca613029044697d31f46818f41da",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/caution_enamel_normal.png",
+      "sha256": "97b503c48bca63c30743602b86d2707c026cd9b61512f4d2296f2837783b5369",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/caution_enamel_orm.png",
+      "sha256": "8bd3c554972b007b24fad80039802ab9889651ddb7948f4fb0b62a1d0712c02a",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/emissive_ice_albedo.png",
+      "sha256": "a1bd08d5e1f9293ae2c0826213a201cf84485319a26a91b68c980ee1b598fe88",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/emissive_ice_normal.png",
+      "sha256": "95bfd3374a4fc44c44a5009a229dc97bfce5e650e126e73332263e756914bf50",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/emissive_ice_orm.png",
+      "sha256": "9222e617175917f8b7df3c4595d5a2d51d6eb33f88fdeda63a420038da55bba5",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/laminated_glass_albedo.png",
+      "sha256": "ac3afb78cb013c60a7ff3d1c2bd9edbcac672faf9e5e303f13bfef5511417705",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/laminated_glass_normal.png",
+      "sha256": "965fa182eb055cea4e472cd25317ead03ff34695dd19890621cb300ce7e0e581",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/laminated_glass_orm.png",
+      "sha256": "1a3e89d80a7695b688039591bd51e3becf71ebe06e9f4198dacf790eec9da6c3",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/machined_aluminium_albedo.png",
+      "sha256": "1f162b97c7381b762404732fe87a47f386f38f2b13823ee7c1b7111bea12b807",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/machined_aluminium_normal.png",
+      "sha256": "fff1192b5fa1c124b4dccaf3d6012a90b37174e7a2dda8ecae9aede63d6913a7",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/machined_aluminium_orm.png",
+      "sha256": "29fc8446477f8669a892411d708284dc668a277cf6d69997fcc10c22386aa749",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/optic_polymer_albedo.png",
+      "sha256": "50f2f8b013191e9e78ec7c2c8e9b025cc68d45ae08b8920a3e4eda7e8fbc5ed8",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/optic_polymer_normal.png",
+      "sha256": "6a7c8db546b1d2e11cb21f42a77368970f0f1475cd94483853896bfb5e86cab3",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/optic_polymer_orm.png",
+      "sha256": "a15579267aa15562e76c89cc723d15af87d9ee8a744c830b01e7538ea294b34d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/powder_graphite_albedo.png",
+      "sha256": "848f36569df384ea09d3c3358e0230a43b0d084ec0a9cdd7e7d7d567c7f97709",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/powder_graphite_normal.png",
+      "sha256": "86d6bccc2053a2b0a2886e171965f21947080707ff09eb03fbcf7401a97156c6",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/powder_graphite_orm.png",
+      "sha256": "a1ef26d1ad5f4c9079246a62a7c86f4684d9fc669328a49375f83f92b1690ad2",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/rubber_gasket_albedo.png",
+      "sha256": "ed3ec22732ee84ac2108024d869fc9b1fe24524d6674ee3d08033f0285c58c3f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/rubber_gasket_normal.png",
+      "sha256": "5aee7f520c12769909c0b3041dba994cbcfa58d04c6ec513e28b4a3faea9f41c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/rubber_gasket_orm.png",
+      "sha256": "db7ab8ee0f7eb05273460fe442c4c7dc4a10adaa750eec7a602899f0bd9854a7",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/safety_ceramic_albedo.png",
+      "sha256": "53432e8d74f76e14c92627f46e734556ec95526eeb9816b2cedb4a4b2dbc9857",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/safety_ceramic_normal.png",
+      "sha256": "3f282e8c596dcd148477f4696529d3ca7ba8569a5f34c8827f77c608f70857eb",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/safety_ceramic_orm.png",
+      "sha256": "84d2ab49572135a11304413e60974ddf31f16b151e8189a5dd1353e173684ebf",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/satin_titanium_albedo.png",
+      "sha256": "981d86977fb48e916ba3cb937d64d3e625cbfda06b2839056aa3c5100e8d7815",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/satin_titanium_normal.png",
+      "sha256": "4fb96d025095b8ded3df57727fa1e3c44aeedb7d548620c521195c953cc5ad9f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r134/satin_titanium_orm.png",
+      "sha256": "799233891d1637877e8feda156bda17d3a68577602045f59c2f317c2873304d0",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/r135/brushed_aluminium_albedo.png",
+      "sha256": "1a1935ff7180440d1297aaf00ff892fc6ad280ab9aeca7a307be72090a06092b",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/brushed_aluminium_normal.png",
+      "sha256": "b3586a11e156a2ee2e452dfd55b52a39e5fba7c4314597c1b0061fe883b8ec02",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/brushed_aluminium_orm.png",
+      "sha256": "37fbc5e9c312d83d8c4b023a7fc1c451fccc471f30c4f0fddec44ef2efb4f7ff",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/ceramic_insulation_albedo.png",
+      "sha256": "ae599a4d8904079d67d63e87fe79afb42427775d5a0fe9415b16c9e07c107cbd",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/ceramic_insulation_normal.png",
+      "sha256": "82a32a14ae6da5305b660790fe3e9a8544c01d916d052aafad1bfe0c4aae0c03",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/ceramic_insulation_orm.png",
+      "sha256": "1794c7d2cf0908afdad12160df240501f17e07e6c0492f304c6eb1b3cbb07e70",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/dielectric_gasket_albedo.png",
+      "sha256": "e7c33c4b56a7a7be81111024ca67b269fb06b9aa82dc95fc9cd7d6adfa72ce70",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/dielectric_gasket_normal.png",
+      "sha256": "f0138a84816b304aba133174029b530bcba01a1ae9257fd9b3280fcd78d326fb",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/dielectric_gasket_orm.png",
+      "sha256": "b3a706ed6723ee63563cf18f4d1f0995d2caec996f0c0a80875bf4a2fbf09473",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/emission_bar_albedo.png",
+      "sha256": "1a1e2bce1b21804232b4d2266750fa17f54b324a384f536f0d9bedce706b3af0",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/emission_bar_normal.png",
+      "sha256": "6a9b9d6a2c5a5f51f8718ab7e5b594b53d6e002d74e9a57dc0a124f90388e215",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/emission_bar_orm.png",
+      "sha256": "586e22027b94cd59bb83b9875c64bf074c4df9393ab4edd2ff907cf0849ff07a",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/epoxy_floor_albedo.png",
+      "sha256": "89c6ce70f8e7b03e358c1d183cf8aef29bb3e893b7167bd42e4b69df01dd8796",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/epoxy_floor_normal.png",
+      "sha256": "5ee3dd3b9fb24484b513bb3779bd2bcebf07f18ef81f408247e18ec20fc86fb6",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/epoxy_floor_orm.png",
+      "sha256": "d8c7e49caab41de64bca7c46084859b64364b971989549eef802dd2a0dad68dc",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/frosted_glass_albedo.png",
+      "sha256": "563b699d780e2599c533583e347b39e3b2368f24a4e69be873314be9835b6b8c",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/frosted_glass_normal.png",
+      "sha256": "3a27332e4c0a71b5d9f0741133edc4520b7399f2c7f10911ab544965c45094e9",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/frosted_glass_orm.png",
+      "sha256": "37a8184bc5e0e9807cdd9306ef717ca450f739f13c3dbe8794a9c6b1df7865f3",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/galvanized_steel_albedo.png",
+      "sha256": "ea646b0819b09b727d9619cbdba4484bcddc4a868b568e3e791e9758b5ce4770",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/galvanized_steel_normal.png",
+      "sha256": "9865caf8850d3f25d7f9a00eed7b6388156990e081ce7f878a6178f0945bd209",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/galvanized_steel_orm.png",
+      "sha256": "b3fdbfafd4a2ace67d82d4705134c1eede31fb3795701153745d6e2585c96f1f",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/optical_fiber_albedo.png",
+      "sha256": "a1c1dfb15c688362127ee191b91cff9457845a4d21163657e5abe2ffe6d03262",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/optical_fiber_normal.png",
+      "sha256": "632c074129643c79674ed3e9b423af0082eff572af8cceabf13eca953158a336",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/optical_fiber_orm.png",
+      "sha256": "06e155b9dec4dabe687bd9cedf2f5534bc388c6f5cbd5f39a4be4b8392e622c4",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/polymer_jacket_albedo.png",
+      "sha256": "8ab22c55198d87985a18485352574f9f52dc35155197f10bf987051de3ab43d4",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/polymer_jacket_normal.png",
+      "sha256": "c20f322270f989f69c9221522ef0e0ca4fd201e87635a39bce731838cd045489",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/polymer_jacket_orm.png",
+      "sha256": "b7904bfbf25363463c69d99c652240d1a3fcd41bf8466f9ded238dd93f5d8774",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/service_paint_albedo.png",
+      "sha256": "d745732245247f11724707b7f6af3c1c22747a90d410d2692c481e0aae591aed",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/service_paint_normal.png",
+      "sha256": "f5c61dfdbce659aa728c76b3449cfafb60fd2beefd97ea5f503121ccdf2375f0",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/service_paint_orm.png",
+      "sha256": "1d12bb20c7e9bb42a164c32296bf2dcad4c7101a5f5a6d333d194edff4b46524",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/warm_copper_albedo.png",
+      "sha256": "3417485debabbd8f8ab8747200a168d32044a7e2c76a86bcc9a1cc4f5ae9530b",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/warm_copper_normal.png",
+      "sha256": "5044f13cf00e4c0ac8dc5f814add806e6e2884a62dc2a1622fa0a009df90b3ae",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/warm_copper_orm.png",
+      "sha256": "7a4300b96cbd946837ea3000072b30d2109fb64af37c3187dfa15adbe88aed53",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/warning_enamel_albedo.png",
+      "sha256": "7df45cdb6701c19eeeadc2420b041fc125ce44b2f822f1f78ab94327488de806",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/warning_enamel_normal.png",
+      "sha256": "0ac07b6facb5d24b73ce461dce45637aac03781d9f63c2665a860cadbf669a68",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/r135/warning_enamel_orm.png",
+      "sha256": "f4da8c71a1ea083cd58a11c7114551a5a869ea50e6f2194e44efcaab5f165c2a",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "textures/rubber_base.png",
+      "sha256": "f3326d843b6d6b806273f397722ae34fb97cd4fee3b085e3258baa20cabb8ac6",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/rubber_normal.png",
+      "sha256": "0d93f0080adbe093226f1bd4b8e268d9f00032d523b7a87067ccd53c1d54a487",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/rubber_orm.png",
+      "sha256": "42ff08a6b291403921d2758f4ca4bf9cea1a44f1edcc24922709225649cc6d2e",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/steel_base.png",
+      "sha256": "e3be59c251b642624f25aaa4d1e15cf2fe7cdfef011d6d068e2803e6b5a53a23",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/steel_normal.png",
+      "sha256": "aa2fbbb5281cad28dc0afce622840a159258a251fb0f81e29b5252eb3187f415",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/steel_orm.png",
+      "sha256": "5e89ceb7a762da1f66aff6d8ea7ea01fe326210f92715f25b382e347e21eaf65",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/white_emissive_base.png",
+      "sha256": "cd66c76760f4046f9f2859963c5cfaa59ba2fea69c3549bc9d4687f2e2f0196f",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/white_emissive_normal.png",
+      "sha256": "6f6a58fa89daee1b58f8045e1e0e59d8483d8b6c82ac494c088c1d0bf4c8a731",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "textures/white_emissive_orm.png",
+      "sha256": "b8dd18ae67b4d7bebcd1b08b95d58a43037d0c731e27d288c3c7d904fb200577",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/analyze_benchmark.py",
+      "sha256": "30723881aa9e24aafeaa2bd3a2cb432439adf7247f1c2c1aa1649f8163d06426",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/analyze_r132_hardware.py",
+      "sha256": "aa35ee0b081f3ee6a38e5c08f9d1de2057097decbddd17e7321fc2acbed2ba1e",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/analyze_r133_gpu.py",
+      "sha256": "241dc796918e495b0caa2ceb326664868e1db5b0958836e5a3235f9117807a15",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/analyze_r134_gpu.py",
+      "sha256": "26c603ba3fac98daa3b71ffaac192f545f75fcca87f7cb906f7742d75e0aa7e1",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/analyze_r135_hardware.py",
+      "sha256": "df33bb299304a0af665fc96d44b0a76cdd5db488e3556f079a183c40b1f4cdb8",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "tools/bench_cpu_asset_import.py",
+      "sha256": "84b84ba9a2e94b321c4b5351d55c81e0ab94a89f7753803013a39153eb1ba670",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/bench_r134_cpu_import.py",
+      "sha256": "c7d268ec5e7e0a7fd5e2971d612ac67638c58a6e586b8ff460b27936c1827582",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/bench_r135_cpu.py",
+      "sha256": "4efa897e90fcbf76a673091768ed98a7d2ef9c579c9337d2581b9bc8eb821019",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "tools/build_r132_detail.py",
+      "sha256": "137e9b826d37a4e1fac4f814bce52cdf27ff325094409c5778f5202db29f0cf9",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/build_r133_detail.py",
+      "sha256": "022bb600cf7fda2c1969532996923a023c8f87596e4e4bc0d62c67431cb7e149",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/build_r134_facility.py",
+      "sha256": "046a554508af0f1b972e88cfdb38ae3c1b2cb95bdcb3994c1011b95ac932e6a7",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/build_r135_service_spine.py",
+      "sha256": "e7793388757e02bf0da38713ecfd8313a0b9fee7a34771aa23fdeb2a9a8ad433",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "tools/check_r133_project.py",
+      "sha256": "3b3872c9bb1e6abd6a0ef827948823cc8c4fa7a32e3eee0f7c3de12476c179e9",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/gpu_probe_r134.py",
+      "sha256": "bd20b8964ecff7511fa9571e80b855d41b09c4e1dd0b82638ae8aed7fb9b7468",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/package_r133.py",
+      "sha256": "573f096a932ee9e73cdfa07666f33125f5303a3ecdcd12ab1a54bc8a2d5e99c9",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/probe_r135_gpu.py",
+      "sha256": "e851476bcce782d0c20ae938eaf3ee852efb19c75a7d27547948e233b4600b32",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "tools/rebuild_environment.py",
+      "sha256": "673fa78ec16ca6a5ca4d79bc857b7b55895ec373484929421c51e069cca67b2c",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/render_r133_preview.py",
+      "sha256": "89a6d409ff9e803f3e6346d0ac5aeae8e201e4af618dcea3c84fd2c5c51d1a67",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/render_r134_scene.py",
+      "sha256": "146e74b05275b131eb831582bcd62f2c066b9846cd2b40f4ccb60a08e7101283",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/render_r135_proof.py",
+      "sha256": "c6479602e51e5bdcedc44bab781d34dd2b10465f5bf7a96b07a7c8a78d9dc585",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "tools/run_hardware_benchmark_linux.sh",
+      "sha256": "3f509262cb928a75c4c552d51aad8acfd262c0f6220a47f271b9dd339e9b0943",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_hardware_benchmark_windows.ps1",
+      "sha256": "047d07ec74a59f29858b3d96dc059bd7c51f2c6bbc6cc8f5e2134534b5b2ba45",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_r132_linux.sh",
+      "sha256": "1d5addf9fc38138c7c13a98f732e41b97956c6f8ff6a43d24d0ba7f1fc7969d4",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_r132_windows.ps1",
+      "sha256": "5b8818a937353d458a89bbba7e2744576ed63104975d9af1ee0e724ba977b81b",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_r133_linux.sh",
+      "sha256": "0b349b5daa46bed350b95b36237016775ea008bb360fe4f04cfab37dc15ce09d",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_r133_windows.ps1",
+      "sha256": "1698709abd28635d652cdfe4ecde667e091cfa34826574443bee1096448ddef0",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_r134_linux.sh",
+      "sha256": "d549ae84177600c942c538e5c473979e82a4c3132869514c87b45cf036b017fc",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_r134_windows.ps1",
+      "sha256": "01baebfef05de291d9d674bec7a3dc14a39acb0432123d53440d842c1cf5cfd9",
+      "status": "EXPECTED_NOT_IN_PAYLOAD"
+    },
+    {
+      "path": "tools/run_r135_linux.sh",
+      "sha256": "b53f3fff51a7444a9c6fbedbcd7dbdd74a17b119d49c77bc308117166aae1e1e",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    },
+    {
+      "path": "tools/run_r135_windows.ps1",
+      "sha256": "7a83a26153d1bbf1a5b57afefae992844684e1f5c2744f48321131fdcef0e17b",
+      "status": "ORIGINAL_PAYLOAD_VERIFIED"
+    }
+  ]
+}
