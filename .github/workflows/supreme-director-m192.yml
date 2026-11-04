@@ -1,0 +1,51 @@
+name: OSGARD Supreme Director M192 functional runtime
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m192/**"
+      - ".github/workflows/supreme-director-m192.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m192/**"
+      - ".github/workflows/supreme-director-m192.yml"
+permissions:
+  contents: read
+jobs:
+  functional:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify shipped M192 source SHA-256 and exact inventory
+        run: python3 supreme-director/m192/verify_source.py
+      - name: Run 46 isolated unit, concurrency, multi-tenant and HTTP tests
+        run: python3 -Werror -m unittest discover -s supreme-director/m192/tests -p 'test_*.py' -v
+      - name: Execute six-domain synthetic functional scenario
+        working-directory: supreme-director/m192
+        run: |
+          python3 demo.py > /tmp/osgard_m192_demo.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/osgard_m192_demo.json'))
+          assert x['schema']=='osgard.m192.synthetic-demo/1'
+          assert len(x['systems'])==6
+          assert x['tenant_isolation'] is True
+          assert x['orbital_execution_ack'] is True
+          assert x['production_authorized'] is False
+          assert x['original_180_tasks_independently_accepted']==0
+          print('M192_REFERENCE_INTEGRATION_PASS: six local domains, no external integrations')
+          PY
+      - name: Syntax check and local CLI bootstrap
+        run: |
+          python3 -m compileall -q supreme-director/m192/osgard_m192
+          python3 -m sys >/dev/null 2>&1 || true
+          python3 -m osgard_m192 --help >/dev/null
+        working-directory: supreme-director/m192
