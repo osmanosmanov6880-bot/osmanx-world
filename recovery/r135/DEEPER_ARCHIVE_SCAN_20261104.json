@@ -1,0 +1,50 @@
+[
+  {
+    "archive": "OSGARD-Ecosystem-0.2.0.zip",
+    "sha256": "e9b192d99b1b6458b4fc8c517892d7640a9358c7f6ac54e66c7ba11337bd17c4",
+    "files": 6791,
+    "nested": 25,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "archive": "OSGARD-YARD-3D-PBR-ART-PACK.zip",
+    "sha256": "fa19e65aeeecacbc06f4d3411ddd133ad988cba78a3b62e749a8acfc68763f3c",
+    "files": 37,
+    "nested": 0,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "archive": "OSGARD_EMPIRE_OMEGA_GODOT_v0_22_FULL_SOURCE.zip",
+    "sha256": "6693e88f77e7c76ed421ff28d36b1ea6e0c5e40304606f277fe375789d5e00dc",
+    "files": 226,
+    "nested": 0,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "archive": "OSGARD_HORIZON_R7_CINEMATIC_WINDOWS.zip",
+    "sha256": "6e6905985de460026b7b07b47bfe0b400ad2604505000fe3be1f3fb2bbecc94c",
+    "files": 5,
+    "nested": 0,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "archive": "OSGARD_WORLD_WAVE3_CINEMATIC_DUAL_PLAYABLE.zip",
+    "sha256": "14d167a64182cec828ced189e1a7c21f8cabe420c8b137d1a6acd4e841b97b7d",
+    "files": 57,
+    "nested": 1,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "archive": "OSGARD_EMPIRE_C1_R127_R31_B17_ISOLATED_SOURCE_2026-10-26.zip",
+    "sha256": "9003281d4f7a0ff882c7a11d3d217c5d04abde1ac1ae858eaccd8b9e75399a8e",
+    "files": 4169,
+    "nested": 1,
+    "matches": [],
+    "errors": []
+  }
+]
