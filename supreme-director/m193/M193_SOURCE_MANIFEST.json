@@ -1,0 +1,20 @@
+{
+  "files": {
+    "README.md": "894ff31fdcdae66c3a6c3d2dcf013de5854f27ff6cba42e3e8e7ff66ffb3b10d",
+    "check_locale.py": "c94af0597c21503af24db808a85bc10da3cfda07103a83e34f79491930c42f74",
+    "docs/M193_RELEASE_GATE.md": "474af4a4cec28c5898c615397430669633e7441362a956d587c9484463bb1104",
+    "osgard_m193/__init__.py": "28e8c5be7e956fc643ee236ea96a02d65e2567520bd75ddc92687a40736c9eea",
+    "osgard_m193/__main__.py": "136f8545b74b5d4d1ca51cfd4e56c4a8758e5756e31caf495f98ac5db4d76045",
+    "osgard_m193/runtime.py": "9a7b203f77fe0f98b4402c697347a0ea0a36ca71210c898bca9632ac426513f3",
+    "osgard_m193/server.py": "a934a880d0e82b7d0dc14da502a31ccb9ea17feb0887aa5c9c0c1903a4852998",
+    "osgard_m193/web/app.js": "a1555b261a87e434345769f4d8bca417af40c38fc07cbe7fb964fd086895d20a",
+    "osgard_m193/web/index.html": "0987bf430433c5116a8b7b76bc3d346aec6576d793097e0cca50dd32883d422f",
+    "osgard_m193/web/styles.css": "23a9f328724856d22294fe9d111787261af126232a50d07c42d733188d1acc38",
+    "pyproject.toml": "9d1145138b57bad4275a1ca8b0f5d9a63045022c4c72a4076dddb94f2c99745f",
+    "tests/test_m193.py": "0cf41ba5af8eb7476315327a556273387af1bf83395bc2229f23fd6db5ba813a",
+    "tests/test_smoke.py": "6bc8c814dd373b6cf6ecb2de69cd75d58cff090598005a088b2661ec2dca39fb",
+    "verify_source.py": "32fb1a00e64fd739e7128fe812a4b441dddcf17237568d34f811c1286530cc78"
+  },
+  "schema": "osgard.m193.source-manifest/1",
+  "source_only": true
+}

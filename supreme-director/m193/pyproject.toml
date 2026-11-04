@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "osgard-supreme-director-m193"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Offline multi-tenant CRM cockpit on M192 runtime"
+dependencies = ["osgard-supreme-director-m192>=0.1.0"]
+[tool.setuptools]
+packages = ["osgard_m193"]
+[tool.setuptools.package-data]
+osgard_m193 = ["web/*.html", "web/*.css", "web/*.js", "web/*.json"]
