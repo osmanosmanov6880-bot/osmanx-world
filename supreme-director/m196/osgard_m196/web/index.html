@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080d18">
+  <title>OSGARD SUPREME DIRECTOR | M196</title>
+  <link rel="stylesheet" href="/studio/styles.css">
+  <script src="/studio/app.js" defer></script>
+</head>
+<body>
+  <div id="login" class="login-screen">
+    <div class="login-card">
+      <div class="brand brand-large"><div class="brand-logo">O</div><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+      <div class="eyebrow">M196 / PROJECT DELIVERY</div>
+      <h1 data-t="loginTitle">Sign in</h1>
+      <p class="muted" data-t="loginText"></p>
+      <form id="loginForm">
+        <label for="credential" data-t="token"></label>
+        <input id="credential" type="password" autocomplete="off" spellcheck="false" required minlength="20" maxlength="128">
+        <button type="submit" class="primary wide" data-t="connect"></button>
+      </form>
+      <div id="loginError" class="error" role="alert" hidden></div>
+      <div class="login-footer" data-t="noExternal"></div>
+    </div>
+  </div>
+  <div id="app" class="app" hidden>
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-logo">O</div><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+      <p class="side-caption" data-t="section"></p>
+      <nav class="side-nav" aria-label="Main">
+        <button type="button" class="nav active" data-page="overview"><span class="nav-symbol">&#9632;</span><span data-t="overview"></span></button>
+        <button type="button" class="nav" data-page="clients"><span class="nav-symbol">&#9675;</span><span data-t="clients"></span></button>
+        <button type="button" class="nav" data-page="deals"><span class="nav-symbol">&#9671;</span><span data-t="deals"></span></button>
+        <button type="button" class="nav" data-page="projects"><span class="nav-symbol">&#9635;</span><span data-t="projects"></span></button>
+        <button type="button" class="nav" data-page="activities"><span class="nav-symbol">&#9201;</span><span data-t="activities"></span></button>
+        <button type="button" class="nav" data-page="operations"><span class="nav-symbol">&#9776;</span><span data-t="operations"></span></button>
+        <button type="button" class="nav" data-page="team"><span class="nav-symbol">&#9776;</span><span data-t="team"></span></button>
+        <button type="button" class="nav" data-page="other"><span class="nav-symbol">&#10022;</span><span data-t="other"></span></button>
+      </nav>
+      <div class="side-bottom">
+        <span class="status-dot"></span><span data-t="environment"></span>
+        <p data-t="notVerified"></p>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <div><span class="eyebrow" data-t="section"></span><div id="pageTitle" class="topbar-title"></div></div>
+        <div class="header-actions">
+          <div id="accountInfo" class="account"></div>
+          <button id="refresh" type="button" class="secondary" data-t="refresh"></button>
+          <button id="logout" type="button" class="ghost" data-t="disconnect"></button>
+        </div>
+      </header>
+      <main id="content" class="content" aria-live="polite"></main>
+      <footer><span data-t="dataOrigin"></span><span data-t="noExternal"></span></footer>
+    </div>
+  </div>
+  <dialog id="modal" aria-labelledby="modalTitle">
+    <div class="dialog-top"><div><div class="eyebrow">OSGARD / M196</div><h2 id="modalTitle"></h2></div><button type="button" id="closeModal" class="icon-button" aria-label="Close">&#10005;</button></div>
+    <form id="editorForm">
+      <div class="fields">
+        <div class="field" data-field="name"><label for="fieldName" data-t="fullName"></label><input id="fieldName" maxlength="100"></div>
+        <div class="field" data-field="contact"><label for="fieldContact" data-t="contact"></label><input id="fieldContact" maxlength="200"></div>
+        <div class="field" data-field="customer"><label for="fieldCustomer" data-t="customer"></label><select id="fieldCustomer"></select></div>
+        <div class="field" data-field="title"><label for="fieldTitle" data-t="dealTitle"></label><input id="fieldTitle" maxlength="160"></div>
+        <div class="field" data-field="amount"><label for="fieldAmount" data-t="amount"></label><input id="fieldAmount" inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" maxlength="18"></div>
+        <div class="field" data-field="stage"><label for="fieldStage" data-t="stage"></label><select id="fieldStage"></select></div>
+        <div class="field" data-field="kind"><label for="fieldKind" data-t="kind"></label><select id="fieldKind"></select></div>
+        <div class="field" data-field="deal"><label for="fieldDeal" data-t="deal"></label><select id="fieldDeal"></select></div>
+        <div class="field" data-field="details"><label for="fieldDetails" data-t="details"></label><textarea id="fieldDetails" rows="3" maxlength="800"></textarea></div>
+        <div class="field" data-field="due"><label for="fieldDue" data-t="due"></label><input id="fieldDue" type="datetime-local"></div>
+      </div>
+      <p id="modalError" role="alert" class="error" hidden></p>
+      <div class="dialog-actions"><button type="button" id="cancelModal" class="secondary" data-t="cancel"></button><button class="primary" type="submit" id="submitModal" data-t="save"></button></div>
+    </form>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+</body>
+</html>

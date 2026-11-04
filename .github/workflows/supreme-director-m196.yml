@@ -1,0 +1,55 @@
+name: OSGARD SUPREME DIRECTOR M196 local project delivery
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m196/**"
+      - ".github/workflows/supreme-director-m196.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m196/**"
+      - ".github/workflows/supreme-director-m196.yml"
+permissions:
+  contents: read
+jobs:
+  m196-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.11", "3.13" ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify M196 source SHA-256 inventory
+        run: python3 supreme-director/m196/verify_source.py
+      - name: Run M196 tenant, concurrency and HTTP tests
+        env:
+          PYTHONPATH: supreme-director/m192:supreme-director/m193:supreme-director/m194:supreme-director/m195:supreme-director/m196
+        run: python3 -m unittest discover -s supreme-director/m196/tests -p 'test_m196.py' -v
+      - name: Run M192-M195 regression suites
+        env:
+          PYTHONPATH: supreme-director/m192:supreme-director/m193:supreme-director/m194:supreme-director/m195:supreme-director/m196
+        run: |
+          for version in 192 193 194 195; do
+            python3 -m unittest discover -s "supreme-director/m${version}/tests" -p 'test_*.py' -q
+          done
+      - name: Run synthetic end-to-end lifecycle
+        env:
+          PYTHONPATH: supreme-director/m192:supreme-director/m193:supreme-director/m194:supreme-director/m195:supreme-director/m196
+        run: python3 supreme-director/m196/demo.py
+      - name: Validate Russian Studio and JavaScript
+        run: |
+          node --check supreme-director/m196/osgard_m196/web/app.js
+          python3 - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('supreme-director/m196/osgard_m196/web')
+          labels=json.loads((p/'ru.json').read_text(encoding='utf8'))
+          assert 'projectsTitle' in labels and 'projects' in labels
+          content=(p/'index.html').read_text(encoding='utf8')
+          assert 'data-page="projects"' in content
+          print('M196 Russian local UI source check PASS')
+          PY
