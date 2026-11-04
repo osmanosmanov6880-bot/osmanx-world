@@ -1,4 +1,4 @@
-# OSGARD SUPREME DIRECTOR · восстановление M187 → M188
+# OSGARD SUPREME DIRECTOR · восстановление M187 → M190
 
 **Дата:** 2026-11-04 · **Статус:** RECOVERY IN PROGRESS / PRODUCTION NO-GO
 
@@ -78,3 +78,19 @@ python3 supreme-director/scripts/smoke_m186.py
 Доверенные ключи и реальные baseline отсутствуют намеренно: [реестр исходников](m189/data/M189_UPSTREAMS.json), [проверяющие](m189/data/M189_TRUST_KEYS.json), [заявки](m189/data/M189_SUBMISSIONS.json). При их отсутствии программа честно возвращает **180 BLOCKED_UPSTREAM, 0 независимо принятых и NO_GO**.
 
 Полный разбор и команды: [M189 — инженерный допуск](docs/M189_ENGINEERING_GATE_RU.md). Дополнительная проверка включена в GitHub Actions. Нельзя ставить `VERIFIED` только на основании локальной подписи: нужны владелец настоящего продукта, независимая продуктовая приёмка и release authorization.
+
+## M190 — локальный журнал проверок, независимые anchor и восстановление цепочки
+
+Новый модуль [m190/](m190/) дополняет M189: SQLite с транзакционным append-only журналом, хеш-цепочкой SHA-256, проверкой последнего известного head перед записью, повторяемым импортом отчёта M189 и экспортом журнала. Не меняет статус оригинальных задач и не запускает внешние системы.
+
+Проверки: **33 unit/negative теста и отдельный smoke M189 → M190 локально PASS**. GitHub Actions содержит отдельную job `m190-ledger`; актуальный результат см. в разделе Actions PR #7. Оригинальные M180/M181 отсутствуют, **0/180 original task acceptance, production NO_GO**.
+
+[Инструкция M190](m190/README_RU.md) · [Инженерный отчёт](docs/M190_ENGINEERING_JOURNAL_RU.md)
+
+Из корня репозитория:
+
+```bash
+python3 supreme-director/m190/verify_source.py
+PYTHONPATH=supreme-director python3 -m unittest discover -s supreme-director/m190/tests -p 'test_*.py' -v
+PYTHONPATH=supreme-director python3 supreme-director/m190/smoke.py
+```
