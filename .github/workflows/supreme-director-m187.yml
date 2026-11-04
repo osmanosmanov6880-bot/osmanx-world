@@ -28,3 +28,28 @@ jobs:
           test -s supreme-director/web/index.html
           test -s supreme-director/web/styles.css
           test -s supreme-director/web/app.js
+
+  source-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned test dependency
+        run: python3 -m pip install -r supreme-director/local-kit/requirements-m185.txt
+      - name: Verify every source file SHA-256 and inventory
+        run: python3 supreme-director/scripts/verify_source_transfer.py
+      - name: Run source-only M187 tests (historical bundle check excluded explicitly)
+        run: python3 supreme-director/local-kit/scripts/verify_source_only.py
+      - name: Verify executable original-plan extraction and DAG
+        working-directory: supreme-director/local-kit
+        run: |
+          python3 -m osgard_m187 restore-plan
+          python3 -m osgard_m187 plan-waves
+      - name: Check historical Studio JS syntax
+        run: |
+          node --check supreme-director/local-kit/dashboard/m184/studio.js
+          node --check supreme-director/local-kit/dashboard/m185/studio.js
+          node --check supreme-director/local-kit/dashboard/m186/studio.js
