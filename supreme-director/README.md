@@ -98,3 +98,23 @@ PYTHONPATH=supreme-director python3 supreme-director/m190/smoke.py
 ## M189 dependency hardening (после M190)
 
 В `m189/admission.py` исправлена транзитивная блокировка: задача не остаётся готовой к внешней проверке, если хотя бы один её предок по цепочке зависимостей заблокирован. Добавлены два регрессионных теста. В актуальном наборе **21 тест M189** (19 исходных + 2 новых), независимо принятых продуктовых задач по-прежнему **0/180**.
+
+
+## M193 — рабочая CRM и русский интерфейс
+
+Новый код: [`m193/`](m193/). Русская документация: [`docs/M193_CRM_STUDIO_RU.md`](docs/M193_CRM_STUDIO_RU.md).
+
+Реализовано: изменение клиентов и сделок с версиями, этапы воронки,
+контакты и напоминания, изоляция организаций, локальный интерфейс на
+`http://127.0.0.1:8713/studio/`. Используется реальная локальная SQLite.
+Проверка CI: [M193 GitHub Actions](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/41918050796)
+(Python 3.11/3.13, 40 тестов M193 + 46 регрессионных тестов M192).
+
+```bash
+# From supreme-director/; initialize only a NEW local database:
+PYTHONPATH=m192:m193 python3 -m osgard_m193 init --db ./m193-local.sqlite --tenant "Local Business" --actor owner
+PYTHONPATH=m192:m193 python3 -m osgard_m193 serve --db ./m193-local.sqlite --port 8713
+```
+
+**Важно:** пока нет независимой продуктовой приёмки всех 180 заданий;
+production **NO-GO**. Интерфейс ещё не проверен визуально на реальном устройстве.
