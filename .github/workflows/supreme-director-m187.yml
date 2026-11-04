@@ -90,3 +90,23 @@ jobs:
           node --check supreme-director/local-kit/dashboard/m184/studio.js
           node --check supreme-director/local-kit/dashboard/m185/studio.js
           node --check supreme-director/local-kit/dashboard/m186/studio.js
+
+  m190-ledger:
+    needs: [integrity, source-transfer]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned M189 verification dependency
+        run: python3 -m pip install -r supreme-director/local-kit/requirements-m185.txt
+      - name: Verify exact M190 source inventory and SHA-256
+        run: python3 supreme-director/m190/verify_source.py
+      - name: Run 33 M190 SQLite, tamper, replay, concurrency and anchor tests
+        run: PYTHONPATH=supreme-director python3 -Werror::ResourceWarning -m unittest discover -s supreme-director/m190/tests -p 'test_*.py' -v
+      - name: M189 to M190 end-to-end synthetic evidence smoke
+        run: PYTHONPATH=supreme-director python3 supreme-director/m190/smoke.py
