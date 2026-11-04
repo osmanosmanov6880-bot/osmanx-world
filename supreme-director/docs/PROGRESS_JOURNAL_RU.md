@@ -45,3 +45,14 @@
 - **Независимая приёмка исходных задач: 0/180**. Точная каноническая база M180/M181 и шесть реальных upstream остаются блокерами.
 
 См. [отчёт M188](M188_SOURCE_TRANSFER_RU.md).
+
+## 2026-11-04 · Партия G4: M186 реальный локальный запуск и проверка кандидатов исходников
+
+- Исполнена команда `python3 -m osgard_m186 init` в локальном M188 source-only наборе (exit 0).
+- Запущен синтетический `LEARNING_PLATFORM`: **REFERENCE_FLOW_COMPLETE, 9/9 контрактных шагов**, `reference_only=true`, `PRODUCTION_NO_GO`.
+- Негативный сценарий с `--inject-fault-at CONTRACT-05`: **BLOCKED_REFERENCE_CONTRACT на шаге 5**, дальнейшие контракты не исполнены; это именно требуемый fail-closed результат.
+- `python3 -m osgard_m186 doctor`: **LOCAL_INTEGRITY_PASS**, `no_real_adapters=true`.
+- Опубликован независимый `scripts/smoke_m186.py`, запускающий позитивный/негативный сценарий в изолированной временной SQLite БД.
+- [GitHub Actions #41845642452](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/41845642452): обе jobs успешны, включая smoke M186, проверку SHA и 22 M187 source-only теста.
+- Проведена read-only инвентаризация доступных GitHub-репозиториев, публичные наблюдения сохранены в [M188_PUBLIC_UPSTREAM_DISCOVERY_RU.md](M188_PUBLIC_UPSTREAM_DISCOVERY_RU.md). Непубличные данные в публичный repo не публиковались.
+- Командная атрибуция по-прежнему **0/6**, независимая приёмка исходных пакетов **0/180**, production **NO-GO**.
