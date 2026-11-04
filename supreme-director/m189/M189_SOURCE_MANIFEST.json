@@ -1,0 +1,13 @@
+{
+  "files": {
+    "admission.py": "97d0891e77ffd103d0850d8b729fbf1ff9feeae100fbd94fe00e19af322db60e",
+    "data/M189_SUBMISSIONS.json": "79e5dc7465f413b3244a5798ae714ffc3a7fb43e833c2d821e0be5f2c77e3032",
+    "data/M189_TRUST_KEYS.json": "5ba6e12098e65d39bf463c5b11b7a104b631d3daaa97ab673b01c40fdec7d4e1",
+    "data/M189_UPSTREAMS.json": "599385cc64a9d24c495a6f079b939afa1954e07268d16cb386e0ae6bed2c744a",
+    "tests/test_admission.py": "dec4d746e3b0b356e40ec25bc3a238c1439ef3fe12faaeaa0ea2166707dc3498"
+  },
+  "independent_product_acceptance": 0,
+  "production": "NO_GO",
+  "schema": "osgard.m189.source-manifest/1",
+  "source_kind": "NEW_ISOLATED_RECOVERY_CODE"
+}
