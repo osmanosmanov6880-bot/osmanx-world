@@ -1,0 +1,68 @@
+{
+  "contracts": [
+    {
+      "consumer": null,
+      "id": "CONTRACT-01",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-02",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-03",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-04",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-05",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-06",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-07",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-08",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    },
+    {
+      "consumer": null,
+      "id": "CONTRACT-09",
+      "producer": null,
+      "schema_sha256": null,
+      "test_run_url": null
+    }
+  ],
+  "schema": "osgard.m182.contracts/1"
+}

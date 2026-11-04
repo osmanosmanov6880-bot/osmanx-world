@@ -1,0 +1,134 @@
+{
+  "authority": "SYNTHETIC_REFERENCE_ONLY",
+  "contracts": [
+    {
+      "consumer": "NEXUS",
+      "depends_on": [],
+      "id": "CONTRACT-01",
+      "producer": "TITAN",
+      "required_output": [
+        "authorized",
+        "identity_proven",
+        "scope"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "COMMERCE",
+      "depends_on": [
+        "CONTRACT-01"
+      ],
+      "id": "CONTRACT-02",
+      "producer": "NEXUS",
+      "required_output": [
+        "external_sources",
+        "intelligence",
+        "intent"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "EXPERIENCE",
+      "depends_on": [
+        "CONTRACT-02"
+      ],
+      "id": "CONTRACT-03",
+      "producer": "COMMERCE",
+      "required_output": [
+        "currency",
+        "payment_enabled",
+        "quote_points"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "GENESIS",
+      "depends_on": [
+        "CONTRACT-02",
+        "CONTRACT-03"
+      ],
+      "id": "CONTRACT-04",
+      "producer": "EXPERIENCE",
+      "required_output": [
+        "quality_status",
+        "screens"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "ORBITAL",
+      "depends_on": [
+        "CONTRACT-04"
+      ],
+      "id": "CONTRACT-05",
+      "producer": "GENESIS",
+      "required_output": [
+        "asset_placeholders",
+        "generated_media"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "TITAN",
+      "depends_on": [
+        "CONTRACT-01",
+        "CONTRACT-05"
+      ],
+      "id": "CONTRACT-06",
+      "producer": "ORBITAL",
+      "required_output": [
+        "independent_audit",
+        "risk_level"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "COMMERCE",
+      "depends_on": [
+        "CONTRACT-02",
+        "CONTRACT-03"
+      ],
+      "id": "CONTRACT-07",
+      "producer": "NEXUS",
+      "required_output": [
+        "intent_quote_consistent",
+        "real_quote"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "GENESIS",
+      "depends_on": [
+        "CONTRACT-04",
+        "CONTRACT-05"
+      ],
+      "id": "CONTRACT-08",
+      "producer": "EXPERIENCE",
+      "required_output": [
+        "real_assets",
+        "slot_asset_consistent"
+      ],
+      "verification": "REFERENCE_ONLY"
+    },
+    {
+      "consumer": "TITAN",
+      "depends_on": [
+        "CONTRACT-01",
+        "CONTRACT-06",
+        "CONTRACT-07",
+        "CONTRACT-08"
+      ],
+      "id": "CONTRACT-09",
+      "producer": "ORBITAL",
+      "required_output": [
+        "flow",
+        "production_authorized",
+        "real_integrations"
+      ],
+      "verification": "REFERENCE_ONLY"
+    }
+  ],
+  "production_authorized": false,
+  "real_upstreams": 0,
+  "schema": "osgard.m186.reference-contract/1"
+}
