@@ -1,0 +1,386 @@
+{
+  ".gitignore": {
+    "sha256": "13617d6f7eaf85c29eaf5f55e50c22698034697528e19505dafb5b80b92641f7",
+    "origin": "R135 standalone source"
+  },
+  "Main.tscn": {
+    "sha256": "cf3312a89051c074742425f646e920f5ed22ebf9babc0cf96cf446f74996c4fb",
+    "origin": "R135 standalone source"
+  },
+  "R135ServiceDirector.gd": {
+    "sha256": "bc016f094d36281f1fcf6c1c261b66709e09f61307a751a49af3a52a6baf8849",
+    "origin": "R135 standalone source"
+  },
+  "README.md": {
+    "sha256": "a7500809c35b5b41a7e7cb1397c14aa1fc1b80e56dd854433377cf4f885f56d5",
+    "origin": "R135 standalone source"
+  },
+  "ReconstructedMain.gd": {
+    "sha256": "581e9225069d931064ca0c96d7364cf8df80031a40f136450b9a3a7042314070",
+    "origin": "reconstructed"
+  },
+  "ReconstructedMain.tscn": {
+    "sha256": "f8253a6d8b6e229a6a6582b68ca5e64b03e51942001eee0b828edf82c56ba5e4",
+    "origin": "reconstructed"
+  },
+  "ReconstructedR136CellDirector.gd": {
+    "sha256": "cfd8bab0267ed8a8941b8b5f334930cbd270a3dfbcd0d9c2df9983a0d2e6e6ee",
+    "origin": "reconstructed"
+  },
+  "StandaloneMain.gd": {
+    "sha256": "c5fa1cba43e8ddaeaa312d7cb037d18ba1978cfa22fde5ce25712e0170eb4b47",
+    "origin": "R135 standalone source"
+  },
+  "bootstrap/part-01.b64": {
+    "sha256": "70609d88d516f772d0c876ac8a0b33585f8ffb18c945f3893462e3fab62d2c9b",
+    "origin": "R135 standalone source"
+  },
+  "bootstrap/part-02.b64": {
+    "sha256": "511b0b8e143dab2be7ba3ccb667321b2f1f60416825c12417c31ddda3ba62db2",
+    "origin": "R135 standalone source"
+  },
+  "bootstrap/part-03.b64": {
+    "sha256": "0f4098d5e0b728f62cde36ae488c82edac303ee4dccbd0012d3f27b871766894",
+    "origin": "R135 standalone source"
+  },
+  "bootstrap/part-04.b64": {
+    "sha256": "8456b2e6ae30ba68d57e3c99c7da262465580e91bd82ab2e3720524c8c7e8b1d",
+    "origin": "R135 standalone source"
+  },
+  "export_presets.cfg": {
+    "sha256": "494afcde5e209a00bfaf438d78bc11cbff357ade7d225e13d3e633c711f8408e",
+    "origin": "R135 standalone source"
+  },
+  "models/r135/service_spine_eco.glb": {
+    "sha256": "c6bbc41c53e596d5048371e639a662cd2a75d58a02f75c9df93ffced7685533b",
+    "origin": "R135 standalone source"
+  },
+  "models/r135/service_spine_eco.manifest.json": {
+    "sha256": "f1b9a43a06def47941a2554e5b41eb15964147aae5c675f8b98386f438f2f7d9",
+    "origin": "R135 standalone source"
+  },
+  "models/r135/service_spine_hero.glb": {
+    "sha256": "8ef33e28534c7c41d4adaceee4e479e38da92287a99bbd5fd53b9fc9318c0078",
+    "origin": "R135 standalone source"
+  },
+  "models/r135/service_spine_hero.manifest.json": {
+    "sha256": "f5bf51d0251831dd36e507dc4541abdd7afda3dc005290a516b37a3aef7d872f",
+    "origin": "R135 standalone source"
+  },
+  "models/r136/r136_precision_cell_eco.glb": {
+    "sha256": "7409f1da0af1890c7d1c37da806db1e406c187e252cbfd5d10df76ee8c88b359",
+    "origin": "R136 delta"
+  },
+  "models/r136/r136_precision_cell_eco.manifest.json": {
+    "sha256": "6c7c476c7c19729fb5fdb616a2e27660f80896a78b0be25379881f5fc020557d",
+    "origin": "R136 delta"
+  },
+  "models/r136/r136_precision_cell_hero.glb": {
+    "sha256": "da076ed71a7a7d79a5a74d9bde182c9a95388d5067ea8660b7e9c1c3df8091ae",
+    "origin": "R136 delta"
+  },
+  "models/r136/r136_precision_cell_hero.manifest.json": {
+    "sha256": "596f06183749858881625d42aa80d85a5eadbe8c139a93d4381801963daa10e7",
+    "origin": "R136 delta"
+  },
+  "originals/R136CellDirector.gd": {
+    "sha256": "d0cdbc748c0f025ceb12d4495f884648e84081c840285ce81f8899149f3e713b",
+    "origin": "R136 delta"
+  },
+  "originals/project-r135.godot": {
+    "sha256": "70812888844d35d7144b42345525a78e05f46853ff2b4e86f46389406b0f78ef",
+    "origin": "R135 standalone source"
+  },
+  "project.godot": {
+    "sha256": "28215cb3ed7cdee88e92665e42150936bfd9677fb666bd93b9f372a0f5c60283",
+    "origin": "reconstructed"
+  },
+  "requirements-r135.txt": {
+    "sha256": "2740bd8fb8cdc4433905af151c2249e336e0266901c14fa223adbf6ffed16325",
+    "origin": "R135 standalone source"
+  },
+  "shaders/r135_cinematic_grade.gdshader": {
+    "sha256": "c41f62529290e5655d61aa0fd03ef46228e8c1ed474d371abec66155a06c17b7",
+    "origin": "R135 standalone source"
+  },
+  "tests/reconstruction_smoke.gd": {
+    "sha256": "89bf53d5b7fb06f054bc405f57eb9c8c16dca10a559c82e0aa44ed82243b76f6",
+    "origin": "reconstructed"
+  },
+  "tests/smoke.gd": {
+    "sha256": "61c5f67e664e209275f06fe234c5bf068c95952c8df8d538467952eb1c94c20d",
+    "origin": "R135 standalone source"
+  },
+  "tests/test_asset_integrity.py": {
+    "sha256": "c42ccf78302c070b37993dd968010719aec27f59a4613a51a013b970ad284b48",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/brushed_aluminium_albedo.png": {
+    "sha256": "1a1935ff7180440d1297aaf00ff892fc6ad280ab9aeca7a307be72090a06092b",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/brushed_aluminium_normal.png": {
+    "sha256": "b3586a11e156a2ee2e452dfd55b52a39e5fba7c4314597c1b0061fe883b8ec02",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/brushed_aluminium_orm.png": {
+    "sha256": "37fbc5e9c312d83d8c4b023a7fc1c451fccc471f30c4f0fddec44ef2efb4f7ff",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/ceramic_insulation_albedo.png": {
+    "sha256": "ae599a4d8904079d67d63e87fe79afb42427775d5a0fe9415b16c9e07c107cbd",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/ceramic_insulation_normal.png": {
+    "sha256": "82a32a14ae6da5305b660790fe3e9a8544c01d916d052aafad1bfe0c4aae0c03",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/ceramic_insulation_orm.png": {
+    "sha256": "1794c7d2cf0908afdad12160df240501f17e07e6c0492f304c6eb1b3cbb07e70",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/dielectric_gasket_albedo.png": {
+    "sha256": "e7c33c4b56a7a7be81111024ca67b269fb06b9aa82dc95fc9cd7d6adfa72ce70",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/dielectric_gasket_normal.png": {
+    "sha256": "f0138a84816b304aba133174029b530bcba01a1ae9257fd9b3280fcd78d326fb",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/dielectric_gasket_orm.png": {
+    "sha256": "b3a706ed6723ee63563cf18f4d1f0995d2caec996f0c0a80875bf4a2fbf09473",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/emission_bar_albedo.png": {
+    "sha256": "1a1e2bce1b21804232b4d2266750fa17f54b324a384f536f0d9bedce706b3af0",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/emission_bar_normal.png": {
+    "sha256": "6a9b9d6a2c5a5f51f8718ab7e5b594b53d6e002d74e9a57dc0a124f90388e215",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/emission_bar_orm.png": {
+    "sha256": "586e22027b94cd59bb83b9875c64bf074c4df9393ab4edd2ff907cf0849ff07a",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/epoxy_floor_albedo.png": {
+    "sha256": "89c6ce70f8e7b03e358c1d183cf8aef29bb3e893b7167bd42e4b69df01dd8796",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/epoxy_floor_normal.png": {
+    "sha256": "5ee3dd3b9fb24484b513bb3779bd2bcebf07f18ef81f408247e18ec20fc86fb6",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/epoxy_floor_orm.png": {
+    "sha256": "d8c7e49caab41de64bca7c46084859b64364b971989549eef802dd2a0dad68dc",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/frosted_glass_albedo.png": {
+    "sha256": "563b699d780e2599c533583e347b39e3b2368f24a4e69be873314be9835b6b8c",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/frosted_glass_normal.png": {
+    "sha256": "3a27332e4c0a71b5d9f0741133edc4520b7399f2c7f10911ab544965c45094e9",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/frosted_glass_orm.png": {
+    "sha256": "37a8184bc5e0e9807cdd9306ef717ca450f739f13c3dbe8794a9c6b1df7865f3",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/galvanized_steel_albedo.png": {
+    "sha256": "ea646b0819b09b727d9619cbdba4484bcddc4a868b568e3e791e9758b5ce4770",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/galvanized_steel_normal.png": {
+    "sha256": "9865caf8850d3f25d7f9a00eed7b6388156990e081ce7f878a6178f0945bd209",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/galvanized_steel_orm.png": {
+    "sha256": "b3fdbfafd4a2ace67d82d4705134c1eede31fb3795701153745d6e2585c96f1f",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/optical_fiber_albedo.png": {
+    "sha256": "a1c1dfb15c688362127ee191b91cff9457845a4d21163657e5abe2ffe6d03262",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/optical_fiber_normal.png": {
+    "sha256": "632c074129643c79674ed3e9b423af0082eff572af8cceabf13eca953158a336",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/optical_fiber_orm.png": {
+    "sha256": "06e155b9dec4dabe687bd9cedf2f5534bc388c6f5cbd5f39a4be4b8392e622c4",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/polymer_jacket_albedo.png": {
+    "sha256": "8ab22c55198d87985a18485352574f9f52dc35155197f10bf987051de3ab43d4",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/polymer_jacket_normal.png": {
+    "sha256": "c20f322270f989f69c9221522ef0e0ca4fd201e87635a39bce731838cd045489",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/polymer_jacket_orm.png": {
+    "sha256": "b7904bfbf25363463c69d99c652240d1a3fcd41bf8466f9ded238dd93f5d8774",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/service_paint_albedo.png": {
+    "sha256": "d745732245247f11724707b7f6af3c1c22747a90d410d2692c481e0aae591aed",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/service_paint_normal.png": {
+    "sha256": "f5c61dfdbce659aa728c76b3449cfafb60fd2beefd97ea5f503121ccdf2375f0",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/service_paint_orm.png": {
+    "sha256": "1d12bb20c7e9bb42a164c32296bf2dcad4c7101a5f5a6d333d194edff4b46524",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/warm_copper_albedo.png": {
+    "sha256": "3417485debabbd8f8ab8747200a168d32044a7e2c76a86bcc9a1cc4f5ae9530b",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/warm_copper_normal.png": {
+    "sha256": "5044f13cf00e4c0ac8dc5f814add806e6e2884a62dc2a1622fa0a009df90b3ae",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/warm_copper_orm.png": {
+    "sha256": "7a4300b96cbd946837ea3000072b30d2109fb64af37c3187dfa15adbe88aed53",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/warning_enamel_albedo.png": {
+    "sha256": "7df45cdb6701c19eeeadc2420b041fc125ce44b2f822f1f78ab94327488de806",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/warning_enamel_normal.png": {
+    "sha256": "0ac07b6facb5d24b73ce461dce45637aac03781d9f63c2665a860cadbf669a68",
+    "origin": "R135 standalone source"
+  },
+  "textures/r135/warning_enamel_orm.png": {
+    "sha256": "f4da8c71a1ea083cd58a11c7114551a5a869ea50e6f2194e44efcaab5f165c2a",
+    "origin": "R135 standalone source"
+  },
+  "textures/r136/anti_slip_floor_albedo.png": {
+    "sha256": "ad6d9af78a93b3b72cb567aed55cc4db6dbe916798b52026f8b3b7a79016638c",
+    "origin": "R136 delta"
+  },
+  "textures/r136/anti_slip_floor_normal.png": {
+    "sha256": "fc8fa39956851fcc629330b31b84124a3f9b989c9689c5cb7faaec0b69b0f614",
+    "origin": "R136 delta"
+  },
+  "textures/r136/anti_slip_floor_orm.png": {
+    "sha256": "03692a28c67dc3dafbee74e0e629ca6aebb676a908e67a7bb9ce6b859cabea36",
+    "origin": "R136 delta"
+  },
+  "textures/r136/dielectric_albedo.png": {
+    "sha256": "c980d396532a38ff55c44c9df1e416af331addf2c90a41fe6c578737c4e83126",
+    "origin": "R136 delta"
+  },
+  "textures/r136/dielectric_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/dielectric_orm.png": {
+    "sha256": "947fe403ff907398b25b3984b98a3a4e01f3667e29e312d390bd5c2727879d95",
+    "origin": "R136 delta"
+  },
+  "textures/r136/gunmetal_albedo.png": {
+    "sha256": "30a9d324eb7697e2f258d54a7fcce28a8adcd7bdd4ae6c44e6ba345609c7609e",
+    "origin": "R136 delta"
+  },
+  "textures/r136/gunmetal_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/gunmetal_orm.png": {
+    "sha256": "4208c3b2ff7666a424cd33eeb583772d4251aae1b422290362acad2b7c2668f9",
+    "origin": "R136 delta"
+  },
+  "textures/r136/inspection_glass_albedo.png": {
+    "sha256": "1b153e2ef8d4286c7ec079511c65af1bbdf74aad78bb74da092f850c8dc191f9",
+    "origin": "R136 delta"
+  },
+  "textures/r136/inspection_glass_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/inspection_glass_orm.png": {
+    "sha256": "507791d3cc5d1becd15d56a029d08fa2aae8de6e5c7ddf06e6d57300b2df1e59",
+    "origin": "R136 delta"
+  },
+  "textures/r136/machined_aluminium_albedo.png": {
+    "sha256": "486935aaee62140301073a3fc6ecd93a0590c5e73aabe486c6b41a61067b6116",
+    "origin": "R136 delta"
+  },
+  "textures/r136/machined_aluminium_normal.png": {
+    "sha256": "5fb993fa8b7df36d4bb63cb5df8910070b9fc35cbcc771ac20440017588cf81c",
+    "origin": "R136 delta"
+  },
+  "textures/r136/machined_aluminium_orm.png": {
+    "sha256": "3d57d7ebe692dfc129142f042c291d9b0bf3e847bfaef703b69905c7970626ac",
+    "origin": "R136 delta"
+  },
+  "textures/r136/optical_blue_albedo.png": {
+    "sha256": "fa68bec0e45ac7e2b16471772c63b76dd7a8fddb330ac637ed2176a6b8ef5ae5",
+    "origin": "R136 delta"
+  },
+  "textures/r136/optical_blue_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/optical_blue_orm.png": {
+    "sha256": "676a24a6a46ff5d3bab5b6484bfe434135e8a306dd02fbcfb3ca973cbb2d78be",
+    "origin": "R136 delta"
+  },
+  "textures/r136/oxidized_copper_albedo.png": {
+    "sha256": "ef3be4b40e842671fe47cbeda18df5fdab14f72a52d45dae50d98d2c4ab12aba",
+    "origin": "R136 delta"
+  },
+  "textures/r136/oxidized_copper_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/oxidized_copper_orm.png": {
+    "sha256": "bf54c566f85427209b7a25a4db0128889b3267581cd9abedfbe0deec096057ac",
+    "origin": "R136 delta"
+  },
+  "textures/r136/painted_steel_albedo.png": {
+    "sha256": "f0acb4dca6bf8b10881313c3ce61a4b5810262278e826934d5a9dfa2d79e436b",
+    "origin": "R136 delta"
+  },
+  "textures/r136/painted_steel_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/painted_steel_orm.png": {
+    "sha256": "582355d5079b2a8b6abdb1371e21a2307fba88fef6068091fb1d38b4eeeeef4f",
+    "origin": "R136 delta"
+  },
+  "textures/r136/safety_enamel_albedo.png": {
+    "sha256": "7feb8ef541b165053a23a5d1e64390cd8e24c8a1b6fcae71eaecac6ad76b9b92",
+    "origin": "R136 delta"
+  },
+  "textures/r136/safety_enamel_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/safety_enamel_orm.png": {
+    "sha256": "b7d110043319f903b68ae7b0b1e377bd6d6c3c3cd2ab29e1a6dde7fcb3eff4d2",
+    "origin": "R136 delta"
+  },
+  "textures/r136/status_emissive_albedo.png": {
+    "sha256": "a1dd55b9f12b756b46a47546a502d1daa37dfea9132641e709495e63f2a1ead7",
+    "origin": "R136 delta"
+  },
+  "textures/r136/status_emissive_normal.png": {
+    "sha256": "bb3a581655c83ea38d40bbe116b41b94d1f11511a31f6e8f776e8ff0e31c44e1",
+    "origin": "R136 delta"
+  },
+  "textures/r136/status_emissive_orm.png": {
+    "sha256": "83ce98a6544a3a28c07d43450e2594accd77ddcd359cc6f80dbc80015a8048cc",
+    "origin": "R136 delta"
+  },
+  "tools/build_r135_service_spine.py": {
+    "sha256": "e7793388757e02bf0da38713ecfd8313a0b9fee7a34771aa23fdeb2a9a8ad433",
+    "origin": "R135 standalone source"
+  }
+}
