@@ -1,0 +1,47 @@
+{
+  "schema": "osgard.m182.upstreams/1",
+  "teams": [
+    {
+      "head_sha": null,
+      "owner": null,
+      "owner_approval_pr": null,
+      "repository_url": null,
+      "team": "TITAN"
+    },
+    {
+      "head_sha": null,
+      "owner": null,
+      "owner_approval_pr": null,
+      "repository_url": null,
+      "team": "NEXUS"
+    },
+    {
+      "head_sha": null,
+      "owner": null,
+      "owner_approval_pr": null,
+      "repository_url": null,
+      "team": "COMMERCE"
+    },
+    {
+      "head_sha": null,
+      "owner": null,
+      "owner_approval_pr": null,
+      "repository_url": null,
+      "team": "EXPERIENCE"
+    },
+    {
+      "head_sha": null,
+      "owner": null,
+      "owner_approval_pr": null,
+      "repository_url": null,
+      "team": "GENESIS"
+    },
+    {
+      "head_sha": null,
+      "owner": null,
+      "owner_approval_pr": null,
+      "repository_url": null,
+      "team": "ORBITAL"
+    }
+  ]
+}

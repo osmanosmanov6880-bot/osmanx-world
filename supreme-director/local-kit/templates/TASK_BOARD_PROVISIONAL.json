@@ -1,0 +1,1448 @@
+{
+  "reported_dependencies": 294,
+  "reported_tasks": 180,
+  "schema": "osgard.m182.provisional-board/1",
+  "source_authority": "PROVISIONAL_NOT_M181",
+  "tasks": [
+    {
+      "description": null,
+      "id": "TITAN-X01",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X02",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X03",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X04",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X05",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X06",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X07",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X08",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X09",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X10",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X11",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X12",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X13",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X14",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X15",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X16",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X17",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X18",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X19",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X20",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X21",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X22",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X23",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X24",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X25",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X26",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X27",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X28",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X29",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "TITAN-X30",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "TITAN"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X01",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X02",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X03",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X04",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X05",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X06",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X07",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X08",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X09",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X10",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X11",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X12",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X13",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X14",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X15",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X16",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X17",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X18",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X19",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X20",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X21",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X22",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X23",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X24",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X25",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X26",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X27",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X28",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X29",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "NEXUS-X30",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "NEXUS"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X01",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X02",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X03",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X04",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X05",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X06",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X07",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X08",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X09",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X10",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X11",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X12",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X13",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X14",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X15",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X16",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X17",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X18",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X19",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X20",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X21",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X22",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X23",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X24",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X25",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X26",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X27",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X28",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X29",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "COMMERCE-X30",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "COMMERCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X01",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X02",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X03",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X04",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X05",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X06",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X07",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X08",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X09",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X10",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X11",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X12",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X13",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X14",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X15",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X16",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X17",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X18",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X19",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X20",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X21",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X22",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X23",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X24",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X25",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X26",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X27",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X28",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X29",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "EXPERIENCE-X30",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "EXPERIENCE"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X01",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X02",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X03",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X04",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X05",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X06",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X07",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X08",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X09",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X10",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X11",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X12",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X13",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X14",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X15",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X16",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X17",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X18",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X19",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X20",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X21",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X22",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X23",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X24",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X25",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X26",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X27",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X28",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X29",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "GENESIS-X30",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "GENESIS"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X01",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X02",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X03",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X04",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X05",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X06",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X07",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X08",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X09",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X10",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X11",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X12",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X13",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X14",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X15",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X16",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X17",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X18",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X19",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X20",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X21",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X22",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X23",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X24",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X25",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X26",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X27",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X28",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X29",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    },
+    {
+      "description": null,
+      "id": "ORBITAL-X30",
+      "independent_acceptance": "NOT_ACCEPTED",
+      "parents": [],
+      "source": "PLACEHOLDER_ONLY",
+      "team": "ORBITAL"
+    }
+  ]
+}
