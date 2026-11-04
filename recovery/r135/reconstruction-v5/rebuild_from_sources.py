@@ -54,7 +54,7 @@ def main():
         for source in a.source:
             if source.is_dir():
                 for file in source.rglob('*'):
-                    if file.is_symlink() or not file.is_file() or '.godot' in file.parts:
+                    if file.is_symlink() or not file.is_file() or any(x in file.parts for x in ('.godot', '.git', '__pycache__', '.pytest_cache')):
                         continue
                     with file.open('rb') as stream:
                         record(stream)
