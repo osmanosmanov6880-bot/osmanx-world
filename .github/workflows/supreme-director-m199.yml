@@ -1,0 +1,41 @@
+name: OSGARD SUPREME DIRECTOR M199 Portfolio Finance
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m199/**"
+      - ".github/workflows/supreme-director-m199.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m199/**"
+      - ".github/workflows/supreme-director-m199.yml"
+permissions:
+  contents: read
+jobs:
+  portfolio-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.13' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Enable verified local modules only
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/supreme-director/m192:$GITHUB_WORKSPACE/supreme-director/m193:$GITHUB_WORKSPACE/supreme-director/m194:$GITHUB_WORKSPACE/supreme-director/m195:$GITHUB_WORKSPACE/supreme-director/m196:$GITHUB_WORKSPACE/supreme-director/m197:$GITHUB_WORKSPACE/supreme-director/m198:$GITHUB_WORKSPACE/supreme-director/m199" >> "$GITHUB_ENV"
+      - name: Exact M199 inventory SHA-256 verification
+        run: python3 supreme-director/m199/verify_source.py
+      - name: Validate browser JavaScript
+        run: node --check supreme-director/m199/osgard_m199/web/app.js
+      - name: Regression all local M192-M199 Python HTTP and unit tests
+        run: |
+          for v in 192 193 194 195 196 197 198 199; do
+            echo "=== Verifying M$v ==="
+            python3 -m unittest discover -s "supreme-director/m$v/tests" -p 'test_*.py' -v
+          done
+      - name: Real local SQLite end-to-end portfolio smoke
+        run: python3 supreme-director/m199/smoke.py
