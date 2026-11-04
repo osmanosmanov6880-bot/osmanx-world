@@ -44,6 +44,7 @@ python3 -m http.server 8080
 - [Маршрут восстановления и критерии приёмки](docs/RECOVERY_ROADMAP_RU.md)
 - [Журнал ограничений](docs/SOURCE_GAPS_RU.md)
 - [M188 — проверенная публикация исходников](docs/M188_SOURCE_TRANSFER_RU.md)
+- [M188 — публичная проверка возможных upstream](docs/M188_PUBLIC_UPSTREAM_DISCOVERY_RU.md)
 
 Все внешние действия с риском (production, платежи, отправки, токены, реальное управление оборудованием) требуют отдельной авторизации владельца с operation ID. Данные из локального M187 — исключительно модель, не результат интеграции всех шести реальных продуктов.
 
@@ -60,3 +61,11 @@ python3 -m osgard_m187 plan-waves
 ```
 
 Для локального запуска приложения установите Python 3.13 и `cryptography==46.0.4` из `local-kit/requirements-m185.txt`, затем используйте `START_OSGARD_M187_WINDOWS.cmd` или `START_OSGARD_M187_LINUX_MAC.sh` **из папки `local-kit`**. Только синтетические данные и loopback. Прежде чем запускать полное тестирование с архивными фикстурами, потребуется полный исторический M187 ZIP: в исходном комплекте Git его бинарные fixtures не включены.
+
+Дополнительный изолированный smoke-тест M186 (9 контрактов и принудительный отказ на пятом, **без** реальных интеграций):
+
+```bash
+python3 supreme-director/scripts/smoke_m186.py
+```
+
+Проверен GitHub Actions [#41845642452](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/41845642452): обе jobs успешны.
