@@ -1,0 +1,30 @@
+[
+  {
+    "source": "baseline_archive_check/OSGARD_R37_COMPLETE_WITH_R24_SOURCE.zip",
+    "archive_sha256": "52c65b5343cf0eb21b4c2022af091cc22c32930a2ee5d699604141fefbf6e6f3",
+    "files": 3769,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "source": "baseline_archive_check/OSGARD_WAVE278-322_ENGINEERING_SOURCE_2026-10-19.zip",
+    "archive_sha256": "6540b0abee2f783f4a340e4317510b5de2b0b081de65a4b9d776114ad4dcf959",
+    "files": 3768,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "source": "baseline_archive_check/OSGARD_WAVE323-367_ENGINEERING_SOURCE_2026-10-19.zip",
+    "archive_sha256": "96bc52f59bb57b52d25a6d5c49b5d27a23dead511965cb730cfcb252782d50d8",
+    "files": 3936,
+    "matches": [],
+    "errors": []
+  },
+  {
+    "source": "baseline_archive_check/OSGARD_WAVE368-412_ENGINEERING_SOURCE_2026-10-19.zip",
+    "archive_sha256": "01f048c7e4d264d31cfb410d91499a2e838e35a16b02c0b6e1dc04e3335b5484",
+    "files": 4090,
+    "matches": [],
+    "errors": []
+  }
+]
