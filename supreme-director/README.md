@@ -94,3 +94,7 @@ python3 supreme-director/m190/verify_source.py
 PYTHONPATH=supreme-director python3 -m unittest discover -s supreme-director/m190/tests -p 'test_*.py' -v
 PYTHONPATH=supreme-director python3 supreme-director/m190/smoke.py
 ```
+
+## M189 dependency hardening (после M190)
+
+В `m189/admission.py` исправлена транзитивная блокировка: задача не остаётся готовой к внешней проверке, если хотя бы один её предок по цепочке зависимостей заблокирован. Добавлены два регрессионных теста. В актуальном наборе **21 тест M189** (19 исходных + 2 новых), независимо принятых продуктовых задач по-прежнему **0/180**.
