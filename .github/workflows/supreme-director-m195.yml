@@ -1,0 +1,42 @@
+name: OSGARD Supreme Director M195 team operations
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m195/**"
+      - ".github/workflows/supreme-director-m195.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m195/**"
+      - ".github/workflows/supreme-director-m195.yml"
+permissions:
+  contents: read
+jobs:
+  team-operations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.13' ]
+    env:
+      PYTHONPATH: "supreme-director/m192:supreme-director/m193:supreme-director/m194:supreme-director/m195"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify M195 exact SHA-256 source inventory
+        run: python supreme-director/m195/verify_source.py
+      - name: Verify Russian Studio JavaScript syntax
+        run: node --check supreme-director/m195/osgard_m195/web/app.js
+      - name: Run M195 role, tenant, history, HTTP and concurrency tests
+        run: python -m unittest discover -s supreme-director/m195/tests -p test_m195.py -v
+      - name: Regression tests against M192
+        run: python -m unittest discover -s supreme-director/m192/tests -p 'test_*.py' -q
+      - name: Regression tests against M193
+        run: python -m unittest discover -s supreme-director/m193/tests -p 'test_*.py' -q
+      - name: Regression tests against M194
+        run: python -m unittest discover -s supreme-director/m194/tests -p 'test_*.py' -q
+      - name: Confirm CLI entrypoint
+        run: python -m osgard_m195 --help
