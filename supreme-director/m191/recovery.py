@@ -143,6 +143,12 @@ def create_backup(db: Path, anchor: Path, bundle: Path, *, inject_failure: str |
         with closing(sqlite3.connect(uri, uri=True, timeout=10)) as source:
             with closing(sqlite3.connect(dest_file, timeout=10)) as target:
                 source.backup(target)
+        # The source is in WAL mode. Normalize the *copy* to a self-contained
+        # SQLite file before the strict two-file bundle layout check.
+        with closing(sqlite3.connect(dest_file, timeout=10)) as target:
+            target.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            mode = target.execute("PRAGMA journal_mode=DELETE").fetchone()[0]
+            require(mode == "delete", "snapshot could not leave WAL mode")
         if inject_failure == "after_snapshot":
             raise RecoveryError("INJECTED_FAILURE_AFTER_SNAPSHOT")
         copied = ledger.verify_anchor(dest_file, trusted)
