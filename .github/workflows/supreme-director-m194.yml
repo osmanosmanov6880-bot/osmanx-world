@@ -1,0 +1,53 @@
+name: OSGARD SUPREME DIRECTOR M194 CRM Operations
+on:
+  push:
+    branches:
+      - recovery/supreme-director-m187-20261104
+    paths:
+      - 'supreme-director/m194/**'
+      - 'supreme-director/m193/**'
+      - 'supreme-director/m192/**'
+      - '.github/workflows/supreme-director-m194.yml'
+  pull_request:
+    paths:
+      - 'supreme-director/m194/**'
+      - 'supreme-director/m193/**'
+      - 'supreme-director/m192/**'
+      - '.github/workflows/supreme-director-m194.yml'
+permissions:
+  contents: read
+jobs:
+  local-crm-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    env:
+      PYTHONPATH: supreme-director/m192:supreme-director/m193:supreme-director/m194
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify exact M194 source inventory and SHA-256
+        run: python3 supreme-director/m194/verify_source.py
+      - name: M194 CSV, queue, RBAC, HTTP and concurrency tests
+        run: python3 -m unittest discover -s supreme-director/m194/tests -p 'test_m194.py' -v
+      - name: M193 CRM regression tests
+        run: python3 -m unittest discover -s supreme-director/m193/tests -p 'test_m193.py' -v
+      - name: M192 domain regression tests
+        run: python3 -m unittest discover -s supreme-director/m192/tests -p 'test_runtime.py' -v
+      - name: Check Russian locale and UI JavaScript
+        run: |
+          node --check supreme-director/m194/osgard_m194/web/app.js
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('supreme-director/m194/osgard_m194/web')
+          locale=json.loads((root/'ru.json').read_text(encoding='utf-8'))
+          assert all(locale[x] for x in ('operations','loginTitle','importClients','followups','salesAnalytics'))
+          assert 'data-page="operations"' in (root/'index.html').read_text(encoding='utf-8')
+          print('M194_LOCALE_PASS:',len(locale),'localized labels')
+          PY
