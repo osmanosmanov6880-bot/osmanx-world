@@ -1,0 +1,41 @@
+name: OSGARD SUPREME DIRECTOR M198 Finance
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m198/**"
+      - ".github/workflows/supreme-director-m198.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m198/**"
+      - ".github/workflows/supreme-director-m198.yml"
+permissions:
+  contents: read
+jobs:
+  financial-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.13' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Use local M192-M198 code only
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/supreme-director/m192:$GITHUB_WORKSPACE/supreme-director/m193:$GITHUB_WORKSPACE/supreme-director/m194:$GITHUB_WORKSPACE/supreme-director/m195:$GITHUB_WORKSPACE/supreme-director/m196:$GITHUB_WORKSPACE/supreme-director/m197:$GITHUB_WORKSPACE/supreme-director/m198" >> "$GITHUB_ENV"
+      - name: Verify all M198 source hashes
+        run: python supreme-director/m198/verify_source.py
+      - name: Check browser JavaScript syntax
+        run: node --check supreme-director/m198/osgard_m198/web/app.js
+      - name: Run all M192 to M198 unit and HTTP regression tests
+        run: |
+          for ver in 192 193 194 195 196 197 198; do
+            echo "=== Module M$ver ==="
+            python -m unittest discover -s "supreme-director/m$ver/tests" -p 'test_*.py' -v
+          done
+      - name: Run real local finance workflow (no banking)
+        run: python supreme-director/m198/smoke.py

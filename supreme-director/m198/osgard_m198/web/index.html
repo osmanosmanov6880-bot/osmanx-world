@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090e19"><title>OSGARD — Финансы проекта</title>
+<link rel="stylesheet" href="/finance/styles.css"><script defer src="/finance/app.js"></script>
+</head><body>
+<div id="loginView" class="login-view"><form id="loginForm" class="login-panel">
+  <div class="logo"><span class="logo-mark">O</span><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+  <p class="eyebrow">M198 / FINANCE INTELLIGENCE</p><h1>Финансы проекта</h1>
+  <p class="subtle">Бюджеты, расходы и сроки оплат — только в локальной базе. Никаких банковских подключений.</p>
+  <label>Локальный токен доступа<input id="loginToken" type="password" autocomplete="off" spellcheck="false" required minlength="20" maxlength="128" placeholder="Вставьте токен"></label>
+  <button type="submit" class="btn primary full">Войти</button><p id="loginError" role="alert" class="error" hidden></p>
+  <p class="footnote">Токен хранится только в памяти вкладки и не отправляется на сторонние сайты.</p>
+</form></div>
+<div id="workspace" class="shell" hidden>
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-mark">O</span><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+    <p class="sideheading">РАБОЧАЯ ОБЛАСТЬ</p>
+    <a class="side-link" href="/studio/">CRM и команда</a>
+    <a class="side-link" href="/projects/">Карточка проекта</a>
+    <span class="side-link selected">Финансы</span>
+    <p class="sideheading projects-label">ПРОЕКТЫ</p>
+    <input id="projectSearch" type="search" placeholder="Найти проект" aria-label="Поиск проекта">
+    <nav id="projectList" class="project-list" aria-label="Список проектов"></nav>
+    <div class="sidebar-foot">M198 · SQLite<br>Никаких реальных переводов денег</div>
+  </aside>
+  <div class="page"><header class="topbar"><div><div class="eyebrow">ЛОКАЛЬНАЯ РАБОЧАЯ ОБЛАСТЬ / M198</div><h2>Финансовый контроль</h2></div>
+    <div class="header-actions"><span id="identityBadge" class="identity"></span><button id="reload" type="button" class="btn muted">Обновить</button><button id="logout" type="button" class="btn muted">Выйти</button></div></header>
+    <main class="main"><section id="emptyMessage" class="empty">Выберите проект, чтобы посмотреть его финансы.</section>
+      <div id="report" hidden>
+        <div class="project-head"><div><p class="eyebrow">ПРОЕКТ / БЮДЖЕТ И ПЛАТЕЖИ</p><h1 id="projectTitle"></h1><p id="projectMeta" class="subtle"></p></div>
+          <button id="setBudget" class="btn primary" type="button">Установить бюджет</button></div>
+        <div id="riskBanner" class="risk-banner"></div>
+        <section class="stats">
+          <div class="metric"><span>Бюджет</span><strong id="metricBudget">—</strong><small>Плановая граница затрат</small></div>
+          <div class="metric"><span>Фактические расходы</span><strong id="metricActual">—</strong><small>Учтённые затраты</small></div>
+          <div class="metric"><span>Прогноз затрат</span><strong id="metricForecast">—</strong><small>Факт + будущие расходы</small></div>
+          <div class="metric"><span>Отклонение прогноза</span><strong id="metricDeviation">—</strong><small>Относительно бюджета</small></div>
+        </section>
+        <section class="secondary-stats"><div><span>Ожидаемые оплаты</span><b id="incomeExpected">—</b></div><div><span>Отмечено полученными вручную</span><b id="incomeRecorded">—</b></div><div><span>Просроченных оплат</span><b id="overdueCount">—</b></div><div><span>Ожидаемая маржа</span><b id="expectedMargin">—</b></div></section>
+        <section class="section"><div class="section-head"><div><h3>Затраты проекта</h3><p>Плановые и фактические. Корректировки хранятся в истории.</p></div><button id="addExpense" class="btn muted" type="button">+ Расход</button></div><div id="expenses" class="records"></div></section>
+        <section class="section"><div class="section-head"><div><h3>Обязательства по оплате</h3><p>Ручной учёт. Статус «получено» не подтверждён банком.</p></div><button id="addReceivable" class="btn muted" type="button">+ Ожидаемая оплата</button></div><div id="receivables" class="records"></div></section>
+        <section class="section"><div class="section-head"><div><h3>Журнал изменений</h3><p>Контрольные суммы SHA-256 событий локального проекта.</p></div><button id="showHistory" class="btn muted" type="button">Посмотреть</button></div><div id="history" class="records"><div class="empty">Журнал ещё не загружен.</div></div></section>
+      </div>
+    </main><footer>Данные локальные · Отмеченные платежи не являются банковской выпиской · Production NO-GO · Исходные 180 задач ещё не приняты</footer>
+  </div>
+</div>
+<dialog id="editDialog"><form id="editForm"><div class="dialog-head"><h3 id="dialogTitle"></h3><button type="button" id="closeDialog" class="btn muted">Закрыть</button></div><div id="editFields" class="form-fields"></div><p id="formError" class="error" hidden></p><div class="dialog-buttons"><button id="cancelDialog" class="btn muted" type="button">Отмена</button><button class="btn primary" id="saveDialog" type="submit">Сохранить</button></div></form></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+</body></html>
