@@ -1,0 +1,30 @@
+name: OSGARD Supreme Director M187 recovery integrity
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/**"
+      - ".github/workflows/supreme-director-m187.yml"
+  pull_request:
+    paths:
+      - "supreme-director/**"
+      - ".github/workflows/supreme-director-m187.yml"
+permissions:
+  contents: read
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check original plan and no fabricated acceptance
+        run: python3 supreme-director/scripts/validate_plan.py
+      - name: Run independent validation unit tests
+        run: python3 -m unittest discover -s supreme-director/tests -p 'test_*.py' -v
+      - name: Syntax-check browser app
+        run: node --check supreme-director/web/app.js
+      - name: Check static web files exist
+        run: |
+          test -s supreme-director/web/index.html
+          test -s supreme-director/web/styles.css
+          test -s supreme-director/web/app.js
