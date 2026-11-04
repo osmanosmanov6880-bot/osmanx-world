@@ -215,12 +215,22 @@ def evaluate(plan: dict, baselines: dict, evidence: dict, trust: dict,
                 status, reason = 'EVIDENCE_REJECTED', str(e)
         rows.append({'id': tid, 'team': team, 'priority': t['priority'],
                      'status': status, 'reason': reason, 'depends_on': t['explicit_deps']})
-    status_by_id = {r['id']: r['status'] for r in rows}
+    # Compute the least fixed point, not a single pass over preliminary statuses.
+    # A child must not remain READY if its parent becomes BLOCKED_DEPENDENCY
+    # due to a grandparent. The least fixed point also fails closed on cycles.
+    ready = set()
+    for _ in range(len(rows)):
+        added = {row['id'] for row in rows
+                 if row['status'] == 'READY_FOR_EXTERNAL_REVIEW'
+                 and row['id'] not in ready
+                 and all(dep in ready for dep in row['depends_on'])}
+        if not added:
+            break
+        ready.update(added)
     for row in rows:
-        if row['status'] == 'READY_FOR_EXTERNAL_REVIEW' and any(
-                status_by_id[d] != 'READY_FOR_EXTERNAL_REVIEW' for d in row['depends_on']):
+        if row['status'] == 'READY_FOR_EXTERNAL_REVIEW' and row['id'] not in ready:
             row['status'] = 'BLOCKED_DEPENDENCY'
-            row['reason'] = 'UPSTREAM_TASK_DEPENDENCY_UNVERIFIED'
+            row['reason'] = 'TRANSITIVE_TASK_DEPENDENCY_UNVERIFIED'
     counter = Counter(r['status'] for r in rows)
     return {'schema': 'osgard.m189.admission-report/1',
             'original_task_acceptance': 0, 'verified_production_upstreams': 0,

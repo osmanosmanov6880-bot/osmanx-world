@@ -113,6 +113,22 @@ class AdmissionTests(unittest.TestCase):
         self.evidence['submissions'] = [self.submission('TITAN-X02')]
         self.assertEqual(self.status('TITAN-X02'), 'BLOCKED_DEPENDENCY')
 
+    def test_transitive_dependency_blocked_when_middle_stage_lacks_parent(self):
+        # X21 depends on X11; X11 depends on X02; X02 is not submitted.
+        # A one-pass preliminary-status map incorrectly left X21 as READY.
+        self.evidence['submissions'] = [self.submission(t) for t in (
+            'TITAN-X01', 'TITAN-X11', 'TITAN-X21')]
+        self.assertEqual(self.status('TITAN-X01'), 'READY_FOR_EXTERNAL_REVIEW')
+        self.assertEqual(self.status('TITAN-X11'), 'BLOCKED_DEPENDENCY')
+        self.assertEqual(self.status('TITAN-X21'), 'BLOCKED_DEPENDENCY')
+        self.assertEqual(self.report()['original_task_acceptance'], 0)
+
+    def test_dependency_release_requires_all_ancestors(self):
+        self.evidence['submissions'] = [self.submission(t) for t in (
+            'TITAN-X01', 'TITAN-X02', 'TITAN-X11', 'TITAN-X21')]
+        self.assertEqual(self.status('TITAN-X21'), 'READY_FOR_EXTERNAL_REVIEW')
+        self.assertEqual(self.report()['original_task_acceptance'], 0)
+
     def test_missing_task_submission(self):
         self.assertEqual(self.status('TITAN-X01'), 'AWAITING_EVIDENCE')
 
