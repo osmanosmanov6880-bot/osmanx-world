@@ -29,3 +29,10 @@ Usage (from repo root with Python >=3.11):
 
 These operations are entirely local, never contact upstream repositories,
 never execute user-supplied tasks, and do not perform payments/deployments.
+
+## Current progress snapshot (2026-11-06)
+
+- [Live 180-task audit snapshot](docs/CURRENT_AUDIT_180_RU.md) — **22 locally related / 150 no direct proof / 8 holds / 0 independently accepted** at code commit `7b68fcf9a40acdde1d24795f347e3a511afbef74`.
+- [Machine-readable 180-task audit](data/CURRENT_AUDIT_180.json).
+- New local code: deterministic signed source packaging (`repro.py`), hash-locked offline dependency preflight (`offline_deps.py`), transactional authorization gateway (`gateway.py`), and versioned workflow ledger (`workflow.py`).
+- Scope caveat: not proof of upstream integration, externally authenticated execution, or release authorization.

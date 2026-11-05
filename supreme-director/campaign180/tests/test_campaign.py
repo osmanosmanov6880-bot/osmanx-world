@@ -112,4 +112,34 @@ class CampaignTests(unittest.TestCase):
                 load_upstreams(root)
 
 
+
+class CurrentAuditSnapshotTests(unittest.TestCase):
+    def test_current_snapshot_matches_recomputed_task_ledger(self):
+        path=REPO/'supreme-director/campaign180/data/CURRENT_AUDIT_180.json'
+        snapshot=json.loads(path.read_text(encoding='utf-8'))
+        fresh=audit_original(REPO)
+        self.assertEqual(snapshot['coverage'],180)
+        self.assertEqual(snapshot['original_master_sha256'],fresh['original_master_sha256'])
+        self.assertEqual(snapshot['independently_accepted'],0)
+        self.assertEqual(snapshot['upstream_approved'],0)
+        self.assertEqual(snapshot['counts']['RELATED_LOCAL_CODE_NOT_ACCEPTED'],
+                         fresh['counts']['related_local_unaccepted'])
+        self.assertEqual(snapshot['counts']['NO_DIRECT_PROOF'],
+                         fresh['counts']['no_direct_proof'])
+        self.assertEqual(snapshot['counts']['HOLD_SCOPE_EXCLUDED'],
+                         fresh['counts']['hold_scope_excluded'])
+        self.assertEqual(snapshot['counts']['HOLD_SOURCE_MISSING'],
+                         fresh['counts']['hold_source_missing'])
+        expected={x['id']:x for x in fresh['task_ledger']}
+        self.assertEqual(len(snapshot['tasks']),180)
+        self.assertEqual({x['id'] for x in snapshot['tasks']},set(expected))
+        for entry in snapshot['tasks']:
+            task=expected[entry['id']]
+            self.assertEqual(entry['implementation_evidence_status'],
+                             task['implementation_evidence_status'])
+            self.assertEqual(entry['related_local_paths'],task['related_local_paths'])
+            self.assertFalse(entry['independently_accepted'])
+            self.assertFalse(entry['production_accepted'])
+
+
 if __name__=='__main__':unittest.main()
