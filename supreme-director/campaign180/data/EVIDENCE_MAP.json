@@ -2,24 +2,74 @@
   "schema": "osgard.original180.related-local-paths/1",
   "caveat": "These paths support code similarity only. They do not certify fulfillment of original team packages.",
   "related_local_paths": {
-    "TITAN-X01": ["supreme-director/recovery/ORIGINAL_180_TASKS.json", "supreme-director/campaign180/campaign180/registry.py"],
-    "TITAN-X02": ["supreme-director/scripts/verify_source_transfer.py", "supreme-director/campaign180/campaign180/registry.py"],
-    "TITAN-X03": [".github/CODEOWNERS", "supreme-director/campaign180/campaign180/gates.py"],
-    "TITAN-X04": ["supreme-director/m198/verify_source.py"],
-    "TITAN-X05": [".github/workflows/supreme-director-m206.yml"],
-    "TITAN-X06": ["supreme-director/campaign180/campaign180/contracts.py"],
-    "TITAN-X07": ["supreme-director/m192/osgard_m192/runtime.py"],
-    "TITAN-X08": ["supreme-director/m192/tests/test_runtime.py"],
-    "TITAN-X12": ["supreme-director/m205/osgard_m205/runtime.py"],
-    "TITAN-X18": ["supreme-director/m190/verify_source.py"],
-    "TITAN-X27": ["supreme-director/m206/osgard_m206/runtime.py"],
-    "TITAN-X28": ["supreme-director/m191/recovery.py"],
-    "COMMERCE-X04": ["supreme-director/m192/osgard_m192/runtime.py"],
-    "COMMERCE-X05": ["supreme-director/m192/osgard_m192/runtime.py"],
-    "COMMERCE-X06": ["supreme-director/m193/osgard_m193/runtime.py"],
-    "COMMERCE-X07": ["supreme-director/m194/osgard_m194/runtime.py"],
-    "COMMERCE-X08": ["supreme-director/m196/osgard_m196/runtime.py"],
-    "COMMERCE-X10": ["supreme-director/m197/osgard_m197/runtime.py"],
-    "COMMERCE-X28": ["supreme-director/m193/README.md"]
+    "TITAN-X01": [
+      "supreme-director/recovery/ORIGINAL_180_TASKS.json",
+      "supreme-director/campaign180/campaign180/registry.py"
+    ],
+    "TITAN-X02": [
+      "supreme-director/scripts/verify_source_transfer.py",
+      "supreme-director/campaign180/campaign180/registry.py"
+    ],
+    "TITAN-X03": [
+      ".github/CODEOWNERS",
+      "supreme-director/campaign180/campaign180/gates.py"
+    ],
+    "TITAN-X04": [
+      "supreme-director/m198/verify_source.py"
+    ],
+    "TITAN-X05": [
+      ".github/workflows/supreme-director-m206.yml"
+    ],
+    "TITAN-X06": [
+      "supreme-director/campaign180/campaign180/contracts.py"
+    ],
+    "TITAN-X07": [
+      "supreme-director/m192/osgard_m192/runtime.py",
+      "supreme-director/campaign180/campaign180/access.py"
+    ],
+    "TITAN-X08": [
+      "supreme-director/m192/tests/test_runtime.py",
+      "supreme-director/campaign180/campaign180/access.py"
+    ],
+    "TITAN-X12": [
+      "supreme-director/m205/osgard_m205/runtime.py",
+      "supreme-director/campaign180/campaign180/queue.py"
+    ],
+    "TITAN-X18": [
+      "supreme-director/m190/verify_source.py"
+    ],
+    "TITAN-X27": [
+      "supreme-director/m206/osgard_m206/runtime.py"
+    ],
+    "TITAN-X28": [
+      "supreme-director/m191/recovery.py"
+    ],
+    "COMMERCE-X04": [
+      "supreme-director/m192/osgard_m192/runtime.py"
+    ],
+    "COMMERCE-X05": [
+      "supreme-director/m192/osgard_m192/runtime.py"
+    ],
+    "COMMERCE-X06": [
+      "supreme-director/m193/osgard_m193/runtime.py"
+    ],
+    "COMMERCE-X07": [
+      "supreme-director/m194/osgard_m194/runtime.py"
+    ],
+    "COMMERCE-X08": [
+      "supreme-director/m196/osgard_m196/runtime.py"
+    ],
+    "COMMERCE-X10": [
+      "supreme-director/m197/osgard_m197/runtime.py"
+    ],
+    "COMMERCE-X28": [
+      "supreme-director/m193/README.md"
+    ],
+    "TITAN-X11": [
+      "supreme-director/campaign180/campaign180/queue.py"
+    ],
+    "TITAN-X13": [
+      "supreme-director/campaign180/campaign180/queue.py"
+    ]
   }
 }
