@@ -1,0 +1,72 @@
+name: OSGARD Original 180 Wave-0 Provenance and Contracts
+on:
+  push:
+    branches: ["recovery/supreme-director-m187-20261104"]
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/CODEOWNERS"
+      - ".github/workflows/supreme-director-campaign180.yml"
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/CODEOWNERS"
+      - ".github/workflows/supreme-director-campaign180.yml"
+permissions:
+  contents: read
+jobs:
+  wave-zero:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Add verified local package only
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/supreme-director/campaign180" >> "$GITHUB_ENV"
+      - name: Syntax and offline security checks
+        run: |
+          python -m compileall -q supreme-director/campaign180
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_*.py' -v
+      - name: Generate exact original 180 coverage and read-only inventory
+        run: |
+          python -m campaign180 audit --root . --output /tmp/osgard-180-audit
+          python -m campaign180 inventory --root . --output /tmp/osgard-180-audit/repository_inventory.json
+      - name: Fail closed on protected or cross-product source changes
+        run: |
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          from campaign180.gates import check_change_set
+          base = subprocess.run(['git','rev-parse','HEAD^'],capture_output=True,text=True)
+          if base.returncode:
+              raise SystemExit('No parent Git commit for change review')
+          changed = subprocess.check_output(['git','diff','--name-only',base.stdout.strip(),'HEAD'],text=True).splitlines()
+          result = check_change_set(Path('.'),changed)
+          print(result)
+          if not result['admitted_for_local_nonproduction_development']:
+              raise SystemExit('GO/NO-GO: PROTECTED PATHS OR CROSS-TEAM SOURCES')
+          PY
+      - name: Retain audit and precise Git inventory (not an acceptance certificate)
+        uses: actions/upload-artifact@v4
+        with:
+          name: original180-wave0-${{ matrix.python-version }}
+          path: /tmp/osgard-180-audit
+          retention-days: 30
+      - name: Release gate remains NO-GO
+        run: |
+          python - <<'PY'
+          from campaign180.audit import audit_original
+          from pathlib import Path
+          x=audit_original(Path('.'))
+          assert x['counts']['independently_accepted']==0
+          assert x['counts']['production_accepted']==0
+          assert x['counts']['upstream_approved']==0
+          print('ORIGINAL_180_AUDIT_PASS: all 180 covered; production NO-GO; upstream 0/6')
+          PY
