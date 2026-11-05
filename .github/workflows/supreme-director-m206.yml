@@ -1,0 +1,43 @@
+name: OSGARD SUPREME DIRECTOR M206 Diagnostics and Forecast Assurance
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m206/**"
+      - ".github/workflows/supreme-director-m206.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m206/**"
+      - ".github/workflows/supreme-director-m206.yml"
+permissions:
+  contents: read
+jobs:
+  assurance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.13' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Configure all M192-M206 imports
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/supreme-director/m192:$GITHUB_WORKSPACE/supreme-director/m193:$GITHUB_WORKSPACE/supreme-director/m194:$GITHUB_WORKSPACE/supreme-director/m195:$GITHUB_WORKSPACE/supreme-director/m196:$GITHUB_WORKSPACE/supreme-director/m197:$GITHUB_WORKSPACE/supreme-director/m198:$GITHUB_WORKSPACE/supreme-director/m199:$GITHUB_WORKSPACE/supreme-director/m200:$GITHUB_WORKSPACE/supreme-director/m201:$GITHUB_WORKSPACE/supreme-director/m202:$GITHUB_WORKSPACE/supreme-director/m203:$GITHUB_WORKSPACE/supreme-director/m204:$GITHUB_WORKSPACE/supreme-director/m205:$GITHUB_WORKSPACE/supreme-director/m206" >> "$GITHUB_ENV"
+      - name: Python compile and JavaScript syntax
+        run: |
+          python3 -m compileall -q supreme-director/m206
+          node --check supreme-director/m206/osgard_m206/web/app.js
+      - name: M206 functional, adversarial and HTTP tests
+        run: python3 -m unittest discover -s supreme-director/m206/tests -p 'test_*.py' -v
+      - name: M192-M205 regression tests
+        run: |
+          for v in 192 193 194 195 196 197 198 199 200 201 202 203 204 205; do
+            echo "=== Regression M$v ==="
+            python3 -m unittest discover -s "supreme-director/m$v/tests" -p 'test_*.py' -v
+          done
+      - name: Synthetic M206 full-stack local smoke
+        run: python3 supreme-director/m206/smoke.py
