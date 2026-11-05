@@ -1,0 +1,41 @@
+name: OSGARD SUPREME DIRECTOR M200 Cashflow
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m200/**"
+      - ".github/workflows/supreme-director-m200.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m200/**"
+      - ".github/workflows/supreme-director-m200.yml"
+permissions:
+  contents: read
+jobs:
+  cashflow-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.13' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Configure modules
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/supreme-director/m192:$GITHUB_WORKSPACE/supreme-director/m193:$GITHUB_WORKSPACE/supreme-director/m194:$GITHUB_WORKSPACE/supreme-director/m195:$GITHUB_WORKSPACE/supreme-director/m196:$GITHUB_WORKSPACE/supreme-director/m197:$GITHUB_WORKSPACE/supreme-director/m198:$GITHUB_WORKSPACE/supreme-director/m199:$GITHUB_WORKSPACE/supreme-director/m200" >> "$GITHUB_ENV"
+      - name: Compile and check frontend
+        run: |
+          node --check supreme-director/m200/osgard_m200/web/app.js
+          python3 -m compileall -q supreme-director/m200
+      - name: Run all M192-M200 tests
+        run: |
+          for v in 192 193 194 195 196 197 198 199 200; do
+            echo "=== Module M$v ==="
+            python3 -m unittest discover -s "supreme-director/m$v/tests" -p 'test_*.py' -v
+          done
+      - name: Local financial smoke test
+        run: python3 supreme-director/m200/smoke.py
