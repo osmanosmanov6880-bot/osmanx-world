@@ -25,15 +25,18 @@
     ],
     "TITAN-X07": [
       "supreme-director/m192/osgard_m192/runtime.py",
-      "supreme-director/campaign180/campaign180/access.py"
+      "supreme-director/campaign180/campaign180/access.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
     ],
     "TITAN-X08": [
       "supreme-director/m192/tests/test_runtime.py",
-      "supreme-director/campaign180/campaign180/access.py"
+      "supreme-director/campaign180/campaign180/access.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
     ],
     "TITAN-X12": [
       "supreme-director/m205/osgard_m205/runtime.py",
-      "supreme-director/campaign180/campaign180/queue.py"
+      "supreme-director/campaign180/campaign180/queue.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
     ],
     "TITAN-X18": [
       "supreme-director/m190/verify_source.py"
@@ -66,10 +69,15 @@
       "supreme-director/m193/README.md"
     ],
     "TITAN-X11": [
-      "supreme-director/campaign180/campaign180/queue.py"
+      "supreme-director/campaign180/campaign180/queue.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
     ],
     "TITAN-X13": [
-      "supreme-director/campaign180/campaign180/queue.py"
+      "supreme-director/campaign180/campaign180/queue.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
+    ],
+    "TITAN-X16": [
+      "supreme-director/campaign180/campaign180/workflow.py"
     ]
   }
 }
