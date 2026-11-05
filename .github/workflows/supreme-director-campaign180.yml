@@ -34,6 +34,16 @@ jobs:
         run: |
           python -m compileall -q supreme-director/campaign180
           python -m unittest discover -s supreme-director/campaign180/tests -p 'test_*.py' -v
+      - name: Deterministic source package and verified local artifacts
+        run: |
+          python -m campaign180.repro build --root . --archive /tmp/campaign180-first.tgz
+          python -m campaign180.repro build --root . --archive /tmp/campaign180-second.tgz
+          cmp /tmp/campaign180-first.tgz /tmp/campaign180-second.tgz
+          python -m campaign180.repro verify --archive /tmp/campaign180-first.tgz
+          openssl genpkey -algorithm ed25519 -out /tmp/campaign180-ci-test.key
+          openssl pkey -in /tmp/campaign180-ci-test.key -pubout -out /tmp/campaign180-ci-test.pub
+          python -m campaign180.repro sign --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.key --signature /tmp/campaign180-ci-test.sig
+          python -m campaign180.repro verify-signature --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.pub --signature /tmp/campaign180-ci-test.sig
       - name: Generate exact original 180 coverage and read-only inventory
         run: |
           python -m campaign180 audit --root . --output /tmp/osgard-180-audit
