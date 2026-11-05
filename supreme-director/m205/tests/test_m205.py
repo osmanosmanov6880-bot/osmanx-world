@@ -514,6 +514,12 @@ class ReconciliationTests(unittest.TestCase):
             current=db.execute("SELECT COUNT(*) FROM requests").fetchone()[0]
         self.assertEqual(original,current)
 
+    def test_roi_refuses_non_safe_json_financial_ratio(self):
+        self.economic(kind="cost_planned",amount=1)
+        self.economic(kind="benefit_forecast_monthly",amount=10**12)
+        with self.assertRaises(Invalid):
+            self.scenario(zero=True)
+
     def test_existing_m204_api_still_returns_report(self):
         self.economic(amount=100000)
         self.assertEqual(

@@ -104,7 +104,7 @@ class HTTPTests(unittest.TestCase):
     def test_missing_idempotency_key_denied_for_mutation(self):
         with self.assertRaises(HTTPError) as err:
             self.request("commerce.recurring.add")
-        self.assertEqual(err.exception.code,400)
+        self.assertEqual(err.exception.code,422)
 
 
 if __name__=="__main__":

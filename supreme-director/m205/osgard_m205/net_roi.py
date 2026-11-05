@@ -111,7 +111,7 @@ def calculate(db,tenant,p):
                 break
         forecasts.append({
             "rate_bp":rate,"status":"PROJECTED_MANUAL_NET_ROI",
-            "projected_roi_bp":_roi(cumulative+cost,cost),
+            "projected_roi_bp":_safe(_roi(cumulative+cost,cost),"ROI basis points"),
             "payback_month":earliest,
             "sustained_payback_month":stable,
             "payback_within_horizon":earliest is not None,
