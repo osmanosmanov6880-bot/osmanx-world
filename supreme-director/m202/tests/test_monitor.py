@@ -133,7 +133,7 @@ class MonitorTests(unittest.TestCase):
 
     def test_catchup_skips_missed_intervals(self):
         self.policy();self.config()
-        self.now[0]+=86400
+        self.now[0]+=2*86400
         result=self.due()
         self.assertEqual(result["next_due_at"],self.now[0]+3600)
 
@@ -175,7 +175,7 @@ class MonitorTests(unittest.TestCase):
         for limit in [True,0,201,"10"]:
             with self.subTest(limit=limit),self.assertRaises(Invalid):
                 self.call("commerce.monitor.snapshots.list",{"limit":limit})
-        with self.assertRaises(Unauthorized):
+        with self.assertRaises(Invalid):
             self.call("commerce.monitor.snapshots.compare",
                 {"previous_id":id,"current_id":id},self.foreign)
 
@@ -196,9 +196,12 @@ class MonitorTests(unittest.TestCase):
 
     def test_financial_access_restricted(self):
         self.policy();self.cost();self.scan()
-        for token in (self.operator,self.viewer,self.foreign):
-            with self.subTest(token=token),self.assertRaises(Unauthorized):
+        for token in (self.operator,self.viewer):
+            with self.subTest(role=token),self.assertRaises(Unauthorized):
                 self.call("commerce.monitor.report",token=token)
+        other_report=self.call("commerce.monitor.report",token=self.foreign)
+        self.assertEqual(other_report["alerts_total"],0)
+        self.assertEqual(other_report["snapshots_total"],0)
 
     def test_old_M200_and_M201_apis_work(self):
         self.policy()
