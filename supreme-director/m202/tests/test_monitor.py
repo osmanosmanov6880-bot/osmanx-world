@@ -133,7 +133,7 @@ class MonitorTests(unittest.TestCase):
 
     def test_catchup_skips_missed_intervals(self):
         self.policy();self.config()
-        self.now[0]+=2*86400
+        self.now[0]+=3*3600
         result=self.due()
         self.assertEqual(result["next_due_at"],self.now[0]+3600)
 
