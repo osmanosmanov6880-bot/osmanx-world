@@ -4,6 +4,10 @@ on:
     branches: [ "recovery/supreme-director-m187-20261104" ]
     paths:
       - "supreme-director/m201/**"
+      - "supreme-director/docs/PROGRESS_JOURNAL_RU.md"
+      - "supreme-director/README.md"
+      - "supreme-director/docs/PROGRESS_JOURNAL_RU.md"
+      - "supreme-director/README.md"
       - ".github/workflows/supreme-director-m201.yml"
   pull_request:
     paths:
