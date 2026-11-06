@@ -523,6 +523,13 @@ async function run(){
   assert.equal(recovery.plaintext_exported,false);
   assert.equal(recovery.includes_roles,false);
   await client.screenshot("10-recovery-integrity-desktop.png");
+  await client.eval("document.querySelector('#recovery-drill').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#recovery-drill-summary')?.textContent.startsWith('PASS')"),
+    "verified isolated recovery drill");
+  const afterDrill=await localApi("/api/v1/recovery/inspect");
+  assert.equal(afterDrill.bundle_sha256,recovery.bundle_sha256);
+  await client.screenshot("11-drill-desktop.png");
 
   // Mobile viewport must not leak navigation or overflow the viewport.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -531,12 +538,12 @@ async function run(){
   const overflow=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
-  await client.screenshot("11-mobile-390.png");
+  await client.screenshot("12-mobile-390.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","mobile"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","mobile"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:11,public_server_started:false,production_deployed:false};
+    screenshots:12,public_server_started:false,production_deployed:false};
 }
 
 try{
