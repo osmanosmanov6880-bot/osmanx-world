@@ -1,0 +1,9 @@
+{"details": "M181 original not available, six-team upstreams not established", "id": "L01", "stage": "SOURCE_DISCOVERY", "status": "DONE_WITH_BLOCKER"}
+{"details": "PIN and ZIP safety, read-only", "id": "L02", "stage": "LOCAL_ADMISSION_TOOL", "status": "IMPLEMENTED_LOCAL"}
+{"details": "180/294, 28 conflict, 9 contracts, 6 upstream checks", "id": "L03", "stage": "CONTRACT_AND_GRAPH_CHECK", "status": "IMPLEMENTED_LOCAL"}
+{"details": "A12/B48/C90/D30 = 180 planning slots", "id": "L04", "stage": "M182_PROPOSED_WORKPLAN", "status": "GENERATED_NOT_ACCEPTED"}
+{"details": "113/113 independent local tests", "id": "L05", "stage": "M182_UNITTEST", "status": "PASS"}
+{"details": "Missing M181 ZIP; no product integration", "id": "L06", "stage": "M181_ADMISSION", "status": "EXPECTED_NO_GO"}
+{"details": "six handoffs and provenance docs", "id": "L07", "stage": "DOCUMENTATION", "status": "CREATED"}
+{"id":"L08","stage":"LOCAL_GIT_BUNDLE_AND_DETERMINISTIC_ZIP","status":"SOURCE_TOOLING_ONLY","details":"immutable file manifest and local source bundle; not M180/M181 lineage"}
+{"id":"L09","stage":"DELIVERY_RECONSTRUCTION_QA","status":"PASS_LOCAL","details":"113/113 re-run from unpacked archive and 113/113 from independent Git bundle clone"}

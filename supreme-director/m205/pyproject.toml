@@ -1,0 +1,5 @@
+[project]
+name = "osgard-supreme-director-m205"
+version = "0.205.0"
+requires-python = ">=3.11"
+description = "Local M198-M204 cost reconciliation, recurring spending and net scenario ROI"

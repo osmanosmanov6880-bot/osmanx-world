@@ -1,0 +1,128 @@
+{
+  "schema": "osgard.original180.site-spec/1",
+  "tenant_id": "tenant_demo",
+  "project_id": "0b83c3f2-b4ab-4a6f-a83e-a48cb39b9c6f",
+  "locale": "ru",
+  "title": "OSGARD | Прототип",
+  "description": "Изолированное демонстрационное приложение без публикации",
+  "models": [
+    {
+      "name": "customers",
+      "label": "Клиенты",
+      "fields": [
+        {
+          "name": "name",
+          "label": "Имя",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "email",
+          "label": "Почта",
+          "type": "email",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "requests",
+      "label": "Заявки",
+      "fields": [
+        {
+          "name": "customer",
+          "label": "Клиент",
+          "type": "reference",
+          "required": true,
+          "references": "customers"
+        },
+        {
+          "name": "summary",
+          "label": "Запрос",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "value",
+          "label": "Сумма",
+          "type": "integer",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "slug": "home",
+      "title": "Главная",
+      "sections": [
+        {
+          "type": "hero",
+          "heading": "Рабочие процессы без лишней сложности",
+          "text": "Демонстрация генерации многостраничного сайта из проверяемой спецификации.",
+          "cta_label": "Открыть данные",
+          "cta_page": "data"
+        },
+        {
+          "type": "features",
+          "heading": "Возможности",
+          "items": [
+            "Версионирование и контроль изменений",
+            "Таблицы со связями и типами данных",
+            "Локальное превью без публикации"
+          ]
+        },
+        {
+          "type": "stats",
+          "heading": "Показатели прототипа",
+          "items": [
+            {
+              "label": "Страниц",
+              "value": "3"
+            },
+            {
+              "label": "Работа с сетью",
+              "value": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "data",
+      "title": "Данные",
+      "sections": [
+        {
+          "type": "hero",
+          "heading": "Данные приложения",
+          "text": "Модели и записи доступны через локальный Python API."
+        },
+        {
+          "type": "table",
+          "heading": "Клиенты",
+          "model": "customers"
+        },
+        {
+          "type": "table",
+          "heading": "Заявки",
+          "model": "requests"
+        }
+      ]
+    },
+    {
+      "slug": "contact",
+      "title": "Контакты",
+      "sections": [
+        {
+          "type": "text",
+          "heading": "Обратная связь",
+          "text": "Контакты приведены только как пример; отправка форм не настроена."
+        },
+        {
+          "type": "contacts",
+          "heading": "Демо-адрес",
+          "email": "demo@example.org"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "schema": "osgard.original180.related-local-paths/1",
+  "caveat": "These paths support code similarity only. They do not certify fulfillment of original team packages.",
+  "related_local_paths": {
+    "TITAN-X01": [
+      "supreme-director/recovery/ORIGINAL_180_TASKS.json",
+      "supreme-director/campaign180/campaign180/registry.py"
+    ],
+    "TITAN-X02": [
+      "supreme-director/scripts/verify_source_transfer.py",
+      "supreme-director/campaign180/campaign180/registry.py"
+    ],
+    "TITAN-X03": [
+      ".github/CODEOWNERS",
+      "supreme-director/campaign180/campaign180/gates.py"
+    ],
+    "TITAN-X04": [
+      "supreme-director/m198/verify_source.py"
+    ],
+    "TITAN-X05": [
+      ".github/workflows/supreme-director-m206.yml"
+    ],
+    "TITAN-X06": [
+      "supreme-director/campaign180/campaign180/contracts.py"
+    ],
+    "TITAN-X07": [
+      "supreme-director/m192/osgard_m192/runtime.py",
+      "supreme-director/campaign180/campaign180/access.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
+    ],
+    "TITAN-X08": [
+      "supreme-director/m192/tests/test_runtime.py",
+      "supreme-director/campaign180/campaign180/access.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
+    ],
+    "TITAN-X12": [
+      "supreme-director/m205/osgard_m205/runtime.py",
+      "supreme-director/campaign180/campaign180/queue.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
+    ],
+    "TITAN-X18": [
+      "supreme-director/m190/verify_source.py",
+      "supreme-director/campaign180/campaign180/review.py"
+    ],
+    "TITAN-X27": [
+      "supreme-director/m206/osgard_m206/runtime.py"
+    ],
+    "TITAN-X28": [
+      "supreme-director/m191/recovery.py",
+      "supreme-director/campaign180/campaign180/backup.py",
+      "supreme-director/campaign180/tests/test_scheduler_backup.py"
+    ],
+    "COMMERCE-X04": [
+      "supreme-director/m192/osgard_m192/runtime.py"
+    ],
+    "COMMERCE-X05": [
+      "supreme-director/m192/osgard_m192/runtime.py"
+    ],
+    "COMMERCE-X06": [
+      "supreme-director/m193/osgard_m193/runtime.py"
+    ],
+    "COMMERCE-X07": [
+      "supreme-director/m194/osgard_m194/runtime.py"
+    ],
+    "COMMERCE-X08": [
+      "supreme-director/m196/osgard_m196/runtime.py"
+    ],
+    "COMMERCE-X10": [
+      "supreme-director/m197/osgard_m197/runtime.py"
+    ],
+    "COMMERCE-X28": [
+      "supreme-director/m193/README.md"
+    ],
+    "TITAN-X11": [
+      "supreme-director/campaign180/campaign180/queue.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
+    ],
+    "TITAN-X13": [
+      "supreme-director/campaign180/campaign180/queue.py",
+      "supreme-director/campaign180/campaign180/gateway.py"
+    ],
+    "TITAN-X16": [
+      "supreme-director/campaign180/campaign180/workflow.py"
+    ],
+    "TITAN-X14": [
+      "supreme-director/campaign180/campaign180/scheduler.py",
+      "supreme-director/campaign180/tests/test_scheduler_backup.py"
+    ],
+    "TITAN-X15": [
+      "supreme-director/campaign180/campaign180/scheduler.py",
+      "supreme-director/campaign180/tests/test_scheduler_backup.py"
+    ],
+    "TITAN-X26": [
+      "supreme-director/campaign180/campaign180/supplychain.py",
+      "supreme-director/campaign180/tests/test_review_supplychain.py"
+    ],
+    "TITAN-X17": [
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+    ],
+    "TITAN-X20": [
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/campaign180/drafts.py",
+      "supreme-director/campaign180/campaign180/structure.py",
+      "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
+      "supreme-director/campaign180/assets/console.js",
+      "supreme-director/campaign180/assets/index.html",
+      "supreme-director/campaign180/tests/browser-console.mjs",
+      "supreme-director/campaign180/campaign180/forms.py",
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/assets/console.css"
+    ],
+    "TITAN-X21": [
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/campaign180/records.py",
+      "supreme-director/campaign180/campaign180/automatic.py",
+      "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
+      "supreme-director/campaign180/campaign180/model_editor.py",
+      "supreme-director/campaign180/assets/index.html",
+      "supreme-director/campaign180/tests/test_wave7_schema.py",
+      "supreme-director/campaign180/campaign180/app_runtime.py",
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py",
+      "supreme-director/campaign180/campaign180/mapped_relations.py",
+      "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
+      "supreme-director/campaign180/campaign180/project_recovery.py",
+      "supreme-director/campaign180/campaign180/recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
+    ],
+    "TITAN-X24": [
+      "supreme-director/campaign180/campaign180/drafts.py",
+      "supreme-director/campaign180/examples/demo-site.json",
+      "supreme-director/campaign180/campaign180/model_editor.py",
+      "supreme-director/campaign180/tests/test_wave7_schema.py",
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/campaign180/revision_restore.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py",
+      "supreme-director/campaign180/campaign180/mapped_relations.py",
+      "supreme-director/campaign180/campaign180/project_recovery.py",
+      "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
+      "supreme-director/campaign180/campaign180/recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
+    ],
+    "TITAN-X25": [
+      "supreme-director/campaign180/campaign180/preview.py",
+      "supreme-director/campaign180/examples/demo-site.json",
+      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py",
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/tests/browser-console.mjs",
+      "supreme-director/campaign180/campaign180/revision_restore.py",
+      "supreme-director/campaign180/campaign180/project_recovery.py",
+      "supreme-director/campaign180/campaign180/recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py",
+      "supreme-director/campaign180/assets/console.css"
+    ],
+    "TITAN-X22": [
+      "supreme-director/campaign180/campaign180/app_runtime.py",
+      "supreme-director/campaign180/campaign180/local_http.py",
+      "supreme-director/campaign180/assets/console.js",
+      "supreme-director/campaign180/tests/test_app_console.py",
+      "supreme-director/campaign180/campaign180/automatic.py",
+      "supreme-director/campaign180/campaign180/structure.py",
+      "supreme-director/campaign180/tests/browser-console.mjs",
+      "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
+    ],
+    "TITAN-X23": [
+      "supreme-director/campaign180/campaign180/app_policy.py",
+      "supreme-director/campaign180/campaign180/app_runtime.py",
+      "supreme-director/campaign180/campaign180/local_http.py",
+      "supreme-director/campaign180/tests/test_app_console.py",
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/campaign180/model_editor.py",
+      "supreme-director/campaign180/campaign180/revision_restore.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py",
+      "supreme-director/campaign180/campaign180/mapped_relations.py",
+      "supreme-director/campaign180/campaign180/project_recovery.py",
+      "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
+      "supreme-director/campaign180/campaign180/recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
+    ],
+    "TITAN-X19": [
+      "supreme-director/campaign180/campaign180/repair.py",
+      "supreme-director/campaign180/tests/test_wave6_repair.py"
+    ]
+  }
+}

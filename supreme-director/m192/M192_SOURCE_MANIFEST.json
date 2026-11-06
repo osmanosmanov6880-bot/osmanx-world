@@ -1,0 +1,16 @@
+{
+  "files": {
+    "README.md": "fbf82cddb4977614cd9fc7210fc7d52844c0024b501b0e4d65ce2ca605f32b2b",
+    "demo.py": "1075d8e7d9f9ea2fcde15ac3ce8c4857dad3a75751e03c4b7e2eb27be5340d0a",
+    "osgard_m192/__init__.py": "cdab88231f0434ab22f5591f4e35caca326766913e423ad37fb3104b09ed3f98",
+    "osgard_m192/__main__.py": "c9d7b7a99417889b8022cfc9c9eb0033d90227039f0872c1d958c1db009f0343",
+    "osgard_m192/runtime.py": "0df0b43f0b652b34fda7f6ee5ce616d8fee9b0bbb539587e61b9aff4f90f3dc6",
+    "osgard_m192/server.py": "0bc4b89bb12aecf1cd6d3b2812c110425d7cbbf15de8305c8a2ca1753c5fdad2",
+    "pyproject.toml": "a6f1b8df047e9c240e7fb62eb841419f6ce3cc76fe915c316def882800ddbf26",
+    "tests/test_runtime.py": "d91072a2638abe58d8ea8eea5aa69bab35b77b9030f3ba325cefa6b1a4e1e684",
+    "verify_source.py": "b0ca7ca58cc026cadc7639a686502046e1f2911016bb43e689fcd1f55620ed13"
+  },
+  "no_real_integrations": true,
+  "original_180_accepted": 0,
+  "schema": "osgard.m192.source-manifest/1"
+}

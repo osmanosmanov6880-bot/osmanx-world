@@ -1,0 +1,51 @@
+name: OSGARD SUPREME DIRECTOR M197 project cards
+on:
+  push:
+    branches:
+      - recovery/supreme-director-m187-20261104
+    paths:
+      - "supreme-director/m197/**"
+      - ".github/workflows/supreme-director-m197.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m197/**"
+      - ".github/workflows/supreme-director-m197.yml"
+# Preserve the check; cancel only superseded runs for this same event/ref.
+concurrency:
+  group: director-m197-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  m197-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify exact M197 source SHA-256
+        run: python3 supreme-director/m197/verify_source.py
+      - name: Syntax-check interactive Russian project card
+        run: node --check supreme-director/m197/osgard_m197/web/app.js
+      - name: Run M197 local database, security, file and HTTP tests
+        env:
+          PYTHONPATH: supreme-director/m192:supreme-director/m193:supreme-director/m194:supreme-director/m195:supreme-director/m196:supreme-director/m197
+        run: python3 -m unittest discover -s supreme-director/m197/tests -p 'test_m197.py' -v
+      - name: Regression check previous M192-M196 modules
+        env:
+          PYTHONPATH: supreme-director/m192:supreme-director/m193:supreme-director/m194:supreme-director/m195:supreme-director/m196:supreme-director/m197
+        run: |
+          for version in 192 193 194 195 196; do
+            echo "REGRESSION M$version"
+            timeout 110s python3 -m unittest discover -s supreme-director/m$version/tests -p 'test_*.py' -q
+          done
+      - name: Explicit production guard
+        run: |
+          grep -q "LOCAL_SQLITE_ONLY" supreme-director/m197/osgard_m197/runtime.py
+          grep -q "production" supreme-director/m197/README.md

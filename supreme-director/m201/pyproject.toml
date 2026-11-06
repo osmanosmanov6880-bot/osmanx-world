@@ -1,0 +1,5 @@
+[project]
+name = "osgard-supreme-director-m201"
+version = "0.201.0"
+requires-python = ">=3.11"
+description = "Offline financial alerts, risk policies and linked employee work"
