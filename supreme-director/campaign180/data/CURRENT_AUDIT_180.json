@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "d3380ef7fe95be7ff65e139c5bfb8607982009c9",
+  "based_on_code_commit": "f56c62567fa24aee50d1cdf16824469616892624",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -8,8 +8,8 @@
   "independently_accepted": 0,
   "production_accepted": 0,
   "counts": {
-    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 25,
-    "NO_DIRECT_PROOF": 147,
+    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 30,
+    "NO_DIRECT_PROOF": 142,
     "HOLD_SCOPE_EXCLUDED": 4,
     "HOLD_SOURCE_MISSING": 4
   },
@@ -272,8 +272,11 @@
       "title": "Генерация кода из проверяемой спецификации",
       "original_status": "PLANNED",
       "original_source_line": 240,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/builder.py",
+        "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -314,8 +317,11 @@
       "title": "Полноценный no-AI редактор страниц",
       "original_status": "PLANNED",
       "original_source_line": 279,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/builder.py",
+        "supreme-director/campaign180/campaign180/drafts.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -327,8 +333,11 @@
       "title": "Визуальные формы, таблицы и связи данных",
       "original_status": "PLANNED",
       "original_source_line": 292,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/builder.py",
+        "supreme-director/campaign180/campaign180/records.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -366,8 +375,11 @@
       "title": "Версионирование, импорт и экспорт проектов",
       "original_status": "PLANNED",
       "original_source_line": 331,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/drafts.py",
+        "supreme-director/campaign180/examples/demo-site.json"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -379,8 +391,12 @@
       "title": "Система превью, тестовых окружений и публикации",
       "original_status": "PLANNED",
       "original_source_line": 344,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/preview.py",
+        "supreme-director/campaign180/examples/demo-site.json",
+        "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -2424,6 +2440,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave 2 scheduling, review, supply-chain and restoration tests",
-  "notes": "25 original tasks have only related local code; none has passed original upstream integration and independent product acceptance."
+  "last_local_campaign": "Wave4 no-AI schema, project drafts, model CRUD, static preview",
+  "notes": "30 related local implementations only. All canonical upstream team integration and independent review remain blocked. 0/180 accepted."
 }

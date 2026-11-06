@@ -93,6 +93,27 @@
     "TITAN-X26": [
       "supreme-director/campaign180/campaign180/supplychain.py",
       "supreme-director/campaign180/tests/test_review_supplychain.py"
+    ],
+    "TITAN-X17": [
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+    ],
+    "TITAN-X20": [
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/campaign180/drafts.py"
+    ],
+    "TITAN-X21": [
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/campaign180/records.py"
+    ],
+    "TITAN-X24": [
+      "supreme-director/campaign180/campaign180/drafts.py",
+      "supreme-director/campaign180/examples/demo-site.json"
+    ],
+    "TITAN-X25": [
+      "supreme-director/campaign180/campaign180/preview.py",
+      "supreme-director/campaign180/examples/demo-site.json",
+      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
     ]
   }
 }

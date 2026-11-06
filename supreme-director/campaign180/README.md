@@ -43,3 +43,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Resource scheduling and recovery](docs/WAVE2_CAPACITY_RECOVERY.md) (TITAN-X14/X15/X28).
 - [Static patch and supply-chain security](docs/WAVE2_PATCH_SUPPLYCHAIN.md) (TITAN-X18/X26).
 - The original five product upstream assumptions are **not** upgraded by this proof: 0/6 canonical team upstreams owner-approved.
+
+## Wave 4 — functional local no-AI workflow (2026-11-06)
+
+- [Live status of all original 180 tasks](docs/CURRENT_AUDIT_180_RU.md) / [machine registry](data/CURRENT_AUDIT_180.json): **30 locally related, 142 unproven, 8 holds, 0 independently accepted**.
+- Working local site specification compiler, versioned project editor, typed tenant-scoped SQLite data models, import/export and offline static preview. [Repro and safety notes](docs/WAVE4_NOAI_SITE_BUILDER.md).
+- Not yet integrated with original KRAKEN/NEXUS/Command upstream or authenticated HTTP; production remains NO-GO.
