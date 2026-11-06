@@ -48,6 +48,14 @@ jobs:
         run: python -m campaign180.supplychain --root . --base HEAD^
       - name: Bounded synthetic crash recovery and restore (no production effects)
         run: python -m campaign180.resilience --tasks-per-tenant 12 > /tmp/osgard-180-audit-resilience.json
+      - name: Offline no-AI site generator integration and deterministic preview
+        run: |
+          mkdir -p /tmp/osgard-offline-preview
+          python -m campaign180.preview build supreme-director/campaign180/examples/demo-site.json /tmp/osgard-offline-preview demo-a
+          python -m campaign180.preview build supreme-director/campaign180/examples/demo-site.json /tmp/osgard-offline-preview demo-b
+          python -m campaign180.preview verify /tmp/osgard-offline-preview/demo-a
+          cmp /tmp/osgard-offline-preview/demo-a/index.html /tmp/osgard-offline-preview/demo-b/index.html
+          cmp /tmp/osgard-offline-preview/demo-a/PREVIEW_MANIFEST.json /tmp/osgard-offline-preview/demo-b/PREVIEW_MANIFEST.json
       - name: Generate exact original 180 coverage and read-only inventory
         run: |
           python -m campaign180 audit --root . --output /tmp/osgard-180-audit
