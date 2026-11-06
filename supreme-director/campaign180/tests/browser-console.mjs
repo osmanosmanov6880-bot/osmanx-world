@@ -380,6 +380,101 @@ async function run(){
     "migrated form remains non-submittable");
   await client.screenshot("06-renamed-form-desktop.png");
 
+  // Wave 9: visual reference-field migration preserves a real linked request.
+  await client.eval("document.querySelector('[data-panel=schema]').click();"+
+    "document.querySelector('#link-rename-model').value='requests';"+
+    "document.querySelector('#link-rename-model').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#link-rename-field').value='customer';"+
+    "document.querySelector('#link-new-name').value='client_ref';"+
+    "document.querySelector('#link-rename-confirm').checked=true;"+
+    "document.querySelector('#link-rename-form').requestSubmit();");
+  await poll(async()=>{
+    const rows=await localApi("/api/v1/models/requests");
+    return rows.rows.some(row=>row.fields.summary==="Связанная заявка из Chromium"
+      && row.fields.client_ref===clientRow.row_id && row.version===2
+      && !Object.hasOwn(row.fields,"customer"));
+  },"relation rename preserved actual row value and revision");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice')?.textContent.startsWith('Поле-связь мигрировано')"),
+    "reference migration editor refreshed");
+  await client.screenshot("07-relation-migration-desktop.png");
+
+  // An *unused* relation can change target without rewriting any existing data.
+  await client.eval("document.querySelector('#schema-select-model').value='vendors';"+
+    "document.querySelector('#schema-field-name').value='assignee';"+
+    "document.querySelector('#schema-field-label').value='Связанная заявка';"+
+    "document.querySelector('#schema-field-type').value='reference';"+
+    "document.querySelector('#schema-field-type').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#schema-reference-model').value='customers';"+
+    "document.querySelector('#schema-field-required').checked=false;"+
+    "document.querySelector('#schema-field-form').requestSubmit();");
+  await poll(async()=>{
+    const spec=await localApi("/api/v1/spec");
+    const field=spec.spec.models.find(x=>x.name==="vendors")?.fields.find(x=>x.name==="assignee");
+    return field?.type==="reference"&&field.references==="customers";
+  },"unused relation field declared");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice')?.textContent.startsWith('Поле добавлено')"),
+    "reference field declaration UI refreshed");
+  await client.eval("document.querySelector('#link-retarget-model').value='vendors';"+
+    "document.querySelector('#link-retarget-model').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#link-retarget-field').value='assignee';"+
+    "document.querySelector('#link-target-model').value='requests';"+
+    "document.querySelector('#link-retarget-confirm').checked=true;"+
+    "document.querySelector('#link-retarget-form').requestSubmit();");
+  await poll(async()=>{
+    const spec=await localApi("/api/v1/spec");
+    const field=spec.spec.models.find(x=>x.name==="vendors")?.fields.find(x=>x.name==="assignee");
+    return field?.references==="requests";
+  },"empty reference retargeted with schema revision");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice')?.textContent.startsWith('Целевая модель изменена')"),
+    "empty reference retarget UI refreshed");
+
+  // A page-only revision change permits a data-preserving, inspect-first restore.
+  const beforePageEdit=await localApi("/api/v1/spec");
+  const oldTitle=beforePageEdit.spec.pages.find(x=>x.slug==="home").title;
+  await client.eval("document.querySelector('[data-panel=pages]').click();"+
+    "document.querySelector('#page-select').value='home';"+
+    "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#page-title').value='Временное название Wave 9';"+
+    "document.querySelector('#page-form').requestSubmit();");
+  await poll(async()=>{
+    const spec=await localApi("/api/v1/spec");
+    return spec.revision===beforePageEdit.revision+1 &&
+      spec.spec.pages.find(x=>x.slug==="home").title==="Временное название Wave 9";
+  },"temporary page title persisted");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice')?.textContent.startsWith('Новая ревизия')"),
+    "page title visual editor refreshed");
+  await client.eval("document.querySelector('[data-panel=history]').click();");
+  await poll(()=>client.eval("document.querySelector('#history-revision')?.options.length>0"),
+    "historical revision options displayed");
+  await client.eval("document.querySelector('#history-revision').value="+
+    JSON.stringify(String(beforePageEdit.revision))+";"+
+    "document.querySelector('#history-revision').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#history-inspect-form').requestSubmit();");
+  await poll(()=>client.eval("document.querySelector('#history-plan').hidden===false "+
+    "&& document.querySelector('#history-plan-summary').textContent.includes('"+
+    "v"+beforePageEdit.revision+"')"),
+    "restore preview with exact historical revision");
+  await client.eval("document.querySelector('#history-approve').checked=true;"+
+    "document.querySelector('#history-approve').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#history-apply').click();");
+  await poll(async()=>{
+    const [spec,requests,vendors]=await Promise.all([
+      localApi("/api/v1/spec"),localApi("/api/v1/models/requests"),
+      localApi("/api/v1/models/vendors")]);
+    return spec.revision===beforePageEdit.revision+2 &&
+      spec.spec.pages.find(x=>x.slug==="home").title===oldTitle &&
+      requests.rows.some(x=>x.fields.client_ref===clientRow.row_id) &&
+      vendors.rows.some(x=>x.fields.name==="Поставщик CI"&&x.fields.tier===2);
+  },"approved page restore creates new revision and preserves business rows");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice')?.textContent.startsWith('Создана новая версия')"),
+    "restore UI refreshed after committing snapshot");
+  await client.screenshot("08-restore-confirmation-desktop.png");
+
   // Mobile viewport must not leak navigation or overflow the viewport.
   await client.send("Emulation.setDeviceMetricsOverride",{
     width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -387,12 +482,12 @@ async function run(){
   const overflow=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
-  await client.screenshot("07-mobile-390.png");
+  await client.screenshot("09-mobile-390.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","mobile"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mobile"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:7,public_server_started:false,production_deployed:false};
+    screenshots:9,public_server_started:false,production_deployed:false};
 }
 
 try{
