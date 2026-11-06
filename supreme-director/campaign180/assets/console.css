@@ -91,3 +91,13 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
 #history-plan{border-top:1px solid #304563;padding-top:18px}
 #history-plan .checkbox-row{line-height:1.6}
 @media(max-width:810px){.nav-link{flex:0 0 auto}}
+
+.mapped-editor,.recovery-inspect{margin-top:18px}
+.mapped-editor .form-config-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mapped-editor .form-config-row button{grid-column:1/-1;width:max-content;max-width:100%}
+.mapped-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+.mapped-row{display:grid;gap:8px;padding:12px;border:1px solid #334e70;border-radius:12px;background:#13243c}
+.mapped-row label{word-break:break-word}
+.mapped-approval{border-top:1px solid #334e70;padding-top:14px;margin-top:16px}
+@media(max-width:900px){.mapped-rows{grid-template-columns:1fr}}
+@media(max-width:650px){.mapped-editor .form-config-row{grid-template-columns:1fr}}

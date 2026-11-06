@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null};
 const panels = ["dashboard","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -59,6 +59,7 @@ async function sync(){
     api("/api/v1/me"),api("/api/v1/spec"),api("/api/v1/workflows")]);
   state.me=me;state.spec=result.spec;state.revision=result.revision;
   state.restorePlan=null;
+  clearMapPlan(true);
   $("history-plan").hidden=true;
   $("history-empty").hidden=false;
   $("history-approve").checked=false;
@@ -85,6 +86,8 @@ async function sync(){
   $("delete-row").disabled=!can("record.write");
   $("wf-create").disabled=!can("workflow.manage");
   $("history-inspect").disabled=!can("spec.write");
+  $("recovery-inspect").disabled=!can("members.manage");
+  $("map-load-options").disabled=!can("spec.write")||!can("record.read");
   renderPages();renderModels();renderSchema();renderWorkflows();
   await refreshRows();
 }
@@ -268,6 +271,9 @@ function renderSchema(){
   pick($("link-rename-model"),options);
   pick($("link-retarget-model"),options);
   pick($("link-target-model"),options);
+  pick($("map-model"),options);
+  pick($("map-target-model"),options);
+  populateMapFields();
   populateRenameFields();
   updateReferenceTargets();
   const labels=[];
@@ -280,6 +286,111 @@ function renderSchema(){
   updateSchemaFieldType();
   updateNewSectionFormType();
 }
+function clearMapPlan(clearChoices=false){
+  state.mappedPlan=null;
+  state.mappedPayload=null;
+  $("map-approval").hidden=true;
+  $("map-approve").checked=false;
+  $("map-apply").disabled=true;
+  if(clearChoices){
+    $("map-review-form").hidden=true;
+    $("map-rows").replaceChildren();
+  }
+}
+function populateMapFields(){
+  const m=state.spec?.models.find(model=>model.name===$("map-model").value);
+  const fields=(m?.fields||[]).filter(f=>f.type==="reference");
+  pick($("map-field"),fields.map(f=>[f.name,f.label+" → "+f.references]));
+  clearMapPlan(true);
+}
+for(const id of ["map-model","map-field","map-target-model"]){
+  $(id).addEventListener("change",()=>{
+    if(id==="map-model")populateMapFields();
+    clearMapPlan(true);
+  });
+}
+$("map-options-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  clearMapPlan(true);
+  try{
+    const payload={model:$("map-model").value,field:$("map-field").value,
+                   new_target_model:$("map-target-model").value};
+    const result=await api("/api/v1/references/map/options",{method:"POST",body:payload});
+    if(result.too_many_for_browser)
+      throw Error("Больше 100 вариантов. Используй проверяемый локальный план, а не интерфейс.");
+    if(!result.sources.length || !result.targets.length)
+      throw Error("Нет записей для переноса или отсутствуют новые целевые записи");
+    const root=$("map-rows");
+    root.replaceChildren();
+    for(const source of result.sources){
+      const row=node("div",null,"mapped-row");
+      row.dataset.sourceId=source.id;
+      const label=node("label",source.label+" · "+source.id.slice(0,8));
+      const pickTarget=node("select");
+      pickTarget.setAttribute("aria-label","Новая запись для "+source.label);
+      pick(pickTarget,[["","Выбери новую запись"],
+        ...result.targets.map(r=>[r.id,r.label+" · "+r.id.slice(0,8)])]);
+      pickTarget.addEventListener("change",()=>clearMapPlan());
+      row.append(label,pickTarget);
+      root.append(row);
+    }
+    $("map-review-form").hidden=false;
+    show("Загружено "+result.sources.length+" старых ссылок. Сопоставь каждую вручную.");
+  }catch(err){show(err.message,true);}
+});
+$("map-review-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  clearMapPlan();
+  try{
+    if(!can("spec.write")||!can("record.write"))throw Error("Недостаточно прав");
+    const entries=[...$("map-rows").children].map(row=>({
+      from_id:row.dataset.sourceId,to_id:row.querySelector("select").value}));
+    if(entries.some(x=>!x.to_id))throw Error("Для каждого старого ID нужно выбрать новый");
+    if(new Set(entries.map(x=>x.to_id)).size!==entries.length)
+      throw Error("Каждой старой связи должна соответствовать отдельная новая запись");
+    const payload={expected_revision:state.revision,model:$("map-model").value,
+      field:$("map-field").value,new_target_model:$("map-target-model").value,
+      mapping:entries};
+    const inspection=await api("/api/v1/references/map/inspect",{
+      method:"POST",body:payload});
+    state.mappedPayload=payload;
+    state.mappedPlan=inspection;
+    $("map-approval").hidden=false;
+    $("map-plan-summary").textContent=inspection.plan.changed_rows+
+      " записей · "+inspection.plan.changed_links+
+      " связей · ревизия "+inspection.plan.expected_revision+
+      " → "+(inspection.plan.expected_revision+1);
+    $("map-plan-digest").textContent="SHA-256: "+inspection.plan_sha256;
+    show("План проверен. Перед выполнением подтвердите соответствия.");
+  }catch(err){show(err.message,true);}
+});
+$("map-approve").addEventListener("change",()=>{
+  $("map-apply").disabled=!state.mappedPlan||!$("map-approve").checked;
+});
+$("map-apply").addEventListener("click",async()=>{
+  try{
+    if(!state.mappedPlan||!state.mappedPayload||!$("map-approve").checked)
+      throw Error("Сначала проверь и подтверди план");
+    const out=await api("/api/v1/references/map/apply",{
+      method:"POST",body:{...state.mappedPayload,
+        expected_plan_sha256:state.mappedPlan.plan_sha256}});
+    await sync();
+    await refreshMigrationHistory();
+    show("Связи перенесены: "+out.changed_links+
+      " · новая ревизия "+out.revision+". Без сетевых операций.");
+  }catch(err){clearMapPlan();show(err.message,true);}
+});
+$("recovery-inspect").addEventListener("click",async()=>{
+  try{
+    if(!can("members.manage"))throw Error("Только владелец может проверять полный архив");
+    const result=await api("/api/v1/recovery/inspect");
+    $("recovery-summary").textContent="Ревизия "+result.revision+
+      " · записей "+result.records+" · связей "+result.links+
+      " · SQLite "+result.sqlite_quick_check+
+      " · SHA "+result.bundle_sha256.slice(0,20)+"…";
+    show("Проектный снимок проверен. Данные не экспортированы и не восстановлены.");
+  }catch(e){show(e.message,true);}
+});
 function relationFields(modelName){
   const m=state.spec?.models.find(m=>m.name===modelName);
   return m?m.fields.filter(f=>f.type==="reference"):[];

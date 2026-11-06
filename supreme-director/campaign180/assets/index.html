@@ -180,6 +180,30 @@
           <button id="link-retarget-submit" type="submit" class="primary top-gap">Изменить целевую модель</button>
         </form>
       </div>
+      <article class="card mapped-editor">
+        <p class="overline">СВЯЗИ / ПЕРЕНОС С ДАННЫМИ</p>
+        <h2>Перенос действующих связей</h2>
+        <p class="hint">Для каждого старого ID явно выбирается новая запись. Угадывание по имени, автоматическое объединение и перенос чужих записей исключены.</p>
+        <form id="map-options-form" class="form-config-row">
+          <div><label for="map-model">Модель с полем</label><select id="map-model"></select></div>
+          <div><label for="map-field">Поле-связь</label><select id="map-field"></select></div>
+          <div><label for="map-target-model">Новая модель для связи</label><select id="map-target-model"></select></div>
+          <button id="map-load-options" class="ghost" type="submit">Загрузить существующие связи</button>
+        </form>
+        <form id="map-review-form" hidden>
+          <div id="map-rows" class="mapped-rows" aria-label="Таблица соответствия идентификаторов"></div>
+          <p class="hint">Каждый новый ID можно выбрать один раз. Для таблиц более 100 вариантов нужен отдельный проверяемый скрипт миграции.</p>
+          <button id="map-review" type="submit" class="ghost">Проверить целостность и план миграции</button>
+        </form>
+        <div id="map-approval" hidden class="mapped-approval">
+          <p id="map-plan-summary" class="history-summary"></p>
+          <p id="map-plan-digest" class="hint"></p>
+          <label class="checkbox-row" for="map-approve">
+            <input type="checkbox" id="map-approve"> Подтверждаю каждую пару ID и проверенный SHA-256 плана
+          </label>
+          <button id="map-apply" type="button" class="primary top-gap" disabled>Выполнить проверенную миграцию</button>
+        </div>
+      </article>
     </section>
     <section id="history" class="panel">
       <div class="page-heading"><div><p class="overline">РЕВИЗИИ / БЕЗ ПОТЕРИ ДАННЫХ</p>
@@ -208,6 +232,13 @@
           </div>
         </div>
       </div>
+      <article class="card recovery-inspect">
+        <h2>Проверка восстановления проекта с записями</h2>
+        <p class="hint">Проверяет текущую схему, записи, ссылки и SQLite. Здесь показывается только техническая сводка — экспорт записей доступен исключительно через доверенную локальную библиотеку, а восстановление выполняется в новый проект.</p>
+        <button id="recovery-inspect" type="button" class="ghost">Проверить целостность проекта</button>
+        <p id="recovery-summary" class="history-summary" aria-live="polite"></p>
+        <p class="hint">Права пользователей, workflows и подключения не копируются. Архив содержит данные клиентов и требует защищённого офлайн-хранения.</p>
+      </article>
     </section>
     <section id="workflows" class="panel">
       <div class="page-heading"><div><p class="overline">ПРАВИЛА / БЕЗ КОДА</p><h1>Автоматизация процессов</h1><p class="muted">Задавай безопасные действия над полями записей. Без скриптов и сетевых запросов.</p></div></div>
