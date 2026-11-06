@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -54,6 +54,8 @@ function switchPanel(name){
   if(name==="history" && state.spec) refreshRevisions().catch(e=>show(e.message,true));
   if(name==="records" && state.spec)refreshBatchHistory().catch(e=>show(e.message,true));
   if(name==="tasks" && state.spec)refreshTasks().catch(e=>show(e.message,true));
+  if(name==="tasks" && can("task.manage"))
+    refreshTeamWorkload().catch(e=>show(e.message,true));
   if(name==="dashboard" && state.spec)refreshTaskSummary().catch(e=>show(e.message,true));
 }
 document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
@@ -73,6 +75,9 @@ async function sync(){
   $("role-pill").textContent="Роль: "+me.role;
   $("tasks-nav").hidden=!can("task.read");
   $("task-form").hidden=!can("task.manage");
+  $("team-workload-panel").hidden=!can("task.manage");
+  $("task-assignee-filter-wrap").hidden=!can("task.manage");
+  $("task-checklist-form").hidden=!can("task.manage");
   $("task-refresh").disabled=!can("task.read");
   $("team-kpis").hidden=!can("task.read");
   state.taskEditing=null;state.taskOffset=0;state.taskPendingKey=null;
@@ -125,6 +130,8 @@ async function loadTaskMembers(){
   state.taskMembers=reply.members;
   pick($("task-assignee"),[["","Не назначено"],
     ...state.taskMembers.map(m=>[m.actor,m.actor+" · "+m.role])]);
+  pick($("task-assignee-filter"),[["","Любой"],["__unassigned__","Без исполнителя"],
+    ...state.taskMembers.map(m=>[m.actor,m.actor+" · "+m.role])]);
 }
 function resetTaskForm(){
   state.taskEditing=null;state.taskPendingKey=null;
@@ -151,8 +158,10 @@ async function refreshTasks({resetOffset=false}={}){
   if(resetOffset)state.taskOffset=0;
   const sequence=++state.taskGeneration;
   const status=$("task-status-filter").value||null;
+  const due=$("task-due-filter").value||null;
+  const assignee=can("task.manage")?($("task-assignee-filter").value||null):null;
   const result=await api("/api/v1/tasks/query",{
-    method:"POST",body:{limit:25,offset:state.taskOffset,status}});
+    method:"POST",body:{limit:25,offset:state.taskOffset,status,due,assignee}});
   if(sequence!==state.taskGeneration)return;
   state.tasks=result.tasks;
   $("task-count").textContent=result.total===0?"Задач пока нет":
@@ -162,7 +171,125 @@ async function refreshTasks({resetOffset=false}={}){
   $("task-next").disabled=!result.has_more;
   renderTaskList();
   await refreshTaskSummary();
+  if(can("task.manage"))await refreshTeamWorkload();
 }
+async function refreshTeamWorkload(){
+  if(!can("task.manage"))return;
+  const reply=await api("/api/v1/tasks/workload");
+  const root=$("team-workload-list");root.replaceChildren();
+  for(const member of reply.members){
+    const card=node("div",null,"team-member-load");
+    card.append(node("strong",member.actor||"Без исполнителя"));
+    card.append(node("small",member.role==="inactive"?"Доступ отозван":member.role));
+    const info=node("div",null,"team-member-stats");
+    for(const [label,value] of [
+      ["Всего",member.total],["Открыты",member.open],
+      ["Просрочены",member.overdue],["Заблокированы",member.blocked],
+      ["Выполнены",member.completed]]){
+      const line=node("span",label+": "+value);info.append(line);
+    }
+    card.append(info);
+    root.append(card);
+  }
+}
+$("team-workload-refresh").addEventListener("click",()=>{
+  refreshTeamWorkload().catch(e=>show(e.message,true));
+});
+function closeTaskCollaboration(){
+  ++state.collabGeneration;state.collabTask=null;
+  state.commentPendingKey=null;state.checklistPendingKey=null;
+  $("task-collaboration").hidden=true;
+}
+$("task-collaboration-close").addEventListener("click",closeTaskCollaboration);
+async function openTaskCollaboration(task){
+  state.collabTask=task;
+  state.commentPendingKey=null;state.checklistPendingKey=null;
+  $("task-collaboration").hidden=false;
+  $("task-collaboration-title").textContent=task.title;
+  $("task-collaboration-hint").textContent="Задача "+task.task_id.slice(0,8)+
+    " · "+TASK_STATUS[task.status]+" · исполнитель: "+(task.assignee||"не назначен");
+  $("task-checklist-form").hidden=!can("task.manage");
+  await refreshTaskCollaboration();
+}
+async function refreshTaskCollaboration(){
+  const task=state.collabTask;
+  if(!task)return;
+  const serial=++state.collabGeneration;
+  const path="/api/v1/tasks/"+encodeURIComponent(task.task_id);
+  const [checklist,comments]=await Promise.all([
+    api(path+"/checklist"),api(path+"/comments")]);
+  if(serial!==state.collabGeneration || state.collabTask?.task_id!==task.task_id)return;
+  $("task-checklist-count").textContent=checklist.completed+"/"+checklist.total;
+  const steps=$("task-checklist-list");steps.replaceChildren();
+  if(!checklist.items.length)steps.append(node("p","Пока нет шагов.","hint"));
+  for(const item of checklist.items){
+    const row=node("label",null,"task-checklist-row");
+    const checkbox=node("input");checkbox.type="checkbox";
+    checkbox.checked=item.done;checkbox.disabled=!can("task.progress");
+    checkbox.setAttribute("aria-label","Завершить шаг: "+item.label);
+    const name=node("span",item.label);
+    if(item.done)name.classList.add("task-checklist-completed");
+    checkbox.addEventListener("change",async()=>{
+      checkbox.disabled=true;
+      try{
+        await api(path+"/checklist/"+encodeURIComponent(item.item_id),{
+          method:"PATCH",body:{expected_version:item.version,done:checkbox.checked,
+                                idempotency_key:safeId()}});
+        await refreshTaskCollaboration();
+        show("Шаг задачи обновлён");
+      }catch(e){
+        checkbox.checked=item.done;checkbox.disabled=false;show(e.message,true);
+      }
+    });
+    row.append(checkbox,name);steps.append(row);
+  }
+  const list=$("task-comment-list");list.replaceChildren();
+  if(!comments.comments.length)list.append(node("p","Комментариев пока нет.","hint"));
+  for(const c of comments.comments){
+    const item=node("article",null,"task-comment");
+    item.append(node("strong",c.actor));
+    item.append(node("small",new Date(c.created_epoch*1000).toLocaleString("ru-RU")));
+    item.append(node("p",c.body));
+    list.append(item);
+  }
+  if(comments.has_more)list.append(node("p","Показаны первые 25 комментариев.","hint"));
+}
+$("task-comment-form").addEventListener("input",()=>{state.commentPendingKey=null;});
+$("task-comment-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const task=state.collabTask;
+  if(!task)return;
+  const button=$("task-comment-form").querySelector("button[type=submit]");
+  button.disabled=true;
+  try{
+    const key=state.commentPendingKey||safeId();
+    state.commentPendingKey=key;
+    await api("/api/v1/tasks/"+encodeURIComponent(task.task_id)+"/comments",{
+      method:"POST",body:{body:$("task-comment-text").value,idempotency_key:key}});
+    state.commentPendingKey=null;
+    $("task-comment-form").reset();
+    await refreshTaskCollaboration();show("Комментарий сохранён в SQLite");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+$("task-checklist-form").addEventListener("input",()=>{state.checklistPendingKey=null;});
+$("task-checklist-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const task=state.collabTask;
+  if(!task||!can("task.manage"))return;
+  const button=$("task-checklist-form").querySelector("button[type=submit]");
+  button.disabled=true;
+  try{
+    const key=state.checklistPendingKey||safeId();
+    state.checklistPendingKey=key;
+    await api("/api/v1/tasks/"+encodeURIComponent(task.task_id)+"/checklist",{
+      method:"POST",body:{label:$("task-checklist-title").value,idempotency_key:key}});
+    state.checklistPendingKey=null;
+    $("task-checklist-form").reset();
+    await refreshTaskCollaboration();show("Пункт чек-листа сохранён");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
 function renderTaskList(){
   const root=$("task-list");root.replaceChildren();
   if(!state.tasks.length){
@@ -225,6 +352,11 @@ function renderTaskList(){
       });
       actions.append(edit);
     }
+    const collab=node("button","Обсуждение / шаги","ghost task-collab-open");
+    collab.type="button";
+    collab.addEventListener("click",()=>openTaskCollaboration(task)
+      .catch(e=>show(e.message,true)));
+    actions.append(collab);
     const history=node("button","История","ghost");
     history.type="button";
     history.addEventListener("click",()=>showTaskHistory(task.task_id)
@@ -257,6 +389,11 @@ $("task-refresh").addEventListener("click",()=>{
 $("task-status-filter").addEventListener("change",()=>{
   refreshTasks({resetOffset:true}).catch(e=>show(e.message,true));
 });
+for(const id of ["task-due-filter","task-assignee-filter"]){
+  $(id).addEventListener("change",()=>{
+    refreshTasks({resetOffset:true}).catch(e=>show(e.message,true));
+  });
+}
 $("task-prev").addEventListener("click",()=>{
   state.taskOffset=Math.max(0,state.taskOffset-25);
   refreshTasks().catch(e=>show(e.message,true));

@@ -688,6 +688,44 @@ async function run(){
     "&& document.querySelectorAll('#task-events-list .task-event').length===2"),
     "Wave 18 two immutable task history events displayed");
   await client.screenshot("17-manager-tasks-desktop.png");
+  // Wave 19: comments, checklist, manager workload and due filters work
+  // through the same authenticated UI and disposable SQLite database.
+  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-collaboration').hidden===false "+
+    "&& document.querySelector('#task-collaboration-title').textContent.includes('Поручение')"),
+    "Wave 19 active task discussion opened");
+  await client.eval("document.querySelector('#task-checklist-title').value='Проверить критерий';"+
+    "document.querySelector('#task-checklist-form').requestSubmit();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-checklist-count').textContent==='0/1' "+
+    "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий')"),
+    "Wave 19 checklist persisted in actual SQLite");
+  await client.eval("document.querySelector('#task-checklist-list input[type=checkbox]').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-checklist-count').textContent==='1/1'"),
+    "Wave 19 checklist CAS change acknowledged in UI");
+  await client.eval("document.querySelector('#task-comment-text').value='Готово, результат проверен';"+
+    "document.querySelector('#task-comment-form').requestSubmit();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-comment-list').textContent.includes('Готово, результат проверен')"),
+    "Wave 19 immutable task comment saved and displayed");
+  await poll(()=>client.eval(
+    "document.querySelector('#team-workload-list').textContent.includes('owner-abc') "+
+    "&& document.querySelector('#team-workload-list').textContent.includes('Открыты')"),
+    "Wave 19 manager workload renders live SQLite");
+  await client.eval("document.querySelector('#task-due-filter').value='undated';"+
+    "document.querySelector('#task-due-filter').dispatchEvent(new Event('change'));");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-count').textContent.includes('Задач пока нет')"),
+    "Wave 19 due-date filter excludes dated tasks");
+  await client.eval("document.querySelector('#task-due-filter').value='';"+
+    "document.querySelector('#task-due-filter').dispatchEvent(new Event('change'));");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-list').textContent.includes('Поручение из Chromium')"),
+    "Wave 19 manager list recovers after filter clear");
+  await client.screenshot("20-task-collaboration-desktop.png");
+
 
   // Use a genuine touch-enabled device viewport and reload so Chromium
   // recomputes meta viewport and responsive layout from navigation start.
@@ -737,6 +775,17 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow390<=2,"390px task board horizontal overflow: "+taskOverflow390);
   await client.screenshot("18-mobile-390-tasks.png");
+  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-collaboration').hidden===false "+
+    "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
+    "&& document.querySelector('#task-comment-list').textContent.includes('Готово, результат проверен')"),
+    "Wave 19 390px task discussion and checklist loaded");
+  const collabOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(collabOverflow390<=2,
+    "390px task discussion horizontal overflow: "+collabOverflow390);
+  await client.screenshot("21-mobile-390-task-discussion.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -785,11 +834,22 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow320<=2,"320px task board horizontal overflow: "+taskOverflow320);
   await client.screenshot("19-mobile-320-tasks.png");
+  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-collaboration').hidden===false "+
+    "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
+    "&& document.querySelector('#task-comment-list').textContent.includes('Готово, результат проверен')"),
+    "Wave 19 320px task discussion and checklist loaded");
+  const collabOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(collabOverflow320<=2,
+    "320px task discussion horizontal overflow: "+collabOverflow320);
+  await client.screenshot("22-mobile-320-task-discussion.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:19,public_server_started:false,production_deployed:false};
+    screenshots:22,public_server_started:false,production_deployed:false};
 }
 
 try{
