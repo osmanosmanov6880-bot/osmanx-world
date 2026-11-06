@@ -339,3 +339,74 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
  .task-dependency-editor .task-detail-input{flex-wrap:wrap}
  .task-dependency-editor .task-detail-input button{width:100%}
 }
+
+/* Wave 21: baseline/forecast/actual project delivery management. */
+.delivery-panel{min-width:0;margin:18px 0}
+.delivery-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:10px;margin:16px 0}
+.delivery-kpis>div{background:#13263f;border-radius:10px;border:1px solid #334d6e;
+ padding:12px 14px;min-width:0;display:grid;gap:9px}
+.delivery-kpis span{font-size:10px;color:#a0badb;line-height:1.45;
+ font-weight:650;letter-spacing:.06em;overflow-wrap:anywhere}
+.delivery-kpis strong{font-size:24px;font-variant-numeric:tabular-nums}
+.delivery-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:13px;margin:18px 0}
+.delivery-editor{padding:16px;background:#13263f;border:1px solid #304866;
+ border-radius:11px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.delivery-editor h3{font-size:16px;line-height:1.35;margin:0 0 5px}
+.delivery-editor label{display:block;color:#b7c9e5;font-size:12px;margin:7px 0 2px}
+.delivery-editor input,.delivery-editor select{width:100%;max-width:100%;min-width:0}
+.delivery-date-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:9px;margin:3px 0 9px}
+.delivery-date-grid>div{min-width:0}
+.delivery-editor button{margin-top:auto;width:100%;white-space:normal}
+.delivery-phase-list{display:grid;gap:14px;margin-top:16px}
+.delivery-phase{border-radius:12px;border:1px solid #344b6b;
+ background:#10243d;min-width:0;padding:18px}
+.delivery-phase-heading,.delivery-milestone-heading{display:flex;gap:10px;
+ justify-content:space-between;align-items:flex-start;min-width:0}
+.delivery-phase-heading h3{font-size:18px;line-height:1.4;margin:0;
+ overflow-wrap:anywhere}
+.delivery-phase-heading small{font-size:11px;color:#a8bfdc;line-height:1.4}
+.delivery-status,.delivery-risk{color:#cbdcf1;border:1px solid #4b6688;
+ font-size:11px;line-height:1.3;border-radius:6px;padding:6px 8px;
+ max-width:100%;flex:none}
+.delivery-phase-meta{display:flex;flex-wrap:wrap;gap:6px 16px;
+ font-size:12px;color:#a9c4e5;margin:13px 0}
+.delivery-phase-meta span{overflow-wrap:anywhere}
+.delivery-progress{border-radius:20px;height:7px;background:#2a3c57;
+ overflow:hidden;margin:10px 0 18px}
+.delivery-progress-fill{height:100%;background:#91baf0;
+ border-radius:20px;transition:width .2s ease}
+.delivery-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;
+ margin:12px 0;min-width:0}
+.delivery-actions input[type=date]{width:auto;min-width:155px;max-width:100%}
+.delivery-actions button{max-width:100%;white-space:normal}
+.delivery-milestone-list{display:grid;gap:9px;margin-top:14px}
+.delivery-milestone{padding:13px 15px;background:#172c47;border:1px solid #39516e;
+ border-radius:10px;min-width:0}
+.delivery-milestone[data-risk=overdue]{border-left:3px solid #dc9696}
+.delivery-milestone[data-risk=slipped]{border-left:3px solid #d6b57a}
+.delivery-milestone[data-risk=completed_late]{border-left:3px solid #d6b57a}
+.delivery-milestone-heading strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.delivery-milestone-dates{display:flex;flex-wrap:wrap;gap:7px 14px;margin:10px 0}
+.delivery-milestone-dates small{color:#a7bedc;font-size:11px;overflow-wrap:anywhere}
+.delivery-history{margin-top:18px;padding:15px;border:1px solid #395372;
+ border-radius:10px;background:#142942}
+.delivery-history h3{font-size:16px;margin:0}
+.delivery-audit-row{display:flex;flex-direction:column;gap:7px;
+ border-top:1px solid #35506c;padding:12px 0;overflow-wrap:anywhere}
+.delivery-audit-row strong{font-size:13px}
+.delivery-audit-row small{color:#a4bfdd;font-size:11px}
+@media(max-width:1050px){.delivery-form-grid{grid-template-columns:1fr}}
+@media(max-width:750px){.delivery-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){
+ .delivery-date-grid{grid-template-columns:1fr}
+ .delivery-phase{padding:13px}
+ .delivery-phase-heading,.delivery-milestone-heading{flex-wrap:wrap}
+ .delivery-actions{display:grid;grid-template-columns:1fr}
+ .delivery-actions input[type=date],.delivery-actions button{width:100%;min-width:0}
+ .delivery-milestone{padding:12px}
+ .delivery-editor{padding:13px}
+ .delivery-kpis>div{padding:10px}
+}
