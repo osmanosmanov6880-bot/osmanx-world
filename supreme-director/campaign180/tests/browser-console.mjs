@@ -570,11 +570,35 @@ async function run(){
     console.error("OSGARD_MOBILE_LAYOUT_OFFENDERS "+offending);
   }
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
+  // Narrow 320px devices must also display the recovery action without
+  // clipping; this is a separate responsive breakpoint from 390px.
+  await client.send("Emulation.setDeviceMetricsOverride",{
+    width:320,height:700,screenWidth:320,screenHeight:700,
+    deviceScaleFactor:1,mobile:true});
+  await poll(()=>client.eval(
+    "innerWidth===320 && document.documentElement.clientWidth===320"+
+    " && matchMedia('(max-width:560px)').matches"),
+    "narrow mobile device viewport");
+  const overflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  await client.screenshot("13-mobile-320.png");
+  if(overflow320>2){
+    const offenders=await client.eval(`JSON.stringify(
+      [...document.querySelectorAll('body *')]
+        .map(e=>{const r=e.getBoundingClientRect();return {
+          id:e.id,tag:e.tagName.toLowerCase(),cls:String(e.className||'').slice(0,65),
+          left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width)};})
+        .filter(x=>x.right>document.documentElement.clientWidth+2&&x.width>0
+                && x.left<document.documentElement.clientWidth+2)
+        .sort((a,b)=>b.right-a.right).slice(0,12))`);
+    console.error("OSGARD_320_LAYOUT_OFFENDERS "+offenders);
+  }
+  assert.ok(overflow320<=2,"320px mobile horizontal overflow: "+overflow320);
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","mobile"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","mobile-390","mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:12,public_server_started:false,production_deployed:false};
+    screenshots:13,public_server_started:false,production_deployed:false};
 }
 
 try{
