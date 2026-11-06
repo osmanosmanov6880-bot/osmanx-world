@@ -129,6 +129,43 @@
           <button id="record-csv-apply" type="button" class="primary" disabled>Импортировать проверенные записи</button>
         </div>
       </article>
+      <article class="card record-batch">
+        <div class="record-operations-header">
+          <div><p class="overline">РЕАЛЬНЫЕ ЗАПИСИ / SQLITE</p>
+          <h2>Массовое изменение и безопасный откат</h2></div>
+          <span class="pill">С проверкой версий</span>
+        </div>
+        <p class="hint">Отметьте записи в таблице ниже (до 25 за операцию), выберите поле и новое значение. Сначала проверьте план: при ошибке хотя бы одной записи весь пакет отменяется.</p>
+        <p id="batch-selected-count" class="history-summary" role="status" aria-live="polite">Выбрано: 0</p>
+        <div class="batch-edit-grid">
+          <div><label for="batch-field">Поле для изменения</label><select id="batch-field"></select></div>
+          <div><label for="batch-value">Новое значение</label><div id="batch-value-control"></div></div>
+          <button id="batch-inspect" type="button" class="ghost">Проверить пакет</button>
+        </div>
+        <p id="batch-summary" class="hint" role="status" aria-live="polite"></p>
+        <label class="checkbox-row" for="batch-approve">
+          <input id="batch-approve" type="checkbox" disabled>
+          Подтверждаю выбранные записи и SHA-256 проверенного плана
+        </label>
+        <button id="batch-apply" type="button" class="primary" disabled>Применить массовое изменение</button>
+        <div class="batch-journal">
+          <div class="record-operations-header">
+            <div><p class="overline">ИСТОРИЯ / БЕЗ ИЗМЕНЕНИЯ ЖУРНАЛА</p>
+            <h3>Журнал пакетных операций</h3></div>
+            <button id="batch-history-refresh" type="button" class="ghost">Обновить журнал</button>
+          </div>
+          <p class="hint">Журнал хранится в локальной SQLite. История показывает идентификаторы и контрольные хеши, но не содержимое клиентских полей. Откат доступен владельцу и редактору при отсутствии последующих изменений.</p>
+          <div id="batch-history-list" class="stack" aria-live="polite"></div>
+          <div id="batch-restore-review" class="batch-restore-review" hidden>
+            <p id="batch-restore-summary" class="history-summary"></p>
+            <label class="checkbox-row" for="batch-restore-approve">
+              <input id="batch-restore-approve" type="checkbox">
+              Подтверждаю откат выбранного пакета и сверенный SHA-256
+            </label>
+            <button id="batch-restore-apply" type="button" class="danger" disabled>Восстановить предыдущие значения</button>
+          </div>
+        </div>
+      </article>
       <article class="card table-card"><h2>Текущие записи</h2><div id="rows-table" class="scroll-table"></div></article>
     </section>
     <section id="schema" class="panel">
