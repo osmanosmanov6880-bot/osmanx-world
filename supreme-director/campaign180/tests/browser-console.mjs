@@ -649,6 +649,46 @@ async function run(){
     "Wave 17 rollback journal remains visible");
   await client.screenshot("16-batch-edit-undo-desktop.png");
 
+  // Wave 18: create a real assigned SQLite task via the manager UI,
+  // inspect actual metrics, advance status and verify immutable event history.
+  await client.eval("document.querySelector('[data-panel=tasks]').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#tasks').classList.contains('active') "+
+    "&& !document.querySelector('#task-form').hidden "+
+    "&& [...document.querySelector('#task-assignee').options].some(x=>x.value==='owner-abc')"),
+    "Wave 18 manager task board loaded with real active member");
+  await client.eval("document.querySelector('#task-title').value='Поручение из Chromium';"+
+    "document.querySelector('#task-description').value='Проверить рабочий процесс';"+
+    "document.querySelector('#task-priority').value='high';"+
+    "document.querySelector('#task-assignee').value='owner-abc';"+
+    "document.querySelector('#task-due').value='2027-11-06';"+
+    "document.querySelector('#task-form').requestSubmit();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/tasks/summary");
+    return data.metrics.total===1 && data.metrics.priority_high_open===1 &&
+           data.metrics.todo===1;
+  },"Wave 18 task saved durably with assignee and high priority");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-list').textContent.includes('Поручение из Chromium') "+
+    "&& document.querySelector('#tasks-total').textContent==='1'"),
+    "Wave 18 task list and manager KPIs update");
+  await client.eval("document.querySelector('#task-list .task-actions select').value='in_progress';"+
+    "document.querySelector('#task-list .task-actions button').click();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/tasks/summary");
+    return data.metrics.total===1 && data.metrics.in_progress===1;
+  },"Wave 18 real status transition persisted");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-list').textContent.includes('Поручение из Chromium') "+
+    "&& document.querySelector('#tasks-progress').textContent==='1'"),
+    "Wave 18 refreshed status card after transition");
+  await client.eval("document.querySelector('#task-list .task-actions button:last-child').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-events-panel').hidden===false "+
+    "&& document.querySelectorAll('#task-events-list .task-event').length===2"),
+    "Wave 18 two immutable task history events displayed");
+  await client.screenshot("17-manager-tasks-desktop.png");
+
   // Use a genuine touch-enabled device viewport and reload so Chromium
   // recomputes meta viewport and responsive layout from navigation start.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -688,6 +728,15 @@ async function run(){
     console.error("OSGARD_MOBILE_LAYOUT_OFFENDERS "+offending);
   }
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
+  await client.eval("document.querySelector('[data-panel=tasks]').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#tasks').classList.contains('active') "+
+    "&& document.querySelector('#task-list').textContent.includes('Поручение из Chromium')"),
+    "Wave 18 mobile 390px task board populated");
+  const taskOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(taskOverflow390<=2,"390px task board horizontal overflow: "+taskOverflow390);
+  await client.screenshot("18-mobile-390-tasks.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -727,11 +776,20 @@ async function run(){
     console.error("OSGARD_320_LAYOUT_OFFENDERS "+offenders);
   }
   assert.ok(overflow320<=2,"320px mobile horizontal overflow: "+overflow320);
+  await client.eval("document.querySelector('[data-panel=tasks]').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#tasks').classList.contains('active') "+
+    "&& document.querySelector('#task-list').textContent.includes('Поручение из Chromium')"),
+    "Wave 18 mobile 320px task board populated");
+  const taskOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(taskOverflow320<=2,"320px task board horizontal overflow: "+taskOverflow320);
+  await client.screenshot("19-mobile-320-tasks.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","mobile-390","mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:16,public_server_started:false,production_deployed:false};
+    screenshots:19,public_server_started:false,production_deployed:false};
 }
 
 try{

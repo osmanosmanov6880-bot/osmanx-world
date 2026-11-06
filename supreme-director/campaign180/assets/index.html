@@ -18,6 +18,7 @@
   <nav class="nav" aria-label="Разделы">
     <button type="button" class="nav-link is-active" data-panel="dashboard"><span class="nav-icon">◈</span> Обзор</button>
     <button type="button" class="nav-link" data-panel="pages"><span class="nav-icon">▣</span> Страницы</button>
+    <button type="button" class="nav-link" data-panel="tasks" id="tasks-nav" hidden><span class="nav-icon">◴</span> Задачи</button>
     <button type="button" class="nav-link" data-panel="records"><span class="nav-icon">▤</span> Данные</button>
     <button type="button" class="nav-link" data-panel="schema"><span class="nav-icon">⬡</span> Модели и формы</button>
     <button type="button" class="nav-link" data-panel="history"><span class="nav-icon">◷</span> Версии и откат</button>
@@ -45,10 +46,82 @@
         <article class="kpi"><span>WORKFLOWS</span><strong id="metric-workflows">—</strong><small>Локальные правила</small></article>
         <article class="kpi"><span>РЕВИЗИЯ</span><strong id="metric-version">—</strong><small>Контроль изменений</small></article>
       </div>
+      <div class="kpi-grid team-kpi-grid" id="team-kpis" hidden>
+        <article class="kpi"><span>ЗАДАЧИ В РАБОТЕ</span><strong id="metric-tasks-open">—</strong><small>Из локальной базы</small></article>
+        <article class="kpi"><span>ПРОСРОЧЕНЫ</span><strong id="metric-tasks-overdue">—</strong><small>Не завершены к сроку</small></article>
+        <article class="kpi"><span>ЗАБЛОКИРОВАНЫ</span><strong id="metric-tasks-blocked">—</strong><small>Требуют решения</small></article>
+        <article class="kpi"><span>ВЫПОЛНЕНЫ</span><strong id="metric-tasks-done">—</strong><small>Закрытые поручения</small></article>
+      </div>
       <div class="dashboard-layout">
         <article class="card"><p class="overline">АРХИТЕКТУРА</p><h2 id="project-name">Проект не загружен</h2><p class="muted" id="project-description">Подключись, чтобы увидеть состояние.</p><div class="divider"></div><p class="mini-label">Гарантии текущего окружения</p><div class="feature-row"><span class="success-dot"></span> SQLite с историей ревизий</div><div class="feature-row"><span class="success-dot"></span> Проверки прав в транзакциях</div><div class="feature-row"><span class="success-dot"></span> Детерминированное статическое превью</div><div class="feature-row"><span class="warning-dot"></span> Публичный деплой отключён</div></article>
         <article class="card diagram"><p class="overline">ПУТЬ ПРИЛОЖЕНИЯ</p><div class="stage">01 · СПЕЦИФИКАЦИЯ<span>JSON / схема</span></div><div class="stage-line"></div><div class="stage">02 · СТРАНИЦЫ И ДАННЫЕ<span>Версии / SQLite</span></div><div class="stage-line"></div><div class="stage">03 · ПРАВИЛА И ДОСТУП<span>RBAC / идемпотентность</span></div><div class="stage-line"></div><div class="stage dim">04 · ПУБЛИКАЦИЯ<span>Не подключена</span></div></article>
       </div>
+    </section>
+    <section id="tasks" class="panel">
+      <div class="page-heading">
+        <div><p class="overline">КОМАНДА / ЗАДАЧИ / SQLITE</p>
+          <h1>Задачи и исполнители</h1>
+          <p class="muted">Поручения, сроки, статусы и журнал. Исполнитель видит только свои задачи.</p>
+        </div><span class="pill">LOCAL ONLY</span>
+      </div>
+      <div class="task-summary-grid">
+        <article class="kpi"><span>ВСЕГО</span><strong id="tasks-total">—</strong><small>Под доступной ролью</small></article>
+        <article class="kpi"><span>В РАБОТЕ</span><strong id="tasks-progress">—</strong><small>Активные поручения</small></article>
+        <article class="kpi"><span>ПРОСРОЧЕНЫ</span><strong id="tasks-overdue">—</strong><small>По дате UTC</small></article>
+        <article class="kpi"><span>ВЫПОЛНЕНЫ</span><strong id="tasks-done">—</strong><small>Закрытые задачи</small></article>
+      </div>
+      <div class="task-workspace">
+        <form id="task-form" class="card" hidden>
+          <div class="record-operations-header">
+            <div><p class="overline">НАЗНАЧЕНИЕ / РЕДАКТИРОВАНИЕ</p><h2 id="task-form-title">Новая задача</h2></div>
+            <button id="task-reset" type="button" class="ghost">Сбросить</button>
+          </div>
+          <label for="task-title">Название задачи</label>
+          <input id="task-title" required maxlength="140" placeholder="Что необходимо сделать">
+          <label for="task-description">Описание и критерий выполнения</label>
+          <textarea id="task-description" rows="3" maxlength="1200" placeholder="Конкретный результат работы"></textarea>
+          <div class="task-input-grid">
+            <div><label for="task-assignee">Исполнитель</label>
+              <select id="task-assignee"><option value="">Не назначено</option></select></div>
+            <div><label for="task-priority">Приоритет</label>
+              <select id="task-priority">
+                <option value="normal">Обычный</option><option value="low">Низкий</option>
+                <option value="high">Высокий</option><option value="urgent">Критический</option>
+              </select></div>
+            <div><label for="task-due">Срок</label><input id="task-due" type="date" min="2000-01-01" max="2100-12-31"></div>
+          </div>
+          <button type="submit" id="task-save" class="primary">Сохранить в SQLite</button>
+          <p class="hint">Изменения требуют проверки версии. Управлять назначениями могут владелец и редактор.</p>
+        </form>
+        <article class="card">
+          <div class="record-operations-header">
+            <div><p class="overline">РЕАЛЬНЫЕ ЗАПИСИ</p><h2>Реестр поручений</h2></div>
+            <button id="task-refresh" class="ghost" type="button">Обновить</button>
+          </div>
+          <div class="task-filters">
+            <label for="task-status-filter">Статус</label>
+            <select id="task-status-filter">
+              <option value="">Все</option><option value="todo">Ожидает</option>
+              <option value="in_progress">В работе</option><option value="blocked">Заблокирована</option>
+              <option value="done">Выполнена</option>
+            </select>
+          </div>
+          <p id="task-count" class="hint" role="status" aria-live="polite"></p>
+          <div id="task-list" class="task-list" aria-live="polite"></div>
+          <div class="record-page-toolbar">
+            <button id="task-prev" class="ghost" type="button" disabled>← Назад</button>
+            <button id="task-next" class="ghost" type="button" disabled>Далее →</button>
+          </div>
+        </article>
+      </div>
+      <article id="task-events-panel" class="card task-events" hidden>
+        <div class="record-operations-header">
+          <div><p class="overline">НЕИЗМЕНЯЕМЫЙ ЖУРНАЛ</p><h2>История задачи</h2></div>
+          <button id="task-events-close" type="button" class="ghost">Закрыть</button>
+        </div>
+        <p class="hint">История показывает действия и версии, но не раскрывает прежние значения клиентских полей.</p>
+        <div id="task-events-list"></div>
+      </article>
     </section>
     <section id="pages" class="panel">
       <div class="page-heading"><div><p class="overline">РЕДАКТОР / NO-AI</p><h1>Страницы и содержимое</h1><p class="muted">Меняй заголовки и текст. Каждая правка создаёт новую ревизию.</p></div><span id="editor-revision" class="pill">Версия —</span></div>

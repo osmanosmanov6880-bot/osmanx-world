@@ -17,11 +17,13 @@ from .drafts import DraftDenied,LocalDraftStore,_identity
 
 PERMISSIONS={
     "owner":frozenset(("spec.read","spec.write","record.read","record.write",
-        "workflow.read","workflow.manage","workflow.run","preview.read","members.manage")),
+        "workflow.read","workflow.manage","workflow.run","preview.read","members.manage",
+        "task.read","task.manage","task.progress")),
     "editor":frozenset(("spec.read","spec.write","record.read","record.write",
-        "workflow.read","workflow.manage","workflow.run","preview.read")),
+        "workflow.read","workflow.manage","workflow.run","preview.read",
+        "task.read","task.manage","task.progress")),
     "operator":frozenset(("spec.read","record.read","record.write",
-        "workflow.read","workflow.run","preview.read")),
+        "workflow.read","workflow.run","preview.read","task.read","task.progress")),
     "viewer":frozenset(("spec.read","record.read","workflow.read","preview.read")),
 }
 CAPABILITIES=frozenset().union(*PERMISSIONS.values())

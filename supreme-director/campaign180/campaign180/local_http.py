@@ -192,6 +192,42 @@ class LocalConsole:
         if method=="GET" and path=="/api/v1/spec":
             out=runtime.get_spec(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
+        if method=="GET" and path=="/api/v1/tasks/members":
+            out=runtime.task_members(tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="GET" and path=="/api/v1/tasks/summary":
+            out=runtime.team_task_summary(tenant=tid,project_id=project,
+                                          actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/tasks/query":
+            data=self._body(environ)
+            self._fields(data,{"limit","offset","status"},set())
+            out=runtime.query_team_tasks(tenant=tid,project_id=project,
+                                         actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/tasks":
+            data=self._body(environ)
+            self._fields(data,{"title","description","assignee","due_date",
+                               "priority","idempotency_key"},
+                         {"title","idempotency_key"})
+            out=runtime.create_team_task(tenant=tid,project_id=project,
+                                         actor=actor,**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/tasks/("+_UUID.pattern[1:-1]+r")/history",path)
+        if method=="POST" and match:
+            data=self._body(environ)
+            self._fields(data,{"limit"},set())
+            out=runtime.team_task_history(tenant=tid,project_id=project,
+                                          actor=actor,task_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/tasks/("+_UUID.pattern[1:-1]+r")",path)
+        if method=="PATCH" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_version","changes","idempotency_key"},
+                         {"expected_version","changes","idempotency_key"})
+            out=runtime.update_team_task(tenant=tid,project_id=project,
+                                         actor=actor,task_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/forms/("+_SLUG.pattern[1:-1]+r")/submit",path)
         if method=="POST" and match:
             data=self._body(environ)
