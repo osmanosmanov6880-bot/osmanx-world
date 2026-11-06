@@ -115,9 +115,10 @@ class LocalModelEditor:
     def add_field(self,*,tenant:str,project_id:str,actor:str,
                   expected_revision:int,model:str,field:dict,
                   default_provided:bool=False,default_value:Any=None)->dict:
-        """Optional append is metadata-only; provided defaults rewrite <=500 rows.
+        """Optional append is metadata-only; provided defaults rewrite <=500 rows
+        INCLUDING deleted tombstones, preserving their archived state.
 
-        To add required fields to existing records a valid default is required.
+        To add required fields to any persisted record a valid default is required.
         New references may be optional but can never be populated with a
         cross-model default by this operation.
         """
@@ -141,8 +142,10 @@ class LocalModelEditor:
                 if typed_field["type"]=="reference" and default_value is not None:
                     raise ModelMigrationDenied("Reference defaults require explicit individual relation checks")
                 validate_row({"fields":[typed_field]}, {name:default_value})
-            rows=db.execute("""SELECT row_id FROM builder_rows WHERE tenant=?
-                AND project_id=? AND model=? AND deleted=0 ORDER BY row_id LIMIT ?""",
+            # Tombstones must be included: recovery exports validate archived
+            # records against the CURRENT schema as well as active records.
+            rows=db.execute("""SELECT row_id,deleted FROM builder_rows WHERE tenant=?
+                AND project_id=? AND model=? ORDER BY row_id LIMIT ?""",
                 (tenant,project_id,model,MAX_ROWS_MIGRATED+1)).fetchall()
             if len(rows)>MAX_ROWS_MIGRATED:
                 raise ModelMigrationDenied("Online migration exceeds local row budget")
@@ -152,16 +155,18 @@ class LocalModelEditor:
             if default_provided:
                 for old in rows:
                     original,header=self.runtime.records._row(
-                        db,tenant,project_id,model,old["row_id"])
+                        db,tenant,project_id,model,old["row_id"],
+                        deleted_allowed=True)
                     migrated={**original,name:default_value}
                     verified=validate_row(new_model,migrated)
                     digest_after=digest(verified)
                     updated=db.execute("""UPDATE builder_rows SET data_json=?,
                         content_digest=?,version=version+1
                         WHERE tenant=? AND project_id=? AND model=? AND row_id=?
-                        AND version=? AND deleted=0""",
+                        AND version=? AND deleted=?""",
                         (canonical(verified).decode("utf-8"),digest_after,
-                         tenant,project_id,model,old["row_id"],header["version"])).rowcount
+                         tenant,project_id,model,old["row_id"],header["version"],
+                         old["deleted"])).rowcount
                     if updated!=1:
                         raise ModelMigrationDenied("Concurrent record migration rejected")
                     changed_rows+=1
