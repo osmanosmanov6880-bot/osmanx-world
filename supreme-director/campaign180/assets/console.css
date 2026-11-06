@@ -63,3 +63,5 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
 @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.dashboard-layout{grid-template-columns:1fr}}
 @media(max-width:800px){.shell{display:block}.sidebar{width:100%;min-height:0;padding:14px;border-bottom:1px solid #273348}.brand{padding:0 8px 10px}.workspace-label,.sidebar-bottom{display:none}.nav{display:flex;overflow-x:auto}.nav-link{min-width:max-content;padding:9px;font-size:11px}.topbar{height:58px;padding:0 18px}.mark-local{display:none}main{padding:25px 16px}.connect,.editor-grid,.record-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.page-heading{display:block}.page-heading>.pill,.page-heading>.status-ring{display:inline-block;margin-top:12px}.kpi-grid{gap:9px}.kpi{padding:17px}.card{padding:21px}.fields{grid-template-columns:1fr}.input-line{flex-direction:column}.preview-tools{margin-top:18px}.topbar-meta{gap:6px}}
+
+.structure-tools{border-top:1px solid #2c405d;margin-top:20px;padding-top:2px}.structure-toolbar{display:flex;gap:8px;margin-top:12px}.structure-toolbar button{flex:1}.structure-tools .danger.full{margin-top:11px}

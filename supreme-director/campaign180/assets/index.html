@@ -51,7 +51,20 @@
     <section id="pages" class="panel">
       <div class="page-heading"><div><p class="overline">РЕДАКТОР / NO-AI</p><h1>Страницы и содержимое</h1><p class="muted">Меняй заголовки и текст. Каждая правка создаёт новую ревизию.</p></div><span id="editor-revision" class="pill">Версия —</span></div>
       <div class="editor-grid">
-        <div class="card"><h2>Структура</h2><label for="page-select">Страница</label><select id="page-select"></select><label for="section-select">Секция</label><select id="section-select"></select><p class="hint">Выбирай раздел, чтобы редактировать его содержимое.</p><div id="section-count" class="small-stat">—</div></div>
+        <div class="card"><h2>Структура</h2><label for="page-select">Страница</label><select id="page-select"></select><label for="section-select">Секция</label><select id="section-select"></select><p class="hint">Выбирай раздел, чтобы редактировать его содержимое.</p><div id="section-count" class="small-stat">—</div>
+        <div class="structure-tools">
+          <label for="new-section-type">Добавить раздел</label>
+          <select id="new-section-type">
+            <option value="text">Текст</option><option value="hero">Обложка</option>
+            <option value="features">Преимущества</option><option value="stats">Показатели</option>
+          </select>
+          <button type="button" class="ghost full" id="add-section">+ Добавить после выбранного</button>
+          <div class="structure-toolbar">
+            <button type="button" class="ghost" id="move-section-up" aria-label="Переместить раздел вверх">↑ Выше</button>
+            <button type="button" class="ghost" id="move-section-down" aria-label="Переместить раздел вниз">↓ Ниже</button>
+          </div>
+          <button type="button" class="danger full" id="remove-section">Удалить раздел</button>
+        </div></div>
         <form id="page-form" class="card"><h2>Свойства</h2><label for="page-title">Название страницы</label><input id="page-title" required maxlength="100"><label for="section-heading">Заголовок секции</label><input id="section-heading" required maxlength="140"><label for="section-text">Основной текст</label><textarea id="section-text" rows="5" maxlength="1600"></textarea><div class="editor-actions"><button class="primary" id="save-page" type="submit">Сохранить версию</button><span class="hint">Сохраняется в локальную SQLite</span></div></form>
       </div>
     </section>

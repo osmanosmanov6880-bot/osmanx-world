@@ -19,6 +19,7 @@ from .contracts import canonical,digest
 from .drafts import LocalDraftStore,_identity,DraftDenied
 from .records import LocalRecordStore,RecordDenied
 from .automatic import apply_record_event
+from .structure import mutate_structure
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -109,6 +110,14 @@ class LocalAppRuntime:
                 VALUES(?,?,?,?,?)""",(tenant,project_id,version,h,canonical_json))
             return {"revision":version,"changed":True,"sha256":h,
                     "production_published":False}
+
+    def edit_structure(self,*,tenant:str,project_id:str,actor:str,slug:str,
+                       expected_revision:int,operation:str,index:int,
+                       section:dict|None=None,target_index:int|None=None)->dict:
+        return mutate_structure(self,tenant=tenant,project_id=project_id,actor=actor,
+                                slug=slug,expected_revision=expected_revision,
+                                operation=operation,index=index,section=section,
+                                target_index=target_index)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:

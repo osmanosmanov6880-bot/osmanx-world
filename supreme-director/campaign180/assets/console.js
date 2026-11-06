@@ -66,6 +66,10 @@ async function sync(){
   $("project-name").textContent=result.spec.title;
   $("project-description").textContent=result.spec.description||"Без описания";
   $("save-page").disabled=!can("spec.write");
+  for(const id of ["add-section","move-section-up","move-section-down","remove-section"]){
+    $(id).disabled=!can("spec.write");
+  }
+
   $("save-row").disabled=!can("record.write");
   $("delete-row").disabled=!can("record.write");
   $("wf-create").disabled=!can("workflow.manage");
@@ -104,6 +108,52 @@ function sectionChanged(){
   $("section-heading").disabled=!can("spec.write");
   $("page-title").disabled=!can("spec.write");
 }
+function sectionTemplate(type){
+  if(type==="text")return {type:"text",heading:"Новый текстовый раздел",text:"Добавьте описание раздела."};
+  if(type==="hero")return {type:"hero",heading:"Новая обложка",text:"Опишите ключевую идею."};
+  if(type==="features")return {type:"features",heading:"Новые преимущества",items:["Первое преимущество"]};
+  if(type==="stats")return {type:"stats",heading:"Новые показатели",items:[{label:"Показатель",value:"—"}]};
+  throw Error("Неизвестный тип раздела");
+}
+async function modifyStructure(operation,targetIndex=null){
+  if(!can("spec.write"))throw Error("Недостаточно прав для изменения структуры");
+  const slug=$("page-select").value;
+  const page=state.spec.pages.find(p=>p.slug===slug);
+  const index=Number($("section-select").value);
+  const params={expected_revision:state.revision,operation,index};
+  if(operation==="add"){
+    params.index=index+1;
+    params.section=sectionTemplate($("new-section-type").value);
+  }
+  if(operation==="move"){
+    params.target_index=targetIndex;
+  }
+  const out=await api("/api/v1/pages/"+slug+"/structure",{method:"POST",body:params});
+  await sync();
+  $("page-select").value=slug;
+  pageChanged();
+  $("section-select").value=String(Math.min(
+    operation==="add"?index+1:operation==="remove"?Math.max(index-1,0):
+    operation==="move"?targetIndex:index,
+    state.spec.pages.find(p=>p.slug===slug).sections.length-1));
+  sectionChanged();
+  show("Структура обновлена · ревизия "+out.revision);
+}
+$("add-section").addEventListener("click",()=>modifyStructure("add").catch(e=>show(e.message,true)));
+$("move-section-up").addEventListener("click",()=>{
+  const i=Number($("section-select").value);
+  if(i>0)modifyStructure("move",i-1).catch(e=>show(e.message,true));
+});
+$("move-section-down").addEventListener("click",()=>{
+  const page=state.spec.pages.find(p=>p.slug===$("page-select").value);
+  const i=Number($("section-select").value);
+  if(i<page.sections.length-1)modifyStructure("move",i+1).catch(e=>show(e.message,true));
+});
+$("remove-section").addEventListener("click",()=>{
+  if(confirm("Удалить выбранный раздел? История версий сохранится.")){
+    modifyStructure("remove").catch(e=>show(e.message,true));
+  }
+});
 $("page-select").addEventListener("change",pageChanged);
 $("section-select").addEventListener("change",sectionChanged);
 $("page-form").addEventListener("submit",async ev=>{
@@ -261,6 +311,7 @@ function renderWorkflows(){
     card.append(node("strong",w.rule.name));
     card.append(node("small",w.rule.model+" · "+w.rule.trigger+(w.enabled?" · активно":" · выключено")));
     if(w.enabled){
+      if(w.rule.trigger==="manual"){
       const run=node("button","Запустить","ghost");
       run.type="button";run.disabled=!can("workflow.run");
       run.addEventListener("click",async()=>{
@@ -273,6 +324,9 @@ function renderWorkflows(){
           if(state.model===w.rule.model)await refreshRows();
         }catch(e){show(e.message,true);}
       });card.append(run);
+      }else{
+        card.append(node("small","Автоматически при событии. Ручной запуск запрещён."));
+      }
       const disable=node("button","Отключить","danger");
       disable.type="button";disable.disabled=!can("workflow.manage");
       disable.addEventListener("click",async()=>{

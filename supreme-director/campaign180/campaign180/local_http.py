@@ -201,6 +201,15 @@ class LocalConsole:
                 out=runtime.disable_workflow(tenant=tid,project_id=project,
                     actor=actor,workflow_id=workflow_id,**data)
             return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/pages/("+_SLUG.pattern[1:-1]+r")/structure",path)
+        if method=="POST" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","operation","index",
+                               "section","target_index"},
+                         {"expected_revision","operation","index"})
+            out=runtime.edit_structure(tenant=tid,project_id=project,actor=actor,
+                                       slug=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/pages/("+_SLUG.pattern[1:-1]+r")",path)
         if method=="PATCH" and match:
             data=self._body(environ)
