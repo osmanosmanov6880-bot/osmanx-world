@@ -71,6 +71,19 @@
         </div></div>
         <form id="page-form" class="card"><h2>Свойства</h2><label for="page-title">Название страницы</label><input id="page-title" required maxlength="100"><label for="section-heading">Заголовок секции</label><input id="section-heading" required maxlength="140"><label for="section-text">Основной текст</label><textarea id="section-text" rows="5" maxlength="1600"></textarea><div class="editor-actions"><button class="primary" id="save-page" type="submit">Сохранить версию</button><span class="hint">Сохраняется в локальную SQLite</span></div></form>
       </div>
+      <form id="form-editor" class="card form-properties" hidden>
+        <div class="form-properties-heading"><div><p class="overline">МОДЕЛЬ / ФОРМА</p><h2>Настройка формы</h2>
+          <p class="hint">Выбери поля и их порядок. Отправка из статического предпросмотра отключена.</p></div>
+          <span class="pill">Без публикации</span></div>
+        <div class="form-config-row">
+          <div><label for="edit-form-heading">Заголовок формы</label><input id="edit-form-heading" required maxlength="140"></div>
+          <div><label for="edit-form-button">Текст кнопки</label><input id="edit-form-button" required maxlength="80"></div>
+          <div><label for="edit-form-model">Модель данных</label><select id="edit-form-model"></select></div>
+        </div>
+        <label>Отображаемые поля (стрелки меняют порядок)</label>
+        <div id="edit-form-fields" class="form-field-editor"></div>
+        <button type="submit" class="primary top-gap" id="save-form">Сохранить настройки формы</button>
+      </form>
     </section>
     <section id="records" class="panel">
       <div class="page-heading"><div><p class="overline">МОДЕЛИ / СВЯЗИ</p><h1>Данные приложения</h1><p class="muted">Собственные записи, связи и версии. Доступ ограничен ролью.</p></div></div>
@@ -117,6 +130,16 @@
         </form>
       </div>
       <div class="schema-grid lower">
+      <form id="schema-rename-form" class="card">
+        <h2>Переименовать поле без потери данных</h2>
+        <p class="hint">Возможна миграция до 500 сохранённых записей. Поля-связи и поля, используемые в workflows, не переименовываются без отдельной проверки.</p>
+        <label for="schema-rename-model">Модель</label><select id="schema-rename-model"></select>
+        <label for="schema-rename-source">Поле</label><select id="schema-rename-source"></select>
+        <label for="schema-rename-target">Новое системное имя</label>
+        <input id="schema-rename-target" pattern="[a-z][a-z0-9_]*" maxlength="32" required placeholder="customer_level">
+        <label class="checkbox-row" for="schema-rename-approve"><input type="checkbox" id="schema-rename-approve" required> Проверил изменения и понимаю, что изменятся существующие записи.</label>
+        <button type="submit" id="schema-rename-submit" class="primary top-gap">Мигрировать название поля</button>
+      </form>
         <form id="schema-label-form" class="card">
           <h2>Названия модели и полей</h2>
           <label for="schema-label-target">Что переименовать</label>

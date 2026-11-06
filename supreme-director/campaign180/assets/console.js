@@ -71,7 +71,7 @@ async function sync(){
     $(id).disabled=!can("spec.write");
   }
 
-  for(const id of ["schema-create-model","schema-add-field","schema-save-label"]){
+  for(const id of ["schema-create-model","schema-add-field","schema-save-label","schema-rename-submit"]){
     $(id).disabled=!can("spec.write")||!can("record.write");
   }
   $("save-row").disabled=!can("record.write");
@@ -110,8 +110,77 @@ function sectionChanged(){
   $("section-text").value=section.text||"";
   $("section-text").disabled=!Object.hasOwn(section,"text") || !can("spec.write");
   $("section-heading").disabled=!can("spec.write");
+  renderFormProperties(section);
   $("page-title").disabled=!can("spec.write");
 }
+function renderFormProperties(section){
+  const root=$("form-editor");
+  const isForm=section.type==="form";
+  root.hidden=!isForm;
+  if(!isForm)return;
+  $("edit-form-heading").value=section.heading;
+  $("edit-form-button").value=section.button_label||"Сохранить";
+  pick($("edit-form-model"),state.spec.models.map(m=>[m.name,m.label]));
+  $("edit-form-model").value=section.model;
+  $("edit-form-heading").disabled=!can("spec.write");
+  $("edit-form-button").disabled=!can("spec.write");
+  $("edit-form-model").disabled=!can("spec.write");
+  $("save-form").disabled=!can("spec.write");
+  fillFormFields(section.fields||null);
+}
+function fillFormFields(original){
+  const chosen=$("edit-form-model").value;
+  const model=state.spec.models.find(m=>m.name===chosen);
+  const root=$("edit-form-fields");
+  root.replaceChildren();
+  if(!model)return;
+  const names=original===null?model.fields.map(f=>f.name):original;
+  const ordered=[...names.filter(n=>model.fields.some(f=>f.name===n)),
+    ...model.fields.filter(f=>!names.includes(f.name)).map(f=>f.name)];
+  for(const name of ordered){
+    const field=model.fields.find(f=>f.name===name);
+    const item=node("div",null,"form-field-row");
+    item.dataset.name=name;
+    const label=node("label",null,"form-field-label");
+    const check=node("input");
+    check.type="checkbox";check.checked=names.includes(name);
+    check.disabled=!can("spec.write");
+    label.append(check,node("span",field.label+" · "+field.type));
+    const up=node("button","↑","ghost");
+    up.type="button";up.title="Выше";up.disabled=!can("spec.write");
+    up.addEventListener("click",()=>{
+      if(item.previousElementSibling)root.insertBefore(item,item.previousElementSibling);
+    });
+    const down=node("button","↓","ghost");
+    down.type="button";down.title="Ниже";down.disabled=!can("spec.write");
+    down.addEventListener("click",()=>{
+      if(item.nextElementSibling)root.insertBefore(item.nextElementSibling,item);
+    });
+    item.append(label,up,down);
+    root.append(item);
+  }
+}
+$("edit-form-model").addEventListener("change",()=>fillFormFields(null));
+$("form-editor").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    if(!can("spec.write"))throw Error("Нет прав на изменение формы");
+    const fields=[...$("edit-form-fields").children]
+      .filter(item=>item.querySelector("input[type=checkbox]").checked)
+      .map(item=>item.dataset.name);
+    if(!fields.length)throw Error("Выбери хотя бы одно поле для формы");
+    const page=$("page-select").value;
+    const index=Number($("section-select").value);
+    const result=await api("/api/v1/pages/"+page+"/form",{method:"PATCH",
+      body:{expected_revision:state.revision,section_index:index,
+        model:$("edit-form-model").value,heading:$("edit-form-heading").value,
+        button_label:$("edit-form-button").value,fields}});
+    await sync();
+    $("page-select").value=page;pageChanged();
+    $("section-select").value=String(index);sectionChanged();
+    show("Настройки формы сохранены · ревизия "+result.revision);
+  }catch(err){show(err.message,true);}
+});
 function sectionTemplate(type){
   if(type==="text")return {type:"text",heading:"Новый текстовый раздел",text:"Добавьте описание раздела."};
   if(type==="hero")return {type:"hero",heading:"Новая обложка",text:"Опишите ключевую идею."};
@@ -121,7 +190,7 @@ function sectionTemplate(type){
     const m=state.spec.models.find(m=>m.name===$("form-model-select").value);
     if(!m)throw Error("Сначала создай модель для формы");
     return {type:"form",heading:"Форма: "+m.label,model:m.name,
-            button_label:"Сохранить"};
+            button_label:"Сохранить",fields:m.fields.map(f=>f.name)};
   }
   throw Error("Неизвестный тип раздела");
 }
@@ -187,6 +256,8 @@ function renderSchema(){
   pick($("schema-select-model"),options);
   pick($("schema-reference-model"),options);
   pick($("form-model-select"),options);
+  pick($("schema-rename-model"),options);
+  populateRenameFields();
   const labels=[];
   for(const m of models){
     labels.push(["model:"+m.name,"Модель · "+m.label]);
@@ -197,6 +268,30 @@ function renderSchema(){
   updateSchemaFieldType();
   updateNewSectionFormType();
 }
+function populateRenameFields(){
+  const model=state.spec?.models.find(m=>m.name===$("schema-rename-model").value);
+  pick($("schema-rename-source"),model
+    ?model.fields.filter(f=>f.type!=="reference").map(f=>[f.name,f.label]):[]);
+}
+$("schema-rename-model").addEventListener("change",populateRenameFields);
+$("schema-rename-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    if(!can("spec.write")||!can("record.write"))throw Error("Недостаточно прав на миграцию");
+    if(!$("schema-rename-approve").checked)throw Error("Подтверди проверку миграции");
+    const model=$("schema-rename-model").value;
+    const response=await api("/api/v1/schema/models/"+model+"/rename-field",{
+      method:"POST",body:{expected_revision:state.revision,
+        old_name:$("schema-rename-source").value,
+        new_name:$("schema-rename-target").value.trim()}});
+    await sync();
+    $("schema-rename-target").value="";
+    $("schema-rename-approve").checked=false;
+    await refreshMigrationHistory();
+    show("Поле переименовано · ревизия "+response.revision+
+         " · перенесено записей "+response.rows_migrated);
+  }catch(err){show(err.message,true);}
+});
 function updateSchemaFieldType(){
   const isRef=$("schema-field-type").value==="reference";
   $("schema-reference-model").disabled=!isRef;
