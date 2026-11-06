@@ -36,3 +36,10 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Machine-readable 180-task audit](data/CURRENT_AUDIT_180.json).
 - New local code: deterministic signed source packaging (`repro.py`), hash-locked offline dependency preflight (`offline_deps.py`), transactional authorization gateway (`gateway.py`), and versioned workflow ledger (`workflow.py`).
 - Scope caveat: not proof of upstream integration, externally authenticated execution, or release authorization.
+
+## Wave 2 current register (2026-11-06)
+
+- [Current 180-task status](docs/CURRENT_AUDIT_180_RU.md) and [machine record](data/CURRENT_AUDIT_180.json): 25 locally related, 147 without direct proof, eight holds, 0 independently accepted.
+- [Resource scheduling and recovery](docs/WAVE2_CAPACITY_RECOVERY.md) (TITAN-X14/X15/X28).
+- [Static patch and supply-chain security](docs/WAVE2_PATCH_SUPPLYCHAIN.md) (TITAN-X18/X26).
+- The original five product upstream assumptions are **not** upgraded by this proof: 0/6 canonical team upstreams owner-approved.

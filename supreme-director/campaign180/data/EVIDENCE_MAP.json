@@ -39,13 +39,16 @@
       "supreme-director/campaign180/campaign180/gateway.py"
     ],
     "TITAN-X18": [
-      "supreme-director/m190/verify_source.py"
+      "supreme-director/m190/verify_source.py",
+      "supreme-director/campaign180/campaign180/review.py"
     ],
     "TITAN-X27": [
       "supreme-director/m206/osgard_m206/runtime.py"
     ],
     "TITAN-X28": [
-      "supreme-director/m191/recovery.py"
+      "supreme-director/m191/recovery.py",
+      "supreme-director/campaign180/campaign180/backup.py",
+      "supreme-director/campaign180/tests/test_scheduler_backup.py"
     ],
     "COMMERCE-X04": [
       "supreme-director/m192/osgard_m192/runtime.py"
@@ -78,6 +81,18 @@
     ],
     "TITAN-X16": [
       "supreme-director/campaign180/campaign180/workflow.py"
+    ],
+    "TITAN-X14": [
+      "supreme-director/campaign180/campaign180/scheduler.py",
+      "supreme-director/campaign180/tests/test_scheduler_backup.py"
+    ],
+    "TITAN-X15": [
+      "supreme-director/campaign180/campaign180/scheduler.py",
+      "supreme-director/campaign180/tests/test_scheduler_backup.py"
+    ],
+    "TITAN-X26": [
+      "supreme-director/campaign180/campaign180/supplychain.py",
+      "supreme-director/campaign180/tests/test_review_supplychain.py"
     ]
   }
 }

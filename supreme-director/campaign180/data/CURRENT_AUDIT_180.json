@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "7b68fcf9a40acdde1d24795f347e3a511afbef74",
+  "based_on_code_commit": "d3380ef7fe95be7ff65e139c5bfb8607982009c9",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -8,8 +8,8 @@
   "independently_accepted": 0,
   "production_accepted": 0,
   "counts": {
-    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 22,
-    "NO_DIRECT_PROOF": 150,
+    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 25,
+    "NO_DIRECT_PROOF": 147,
     "HOLD_SCOPE_EXCLUDED": 4,
     "HOLD_SOURCE_MISSING": 4
   },
@@ -225,8 +225,11 @@
       "title": "Многопроцессный и многосерверный scheduler",
       "original_status": "PLANNED",
       "original_source_line": 201,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/scheduler.py",
+        "supreme-director/campaign180/tests/test_scheduler_backup.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -238,8 +241,11 @@
       "title": "Планирование ресурсов и admission control",
       "original_status": "PLANNED",
       "original_source_line": 214,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/scheduler.py",
+        "supreme-director/campaign180/tests/test_scheduler_backup.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -280,7 +286,8 @@
       "original_status": "PLANNED",
       "original_source_line": 253,
       "related_local_paths": [
-        "supreme-director/m190/verify_source.py"
+        "supreme-director/m190/verify_source.py",
+        "supreme-director/campaign180/campaign180/review.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -385,8 +392,11 @@
       "title": "CI/CD, dependency и secrets scanning",
       "original_status": "PLANNED",
       "original_source_line": 357,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/supplychain.py",
+        "supreme-director/campaign180/tests/test_review_supplychain.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -414,7 +424,9 @@
       "original_status": "PLANNED",
       "original_source_line": 383,
       "related_local_paths": [
-        "supreme-director/m191/recovery.py"
+        "supreme-director/m191/recovery.py",
+        "supreme-director/campaign180/campaign180/backup.py",
+        "supreme-director/campaign180/tests/test_scheduler_backup.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2411,5 +2423,7 @@
       "production_accepted": false,
       "independently_accepted": false
     }
-  ]
+  ],
+  "last_local_campaign": "Wave 2 scheduling, review, supply-chain and restoration tests",
+  "notes": "25 original tasks have only related local code; none has passed original upstream integration and independent product acceptance."
 }
