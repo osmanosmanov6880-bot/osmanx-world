@@ -1,22 +1,27 @@
-# Аудит исходных 180 задач — Wave 8
+# OSGARD SUPREME DIRECTOR — актуальная сверка 180 исходных задач
 
-Обновлено: 6 ноября 2026. Снимок кода: `30099046ccdc67ca222371dc98bd8d03c5b9010a`.
-Оригинальный исходный план и его происхождение не изменены.
+Обновлено: 6 ноября 2026. Снимок кода `b643c2b4bd3b0a74836e1a8c44345aa388535e7c`.
+Исходный план и исторический `INITIAL_AUDIT_180_RU.md` не менялись.
 
-**33 задачи** имеют ссылку на связанный локальный код (это не выполнение
-исходного критерия), **139** без прямого доказательства, **4** SkillCred
-исключены из scope, **4** Noor удержаны из-за отсутствующих исходников.
-**0/180 независимо принято.**
+**33 исходных ID с локальным кодом (не приняты), 139 без прямых доказательств,
+4 SkillCred исключены из объёма, 4 Noor заблокированы без исходников.
+0/180 независимо принято.**
 
-Новые локальные работы: `forms.py` (управление конфигурацией формы), 
-`app_runtime.py` (проверяемые варианты связей), `model_editor.py`
-(атомарная миграция переименования), браузерное редактирование и негативные
-тесты. Подробнее: [Wave 8](WAVE8_FORMS_RELATIONS_MIGRATIONS_RU.md).
+## Новая работа Wave 9
 
-GitHub CI Wave 8 проверяется отдельно. Защищённый Draft PR #7 не сливается,
-в main и production изменений не вносилось.
+- TITAN-X21/X23/X24 — безопасные SQLite-миграции имён полей-связей вместе с
+  фактическими индексами, и ограниченное переназначение цели только для пустых связей.
+- TITAN-X20/X24 — inspect-first восстановление старых страниц с новым номером
+  ревизии, без модификации сохранённых записей.
+- TITAN-X22/X25 — локальный токенный API, русский интерфейс с обязательным
+  подтверждением и реальные Chromium-сценарии. Статус CI отдельно.
 
-## Все 180 оригинальных задач
+[Документация Wave 9](WAVE9_RELATIONS_RESTORE_RU.md)
+
+Main, production и исходные репозитории не изменены. Draft PR #7 не слит.
+CI Wave 9 ещё не считается пройденным.
+
+## Все 180 исходных ID
 
 | ID | Приоритет | Оригинальная задача | Доказательство | Локальный код |
 |---|---|---|---|---|
@@ -40,11 +45,11 @@ GitHub CI Wave 8 проверяется отдельно. Защищённый D
 | TITAN-X18 | P1 | Независимая проверка патчей и policy gates | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/m190/verify_source.py`, `supreme-director/campaign180/campaign180/review.py` |
 | TITAN-X19 | P1 | Автоматизированное исправление ошибок с лимитами | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/repair.py`, `supreme-director/campaign180/tests/test_wave6_repair.py` |
 | TITAN-X20 | P1 | Полноценный no-AI редактор страниц | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/builder.py`, `supreme-director/campaign180/campaign180/drafts.py`, `supreme-director/campaign180/campaign180/structure.py`, `supreme-director/campaign180/tests/test_wave6_structure_automatic.py`, `supreme-director/campaign180/assets/console.js`, `supreme-director/campaign180/assets/index.html`, `supreme-director/campaign180/tests/browser-console.mjs`, `supreme-director/campaign180/campaign180/forms.py`, `supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py` |
-| TITAN-X21 | P1 | Визуальные формы, таблицы и связи данных | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/builder.py`, `supreme-director/campaign180/campaign180/records.py`, `supreme-director/campaign180/campaign180/automatic.py`, `supreme-director/campaign180/tests/test_wave6_structure_automatic.py`, `supreme-director/campaign180/campaign180/model_editor.py`, `supreme-director/campaign180/assets/index.html`, `supreme-director/campaign180/tests/test_wave7_schema.py`, `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py` |
-| TITAN-X22 | P1 | API и workflows в визуальном конструкторе | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/campaign180/local_http.py`, `supreme-director/campaign180/assets/console.js`, `supreme-director/campaign180/tests/test_app_console.py`, `supreme-director/campaign180/campaign180/automatic.py`, `supreme-director/campaign180/campaign180/structure.py`, `supreme-director/campaign180/tests/browser-console.mjs`, `supreme-director/campaign180/tests/test_wave6_structure_automatic.py` |
-| TITAN-X23 | P1 | Политики и разрешения в созданных приложениях | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/app_policy.py`, `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/campaign180/local_http.py`, `supreme-director/campaign180/tests/test_app_console.py`, `supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py` |
-| TITAN-X24 | P1 | Версионирование, импорт и экспорт проектов | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/drafts.py`, `supreme-director/campaign180/examples/demo-site.json`, `supreme-director/campaign180/campaign180/model_editor.py`, `supreme-director/campaign180/tests/test_wave7_schema.py`, `supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py` |
-| TITAN-X25 | P1 | Система превью, тестовых окружений и публикации | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/preview.py`, `supreme-director/campaign180/examples/demo-site.json`, `supreme-director/campaign180/tests/test_builder_drafts_records_preview.py`, `supreme-director/campaign180/campaign180/builder.py`, `supreme-director/campaign180/tests/browser-console.mjs` |
+| TITAN-X21 | P1 | Визуальные формы, таблицы и связи данных | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/builder.py`, `supreme-director/campaign180/campaign180/records.py`, `supreme-director/campaign180/campaign180/automatic.py`, `supreme-director/campaign180/tests/test_wave6_structure_automatic.py`, `supreme-director/campaign180/campaign180/model_editor.py`, `supreme-director/campaign180/assets/index.html`, `supreme-director/campaign180/tests/test_wave7_schema.py`, `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py`, `supreme-director/campaign180/tests/test_wave9_reference_restore.py` |
+| TITAN-X22 | P1 | API и workflows в визуальном конструкторе | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/campaign180/local_http.py`, `supreme-director/campaign180/assets/console.js`, `supreme-director/campaign180/tests/test_app_console.py`, `supreme-director/campaign180/campaign180/automatic.py`, `supreme-director/campaign180/campaign180/structure.py`, `supreme-director/campaign180/tests/browser-console.mjs`, `supreme-director/campaign180/tests/test_wave6_structure_automatic.py`, `supreme-director/campaign180/tests/test_wave9_reference_restore.py` |
+| TITAN-X23 | P1 | Политики и разрешения в созданных приложениях | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/app_policy.py`, `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/campaign180/local_http.py`, `supreme-director/campaign180/tests/test_app_console.py`, `supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py`, `supreme-director/campaign180/campaign180/model_editor.py`, `supreme-director/campaign180/campaign180/revision_restore.py`, `supreme-director/campaign180/tests/test_wave9_reference_restore.py` |
+| TITAN-X24 | P1 | Версионирование, импорт и экспорт проектов | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/drafts.py`, `supreme-director/campaign180/examples/demo-site.json`, `supreme-director/campaign180/campaign180/model_editor.py`, `supreme-director/campaign180/tests/test_wave7_schema.py`, `supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py`, `supreme-director/campaign180/campaign180/revision_restore.py`, `supreme-director/campaign180/tests/test_wave9_reference_restore.py` |
+| TITAN-X25 | P1 | Система превью, тестовых окружений и публикации | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/preview.py`, `supreme-director/campaign180/examples/demo-site.json`, `supreme-director/campaign180/tests/test_builder_drafts_records_preview.py`, `supreme-director/campaign180/campaign180/builder.py`, `supreme-director/campaign180/tests/browser-console.mjs`, `supreme-director/campaign180/campaign180/revision_restore.py` |
 | TITAN-X26 | P2 | CI/CD, dependency и secrets scanning | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/supplychain.py`, `supreme-director/campaign180/tests/test_review_supplychain.py` |
 | TITAN-X27 | P2 | Observability, SLO, трассировка и audit | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/m206/osgard_m206/runtime.py` |
 | TITAN-X28 | P2 | Backup/restore и сценарии аварийного возврата | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/m191/recovery.py`, `supreme-director/campaign180/campaign180/backup.py`, `supreme-director/campaign180/tests/test_scheduler_backup.py` |

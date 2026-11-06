@@ -125,7 +125,7 @@ class Wave9(unittest.TestCase):
     def test_invalid_relation_name_stale_revision_and_wrong_type_denied(self):
         a=self.customer()
         self.request(a["row_id"])
-        for name in ("customer","api_key","id","email","../../etc"):
+        for name in ("customer","api_key","id","summary","../../etc"):
             with self.subTest(name=name),self.assertRaises(ModelMigrationDenied):
                 self.schema.rename_reference_field(**self.kw,expected_revision=1,
                     model="requests",old_name="customer",new_name=name)

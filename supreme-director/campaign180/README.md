@@ -73,3 +73,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Wave 8 design, migration and rollback notes](docs/WAVE8_FORMS_RELATIONS_MIGRATIONS_RU.md)
 - [Current 180-task ledger](docs/CURRENT_AUDIT_180_RU.md) and [machine registry](data/CURRENT_AUDIT_180.json): **33 local-code links / 139 no evidence / 8 holds / 0 independently accepted**.
 - Preview forms cannot submit, API is loopback-only, and field renames are bounded to 500 records with immutable local receipts. No production deployment.
+
+## Wave 9 — relation migration and inspected page rollback (2026-11-06)
+
+- [Implementation, safety/rollback and negative tests](docs/WAVE9_RELATIONS_RESTORE_RU.md).
+- [Updated 180 original ID ledger](docs/CURRENT_AUDIT_180_RU.md) and [machine registry](data/CURRENT_AUDIT_180.json): 33 local-code links, 139 without direct evidence, eight holds, **0 independently accepted**.
+- Atomic relation field rename with verified link index, blocked live retarget, inspect-first compatible page restore to a new revision, Russian UI. No production deployment or upstream acceptance.

@@ -118,21 +118,25 @@
       "supreme-director/campaign180/assets/index.html",
       "supreme-director/campaign180/tests/test_wave7_schema.py",
       "supreme-director/campaign180/campaign180/app_runtime.py",
-      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
     ],
     "TITAN-X24": [
       "supreme-director/campaign180/campaign180/drafts.py",
       "supreme-director/campaign180/examples/demo-site.json",
       "supreme-director/campaign180/campaign180/model_editor.py",
       "supreme-director/campaign180/tests/test_wave7_schema.py",
-      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/campaign180/revision_restore.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
     ],
     "TITAN-X25": [
       "supreme-director/campaign180/campaign180/preview.py",
       "supreme-director/campaign180/examples/demo-site.json",
       "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py",
       "supreme-director/campaign180/campaign180/builder.py",
-      "supreme-director/campaign180/tests/browser-console.mjs"
+      "supreme-director/campaign180/tests/browser-console.mjs",
+      "supreme-director/campaign180/campaign180/revision_restore.py"
     ],
     "TITAN-X22": [
       "supreme-director/campaign180/campaign180/app_runtime.py",
@@ -142,14 +146,18 @@
       "supreme-director/campaign180/campaign180/automatic.py",
       "supreme-director/campaign180/campaign180/structure.py",
       "supreme-director/campaign180/tests/browser-console.mjs",
-      "supreme-director/campaign180/tests/test_wave6_structure_automatic.py"
+      "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
     ],
     "TITAN-X23": [
       "supreme-director/campaign180/campaign180/app_policy.py",
       "supreme-director/campaign180/campaign180/app_runtime.py",
       "supreme-director/campaign180/campaign180/local_http.py",
       "supreme-director/campaign180/tests/test_app_console.py",
-      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/campaign180/model_editor.py",
+      "supreme-director/campaign180/campaign180/revision_restore.py",
+      "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
     ],
     "TITAN-X19": [
       "supreme-director/campaign180/campaign180/repair.py",
