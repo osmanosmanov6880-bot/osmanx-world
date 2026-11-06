@@ -287,12 +287,23 @@ async function run(){
     const spec=await localApi("/api/v1/spec");
     return spec.spec.pages[0].sections.some(x=>x.type==="form"&&x.model==="vendors");
   },"form section saved by editor");
-  await client.eval("document.querySelector('[data-panel=preview]').click();");
-  await poll(()=>client.eval("document.querySelector('#preview-frame').srcdoc.includes('demo-form')"),
-    "read-only model form preview");
-  const formIsDisabled=await client.eval(
-    "document.querySelector('#preview-frame').srcdoc.includes('type=\"button\" disabled')");
-  assert.equal(formIsDisabled,true,"offline preview form must not submit");
+  const serverRendered=await poll(async()=>{
+    const result=await localApi("/api/v1/preview/home");
+    return result.html.includes('<form class="demo-form">') &&
+      result.html.includes('<button type="button" disabled>') &&
+      result.production_published===false;
+  },"server generated disabled model-backed form");
+  await client.eval("document.querySelector('[data-panel=preview]').click();"+
+    "document.querySelector('#preview-select').value='home';"+
+    "document.querySelector('#refresh-preview').click();");
+  await poll(()=>client.eval(`(()=>{
+    const src=document.querySelector('#preview-frame').srcdoc;
+    const doc=new DOMParser().parseFromString(src,"text/html");
+    const form=doc.querySelector("form.demo-form");
+    return Boolean(form && form.querySelector('button[type="button"]:disabled')
+      && [...form.querySelectorAll("input")].length>=2
+      && [...form.querySelectorAll("input")].every(input=>input.disabled));
+  })()`),"actual non-submittable form DOM in preview");
   await client.screenshot("04-schema-form-desktop.png");
 
   // Mobile viewport must not leak navigation or overflow the viewport.
