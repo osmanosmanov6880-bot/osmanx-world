@@ -244,6 +244,14 @@ class LocalConsole:
             out=self.model_editor.add_model(
                 tenant=tid,project_id=project,actor=actor,**data)
             return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")/rename-field",path)
+        if method=="POST" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","old_name","new_name"},
+                         {"expected_revision","old_name","new_name"})
+            out=self.model_editor.rename_field(tenant=tid,project_id=project,
+                                               actor=actor,model=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")/fields/("+_MODEL.pattern[1:-1]+r")",path)
         if method=="PATCH" and match:
             data=self._body(environ)

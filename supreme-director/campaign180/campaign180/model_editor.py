@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .builder import FIELD, SiteSpecDenied, validate_row, validate_site_spec
+from .builder import FIELD, SECRET_NAMES, SiteSpecDenied, validate_row, validate_site_spec
 from .contracts import canonical, digest
 from .app_runtime import LocalAppRuntime
 
@@ -167,6 +167,77 @@ class LocalModelEditor:
                     changed_rows+=1
             return self._record(db,tenant,project_id,head,new_spec,
                                 "ADD_FIELD",model,changed_rows)
+
+    def rename_field(self,*,tenant:str,project_id:str,actor:str,
+                     expected_revision:int,model:str,old_name:str,new_name:str)->dict:
+        """Bounded, atomic non-reference field rename over existing stored rows.
+
+        Relationships are never rewritten implicitly. Workflow predicates/actions
+        using this field require a reviewed workflow migration first. Deleted
+        tombstones also receive the new key, keeping all persisted JSON parseable.
+        """
+        if (type(old_name) is not str or type(new_name) is not str
+            or not FIELD.fullmatch(old_name) or not FIELD.fullmatch(new_name)
+            or old_name==new_name or new_name in SECRET_NAMES or new_name=="id"):
+            raise ModelMigrationDenied("Invalid or reserved target field name")
+        with self.runtime.drafts._tx() as db:
+            doc,head=self._context(db,tenant,project_id,actor,
+                                    expected_revision,write_records=True)
+            definition=self.runtime.records._model(doc,model)
+            old_definition=json.loads(canonical(definition))
+            matching=[f for f in definition["fields"] if f["name"]==old_name]
+            if len(matching)!=1:
+                raise ModelMigrationDenied("Field not found")
+            if matching[0]["type"]=="reference":
+                raise ModelMigrationDenied("Reference field renaming requires explicit link migration")
+            if any(f["name"]==new_name for f in definition["fields"]):
+                raise ModelMigrationDenied("Target field name already exists")
+            # Existing workflows are immutable declarations with field paths;
+            # fail closed until their owner explicitly reviews each dependency.
+            workflows=db.execute("""SELECT * FROM app_workflows
+                WHERE tenant=? AND project_id=?""",
+                (tenant,project_id)).fetchall()
+            for workflow in workflows:
+                rule=self.runtime._read_rule(workflow)["rule"]
+                if rule["model"]==model and (
+                    rule["action"]["field"]==old_name or
+                    (rule["condition"] is not None and
+                     rule["condition"]["field"]==old_name)):
+                    raise ModelMigrationDenied("Workflow depends on field: migrate rule first")
+            matching[0]["name"]=new_name
+            # Selected field order on model-driven static forms follows rename.
+            for page in doc["pages"]:
+                for section in page["sections"]:
+                    if section["type"]=="form" and section["model"]==model and "fields" in section:
+                        section["fields"]=[new_name if name==old_name else name
+                                           for name in section["fields"]]
+            verified=validate_site_spec(doc)
+            new_definition=self.runtime.records._model(verified,model)
+            rows=db.execute("""SELECT row_id,deleted FROM builder_rows
+                WHERE tenant=? AND project_id=? AND model=? ORDER BY row_id
+                LIMIT ?""",
+                (tenant,project_id,model,MAX_ROWS_MIGRATED+1)).fetchall()
+            if len(rows)>MAX_ROWS_MIGRATED:
+                raise ModelMigrationDenied("Field rename exceeds reviewed migration budget")
+            for record in rows:
+                old,header=self.runtime.records._row(
+                    db,tenant,project_id,model,record["row_id"],deleted_allowed=True)
+                validate_row(old_definition,old)
+                # Optional fields absent in old data remain absent after rename.
+                renamed={new_name if key==old_name else key:value
+                         for key,value in old.items()}
+                validated=validate_row(new_definition,renamed)
+                updated=db.execute("""UPDATE builder_rows
+                    SET data_json=?,content_digest=?,version=version+1
+                    WHERE tenant=? AND project_id=? AND model=? AND row_id=?
+                      AND version=? AND deleted=?""",
+                    (canonical(validated).decode("utf-8"),digest(validated),
+                     tenant,project_id,model,record["row_id"],header["version"],
+                     record["deleted"])).rowcount
+                if updated!=1:
+                    raise ModelMigrationDenied("Concurrent row mutation during rename")
+            return self._record(db,tenant,project_id,head,verified,
+                                "RENAME_FIELD",model,len(rows))
 
     def list_migrations(self,*,tenant:str,project_id:str,actor:str,
                         limit:int=50)->list[dict]:
