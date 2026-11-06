@@ -122,3 +122,39 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
 .mapped-approval{border-top:1px solid #334e70;padding-top:14px;margin-top:16px}
 @media(max-width:900px){.mapped-rows{grid-template-columns:1fr}}
 @media(max-width:650px){.mapped-editor .form-config-row{grid-template-columns:1fr}}
+
+/* Wave 16: accessible real-data operations, responsive down to 320 px. */
+.record-operations{margin:18px 0;min-width:0}
+.record-operations-header{display:flex;gap:12px;align-items:flex-start;
+  justify-content:space-between;flex-wrap:wrap}
+.record-operations-header h2{margin-top:0}
+.record-search-grid{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;
+  align-items:end;gap:12px;margin:14px 0}
+.record-search-grid>*{min-width:0}
+.record-search-grid label{display:block}
+.record-search-grid input{width:100%;min-width:0}
+.record-page-toolbar{display:flex;gap:14px;align-items:center;
+  justify-content:flex-start;flex-wrap:wrap;margin:16px 0}
+.record-page-toolbar span{font-size:13px;color:#c9d8eb;font-variant-numeric:tabular-nums}
+.record-import-box{border-top:1px solid #334a65;margin-top:18px;padding-top:18px;min-width:0}
+.record-import-box h3{margin:4px 0 12px;font-size:17px;font-weight:650}
+.record-import-box input[type=file]{width:100%;max-width:550px;min-width:0;
+  padding:12px;border:1px solid #314765;border-radius:10px;background:#12243a;
+  color:#dae8f9}
+.record-import-box>.ghost{display:block;max-width:100%;margin-top:12px}
+.record-import-box .hint{max-width:900px;overflow-wrap:anywhere}
+.record-import-box .checkbox-row{max-width:900px;align-items:flex-start}
+.record-import-box button{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+@media(max-width:950px){
+  .record-search-grid{grid-template-columns:minmax(0,1fr) auto auto}
+  .record-search-grid>div{grid-column:1/-1}
+}
+@media(max-width:560px){
+  .record-search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .record-search-grid>div{grid-column:1/-1}
+  .record-search-grid button{width:100%;min-width:0}
+  .record-search-grid #record-export{grid-column:1/-1}
+  .record-page-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .record-page-toolbar span{grid-row:1;grid-column:1/-1}
+  .record-page-toolbar button{min-width:0}
+}
