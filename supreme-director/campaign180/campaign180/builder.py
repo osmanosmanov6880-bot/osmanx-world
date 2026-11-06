@@ -21,7 +21,7 @@ FIELD=re.compile(r"^[a-z][a-z0-9_]{0,31}$")
 EMAIL=re.compile(r"^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,160}\.[A-Za-z]{2,24}$")
 PHONE=re.compile(r"^\+?[0-9 ()-]{5,30}$")
 MODEL_TYPES=frozenset(("text","integer","boolean","email","date","reference"))
-SECTION_TYPES=frozenset(("hero","text","features","stats","contacts","table"))
+SECTION_TYPES=frozenset(("hero","text","features","stats","contacts","table","form"))
 SECRET_NAMES=frozenset(("password","passwd","secret","token","api_key","private_key","access_key"))
 MAX_SPEC_BYTES=65536
 MAX_PAGES=8
@@ -147,6 +147,7 @@ def validate_site_spec(raw:Any)->dict:
                 "stats":({"type","heading","items"},{"type","heading","items"}),
                 "contacts":({"type","heading","email","phone"},{"type","heading"}),
                 "table":({"type","heading","model"},{"type","heading","model"}),
+                "form":({"type","heading","model","button_label"},{"type","heading","model"}),
             }
             allow,required=accepted[typ]
             _record(section,allow,required,"section")
@@ -179,8 +180,10 @@ def validate_site_spec(raw:Any)->dict:
                 if "phone" in section and (
                     type(section["phone"]) is not str or not PHONE.fullmatch(section["phone"])):
                     raise SiteSpecDenied("Invalid phone number")
-            if typ=="table" and section["model"] not in model_names:
-                raise SiteSpecDenied("Unknown table data model")
+            if typ in ("table","form") and section["model"] not in model_names:
+                raise SiteSpecDenied("Unknown table/form model")
+            if typ=="form" and "button_label" in section:
+                _string(section["button_label"],"form button",80)
     if "home" not in slugs:
         raise SiteSpecDenied("Home page required")
     for page in pages:
@@ -233,6 +236,16 @@ def validate_row(model:dict, raw:Any, *, partial:bool=False)->dict:
         data[name]=value
     return data
 
+
+FORM_CSS=""".demo-form{max-width:760px;padding:24px;border:1px solid #2b4261;
+border-radius:14px;background:#101f33}.demo-fields{display:grid;grid-template-columns:
+repeat(auto-fit,minmax(210px,1fr));gap:15px}.demo-control label{display:block;
+color:#d6e4f6;font-size:14px}.demo-control input{display:block;width:100%;
+margin-top:7px;padding:12px;background:#12243a;color:#c2d1e5;
+border:1px solid #3b5272;border-radius:9px}.demo-form button{margin-top:22px;
+padding:11px 18px;background:#243b59;color:#aabdda;border:1px solid #4b6382;
+border-radius:9px;cursor:not-allowed}.demo-note{margin:14px 0 0;font-size:12px;color:#a5bad6}
+"""
 
 def _href(slug:str)->str:
     return "index.html" if slug=="home" else slug+".html"
@@ -305,13 +318,29 @@ def render_site(raw:dict, *, datasets:Mapping[str,list[dict]] | None=None)->dict
                 chunks.append("<section><h2>"+name+"</h2><table><thead>"+header+
                     "</thead><tbody>"+"".join(lines)+"</tbody></table>"+
                     ("" if rows else "<p>Данные пока не добавлены.</p>")+"</section>")
+            elif typ=="form":
+                fields=models[sec["model"]]["fields"]
+                inputs=[]
+                for field in fields:
+                    label=escape(field["label"],quote=True)
+                    kind=field["type"]
+                    html_type=kind if kind in ("email","date") else "number" if kind=="integer" else "checkbox" if kind=="boolean" else "text"
+                    inputs.append('<div class="demo-control"><label>'+label+
+                        '<input type="'+html_type+'" disabled aria-label="'+label+
+                        '" placeholder="Только предпросмотр"></label></div>')
+                button=escape(sec.get("button_label","Сохранить"))
+                chunks.append('<section><h2>'+name+'</h2><form class="demo-form">'+
+                    '<div class="demo-fields">'+"".join(inputs)+'</div>'+
+                    '<button type="button" disabled>'+button+'</button>'+
+                    '<p class="demo-note">Отправка отключена в статическом превью.</p>'+
+                    '</form></section>')
         description=escape(s.get("description","Локальное превью"),quote=True)
         doc='<!doctype html><html lang="'+s["locale"]+'"><head><meta charset="utf-8">'+\
             '<meta name="viewport" content="width=device-width,initial-scale=1">'+\
             '<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; base-uri &#39;none&#39;; form-action &#39;none&#39;">'+\
             '<meta name="robots" content="noindex,nofollow">'+\
             '<meta name="description" content="'+description+'">'+\
-            '<title>'+escape(p["title"])+' · '+title+'</title><style>'+CSS+'</style></head>'+\
+            '<title>'+escape(p["title"])+' · '+title+'</title><style>'+CSS+FORM_CSS+'</style></head>'+\
             '<body><header><strong>'+title+'</strong><nav aria-label="Основная навигация">'+\
             nav+'</nav></header><main>'+"".join(chunks)+'</main><footer><small>'+\
             'Локальное превью · без публикации · '+title+'</small></footer></body></html>'
