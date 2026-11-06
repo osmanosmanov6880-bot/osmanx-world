@@ -236,7 +236,7 @@ class LocalConsole:
             return self._json(start_response,"200 OK",out)
         if method=="POST" and path=="/api/v1/tasks/query":
             data=self._body(environ)
-            self._fields(data,{"limit","offset","status"},set())
+            self._fields(data,{"limit","offset","status","assignee","due"},set())
             out=runtime.query_team_tasks(tenant=tid,project_id=project,
                                          actor=actor,**data)
             return self._json(start_response,"200 OK",out)
