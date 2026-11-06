@@ -70,6 +70,35 @@
         <article class="kpi"><span>ПРОСРОЧЕНЫ</span><strong id="tasks-overdue">—</strong><small>По дате UTC</small></article>
         <article class="kpi"><span>ВЫПОЛНЕНЫ</span><strong id="tasks-done">—</strong><small>Закрытые задачи</small></article>
       </div>
+      <article id="task-calendar-panel" class="card task-calendar">
+        <div class="record-operations-header">
+          <div><p class="overline">ДЕДЛАЙНЫ / UTC / SQLITE</p>
+            <h2>Календарь задач и критические сроки</h2></div>
+          <button id="task-calendar-refresh" type="button" class="ghost">Обновить календарь</button>
+        </div>
+        <p class="hint">Показывает фактические сроки, просрочки и задачи, ожидающие завершения предшественников. Данные считаются при запросе, уведомления не отправляются.</p>
+        <div class="task-calendar-filters">
+          <div><label for="task-calendar-start">Дата начала (UTC)</label>
+            <input id="task-calendar-start" type="date" min="2000-01-01" max="2100-12-31"></div>
+          <div><label for="task-calendar-days">Горизонт</label>
+            <select id="task-calendar-days">
+              <option value="7">7 дней</option><option value="14">14 дней</option>
+              <option value="30" selected>30 дней</option><option value="60">60 дней</option>
+            </select></div>
+          <label class="checkbox-row task-calendar-overdue" for="task-calendar-overdue">
+            <input id="task-calendar-overdue" type="checkbox" checked>
+            Включить просроченные
+          </label>
+        </div>
+        <div class="task-calendar-metrics">
+          <div><span>ПРОСРОЧЕНЫ</span><strong id="calendar-overdue">—</strong></div>
+          <div><span>КРИТИЧЕСКИЕ</span><strong id="calendar-critical">—</strong></div>
+          <div><span>ЖДУТ ЗАВИСИМОСТИ</span><strong id="calendar-blocked">—</strong></div>
+          <div><span>В ИНТЕРВАЛЕ</span><strong id="calendar-in-window">—</strong></div>
+        </div>
+        <p id="task-calendar-summary" class="hint" role="status" aria-live="polite"></p>
+        <div id="task-calendar-list" class="task-calendar-list" aria-live="polite"></div>
+      </article>
       <article id="team-workload-panel" class="card" hidden>
         <div class="record-operations-header">
           <div><p class="overline">ЗАГРУЗКА КОМАНДЫ / SQLITE</p><h2>Ответственность и сроки</h2></div>
@@ -151,6 +180,23 @@
           <button id="task-collaboration-close" type="button" class="ghost">Закрыть</button>
         </div>
         <p id="task-collaboration-hint" class="hint"></p>
+        <section class="task-dependency-area">
+          <div class="record-operations-header">
+            <div><p class="overline">ЗАВИСИМОСТИ / ОРИЕНТИРОВАННЫЙ ГРАФ</p>
+              <h3>Что должно завершиться раньше</h3></div>
+            <span id="task-dependency-count" class="pill">0 связей</span>
+          </div>
+          <p class="hint">Задача не может завершиться, пока предшественники не закрыты. Циклы и связи между проектами запрещены.</p>
+          <div id="task-dependency-list" class="task-dependency-list" aria-live="polite"></div>
+          <div id="task-dependency-editor" class="task-dependency-editor" hidden>
+            <label for="task-dependency-candidate">Добавить предшествующую задачу</label>
+            <div class="task-detail-input">
+              <select id="task-dependency-candidate"><option value="">Выберите задачу</option></select>
+              <button id="task-dependency-add" type="button" class="ghost">Добавить связь</button>
+            </div>
+            <p class="hint">Для выбора доступны первые 100 задач проекта; права на изменение — только у руководителя.</p>
+          </div>
+        </section>
         <div class="task-collaboration-grid">
           <section class="task-detail-section">
             <h3>Шаги выполнения <span id="task-checklist-count"></span></h3>

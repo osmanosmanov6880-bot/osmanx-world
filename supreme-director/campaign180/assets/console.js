@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -54,6 +54,7 @@ function switchPanel(name){
   if(name==="history" && state.spec) refreshRevisions().catch(e=>show(e.message,true));
   if(name==="records" && state.spec)refreshBatchHistory().catch(e=>show(e.message,true));
   if(name==="tasks" && state.spec)refreshTasks().catch(e=>show(e.message,true));
+  if(name==="tasks" && state.spec)refreshTaskCalendar().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))
     refreshTeamWorkload().catch(e=>show(e.message,true));
   if(name==="dashboard" && state.spec)refreshTaskSummary().catch(e=>show(e.message,true));
@@ -172,7 +173,66 @@ async function refreshTasks({resetOffset=false}={}){
   renderTaskList();
   await refreshTaskSummary();
   if(can("task.manage"))await refreshTeamWorkload();
+  await refreshTaskCalendar();
 }
+const TASK_CALENDAR_RISK={
+  overdue:"Просрочена",blocked:"Ожидает предшественников",
+  urgent:"Критический срок",normal:"По графику",
+};
+async function refreshTaskCalendar(){
+  if(!can("task.read"))return;
+  const seq=++state.calendarGeneration;
+  const body={
+    days:Number($("task-calendar-days").value),
+    include_overdue:$("task-calendar-overdue").checked,
+  };
+  if($("task-calendar-start").value)body.start_date=$("task-calendar-start").value;
+  const report=await api("/api/v1/tasks/calendar",{method:"POST",body});
+  if(seq!==state.calendarGeneration)return;
+  const stats=report.metrics;
+  $("calendar-overdue").textContent=stats.overdue;
+  $("calendar-critical").textContent=stats.critical_open;
+  $("calendar-blocked").textContent=stats.blocked_by_dependencies;
+  $("calendar-in-window").textContent=stats.due_in_window;
+  $("task-calendar-summary").textContent=report.from_date+" — "+report.through_date+
+    " · "+report.selected_total+" задач с датами"+
+    (report.truncated?" · показаны первые 200":"")+
+    " · "+(report.scope==="all"?"Вся команда":"Мои поручения");
+  const root=$("task-calendar-list");root.replaceChildren();
+  if(!report.tasks.length){
+    root.append(node("p","На выбранный период нет открытых задач со сроками.","hint"));
+  }
+  for(const item of report.tasks){
+    const card=node("article",null,"task-calendar-item");
+    card.dataset.risk=item.risk;
+    const head=node("div",null,"task-item-head");
+    head.append(node("strong",item.title),
+                node("span",TASK_CALENDAR_RISK[item.risk]||"По плану","task-calendar-risk"));
+    card.append(head);
+    const details=node("div",null,"task-calendar-item-details");
+    details.append(node("small","Срок: "+item.due_date),
+      node("small","Статус: "+TASK_STATUS[item.status]),
+      node("small",item.assignee?"Исполнитель: "+item.assignee:"Без исполнителя"));
+    if(item.unfinished_prerequisites){
+      details.append(node("small","Не завершены предшественники: "+
+        item.unfinished_prerequisites));
+    }
+    card.append(details);
+    const open=node("button","Открыть задачу","ghost");
+    open.type="button";
+    open.addEventListener("click",()=>openTaskCollaboration(item)
+      .catch(e=>show(e.message,true)));
+    card.append(open);
+    root.append(card);
+  }
+}
+for(const id of ["task-calendar-start","task-calendar-days","task-calendar-overdue"]){
+  $(id).addEventListener("change",()=>
+    refreshTaskCalendar().catch(e=>show(e.message,true)));
+}
+$("task-calendar-refresh").addEventListener("click",()=>
+  refreshTaskCalendar().catch(e=>show(e.message,true)));
+
 async function refreshTeamWorkload(){
   if(!can("task.manage"))return;
   const reply=await api("/api/v1/tasks/workload");
@@ -204,6 +264,8 @@ $("task-collaboration-close").addEventListener("click",closeTaskCollaboration);
 async function openTaskCollaboration(task){
   state.collabTask=task;
   state.commentPendingKey=null;state.checklistPendingKey=null;
+  state.dependencyRetryKey=null;
+  $("task-dependency-editor").hidden=!can("task.manage");
   $("task-collaboration").hidden=false;
   $("task-collaboration-title").textContent=task.title;
   $("task-collaboration-hint").textContent="Задача "+task.task_id.slice(0,8)+
@@ -211,14 +273,95 @@ async function openTaskCollaboration(task){
   $("task-checklist-form").hidden=!can("task.manage");
   await refreshTaskCollaboration();
 }
+function renderTaskDependencies(data,candidates){
+  const root=$("task-dependency-list");root.replaceChildren();
+  $("task-dependency-count").textContent=data.total+" связей · "+
+    data.unfinished+" не завершены";
+  if(!data.prerequisites.length){
+    root.append(node("p","Предшествующих задач пока нет.","hint"));
+  }
+  const selectedIds=new Set();
+  for(const edge of data.prerequisites){
+    const entry=node("div",null,"task-dependency-item");
+    if(data.can_manage){
+      selectedIds.add(edge.task_id);
+      const name=node("strong",edge.title);
+      const status=node("small",
+        edge.status==="done"?"Выполнена":"Ожидает: "+TASK_STATUS[edge.status]);
+      entry.append(name,status);
+      const drop=node("button","Убрать связь","ghost");
+      drop.type="button";
+      drop.disabled=state.collabTask?.status==="done";
+      drop.addEventListener("click",async()=>{
+        const task=state.collabTask;
+        if(!task)return;
+        drop.disabled=true;
+        try{
+          const result=await api("/api/v1/tasks/"+encodeURIComponent(task.task_id)+
+            "/dependencies/remove",{method:"POST",body:{
+              prerequisite_id:edge.task_id,expected_version:task.version,
+              idempotency_key:safeId()}});
+          if(state.collabTask?.task_id!==task.task_id)return;
+          state.collabTask={...state.collabTask,version:result.version};
+          await refreshTaskCollaboration();
+          await refreshTasks();
+          show("Зависимость удалена, изменение записано в журнал");
+        }catch(error){show(error.message,true);}
+        finally{drop.disabled=false;}
+      });
+      entry.append(drop);
+    }else{
+      entry.append(node("span",
+        edge.completed?"Предшественник завершён":"Ожидается завершение предшественника"));
+    }
+    root.append(entry);
+  }
+  const editor=$("task-dependency-editor");
+  editor.hidden=!can("task.manage")||state.collabTask?.status==="done";
+  if(!editor.hidden){
+    const options=candidates.filter(x=>
+      x.task_id!==state.collabTask?.task_id && !selectedIds.has(x.task_id));
+    pick($("task-dependency-candidate"),[["","Выберите задачу"],
+      ...options.map(x=>[x.task_id,x.title+" · "+TASK_STATUS[x.status]])]);
+  }
+}
+$("task-dependency-candidate").addEventListener("change",()=>{
+  state.dependencyRetryKey=null;
+});
+$("task-dependency-add").addEventListener("click",async()=>{
+  const task=state.collabTask;
+  if(!task||!can("task.manage"))return;
+  const before=$("task-dependency-candidate").value;
+  if(!before){show("Выберите предшествующую задачу",true);return;}
+  const button=$("task-dependency-add");button.disabled=true;
+  try{
+    const key=state.dependencyRetryKey||safeId();
+    state.dependencyRetryKey=key;
+    const result=await api("/api/v1/tasks/"+encodeURIComponent(task.task_id)+
+      "/dependencies/add",{method:"POST",body:{
+        prerequisite_id:before,expected_version:task.version,idempotency_key:key}});
+    state.dependencyRetryKey=null;
+    if(state.collabTask?.task_id!==task.task_id)return;
+    state.collabTask={...state.collabTask,version:result.version};
+    await refreshTaskCollaboration();
+    await refreshTasks();
+    show("Зависимость сохранена: завершение задачи теперь контролируется");
+  }catch(error){show(error.message,true);}
+  finally{button.disabled=false;}
+});
 async function refreshTaskCollaboration(){
   const task=state.collabTask;
   if(!task)return;
   const serial=++state.collabGeneration;
   const path="/api/v1/tasks/"+encodeURIComponent(task.task_id);
-  const [checklist,comments]=await Promise.all([
-    api(path+"/checklist"),api(path+"/comments")]);
+  const requests=[api(path+"/checklist"),api(path+"/comments"),
+    api(path+"/dependencies")];
+  if(can("task.manage"))requests.push(api("/api/v1/tasks/query",{
+    method:"POST",body:{limit:100,offset:0}}));
+  const [checklist,comments,dependencies,choices]=await Promise.all(requests);
   if(serial!==state.collabGeneration || state.collabTask?.task_id!==task.task_id)return;
+  state.collabTask={...task,version:dependencies.task_version};
+  renderTaskDependencies(dependencies,choices?.tasks||[]);
   $("task-checklist-count").textContent=checklist.completed+"/"+checklist.total;
   const steps=$("task-checklist-list");steps.replaceChildren();
   if(!checklist.items.length)steps.append(node("p","Пока нет шагов.","hint"));
@@ -297,6 +440,8 @@ function renderTaskList(){
   }
   for(const task of state.tasks){
     const card=node("article",null,"task-item");
+    card.dataset.taskId=task.task_id;
+    card.dataset.taskStatus=task.status;
     const top=node("div",null,"task-item-head");
     const title=node("strong",task.title);
     const info=node("span",TASK_PRIORITY[task.priority],"task-priority");
@@ -1602,4 +1747,6 @@ async function refreshPreview(){
 }
 $("preview-select").addEventListener("change",refreshPreview);
 $("refresh-preview").addEventListener("click",refreshPreview);
+// A deterministic signal for real browser readiness and safe form submission.
+document.documentElement.dataset.consoleReady="1";
 })();

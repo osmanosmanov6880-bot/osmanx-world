@@ -279,3 +279,63 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
  .task-collaboration-grid{gap:12px}
  .task-detail-section{padding:12px}
 }
+
+/* Wave 20 — task calendar, critical deadlines and guarded DAG dependencies. */
+.task-calendar{margin:18px 0;min-width:0}
+.task-calendar-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
+ gap:12px;align-items:end;min-width:0;margin:16px 0}
+.task-calendar-filters>div{min-width:0}
+.task-calendar-filters label{display:block}
+.task-calendar-filters input[type=date],.task-calendar-filters select{
+ width:100%;min-width:0;max-width:100%}
+.task-calendar-overdue{display:flex!important;align-items:center;gap:8px;
+ margin:0!important;line-height:1.5;padding:10px 0;white-space:normal}
+.task-calendar-overdue input{flex:none}
+.task-calendar-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:10px;margin:16px 0}
+.task-calendar-metrics>div{background:#10243c;border:1px solid #324964;
+ border-radius:11px;padding:13px;min-width:0;display:grid;gap:7px}
+.task-calendar-metrics span{color:#94b3d8;font-size:10px;
+ font-weight:650;letter-spacing:.07em;overflow-wrap:anywhere}
+.task-calendar-metrics strong{font-size:25px;font-variant-numeric:tabular-nums}
+.task-calendar-list{display:grid;grid-template-columns:
+ repeat(auto-fit,minmax(min(100%,270px),1fr));gap:11px;margin-top:16px;min-width:0}
+.task-calendar-item{background:#11243b;border:1px solid #324b69;
+ border-radius:12px;padding:15px;min-width:0;display:flex;flex-direction:column;gap:11px}
+.task-calendar-item[data-risk=overdue]{border-left:3px solid #e9a49c}
+.task-calendar-item[data-risk=blocked]{border-left:3px solid #edc17a}
+.task-calendar-item[data-risk=urgent]{border-left:3px solid #9dbde5}
+.task-calendar-risk{font-size:10px;line-height:1.35;
+ color:#cedff3;border:1px solid #49617f;border-radius:6px;
+ padding:5px 8px;flex:none;max-width:100%}
+.task-calendar-item-details{display:grid;gap:6px}
+.task-calendar-item-details small{font-size:12px;color:#abc2dd;overflow-wrap:anywhere}
+.task-calendar-item button{align-self:flex-start;max-width:100%}
+.task-dependency-area{border-bottom:1px solid #324964;
+ padding:4px 0 20px;margin:12px 0 18px;min-width:0}
+.task-dependency-area h3{font-size:16px;margin:0}
+.task-dependency-list{display:grid;grid-template-columns:
+ repeat(auto-fit,minmax(min(100%,235px),1fr));gap:9px;margin:13px 0}
+.task-dependency-item{background:#152841;border-radius:10px;
+ border:1px solid #304a69;padding:12px;display:flex;flex-direction:column;gap:9px;
+ min-width:0;overflow-wrap:anywhere}
+.task-dependency-item strong{font-size:13px}
+.task-dependency-item small{color:#a9c1e1;line-height:1.4}
+.task-dependency-item button{align-self:flex-start;white-space:normal}
+.task-dependency-editor{margin:12px 0}
+.task-dependency-editor label{display:block}
+.task-dependency-editor select{min-width:0;flex:1;max-width:100%}
+.task-dependency-editor .task-detail-input{margin-top:9px}
+@media(max-width:860px){
+ .task-calendar-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .task-calendar-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .task-calendar-overdue{grid-column:1/-1}
+}
+@media(max-width:560px){
+ .task-calendar-filters{grid-template-columns:1fr}
+ .task-calendar-overdue{grid-column:auto}
+ .task-calendar-item .task-item-head{flex-wrap:wrap}
+ .task-calendar-list{grid-template-columns:1fr}
+ .task-dependency-editor .task-detail-input{flex-wrap:wrap}
+ .task-dependency-editor .task-detail-input button{width:100%}
+}

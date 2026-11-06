@@ -36,6 +36,10 @@ from .task_collaboration import (
     init_collaboration,add_comment,list_comments,add_checklist_item,
     list_checklist,set_checklist_done,team_workload,
 )
+from .task_planning import (
+    init_planning,mutate_dependency,list_dependencies,calendar_agenda,
+    dependency_events,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -73,6 +77,7 @@ class LocalAppRuntime:
         init_journal(self)
         init_tasks(self)
         init_collaboration(self)
+        init_planning(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -281,6 +286,41 @@ class LocalAppRuntime:
 
     def team_workload(self,*,tenant:str,project_id:str,actor:str)->dict:
         return team_workload(self,tenant=tenant,project_id=project_id,actor=actor)
+
+    def add_task_dependency(self,*,tenant:str,project_id:str,actor:str,
+                            task_id:str,prerequisite_id:str,
+                            expected_version:int,idempotency_key:str)->dict:
+        return mutate_dependency(self,tenant=tenant,project_id=project_id,
+                                 actor=actor,task_id=task_id,
+                                 prerequisite_id=prerequisite_id,
+                                 expected_version=expected_version,
+                                 idempotency_key=idempotency_key,action="add")
+
+    def remove_task_dependency(self,*,tenant:str,project_id:str,actor:str,
+                               task_id:str,prerequisite_id:str,
+                               expected_version:int,idempotency_key:str)->dict:
+        return mutate_dependency(self,tenant=tenant,project_id=project_id,
+                                 actor=actor,task_id=task_id,
+                                 prerequisite_id=prerequisite_id,
+                                 expected_version=expected_version,
+                                 idempotency_key=idempotency_key,action="remove")
+
+    def list_task_dependencies(self,*,tenant:str,project_id:str,actor:str,
+                               task_id:str)->dict:
+        return list_dependencies(self,tenant=tenant,project_id=project_id,
+                                 actor=actor,task_id=task_id)
+
+    def task_calendar(self,*,tenant:str,project_id:str,actor:str,
+                      start_date:str|None=None,days:int=30,
+                      include_overdue:bool=True)->dict:
+        return calendar_agenda(self,tenant=tenant,project_id=project_id,
+                               actor=actor,start_date=start_date,days=days,
+                               include_overdue=include_overdue)
+
+    def task_dependency_events(self,*,tenant:str,project_id:str,actor:str,
+                               task_id:str,limit:int=30)->dict:
+        return dependency_events(self,tenant=tenant,project_id=project_id,
+                                 actor=actor,task_id=task_id,limit=limit)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:

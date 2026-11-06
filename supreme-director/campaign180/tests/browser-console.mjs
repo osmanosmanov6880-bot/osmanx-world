@@ -63,8 +63,8 @@ async function poll(predicate,description,timeout=20000){
   let diagnostic="";
   if(client){
     try{
-      const state=await client.eval("JSON.stringify({notice:document.querySelector('#notice')?.textContent,revision:document.querySelector('#editor-revision')?.textContent,active:document.querySelector('.panel.active')?.id,visibility:document.querySelector('#connect')?.hidden})");
-      diagnostic="; browser state="+state;
+      const state=await client.eval("JSON.stringify({notice:document.querySelector('#notice')?.textContent,revision:document.querySelector('#editor-revision')?.textContent,active:document.querySelector('.panel.active')?.id,visibility:document.querySelector('#connect')?.hidden,ready:document.documentElement.dataset.consoleReady,tokenLength:document.querySelector('#token')?.value.length,formValid:document.querySelector('#auth-form')?.checkValidity(),scripts:[...document.scripts].map(s=>s.src)})");
+      diagnostic="; browser state="+state+"; runtime errors="+client.errors.slice(-5).join("|");
     }catch(error){diagnostic="; diagnostic failed="+error.message;}
   }
   throw Error("Browser wait timed out: "+description+(last?": "+last.message:"")+diagnostic);
@@ -171,6 +171,8 @@ async function run(){
   await client.send("Page.navigate",{url:baseUrl+"/console"});
   await poll(()=>client.eval("document.readyState==='complete' && !!document.querySelector('#auth-form')"),
              "console DOM ready");
+  await poll(()=>client.eval("document.documentElement.dataset.consoleReady==='1'"),
+             "application JavaScript initialized");
   await client.eval("document.querySelector('#token').value="+JSON.stringify(token)+
                     ";document.querySelector('#auth-form').requestSubmit();true");
   await poll(()=>client.eval("document.querySelector('#connect').hidden && "+
@@ -690,7 +692,9 @@ async function run(){
   await client.screenshot("17-manager-tasks-desktop.png");
   // Wave 19: comments, checklist, manager workload and due filters work
   // through the same authenticated UI and disposable SQLite database.
-  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Поручение из Chromium'))"+
+    ".querySelector('.task-collab-open')).click();");
   await poll(()=>client.eval(
     "document.querySelector('#task-collaboration').hidden===false "+
     "&& document.querySelector('#task-collaboration-title').textContent.includes('Поручение')"),
@@ -725,6 +729,61 @@ async function run(){
     "document.querySelector('#task-list').textContent.includes('Поручение из Chromium')"),
     "Wave 19 manager list recovers after filter clear");
   await client.screenshot("20-task-collaboration-desktop.png");
+  // Wave 20: create two real tasks and a prerequisite through the Russian UI.
+  // Verify calendar metrics and that the status API refuses premature closure.
+  const tomorrow=await client.eval(
+    "new Date(Date.now()+86400000).toISOString().slice(0,10)");
+  await client.eval("document.querySelector('#task-title').value='Подготовка Wave 20';"+
+    "document.querySelector('#task-due').value="+JSON.stringify(tomorrow)+";"+
+    "document.querySelector('#task-priority').value='normal';"+
+    "document.querySelector('#task-form').requestSubmit();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-list').textContent.includes('Подготовка Wave 20')"),
+    "Wave 20 prerequisite created in real SQLite");
+  await client.eval("document.querySelector('#task-title').value='Запуск Wave 20';"+
+    "document.querySelector('#task-due').value="+JSON.stringify(tomorrow)+";"+
+    "document.querySelector('#task-priority').value='urgent';"+
+    "document.querySelector('#task-form').requestSubmit();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-list').textContent.includes('Запуск Wave 20') "+
+    "&& document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20')"),
+    "Wave 20 future urgent task is visible in real calendar");
+  await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Запуск Wave 20'))"+
+    ".querySelector('.task-collab-open')).click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-dependency-editor').hidden===false "+
+    "&& document.querySelector('#task-dependency-candidate').options.length>1"),
+    "Wave 20 editor loaded allowed predecessor tasks");
+  await client.eval("document.querySelector('#task-dependency-candidate').value="+
+    "[...document.querySelectorAll('#task-list .task-item')].find(x=>x.textContent.includes('Подготовка Wave 20')).dataset.taskId;"+
+    "document.querySelector('#task-dependency-add').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-dependency-count').textContent.includes('1 связей') "+
+    "&& document.querySelector('#calendar-blocked').textContent==='1'"),
+    "Wave 20 DAG link persisted and calendar flags blocked dependent");
+  await client.eval("(()=>{const row=[...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Запуск Wave 20'));"+
+    "row.querySelector('.task-actions select').value='done';"+
+    "row.querySelector('.task-actions button').click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice').textContent.includes('INVALID_OPERATION') "+
+    "&& [...document.querySelectorAll('#task-list .task-item')].some(x=>x.textContent.includes('Запуск Wave 20')&&x.dataset.taskStatus==='todo')"),
+    "Wave 20 API rejects premature completion without exposing sensitive details");
+  await client.eval("(()=>{const row=[...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Подготовка Wave 20'));"+
+    "row.querySelector('.task-actions select').value='done';"+
+    "row.querySelector('.task-actions button').click();})()");
+  await poll(()=>client.eval(
+    "[...document.querySelectorAll('#task-list .task-item')].some(x=>x.textContent.includes('Подготовка Wave 20')&&x.dataset.taskStatus==='done') "+
+    "&& document.querySelector('#calendar-blocked').textContent==='0' "+
+    "&& document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20')"),
+    "Wave 20 finishing prerequisite clears calendar dependency risk");
+  await poll(()=>client.eval(
+    "document.querySelector('#calendar-critical').textContent==='1'"),
+    "Wave 20 real urgent deadline remains visible after predecessor completes");
+  await client.screenshot("23-agenda-dependency-desktop.png");
+
 
 
   // Use a genuine touch-enabled device viewport and reload so Chromium
@@ -775,7 +834,9 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow390<=2,"390px task board horizontal overflow: "+taskOverflow390);
   await client.screenshot("18-mobile-390-tasks.png");
-  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Поручение из Chromium'))"+
+    ".querySelector('.task-collab-open')).click();");
   await poll(()=>client.eval(
     "document.querySelector('#task-collaboration').hidden===false "+
     "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
@@ -786,6 +847,15 @@ async function run(){
   assert.ok(collabOverflow390<=2,
     "390px task discussion horizontal overflow: "+collabOverflow390);
   await client.screenshot("21-mobile-390-task-discussion.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20') "+
+    "&& document.querySelector('#calendar-critical').textContent==='1'"),
+    "Wave 20 390px real calendar data loaded");
+  const wave20CalendarOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(wave20CalendarOverflow390<=2,
+    "390px task calendar overflow: "+wave20CalendarOverflow390);
+  await client.screenshot("24-mobile-390-calendar.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -834,7 +904,9 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow320<=2,"320px task board horizontal overflow: "+taskOverflow320);
   await client.screenshot("19-mobile-320-tasks.png");
-  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Поручение из Chromium'))"+
+    ".querySelector('.task-collab-open')).click();");
   await poll(()=>client.eval(
     "document.querySelector('#task-collaboration').hidden===false "+
     "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
@@ -845,11 +917,20 @@ async function run(){
   assert.ok(collabOverflow320<=2,
     "320px task discussion horizontal overflow: "+collabOverflow320);
   await client.screenshot("22-mobile-320-task-discussion.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20') "+
+    "&& document.querySelector('#calendar-critical').textContent==='1'"),
+    "Wave 20 320px real calendar data loaded");
+  const wave20CalendarOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(wave20CalendarOverflow320<=2,
+    "320px task calendar overflow: "+wave20CalendarOverflow320);
+  await client.screenshot("25-mobile-320-calendar.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:22,public_server_started:false,production_deployed:false};
+    screenshots:25,public_server_started:false,production_deployed:false};
 }
 
 try{
