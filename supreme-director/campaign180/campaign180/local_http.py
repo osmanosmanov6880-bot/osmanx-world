@@ -257,7 +257,21 @@ def main(argv=None)->int:
         command.add_argument("--actor",required=True)
         if name=="serve":
             command.add_argument("--port",type=int,default=8765)
+    init=subs.add_parser("init")
+    init.add_argument("--database",type=Path,required=True)
+    init.add_argument("--spec",type=Path,required=True)
+    init.add_argument("--actor",required=True)
     args=parser.parse_args(argv)
+    if args.command=="init":
+        data=json.loads(args.spec.read_text(encoding="utf-8"))
+        validated=validate_site_spec(data)
+        app=LocalAppRuntime(str(args.database))
+        app.drafts.create(validated,tenant=validated["tenant_id"])
+        app.policy.bootstrap_owner(tenant=validated["tenant_id"],
+            project_id=validated["project_id"],actor=args.actor,
+            now=__import__("time").time_ns()//10**9)
+        print("LOCAL_DEMO_INITIALIZED; project="+validated["project_id"])
+        return 0
     if args.command=="bootstrap":
         app=LocalAppRuntime(str(args.database))
         app.policy.bootstrap_owner(tenant=args.tenant,project_id=args.project_id,
