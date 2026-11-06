@@ -21,6 +21,7 @@ from .records import LocalRecordStore,RecordDenied
 from .automatic import apply_record_event
 from .structure import mutate_structure
 from .forms import edit_form
+from .form_submissions import submit_form
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -127,6 +128,14 @@ class LocalAppRuntime:
                          slug=slug,expected_revision=expected_revision,
                          section_index=section_index,model=model,heading=heading,
                          button_label=button_label,fields=fields)
+
+    def submit_form(self,*,tenant:str,project_id:str,actor:str,slug:str,
+                    section_index:int,expected_revision:int,data:dict,
+                    idempotency_key:str)->dict:
+        return submit_form(self,tenant=tenant,project_id=project_id,
+                           actor=actor,slug=slug,section_index=section_index,
+                           expected_revision=expected_revision,data=data,
+                           idempotency_key=idempotency_key)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
