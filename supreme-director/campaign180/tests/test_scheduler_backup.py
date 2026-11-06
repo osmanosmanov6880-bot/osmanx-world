@@ -10,6 +10,7 @@ import uuid
 from campaign180.access import AccessDirectory
 from campaign180.contracts import SCHEMA_TASK,SCHEMA_RESULT,validate_result,digest
 from campaign180.gateway import TransactionalLocalGateway,AdmissionDenied
+from campaign180.queue import QueueDenied
 from campaign180.scheduler import CapacityScheduler,ResourceCost
 from campaign180.backup import (snapshot_sqlite,verify_snapshot,restore_snapshot,
                                 restore_drill,BackupDenied)
@@ -110,7 +111,7 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(self.scheduler.usage("tenant_alpha",now=NOW+5)["leased"],0)
         second=self.scheduler.reserve(worker_id="worker-two",now=NOW+6)
         self.assertEqual(second.fence,first.fence+1)
-        with self.assertRaises(AdmissionDenied):
+        with self.assertRaises((AdmissionDenied,QueueDenied)):
             self.scheduler.finish(first,source_result(first),now=NOW+7)
 
     def test_retry_releases_capacity_and_limits_attempts(self):

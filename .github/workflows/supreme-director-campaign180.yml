@@ -44,6 +44,8 @@ jobs:
           openssl pkey -in /tmp/campaign180-ci-test.key -pubout -out /tmp/campaign180-ci-test.pub
           python -m campaign180.repro sign --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.key --signature /tmp/campaign180-ci-test.sig
           python -m campaign180.repro verify-signature --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.pub --signature /tmp/campaign180-ci-test.sig
+      - name: Static scan only changed source paths (no secret output)
+        run: python -m campaign180.supplychain --root . --base HEAD^
       - name: Generate exact original 180 coverage and read-only inventory
         run: |
           python -m campaign180 audit --root . --output /tmp/osgard-180-audit
