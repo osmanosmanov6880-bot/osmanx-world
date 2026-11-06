@@ -178,7 +178,11 @@ def mutate_dependency(runtime: "LocalAppRuntime", *, tenant: str,
     with runtime.drafts._tx() as db:
         _principal(runtime, db, tenant, project_id, actor, "task.manage")
         task = _read(db, tenant, project_id, task_id)
-        _read(db, tenant, project_id, prerequisite_id)
+        try:
+            _read(db, tenant, project_id, prerequisite_id)
+        except TaskDenied as exc:
+            raise TaskPlanningDenied(
+                "Prerequisite does not exist within this project") from exc
         replay = runtime.records._seen(
             db, tenant, project_id, idempotency_key, request)
         if replay is not None:
