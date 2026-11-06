@@ -728,6 +728,15 @@ async function run(){
     console.error("OSGARD_MOBILE_LAYOUT_OFFENDERS "+offending);
   }
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
+  await client.eval("document.querySelector('[data-panel=tasks]').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#tasks').classList.contains('active') "+
+    "&& document.querySelector('#task-list').textContent.includes('Поручение из Chromium')"),
+    "Wave 18 mobile 390px task board populated");
+  const taskOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(taskOverflow390<=2,"390px task board horizontal overflow: "+taskOverflow390);
+  await client.screenshot("18-mobile-390-tasks.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -767,11 +776,20 @@ async function run(){
     console.error("OSGARD_320_LAYOUT_OFFENDERS "+offenders);
   }
   assert.ok(overflow320<=2,"320px mobile horizontal overflow: "+overflow320);
+  await client.eval("document.querySelector('[data-panel=tasks]').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#tasks').classList.contains('active') "+
+    "&& document.querySelector('#task-list').textContent.includes('Поручение из Chromium')"),
+    "Wave 18 mobile 320px task board populated");
+  const taskOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(taskOverflow320<=2,"320px task board horizontal overflow: "+taskOverflow320);
+  await client.screenshot("19-mobile-320-tasks.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:17,public_server_started:false,production_deployed:false};
+    screenshots:19,public_server_started:false,production_deployed:false};
 }
 
 try{
