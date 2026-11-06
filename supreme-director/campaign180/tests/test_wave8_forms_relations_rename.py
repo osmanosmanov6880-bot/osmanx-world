@@ -85,19 +85,26 @@ class AppTests(unittest.TestCase):
                 actor=OWNER,model="customers")
 
     def test_reference_integrity_and_clear_optional_reference(self):
-        parent=self.customer()
+        required_parent=self.customer("Основной")
+        optional_parent=self.customer("Дополнительный")
+        self.editor.add_field(**self.kw,expected_revision=1,model="requests",
+            field={"name":"assignee","label":"Ответственный",
+                   "type":"reference","required":False,"references":"customers"})
         req=self.app.create_row(**self.kw,model="requests",
-            data={"summary":"Связанный запрос","customer":parent["row_id"]},
-            idempotency_key=key())
+            data={"summary":"Связанный запрос","customer":required_parent["row_id"],
+                  "assignee":optional_parent["row_id"]},idempotency_key=key())
         with self.assertRaises(AppOperationDenied):
             self.app.delete_row(**self.kw,model="customers",
-                row_id=parent["row_id"],expected_version=1,idempotency_key=key())
+                row_id=optional_parent["row_id"],expected_version=1,idempotency_key=key())
         changed=self.app.update_row(**self.kw,model="requests",
             row_id=req["row_id"],expected_version=1,
-            changes={"customer":None},idempotency_key=key())
+            changes={"assignee":None},idempotency_key=key())
         self.assertEqual(changed["version"],2)
         self.app.delete_row(**self.kw,model="customers",
-            row_id=parent["row_id"],expected_version=1,idempotency_key=key())
+            row_id=optional_parent["row_id"],expected_version=1,idempotency_key=key())
+        with self.assertRaises(AppOperationDenied):
+            self.app.delete_row(**self.kw,model="customers",
+                row_id=required_parent["row_id"],expected_version=1,idempotency_key=key())
 
     def test_reference_from_another_project_is_denied(self):
         other=json.loads(DEMO.read_text(encoding="utf8"))
