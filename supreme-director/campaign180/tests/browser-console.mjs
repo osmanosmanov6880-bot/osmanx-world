@@ -252,8 +252,9 @@ async function run(){
   await client.eval("document.querySelector('[data-panel=records]').click();"+
     "document.querySelector('#model-select').value='vendors';"+
     "document.querySelector('#model-select').dispatchEvent(new Event('change'));");
-  await poll(()=>client.eval("document.querySelector('#row-fields #field-name')?.disabled===false"),
-    "vendor data entry form active");
+  await poll(()=>client.eval("document.querySelector('#model-description')?.textContent.includes('1 полей') && "+
+    "document.querySelector('#row-fields #field-name')?.disabled===false"),
+    "vendor data entry form fully updated");
   await client.eval("document.querySelector('#field-name').value='Поставщик CI';"+
     "document.querySelector('#row-form').requestSubmit();");
   await poll(async()=>{
