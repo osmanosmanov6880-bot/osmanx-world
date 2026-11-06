@@ -147,7 +147,7 @@ def validate_site_spec(raw:Any)->dict:
                 "stats":({"type","heading","items"},{"type","heading","items"}),
                 "contacts":({"type","heading","email","phone"},{"type","heading"}),
                 "table":({"type","heading","model"},{"type","heading","model"}),
-                "form":({"type","heading","model","button_label"},{"type","heading","model"}),
+                "form":({"type","heading","model","button_label","fields"},{"type","heading","model"}),
             }
             allow,required=accepted[typ]
             _record(section,allow,required,"section")
@@ -182,8 +182,17 @@ def validate_site_spec(raw:Any)->dict:
                     raise SiteSpecDenied("Invalid phone number")
             if typ in ("table","form") and section["model"] not in model_names:
                 raise SiteSpecDenied("Unknown table/form model")
-            if typ=="form" and "button_label" in section:
-                _string(section["button_label"],"form button",80)
+            if typ=="form":
+                if "button_label" in section:
+                    _string(section["button_label"],"form button",80)
+                if "fields" in section:
+                    selected=section["fields"]
+                    matching=next(m for m in models if m["name"]==section["model"])
+                    available={f["name"] for f in matching["fields"]}
+                    if (type(selected) is not list or not 1<=len(selected)<=12
+                        or any(type(f) is not str or f not in available for f in selected)
+                        or len(set(selected))!=len(selected)):
+                        raise SiteSpecDenied("Form must select unique fields within its model")
     if "home" not in slugs:
         raise SiteSpecDenied("Home page required")
     for page in pages:
@@ -319,7 +328,11 @@ def render_site(raw:dict, *, datasets:Mapping[str,list[dict]] | None=None)->dict
                     "</thead><tbody>"+"".join(lines)+"</tbody></table>"+
                     ("" if rows else "<p>Данные пока не добавлены.</p>")+"</section>")
             elif typ=="form":
-                fields=models[sec["model"]]["fields"]
+                model_fields=models[sec["model"]]["fields"]
+                selected=sec.get("fields")
+                fields=[f for f in model_fields if selected is None or f["name"] in selected]
+                if selected is not None:
+                    fields=sorted(fields,key=lambda f:selected.index(f["name"]))
                 inputs=[]
                 for field in fields:
                     label=escape(field["label"],quote=True)

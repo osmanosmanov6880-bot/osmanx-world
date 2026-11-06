@@ -20,6 +20,7 @@ from .drafts import LocalDraftStore,_identity,DraftDenied
 from .records import LocalRecordStore,RecordDenied
 from .automatic import apply_record_event
 from .structure import mutate_structure
+from .forms import edit_form
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -118,6 +119,14 @@ class LocalAppRuntime:
                                 slug=slug,expected_revision=expected_revision,
                                 operation=operation,index=index,section=section,
                                 target_index=target_index)
+
+    def edit_form(self,*,tenant:str,project_id:str,actor:str,slug:str,
+                  expected_revision:int,section_index:int,model:str,
+                  heading:str,button_label:str,fields:list[str])->dict:
+        return edit_form(self,tenant=tenant,project_id=project_id,actor=actor,
+                         slug=slug,expected_revision=expected_revision,
+                         section_index=section_index,model=model,heading=heading,
+                         button_label=button_label,fields=fields)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
