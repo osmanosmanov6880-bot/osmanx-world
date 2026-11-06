@@ -1,0 +1,47 @@
+name: OSGARD Original 180 Local Chromium Acceptance
+on:
+  push:
+    branches: ["recovery/supreme-director-m187-20261104"]
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/workflows/supreme-director-campaign180-browser.yml"
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/workflows/supreme-director-campaign180-browser.yml"
+permissions:
+  contents: read
+jobs:
+  local-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Use preinstalled Chromium or Chrome
+        run: |
+          command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser
+          node --version
+      - name: Browser JavaScript syntax
+        run: |
+          node --check supreme-director/campaign180/assets/console.js
+          node --check supreme-director/campaign180/tests/browser-console.mjs
+      - name: Headless desktop/mobile API + UI E2E (no third-party npm packages)
+        env:
+          OSGARD_BROWSER_ARTIFACT_DIR: /tmp/osgard-browser-artifacts
+        run: |
+          mkdir -p "$OSGARD_BROWSER_ARTIFACT_DIR"
+          node supreme-director/campaign180/tests/browser-console.mjs
+      - name: Preserve screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osgard-original180-browser-screenshots
+          path: /tmp/osgard-browser-artifacts/*.png
+          if-no-files-found: ignore
+          retention-days: 7
