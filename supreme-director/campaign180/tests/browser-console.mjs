@@ -60,7 +60,14 @@ async function poll(predicate,description,timeout=20000){
     }catch(error){last=error;}
     await sleep(140);
   }
-  throw Error("Browser wait timed out: "+description+(last?": "+last.message:""));
+  let diagnostic="";
+  if(client){
+    try{
+      const state=await client.eval("JSON.stringify({notice:document.querySelector('#notice')?.textContent,revision:document.querySelector('#editor-revision')?.textContent,active:document.querySelector('.panel.active')?.id,visibility:document.querySelector('#connect')?.hidden})");
+      diagnostic="; browser state="+state;
+    }catch(error){diagnostic="; diagnostic failed="+error.message;}
+  }
+  throw Error("Browser wait timed out: "+description+(last?": "+last.message:"")+diagnostic);
 }
 
 class Devtools{

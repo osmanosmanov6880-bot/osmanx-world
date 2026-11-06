@@ -103,9 +103,12 @@ class LocalConsole:
             raise ConsoleDenied("Explicit JSON body length required") from exc
         if not 1<=size<=_BODY_LIMIT:
             raise ConsoleDenied("Request body length out of bounds")
-        data=environ["wsgi.input"].read(size+1)
+        # WSGI input can be a live socket: reading size+1 waits for a byte that
+        # cannot arrive while the client is waiting for this response.
+        # Content-Length is already bounded; read exactly size bytes.
+        data=environ["wsgi.input"].read(size)
         if len(data)!=size:
-            raise ConsoleDenied("Body size differs from Content-Length")
+            raise ConsoleDenied("Body shorter than declared Content-Length")
         try:
             raw=json.loads(data.decode("utf-8"),object_pairs_hook=_unique_object,
                            parse_constant=_no_constants)
