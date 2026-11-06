@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null};
 const panels = ["dashboard","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -58,6 +58,7 @@ async function sync(){
   const [me,result,workflows]=await Promise.all([
     api("/api/v1/me"),api("/api/v1/spec"),api("/api/v1/workflows")]);
   state.me=me;state.spec=result.spec;state.revision=result.revision;
+  state.csvPending=null;state.csvRetryKey=null;state.rowOffset=0;
   state.restorePlan=null;
   clearMapPlan(true);
   $("history-plan").hidden=true;
@@ -795,12 +796,23 @@ function readForm(){
   }
   return data;
 }
-async function refreshRows(){
+async function refreshRows({resetOffset=false}={}){
   if(!state.spec || !can("record.read"))return;
+  if(resetOffset)state.rowOffset=0;
   const targetModel=state.model;
-  const answer=await api("/api/v1/models/"+encodeURIComponent(targetModel));
-  if(targetModel!==state.model)return;
-  state.rows=answer.rows;
+  const sequence=++state.rowGeneration;
+  const result=await api("/api/v1/models/"+encodeURIComponent(targetModel)+"/query",{
+    method:"POST",body:{limit:state.rowLimit,offset:state.rowOffset,
+      search:$("record-search").value.trim()}});
+  if(targetModel!==state.model || sequence!==state.rowGeneration)return;
+  state.rows=result.rows;
+  $("record-page-info").textContent=(result.total===0?"Нет записей":
+    "Показаны "+(result.offset+1)+"–"+(result.offset+result.rows.length)+
+    " из "+result.total);
+  $("record-prev").disabled=result.offset===0;
+  $("record-next").disabled=!result.has_more;
+  $("record-export").disabled=!can("record.read");
+  $("record-csv-inspect").disabled=!can("record.write");
   pick($("row-select"),[["","Новая запись"],...state.rows.map(r=>
     [r.row_id,(r.fields[model().fields[0].name]??r.row_id)+" · v"+r.version])]);
   state.selectedRow=null;
@@ -809,6 +821,103 @@ async function refreshRows(){
   $("delete-row").disabled=true;
   drawTable();
 }
+function clearCsvPlan(){
+  state.csvPending=null;
+  state.csvRetryKey=null;
+  $("record-csv-approve").checked=false;
+  $("record-csv-approve").disabled=true;
+  $("record-csv-apply").disabled=true;
+  $("record-csv-summary").textContent="";
+}
+$("record-find").addEventListener("click",async()=>{
+  try{await refreshRows({resetOffset:true});}catch(error){show(error.message,true);}
+});
+$("record-search").addEventListener("keydown",event=>{
+  if(event.key==="Enter"){event.preventDefault();$("record-find").click();}
+});
+$("record-clear").addEventListener("click",async()=>{
+  $("record-search").value="";
+  try{await refreshRows({resetOffset:true});}catch(error){show(error.message,true);}
+});
+$("record-prev").addEventListener("click",async()=>{
+  state.rowOffset=Math.max(0,state.rowOffset-state.rowLimit);
+  try{await refreshRows();}catch(error){show(error.message,true);}
+});
+$("record-next").addEventListener("click",async()=>{
+  state.rowOffset+=state.rowLimit;
+  try{await refreshRows();}catch(error){show(error.message,true);}
+});
+$("record-export").addEventListener("click",async()=>{
+  try{
+    if(!can("record.read"))throw Error("Нет прав на экспорт");
+    const result=await api("/api/v1/models/"+encodeURIComponent(state.model)+"/csv-export",{
+      method:"POST",body:{limit:100,search:$("record-search").value.trim()}});
+    const blob=new Blob(["\ufeff",result.csv_text],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const anchor=node("a");
+    anchor.href=url;anchor.download=state.model+"-local-export.csv";
+    document.body.append(anchor);anchor.click();anchor.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    show("CSV подготовлен: "+result.exported+" строк"+
+      (result.truncated?" (только первые 100 из "+result.total_filtered+")":""));
+  }catch(error){show(error.message,true);}
+});
+$("record-csv-file").addEventListener("change",clearCsvPlan);
+$("record-csv-approve").addEventListener("change",()=>{
+  $("record-csv-apply").disabled=!$("record-csv-approve").checked || !state.csvPending;
+});
+$("record-csv-inspect").addEventListener("click",async()=>{
+  clearCsvPlan();
+  try{
+    if(!can("record.write"))throw Error("Нет права на импорт");
+    const file=$("record-csv-file").files?.[0];
+    if(!file)throw Error("Сначала выбери CSV-файл");
+    if(file.size>60000)throw Error("CSV превышает ограничение 60 КБ");
+    const csvText=await file.text();
+    if(new TextEncoder().encode(csvText).length>60000)
+      throw Error("CSV превышает ограничение 60 КБ");
+    const target=state.model,revision=state.revision;
+    const inspected=await api("/api/v1/models/"+encodeURIComponent(target)+
+      "/csv-import/inspect",{method:"POST",
+      body:{expected_revision:revision,csv_text:csvText}});
+    if(target!==state.model || revision!==state.revision)
+      throw Error("Модель или схема изменилась, проверьте CSV снова");
+    state.csvPending={model:target,revision,csvText,inspected};
+    $("record-csv-summary").textContent="Проверено: "+inspected.count+
+      " строк, "+inspected.columns.length+" столбцов · SHA-256 "+
+      inspected.expected_plan_sha256.slice(0,16)+"…";
+    $("record-csv-approve").disabled=false;
+    show("Проверка CSV завершена, данные ещё не сохранены");
+  }catch(error){$("record-csv-summary").textContent="Ошибка проверки: "+error.message;
+    show(error.message,true);}
+});
+$("record-csv-apply").addEventListener("click",async()=>{
+  const pending=state.csvPending;
+  if(!pending || !$("record-csv-approve").checked)return;
+  const button=$("record-csv-apply");button.disabled=true;
+  try{
+    if(!can("record.write") || pending.model!==state.model ||
+       pending.revision!==state.revision)
+      throw Error("Права или настройки модели изменились — требуется новая проверка");
+    const key=state.csvRetryKey||safeId();
+    state.csvRetryKey=key;
+    const result=await api("/api/v1/models/"+encodeURIComponent(pending.model)+
+      "/csv-import/apply",{method:"POST",body:{
+        expected_revision:pending.revision,csv_text:pending.csvText,
+        expected_plan_sha256:pending.inspected.expected_plan_sha256,
+        idempotency_key:key}});
+    clearCsvPlan();
+    $("record-csv-file").value="";
+    await refreshRows({resetOffset:true});
+    show("Импортировано в SQLite: "+result.imported+
+      " записей · автоматизаций: "+result.workflow_runs);
+  }catch(error){
+    $("record-csv-summary").textContent="Импорт не подтверждён: "+error.message;
+    show(error.message,true);
+  }finally{
+    button.disabled=!state.csvPending || !$("record-csv-approve").checked;
+  }
+});
 function drawTable(){
   const root=$("rows-table");root.replaceChildren();
   const m=model();if(!m)return;
@@ -833,7 +942,10 @@ function selectRow(){
 }
 $("model-select").addEventListener("change",async()=>{
   state.model=$("model-select").value;
-  try{await refreshRows();}catch(e){show(e.message,true);}
+  $("record-search").value="";
+  $("record-csv-file").value="";
+  clearCsvPlan();
+  try{await refreshRows({resetOffset:true});}catch(e){show(e.message,true);}
 });
 $("row-select").addEventListener("change",selectRow);
 $("new-row").addEventListener("click",()=>{
