@@ -70,6 +70,14 @@
         <article class="kpi"><span>ПРОСРОЧЕНЫ</span><strong id="tasks-overdue">—</strong><small>По дате UTC</small></article>
         <article class="kpi"><span>ВЫПОЛНЕНЫ</span><strong id="tasks-done">—</strong><small>Закрытые задачи</small></article>
       </div>
+      <article id="team-workload-panel" class="card" hidden>
+        <div class="record-operations-header">
+          <div><p class="overline">ЗАГРУЗКА КОМАНДЫ / SQLITE</p><h2>Ответственность и сроки</h2></div>
+          <button id="team-workload-refresh" type="button" class="ghost">Обновить</button>
+        </div>
+        <p class="hint">Только руководителю: фактическая нагрузка по активным сотрудникам, просрочкам и заблокированным задачам.</p>
+        <div id="team-workload-list" class="team-workload-list" aria-live="polite"></div>
+      </article>
       <div class="task-workspace">
         <form id="task-form" class="card" hidden>
           <div class="record-operations-header">
@@ -98,13 +106,27 @@
             <div><p class="overline">РЕАЛЬНЫЕ ЗАПИСИ</p><h2>Реестр поручений</h2></div>
             <button id="task-refresh" class="ghost" type="button">Обновить</button>
           </div>
-          <div class="task-filters">
-            <label for="task-status-filter">Статус</label>
-            <select id="task-status-filter">
-              <option value="">Все</option><option value="todo">Ожидает</option>
-              <option value="in_progress">В работе</option><option value="blocked">Заблокирована</option>
-              <option value="done">Выполнена</option>
-            </select>
+          <div class="task-filters task-filters-v19">
+            <div>
+              <label for="task-status-filter">Статус</label>
+              <select id="task-status-filter">
+                <option value="">Все</option><option value="todo">Ожидает</option>
+                <option value="in_progress">В работе</option><option value="blocked">Заблокирована</option>
+                <option value="done">Выполнена</option>
+              </select>
+            </div>
+            <div>
+              <label for="task-due-filter">Срок</label>
+              <select id="task-due-filter">
+                <option value="">Любой</option><option value="overdue">Просрочены</option>
+                <option value="today">Сегодня</option><option value="next7">На 7 дней</option>
+                <option value="undated">Без срока</option>
+              </select>
+            </div>
+            <div id="task-assignee-filter-wrap" hidden>
+              <label for="task-assignee-filter">Исполнитель</label>
+              <select id="task-assignee-filter"><option value="">Любой</option></select>
+            </div>
           </div>
           <p id="task-count" class="hint" role="status" aria-live="polite"></p>
           <div id="task-list" class="task-list" aria-live="polite"></div>
@@ -121,6 +143,36 @@
         </div>
         <p class="hint">История показывает действия и версии, но не раскрывает прежние значения клиентских полей.</p>
         <div id="task-events-list"></div>
+      </article>
+      <article id="task-collaboration" class="card task-collaboration" hidden>
+        <div class="record-operations-header">
+          <div><p class="overline">ВНУТРИ ЗАДАЧИ / SQLITE</p>
+            <h2 id="task-collaboration-title">Обсуждение и чек-лист</h2></div>
+          <button id="task-collaboration-close" type="button" class="ghost">Закрыть</button>
+        </div>
+        <p id="task-collaboration-hint" class="hint"></p>
+        <div class="task-collaboration-grid">
+          <section class="task-detail-section">
+            <h3>Шаги выполнения <span id="task-checklist-count"></span></h3>
+            <div id="task-checklist-list" class="task-checklist-list" aria-live="polite"></div>
+            <form id="task-checklist-form" hidden>
+              <label for="task-checklist-title">Новый пункт чек-листа</label>
+              <div class="task-detail-input">
+                <input id="task-checklist-title" maxlength="160" required placeholder="Проверить результат">
+                <button class="ghost" type="submit">Добавить пункт</button>
+              </div>
+            </form>
+          </section>
+          <section class="task-detail-section">
+            <h3>Комментарии</h3>
+            <div id="task-comment-list" class="task-comment-list" aria-live="polite"></div>
+            <form id="task-comment-form">
+              <label for="task-comment-text">Написать комментарий</label>
+              <textarea id="task-comment-text" rows="3" required maxlength="1000" placeholder="Что сделано, что мешает, какой следующий шаг?"></textarea>
+              <button type="submit" class="primary">Сохранить комментарий</button>
+            </form>
+          </section>
+        </div>
       </article>
     </section>
     <section id="pages" class="panel">
