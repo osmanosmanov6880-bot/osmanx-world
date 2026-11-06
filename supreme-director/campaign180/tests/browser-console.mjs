@@ -734,14 +734,14 @@ async function run(){
     "document.querySelector('#task-priority').value='normal';"+
     "document.querySelector('#task-form').requestSubmit();");
   await poll(()=>client.eval(
-    "state.tasks.some(x=>x.title==='Подготовка Wave 20')"),
+    "document.querySelector('#task-list').textContent.includes('Подготовка Wave 20')"),
     "Wave 20 prerequisite created in real SQLite");
   await client.eval("document.querySelector('#task-title').value='Запуск Wave 20';"+
     "document.querySelector('#task-due').value="+JSON.stringify(tomorrow)+";"+
     "document.querySelector('#task-priority').value='urgent';"+
     "document.querySelector('#task-form').requestSubmit();");
   await poll(()=>client.eval(
-    "state.tasks.some(x=>x.title==='Запуск Wave 20') "+
+    "document.querySelector('#task-list').textContent.includes('Запуск Wave 20') "+
     "&& document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20')"),
     "Wave 20 future urgent task is visible in real calendar");
   await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
@@ -752,7 +752,7 @@ async function run(){
     "&& document.querySelector('#task-dependency-candidate').options.length>1"),
     "Wave 20 editor loaded allowed predecessor tasks");
   await client.eval("document.querySelector('#task-dependency-candidate').value="+
-    "state.tasks.find(x=>x.title==='Подготовка Wave 20').task_id;"+
+    "[...document.querySelectorAll('#task-list .task-item')].find(x=>x.textContent.includes('Подготовка Wave 20')).dataset.taskId;"+
     "document.querySelector('#task-dependency-add').click();");
   await poll(()=>client.eval(
     "document.querySelector('#task-dependency-count').textContent.includes('1 связей') "+
@@ -764,14 +764,14 @@ async function run(){
     "row.querySelector('.task-actions button').click();})()");
   await poll(()=>client.eval(
     "document.querySelector('#notice').textContent.includes('INVALID_OPERATION') "+
-    "&& state.tasks.some(x=>x.title==='Запуск Wave 20'&&x.status==='todo')"),
+    "&& [...document.querySelectorAll('#task-list .task-item')].some(x=>x.textContent.includes('Запуск Wave 20')&&x.dataset.taskStatus==='todo')"),
     "Wave 20 API rejects premature completion without exposing sensitive details");
   await client.eval("(()=>{const row=[...document.querySelectorAll('#task-list .task-item')]"+
     ".find(x=>x.textContent.includes('Подготовка Wave 20'));"+
     "row.querySelector('.task-actions select').value='done';"+
     "row.querySelector('.task-actions button').click();})()");
   await poll(()=>client.eval(
-    "state.tasks.some(x=>x.title==='Подготовка Wave 20'&&x.status==='done') "+
+    "[...document.querySelectorAll('#task-list .task-item')].some(x=>x.textContent.includes('Подготовка Wave 20')&&x.dataset.taskStatus==='done') "+
     "&& document.querySelector('#calendar-blocked').textContent==='0' "+
     "&& document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20')"),
     "Wave 20 finishing prerequisite clears calendar dependency risk");
