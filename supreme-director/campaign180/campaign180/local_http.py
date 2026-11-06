@@ -192,6 +192,61 @@ class LocalConsole:
         if method=="GET" and path=="/api/v1/spec":
             out=runtime.get_spec(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
+        # Wave 21: manager-only project baselines and actual delivery.
+        if method=="GET" and path=="/api/v1/delivery":
+            out=runtime.delivery_schedule(tenant=tid,project_id=project,
+                                          actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/delivery/phases":
+            data=self._body(environ)
+            self._fields(data,{"name","baseline_start","baseline_end",
+                               "idempotency_key"},
+                         {"name","baseline_start","baseline_end","idempotency_key"})
+            out=runtime.create_delivery_phase(tenant=tid,project_id=project,
+                                              actor=actor,**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/delivery/phases/("+_UUID.pattern[1:-1]+
+                           r")/forecast",path)
+        if match and method=="PATCH":
+            data=self._body(environ)
+            self._fields(data,{"expected_version","forecast_end",
+                               "idempotency_key"},
+                         {"expected_version","forecast_end","idempotency_key"})
+            out=runtime.revise_delivery_phase(
+                tenant=tid,project_id=project,actor=actor,
+                phase_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/delivery/phases/("+_UUID.pattern[1:-1]+
+                           r")/milestones",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"name","baseline_due","linked_task_id",
+                               "idempotency_key"},
+                         {"name","baseline_due","idempotency_key"})
+            out=runtime.create_delivery_milestone(
+                tenant=tid,project_id=project,actor=actor,
+                phase_id=match.group(1),**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/delivery/milestones/("+_UUID.pattern[1:-1]+
+                           r")",path)
+        if match and method=="PATCH":
+            data=self._body(environ)
+            self._fields(data,{"expected_version","operation","value",
+                               "idempotency_key"},
+                         {"expected_version","operation","value","idempotency_key"})
+            out=runtime.change_delivery_milestone(
+                tenant=tid,project_id=project,actor=actor,
+                milestone_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/delivery/("+_UUID.pattern[1:-1]+
+                           r")/history",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"limit"},set())
+            out=runtime.delivery_event_history(
+                tenant=tid,project_id=project,actor=actor,
+                entity_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         if method=="POST" and path=="/api/v1/tasks/calendar":
             data=self._body(environ)
             self._fields(data,{"start_date","days","include_overdue"},set())

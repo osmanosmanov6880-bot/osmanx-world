@@ -70,6 +70,57 @@
         <article class="kpi"><span>ПРОСРОЧЕНЫ</span><strong id="tasks-overdue">—</strong><small>По дате UTC</small></article>
         <article class="kpi"><span>ВЫПОЛНЕНЫ</span><strong id="tasks-done">—</strong><small>Закрытые задачи</small></article>
       </div>
+      <section id="delivery-panel" class="card delivery-panel" hidden>
+        <div class="record-operations-header">
+          <div><p class="overline">ПЛАН ПРОЕКТА / НЕИЗМЕНЯЕМЫЕ БАЗОВЫЕ СРОКИ</p>
+            <h2>Этапы, вехи и отклонения</h2></div>
+          <button type="button" id="delivery-refresh" class="ghost">Обновить план</button>
+        </div>
+        <p class="hint">Базовые сроки фиксируются при создании. Прогноз можно менять с контролем версии; фактическое завершение подтверждается отдельно. Все показатели рассчитаны из SQLite, без автоматического признания выполнения.</p>
+        <div class="delivery-kpis">
+          <div><span>ЭТАПОВ</span><strong id="delivery-phases-count">—</strong></div>
+          <div><span>ЭТАПОВ СО СДВИГОМ</span><strong id="delivery-phases-late">—</strong></div>
+          <div><span>ВЕХ ВЫПОЛНЕНО</span><strong id="delivery-done">—</strong></div>
+          <div><span>ВЕХ ПРОСРОЧЕНО</span><strong id="delivery-overdue">—</strong></div>
+        </div>
+        <div class="delivery-form-grid">
+          <form id="delivery-phase-form" class="delivery-editor">
+            <h3>Новый этап</h3>
+            <label for="delivery-phase-name">Название этапа</label>
+            <input id="delivery-phase-name" maxlength="100" required placeholder="Проектирование">
+            <div class="delivery-date-grid">
+              <div><label for="delivery-phase-start">Базовое начало</label>
+                <input id="delivery-phase-start" type="date" required min="2000-01-01" max="2100-12-31"></div>
+              <div><label for="delivery-phase-end">Базовое завершение</label>
+                <input id="delivery-phase-end" type="date" required min="2000-01-01" max="2100-12-31"></div>
+            </div>
+            <button id="delivery-phase-create" type="submit" class="primary">Создать этап</button>
+          </form>
+          <form id="delivery-milestone-form" class="delivery-editor">
+            <h3>Новая контрольная веха</h3>
+            <label for="delivery-milestone-phase">Этап</label>
+            <select id="delivery-milestone-phase" required><option value="">Сначала создайте этап</option></select>
+            <label for="delivery-milestone-name">Результат для приёмки</label>
+            <input id="delivery-milestone-name" maxlength="120" required placeholder="Дизайн утверждён">
+            <div class="delivery-date-grid">
+              <div><label for="delivery-milestone-due">Базовая дата</label>
+                <input id="delivery-milestone-due" type="date" required min="2000-01-01" max="2100-12-31"></div>
+              <div><label for="delivery-milestone-task">Связать с задачей (необязательно)</label>
+                <select id="delivery-milestone-task"><option value="">Без задачи</option></select></div>
+            </div>
+            <button id="delivery-milestone-create" type="submit" class="primary">Добавить веху</button>
+          </form>
+        </div>
+        <p id="delivery-summary" class="hint" aria-live="polite"></p>
+        <div id="delivery-phase-list" class="delivery-phase-list" aria-live="polite"></div>
+        <div id="delivery-history-panel" class="delivery-history" hidden>
+          <div class="record-operations-header">
+            <h3>История изменений плана</h3>
+            <button type="button" id="delivery-history-close" class="ghost">Закрыть</button>
+          </div>
+          <div id="delivery-history-list"></div>
+        </div>
+      </section>
       <article id="task-calendar-panel" class="card task-calendar">
         <div class="record-operations-header">
           <div><p class="overline">ДЕДЛАЙНЫ / UTC / SQLITE</p>

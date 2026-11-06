@@ -40,6 +40,10 @@ from .task_planning import (
     init_planning,mutate_dependency,list_dependencies,calendar_agenda,
     dependency_events,
 )
+from .delivery_plan import (
+    init_delivery,create_phase,revise_phase_forecast,create_milestone,
+    change_milestone,delivery_report,delivery_history,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -78,6 +82,7 @@ class LocalAppRuntime:
         init_tasks(self)
         init_collaboration(self)
         init_planning(self)
+        init_delivery(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -321,6 +326,50 @@ class LocalAppRuntime:
                                task_id:str,limit:int=30)->dict:
         return dependency_events(self,tenant=tenant,project_id=project_id,
                                  actor=actor,task_id=task_id,limit=limit)
+
+    def create_delivery_phase(self,*,tenant:str,project_id:str,actor:str,
+                              name:str,baseline_start:str,baseline_end:str,
+                              idempotency_key:str)->dict:
+        return create_phase(self,tenant=tenant,project_id=project_id,
+                            actor=actor,name=name,baseline_start=baseline_start,
+                            baseline_end=baseline_end,idempotency_key=idempotency_key)
+
+    def revise_delivery_phase(self,*,tenant:str,project_id:str,actor:str,
+                              phase_id:str,expected_version:int,
+                              forecast_end:str,idempotency_key:str)->dict:
+        return revise_phase_forecast(self,tenant=tenant,project_id=project_id,
+                                     actor=actor,phase_id=phase_id,
+                                     expected_version=expected_version,
+                                     forecast_end=forecast_end,
+                                     idempotency_key=idempotency_key)
+
+    def create_delivery_milestone(self,*,tenant:str,project_id:str,actor:str,
+                                  phase_id:str,name:str,baseline_due:str,
+                                  idempotency_key:str,
+                                  linked_task_id:str|None=None)->dict:
+        return create_milestone(self,tenant=tenant,project_id=project_id,
+                                actor=actor,phase_id=phase_id,name=name,
+                                baseline_due=baseline_due,
+                                idempotency_key=idempotency_key,
+                                linked_task_id=linked_task_id)
+
+    def change_delivery_milestone(self,*,tenant:str,project_id:str,actor:str,
+                                  milestone_id:str,expected_version:int,
+                                  operation:str,value:str,
+                                  idempotency_key:str)->dict:
+        return change_milestone(self,tenant=tenant,project_id=project_id,
+                                actor=actor,milestone_id=milestone_id,
+                                expected_version=expected_version,
+                                operation=operation,value=value,
+                                idempotency_key=idempotency_key)
+
+    def delivery_schedule(self,*,tenant:str,project_id:str,actor:str)->dict:
+        return delivery_report(self,tenant=tenant,project_id=project_id,actor=actor)
+
+    def delivery_event_history(self,*,tenant:str,project_id:str,actor:str,
+                               entity_id:str,limit:int=30)->dict:
+        return delivery_history(self,tenant=tenant,project_id=project_id,
+                                actor=actor,entity_id=entity_id,limit=limit)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
