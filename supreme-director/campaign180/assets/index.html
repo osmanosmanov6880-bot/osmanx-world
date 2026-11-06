@@ -85,8 +85,16 @@
         <div id="edit-form-fields" class="form-field-editor"></div>
         <button type="submit" class="primary top-gap" id="save-form">Сохранить настройки формы</button>
       </form>
+      <form id="live-form" class="card form-properties" hidden>
+        <p class="overline">ДЕЙСТВУЮЩАЯ ФОРМА / ЛОКАЛЬНАЯ БАЗА</p>
+        <h2 id="live-form-title">Испытать форму</h2>
+        <p class="hint">Сохраняет настоящую запись SQLite и выполняет локальные автоматизации. Публичная отправка отключена.</p>
+        <div id="live-form-fields" class="fields"></div>
+        <button id="live-form-submit" type="submit" class="primary top-gap">Отправить в локальную базу</button>
+        <p id="live-form-status" class="hint" role="status" aria-live="polite"></p>
+      </form>
     </section>
-    <section id="records" class="panel">
+    <section id="records" class="panel'>
       <div class="page-heading"><div><p class="overline">МОДЕЛИ / СВЯЗИ</p><h1>Данные приложения</h1><p class="muted">Собственные записи, связи и версии. Доступ ограничен ролью.</p></div></div>
       <div class="record-grid"><div class="card"><h2>Модель</h2><label for="model-select">Выбери таблицу</label><select id="model-select"></select><div id="model-description" class="small-stat">—</div><label for="row-select">Запись для изменения</label><select id="row-select"></select><button id="new-row" type="button" class="ghost full">+ Новая запись</button></div>
       <form id="row-form" class="card"><h2 id="row-form-title">Новая запись</h2><div id="row-fields" class="fields"></div><div class="editor-actions"><button id="save-row" type="submit" class="primary">Сохранить запись</button><button id="delete-row" type="button" class="danger">Удалить</button></div></form></div>

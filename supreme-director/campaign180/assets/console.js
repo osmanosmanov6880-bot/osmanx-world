@@ -123,6 +123,7 @@ function sectionChanged(){
   $("section-text").disabled=!Object.hasOwn(section,"text") || !can("spec.write");
   $("section-heading").disabled=!can("spec.write");
   renderFormProperties(section);
+  renderLiveForm(section);
   $("page-title").disabled=!can("spec.write");
 }
 function renderFormProperties(section){
@@ -192,6 +193,88 @@ $("form-editor").addEventListener("submit",async ev=>{
     $("section-select").value=String(index);sectionChanged();
     show("Настройки формы сохранены · ревизия "+result.revision);
   }catch(err){show(err.message,true);}
+});
+function renderLiveForm(section){
+  const form=$("live-form"),root=$("live-form-fields");
+  const generation=(state.liveFormGeneration=(state.liveFormGeneration||0)+1);
+  state.liveFormRetryKey=null;
+  const enabled=section?.type==="form" && can("record.write");
+  form.hidden=!enabled;
+  root.replaceChildren();
+  if(!enabled)return;
+  const selected=state.spec.models.find(m=>m.name===section.model);
+  if(!selected){form.hidden=true;return;}
+  const included=section.fields||selected.fields.map(f=>f.name);
+  $("live-form-title").textContent="Испытать форму: "+section.heading;
+  $("live-form-status").textContent="";
+  for(const name of included){
+    const field=selected.fields.find(f=>f.name===name);
+    if(!field)continue;
+    const wrapper=node("div"),label=node("label",field.label+(field.required?" *":""));
+    const input=field.type==="reference"?node("select"):node("input");
+    input.dataset.liveField=field.name;
+    input.id="live-"+field.name;
+    input.required=Boolean(field.required);
+    if(field.type==="reference"){
+      pick(input,[["","Загрузка связей…"]]);input.disabled=true;
+      api("/api/v1/models/"+encodeURIComponent(field.references)+"/choices")
+        .then(result=>{
+          if(generation!==state.liveFormGeneration)return;
+          pick(input,[["","Выберите запись"],...result.choices.map(row=>[row.row_id,row.label])]);
+          input.disabled=false;
+        })
+        .catch(()=>{
+          if(generation!==state.liveFormGeneration)return;
+          pick(input,[["","Связи недоступны"]]);input.disabled=true;
+        });
+    }else{
+      input.type=field.type==="integer"?"number":
+        field.type==="email"?"email":
+        field.type==="date"?"date":
+        field.type==="boolean"?"checkbox":"text";
+      if(input.type==="number")input.step="1";
+    }
+    label.setAttribute("for",input.id);
+    wrapper.append(label,input);root.append(wrapper);
+    input.addEventListener("input",()=>{state.liveFormRetryKey=null;});
+    input.addEventListener("change",()=>{state.liveFormRetryKey=null;});
+  }
+  $("live-form-submit").disabled=false;
+}
+$("live-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const button=$("live-form-submit");
+  if(button.disabled)return;
+  button.disabled=true;
+  try{
+    if(!can("record.write"))throw Error("Недостаточно прав для отправки");
+    const page=$("page-select").value;
+    const index=Number($("section-select").value);
+    const section=state.spec.pages.find(p=>p.slug===page)?.sections[index];
+    if(section?.type!=="form")throw Error("Форма изменилась, обновите страницу");
+    const definition=state.spec.models.find(m=>m.name===section.model);
+    const data={};
+    for(const input of $("live-form-fields").querySelectorAll("[data-live-field]")){
+      if(input.disabled)throw Error("Поле связи ещё не загружено");
+      const field=definition.fields.find(f=>f.name===input.dataset.liveField);
+      const raw=field.type==="boolean"?input.checked:input.value.trim();
+      if(raw==="" && !field.required)continue;
+      data[field.name]=typed(field,raw);
+    }
+    const key=state.liveFormRetryKey||safeId();
+    state.liveFormRetryKey=key;
+    const result=await api("/api/v1/forms/"+encodeURIComponent(page)+"/submit",{
+      method:"POST",body:{section_index:index,expected_revision:state.revision,
+        data,idempotency_key:key}});
+    state.liveFormRetryKey=null;
+    $("live-form").reset();
+    $("live-form-status").textContent="Сохранено в SQLite: "+result.row_id.slice(0,8);
+    if(state.model===result.model)await refreshRows();
+    show("Форма отправлена; сохранена реальная запись · v"+result.version);
+  }catch(error){
+    $("live-form-status").textContent="Не сохранено: "+error.message;
+    show(error.message,true);
+  }finally{button.disabled=false;}
 });
 function sectionTemplate(type){
   if(type==="text")return {type:"text",heading:"Новый текстовый раздел",text:"Добавьте описание раздела."};
