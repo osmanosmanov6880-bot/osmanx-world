@@ -128,9 +128,9 @@ class AutomaticWorkflowTests(Wave6Setup):
 
     def test_revoked_role_does_not_dispatch_side_effect(self):
         self.make_rule("record.created")
-        self.app.policy.add_member(**self.args,owner_actor=OWNER,
+        self.app.policy.add_member(tenant=TENANT,project_id=self.project,owner_actor=OWNER,
                                    member_actor=VIEWER,role="operator",now=1799971202)
-        self.app.policy.revoke_member(**self.args,owner_actor=OWNER,
+        self.app.policy.revoke_member(tenant=TENANT,project_id=self.project,owner_actor=OWNER,
                                       member_actor=VIEWER,now=1799971203)
         with self.assertRaises(AppAccessDenied):
             self.app.create_row(tenant=TENANT,project_id=self.project,actor=VIEWER,
