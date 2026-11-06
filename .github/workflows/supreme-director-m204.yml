@@ -9,6 +9,10 @@ on:
     paths:
       - "supreme-director/m204/**"
       - ".github/workflows/supreme-director-m204.yml"
+# Preserve the check; cancel only superseded runs for this same event/ref.
+concurrency:
+  group: director-m204-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
