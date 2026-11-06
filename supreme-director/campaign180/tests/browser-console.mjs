@@ -475,6 +475,55 @@ async function run(){
     "restore UI refreshed after committing snapshot");
   await client.screenshot("08-restore-confirmation-desktop.png");
 
+  // Wave 10: map the existing live relation to an explicitly chosen vendor.
+  const vendorsForMap=await localApi("/api/v1/models/vendors");
+  const vendorTarget=vendorsForMap.rows.find(x=>x.fields.name==="Поставщик CI");
+  assert.ok(vendorTarget?.row_id,"vendor target must exist for explicit mapping");
+  await client.eval("document.querySelector('[data-panel=schema]').click();"+
+    "document.querySelector('#map-model').value='requests';"+
+    "document.querySelector('#map-model').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#map-field').value='client_ref';"+
+    "document.querySelector('#map-target-model').value='vendors';"+
+    "document.querySelector('#map-options-form').requestSubmit();");
+  await poll(()=>client.eval("document.querySelectorAll('#map-rows .mapped-row').length===1 "+
+    "&& document.querySelector('#map-review-form').hidden===false"),
+    "mapped migration wizard loaded one old source value");
+  await client.eval("document.querySelector('#map-rows .mapped-row select').value="+
+    JSON.stringify(vendorTarget.row_id)+";"+
+    "document.querySelector('#map-rows .mapped-row select').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#map-review-form').requestSubmit();");
+  await poll(()=>client.eval("document.querySelector('#map-approval').hidden===false "+
+    "&& document.querySelector('#map-plan-digest').textContent.includes('SHA-256')"),
+    "mapping preview and SHA-256 generated");
+  await client.eval("document.querySelector('#map-approve').checked=true;"+
+    "document.querySelector('#map-approve').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#map-apply').click();");
+  await poll(async()=>{
+    const [rows,spec]=await Promise.all([
+      localApi("/api/v1/models/requests"),localApi("/api/v1/spec")]);
+    const target=spec.spec.models.find(m=>m.name==="requests")
+      ?.fields.find(f=>f.name==="client_ref")?.references;
+    return target==="vendors" && rows.rows.some(r=>
+      r.fields.summary==="Связанная заявка из Chromium" &&
+      r.fields.client_ref===vendorTarget.row_id && r.version===3);
+  },"live foreign key remapped and link schema updated");
+  await poll(()=>client.eval("document.querySelector('#notice')?.textContent.startsWith('Связи перенесены')"),
+    "mapping wizard UI refreshed");
+  await client.screenshot("09-approved-live-remap-desktop.png");
+
+  // Owner-only metadata check: the full recovery archive must never be sent over HTTP.
+  await client.eval("document.querySelector('[data-panel=history]').click();"+
+    "document.querySelector('#recovery-inspect').click();");
+  await poll(()=>client.eval("document.querySelector('#recovery-summary').textContent.includes('SQLite ok') "+
+    "&& document.querySelector('#recovery-summary').textContent.includes('SHA ')"),
+    "project recovery integrity summary");
+  const recovery=await localApi("/api/v1/recovery/inspect");
+  assert.ok(recovery.records>=4);
+  assert.ok(recovery.links>=1);
+  assert.equal(recovery.plaintext_exported,false);
+  assert.equal(recovery.includes_roles,false);
+  await client.screenshot("10-recovery-integrity-desktop.png");
+
   // Mobile viewport must not leak navigation or overflow the viewport.
   await client.send("Emulation.setDeviceMetricsOverride",{
     width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -482,12 +531,12 @@ async function run(){
   const overflow=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
-  await client.screenshot("09-mobile-390.png");
+  await client.screenshot("11-mobile-390.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mobile"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","mobile"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:9,public_server_started:false,production_deployed:false};
+    screenshots:11,public_server_started:false,production_deployed:false};
 }
 
 try{
