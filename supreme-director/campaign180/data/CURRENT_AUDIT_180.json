@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "ab9a71acce61c8a0dd3c27e8f893090e442117af",
+  "based_on_code_commit": "ccb4bd39426072c157c6f41fa789afc1bc4a18f2",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -358,7 +358,8 @@
         "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
         "supreme-director/campaign180/campaign180/project_recovery.py",
         "supreme-director/campaign180/campaign180/recovery_drill.py",
-        "supreme-director/campaign180/tests/test_wave11_recovery_drill.py"
+        "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+        "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -408,7 +409,8 @@
         "supreme-director/campaign180/campaign180/project_recovery.py",
         "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
         "supreme-director/campaign180/campaign180/recovery_drill.py",
-        "supreme-director/campaign180/tests/test_wave11_recovery_drill.py"
+        "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+        "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -434,7 +436,8 @@
         "supreme-director/campaign180/campaign180/project_recovery.py",
         "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
         "supreme-director/campaign180/campaign180/recovery_drill.py",
-        "supreme-director/campaign180/tests/test_wave11_recovery_drill.py"
+        "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+        "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -456,7 +459,8 @@
         "supreme-director/campaign180/tests/browser-console.mjs",
         "supreme-director/campaign180/campaign180/revision_restore.py",
         "supreme-director/campaign180/campaign180/project_recovery.py",
-        "supreme-director/campaign180/campaign180/recovery_drill.py"
+        "supreme-director/campaign180/campaign180/recovery_drill.py",
+        "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2502,6 +2506,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave11 19-workflow concurrency cleanup, scratch project recovery drill and negative privacy/ACL tests",
-  "notes": "CI job dispatch remains pending independent of queue cleanup; 33 locally linked, 139 no evidence, 8 holds, 0 independently accepted. No main/production change."
+  "last_local_campaign": "Wave12 archived tombstone schema migration repair, 12-table source state invariant and dual synthetic restore drill",
+  "notes": "Local code evidence only, Wave12 CI not yet confirmed. 33 locally linked original IDs, 139 no evidence, 8 holds, 0 independently accepted."
 }

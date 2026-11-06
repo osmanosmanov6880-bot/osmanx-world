@@ -124,7 +124,8 @@
       "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
       "supreme-director/campaign180/campaign180/project_recovery.py",
       "supreme-director/campaign180/campaign180/recovery_drill.py",
-      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py"
+      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
     ],
     "TITAN-X24": [
       "supreme-director/campaign180/campaign180/drafts.py",
@@ -138,7 +139,8 @@
       "supreme-director/campaign180/campaign180/project_recovery.py",
       "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
       "supreme-director/campaign180/campaign180/recovery_drill.py",
-      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py"
+      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
     ],
     "TITAN-X25": [
       "supreme-director/campaign180/campaign180/preview.py",
@@ -148,7 +150,8 @@
       "supreme-director/campaign180/tests/browser-console.mjs",
       "supreme-director/campaign180/campaign180/revision_restore.py",
       "supreme-director/campaign180/campaign180/project_recovery.py",
-      "supreme-director/campaign180/campaign180/recovery_drill.py"
+      "supreme-director/campaign180/campaign180/recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
     ],
     "TITAN-X22": [
       "supreme-director/campaign180/campaign180/app_runtime.py",
@@ -174,7 +177,8 @@
       "supreme-director/campaign180/campaign180/project_recovery.py",
       "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py",
       "supreme-director/campaign180/campaign180/recovery_drill.py",
-      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py"
+      "supreme-director/campaign180/tests/test_wave11_recovery_drill.py",
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
     ],
     "TITAN-X19": [
       "supreme-director/campaign180/campaign180/repair.py",

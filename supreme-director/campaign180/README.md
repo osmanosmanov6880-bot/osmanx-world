@@ -95,3 +95,11 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 ### CI backlog maintenance (Wave 11)
 
 All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and event path filters, but now use per-workflow PR/push concurrency cancellation. The two Original-180 campaign checks use PR-only triggers and manual dispatch. This removes stale queued checks, not an unavailable GitHub runner; independently accepted remains 0/180.
+
+## Wave 12 — archive-safe typed migrations and 12-table restore assertions
+
+- [Wave 12 regression and recovery findings](docs/WAVE12_ARCHIVED_SCHEMA_RECOVERY_RU.md).
+- Repair archived tombstones during required-field migrations (flag-preserving, bounded, transactional).
+- Restore drill now hashes and compares 12 project table families and closes SQLite backup descriptors.
+- CI requires both synthetic `demo` and `archived` restore runs; no PASS claimed until a job completes.
+- [Original 180 ledger](docs/CURRENT_AUDIT_180_RU.md): 33 related, 139 without evidence, eight holds, independently accepted 0.
