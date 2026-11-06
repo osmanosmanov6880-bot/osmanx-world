@@ -91,3 +91,7 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Wave 11 report and limitation disclosure](docs/WAVE11_ISOLATED_RESTORE_AND_CI_RU.md).
 - [180 original IDs](docs/CURRENT_AUDIT_180_RU.md) / [machine ledger](data/CURRENT_AUDIT_180.json): 33 locally related, 139 without direct proof, 8 holds, independently accepted 0.
 - Python CI now verifies a full synthetic recovery into a scratch project; Chromium clicks the owner-only restore drill. PR checks are deduplicated and superseded runs canceled. No deployed services or source database modifications.
+
+### CI backlog maintenance (Wave 11)
+
+All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and event path filters, but now use per-workflow PR/push concurrency cancellation. The two Original-180 campaign checks use PR-only triggers and manual dispatch. This removes stale queued checks, not an unavailable GitHub runner; independently accepted remains 0/180.

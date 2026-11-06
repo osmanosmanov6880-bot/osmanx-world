@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "b18a42b119ef9fcca9b76d1900d1a74a7e1690f1",
+  "based_on_code_commit": "ab9a71acce61c8a0dd3c27e8f893090e442117af",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -2502,6 +2502,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave11 CI queue deduplication and SQLite source-read-only isolated clone restore drill",
-  "notes": "33 locally linked original IDs, 139 without direct proof and eight holds; latest PR CI remains queued, 0/180 independently accepted; main and production unchanged."
+  "last_local_campaign": "Wave11 19-workflow concurrency cleanup, scratch project recovery drill and negative privacy/ACL tests",
+  "notes": "CI job dispatch remains pending independent of queue cleanup; 33 locally linked, 139 no evidence, 8 holds, 0 independently accepted. No main/production change."
 }
