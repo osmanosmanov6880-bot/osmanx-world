@@ -1747,4 +1747,6 @@ async function refreshPreview(){
 }
 $("preview-select").addEventListener("change",refreshPreview);
 $("refresh-preview").addEventListener("click",refreshPreview);
+// A deterministic signal for real browser readiness and safe form submission.
+document.documentElement.dataset.consoleReady="1";
 })();
