@@ -692,7 +692,9 @@ async function run(){
   await client.screenshot("17-manager-tasks-desktop.png");
   // Wave 19: comments, checklist, manager workload and due filters work
   // through the same authenticated UI and disposable SQLite database.
-  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Поручение из Chromium'))"+
+    ".querySelector('.task-collab-open')).click();");
   await poll(()=>client.eval(
     "document.querySelector('#task-collaboration').hidden===false "+
     "&& document.querySelector('#task-collaboration-title').textContent.includes('Поручение')"),
@@ -832,7 +834,9 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow390<=2,"390px task board horizontal overflow: "+taskOverflow390);
   await client.screenshot("18-mobile-390-tasks.png");
-  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Поручение из Chromium'))"+
+    ".querySelector('.task-collab-open')).click();");
   await poll(()=>client.eval(
     "document.querySelector('#task-collaboration').hidden===false "+
     "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
@@ -900,7 +904,9 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow320<=2,"320px task board horizontal overflow: "+taskOverflow320);
   await client.screenshot("19-mobile-320-tasks.png");
-  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await client.eval("([...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Поручение из Chromium'))"+
+    ".querySelector('.task-collab-open')).click();");
   await poll(()=>client.eval(
     "document.querySelector('#task-collaboration').hidden===false "+
     "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
