@@ -1,16 +1,17 @@
 name: OSGARD Original 180 Wave-0 Provenance and Contracts
+# PR-only trigger avoids duplicating every push with a PR run.
+# workflow_dispatch remains available for an explicit manual verification.
 on:
-  push:
-    branches: ["recovery/supreme-director-m187-20261104"]
-    paths:
-      - "supreme-director/campaign180/**"
-      - ".github/CODEOWNERS"
-      - ".github/workflows/supreme-director-campaign180.yml"
+  workflow_dispatch:
   pull_request:
     paths:
       - "supreme-director/campaign180/**"
       - ".github/CODEOWNERS"
       - ".github/workflows/supreme-director-campaign180.yml"
+# Cancel superseded queued/active verification for this PR only.
+concurrency:
+  group: original180-python-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

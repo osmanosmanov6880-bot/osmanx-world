@@ -1,14 +1,16 @@
 name: OSGARD Original 180 Local Chromium Acceptance
+# PR-only trigger avoids duplicating every push with a PR run.
+# workflow_dispatch remains available for an explicit manual verification.
 on:
-  push:
-    branches: ["recovery/supreme-director-m187-20261104"]
-    paths:
-      - "supreme-director/campaign180/**"
-      - ".github/workflows/supreme-director-campaign180-browser.yml"
+  workflow_dispatch:
   pull_request:
     paths:
       - "supreme-director/campaign180/**"
       - ".github/workflows/supreme-director-campaign180-browser.yml"
+# Cancel superseded queued/active verification for this PR only.
+concurrency:
+  group: original180-chromium-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
