@@ -192,6 +192,41 @@ class LocalConsole:
         if method=="GET" and path=="/api/v1/spec":
             out=runtime.get_spec(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/tasks/calendar":
+            data=self._body(environ)
+            self._fields(data,{"start_date","days","include_overdue"},set())
+            out=runtime.task_calendar(tenant=tid,project_id=project,
+                                      actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/tasks/("+_UUID.pattern[1:-1]+
+                           r")/dependencies/(add|remove)",path)
+        if match and method=="POST":
+            task_id,operation=match.groups()
+            data=self._body(environ)
+            self._fields(data,{"prerequisite_id","expected_version",
+                               "idempotency_key"},
+                         {"prerequisite_id","expected_version","idempotency_key"})
+            method_fn=(runtime.add_task_dependency if operation=="add"
+                       else runtime.remove_task_dependency)
+            out=method_fn(tenant=tid,project_id=project,actor=actor,
+                          task_id=task_id,**data)
+            return self._json(start_response,"201 Created" if operation=="add"
+                              else "200 OK",out)
+        match=re.fullmatch(r"/api/v1/tasks/("+_UUID.pattern[1:-1]+
+                           r")/dependencies",path)
+        if match and method=="GET":
+            out=runtime.list_task_dependencies(tenant=tid,project_id=project,
+                                                actor=actor,task_id=match.group(1))
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/tasks/("+_UUID.pattern[1:-1]+
+                           r")/dependency-history",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"limit"},set())
+            out=runtime.task_dependency_events(
+                tenant=tid,project_id=project,actor=actor,
+                task_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/tasks/workload":
             out=runtime.team_workload(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
