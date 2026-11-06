@@ -22,6 +22,8 @@ from .app_policy import AppPrincipal,AppAccessDenied
 from .app_runtime import LocalAppRuntime,AppOperationDenied
 from .model_editor import LocalModelEditor
 from .revision_restore import LocalRevisionRestorer
+from .mapped_relations import LocalMappedReferenceMigration
+from .project_recovery import LocalProjectRecovery
 from .builder import validate_site_spec
 from .contracts import ACTOR_RE,TENANT_RE
 from .drafts import DraftDenied,_identity
@@ -72,6 +74,8 @@ class LocalConsole:
         self.runtime=LocalAppRuntime(str(database))
         self.model_editor=LocalModelEditor(self.runtime)
         self.restorer=LocalRevisionRestorer(self.runtime)
+        self.mapped=LocalMappedReferenceMigration(self.runtime)
+        self.recovery=LocalProjectRecovery(self.runtime)
         # Fail early when the trusted local principal was not provisioned.
         self.runtime.policy.get_role(tenant=tenant,project_id=project_id,actor=actor)
 
@@ -234,6 +238,32 @@ class LocalConsole:
                          {"expected_revision"})
             out=runtime.edit_page(tenant=tid,project_id=project,actor=actor,
                                   slug=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="GET" and path=="/api/v1/recovery/inspect":
+            out=self.recovery.inspect(tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/references/map/options":
+            data=self._body(environ)
+            self._fields(data,{"model","field","new_target_model"},
+                         {"model","field","new_target_model"})
+            out=self.mapped.mapping_options(tenant=tid,project_id=project,
+                                            actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/references/map/inspect":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","model","field",
+                               "new_target_model","mapping"},
+                         {"expected_revision","model","field",
+                          "new_target_model","mapping"})
+            out=self.mapped.inspect(tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/references/map/apply":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","model","field",
+                               "new_target_model","mapping","expected_plan_sha256"},
+                         {"expected_revision","model","field",
+                          "new_target_model","mapping","expected_plan_sha256"})
+            out=self.mapped.apply(tenant=tid,project_id=project,actor=actor,**data)
             return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/revisions":
             out=self.restorer.list_revisions(tenant=tid,project_id=project,actor=actor)
