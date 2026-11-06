@@ -12,6 +12,7 @@ not replace off-site backup, security review, or independent acceptance.
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -40,10 +41,40 @@ class LocalRecoveryDrill:
         absolute=Path(source_path).resolve(strict=True)
         source=sqlite3.connect(absolute.as_uri()+"?mode=ro",uri=True,timeout=15)
         try:
-            with sqlite3.connect(str(target),timeout=15) as scratch:
+            # sqlite3.Connection's ordinary context manager does NOT close
+            # the file descriptor; closing() guarantees the snapshot is ready.
+            with closing(sqlite3.connect(str(target),timeout=15)) as scratch:
                 source.backup(scratch,pages=100,sleep=0.01)
         finally:
             source.close()
+
+    @staticmethod
+    def _source_state(db,tenant,project_id):
+        """Capture EVERY recognized project-specific SQLite table, not only rows.
+
+        Includes workflow rules/runs, idempotency receipts, audit events and
+        immutable schema/migration receipts. The hashes remain local and only
+        a metadata count is exposed in the report.
+        """
+        tables=("draft_projects","draft_revisions","builder_rows",
+                "builder_links","builder_idempotency","app_memberships",
+                "app_membership_events","app_workflows","app_workflow_runs",
+                "builder_model_migrations","builder_reference_remaps",
+                "builder_page_restores")
+        available={r["name"] for r in db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        out={}
+        for table in tables:
+            if table not in available:
+                out[table]="table-not-initialized"
+                continue
+            # Constant, hard-coded SQL identifiers; no user-controlled table name.
+            rows=[tuple(r) for r in db.execute(
+                "SELECT * FROM "+table+" WHERE tenant=? AND project_id=? ORDER BY rowid",
+                (tenant,project_id)).fetchall()]
+            out[table]=sha256(json.dumps(rows,ensure_ascii=False,
+                 sort_keys=True,separators=(",",":")).encode("utf-8")).hexdigest()
+        return out
 
     @staticmethod
     def _row_snapshot(db,tenant,project_id):
@@ -71,6 +102,7 @@ class LocalRecoveryDrill:
             engine=LocalProjectRecovery(clone_runtime)
             with clone_runtime.drafts._db() as db:
                 spec,head=clone_runtime.drafts._head(db,tenant,project_id)
+                before_state=self._source_state(db,tenant,project_id)
                 before_rows=self._row_snapshot(db,tenant,project_id)
                 before_links=self._link_snapshot(db,tenant,project_id)
                 before_members=[tuple(row) for row in db.execute("""SELECT
@@ -95,6 +127,7 @@ class LocalRecoveryDrill:
                     db,tenant,scratch_project_id)
                 current_source,source_head=clone_runtime.drafts._head(
                     db,tenant,project_id)
+                after_state=self._source_state(db,tenant,project_id)
                 after_source_rows=self._row_snapshot(db,tenant,project_id)
                 after_source_links=self._link_snapshot(db,tenant,project_id)
                 cloned_rows=self._row_snapshot(db,tenant,scratch_project_id)
@@ -116,7 +149,8 @@ class LocalRecoveryDrill:
                 check=db.execute("PRAGMA quick_check").fetchone()[0]
             if check!="ok":
                 raise RecoveryDrillDenied("Isolated SQLite integrity check failed")
-            if (current_source!=spec or source_head["revision"]!=head["revision"]
+            if (before_state!=after_state
+                or current_source!=spec or source_head["revision"]!=head["revision"]
                 or after_source_rows!=before_rows or after_source_links!=before_links
                 or after_members!=before_members or
                 self._row_snapshot_to_hash(cloned_rows)!=self._row_snapshot_to_hash(before_rows)
@@ -140,6 +174,7 @@ class LocalRecoveryDrill:
                     "clone_delegated_memberships":0,
                     "scratch_only":True,"production_published":False,
                     "source_database_modified":False,
+                    "source_tables_verified":len(before_state),
                     "contains_customer_data":False,
                     "independent_acceptance":False}
 
