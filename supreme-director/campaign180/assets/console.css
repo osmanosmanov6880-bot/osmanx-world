@@ -86,3 +86,8 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
 .form-field-row button{padding:5px 9px;min-width:30px}
 @media(max-width:1000px){.form-config-row{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.form-config-row,.form-field-editor{grid-template-columns:1fr}}
+
+.history-summary{color:#d9e8f8;font-size:15px;font-weight:650;line-height:1.6}
+#history-plan{border-top:1px solid #304563;padding-top:18px}
+#history-plan .checkbox-row{line-height:1.6}
+@media(max-width:810px){.nav-link{flex:0 0 auto}}

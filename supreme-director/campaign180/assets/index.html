@@ -20,6 +20,7 @@
     <button type="button" class="nav-link" data-panel="pages"><span class="nav-icon">▣</span> Страницы</button>
     <button type="button" class="nav-link" data-panel="records"><span class="nav-icon">▤</span> Данные</button>
     <button type="button" class="nav-link" data-panel="schema"><span class="nav-icon">⬡</span> Модели и формы</button>
+    <button type="button" class="nav-link" data-panel="history"><span class="nav-icon">◷</span> Версии и откат</button>
     <button type="button" class="nav-link" data-panel="workflows"><span class="nav-icon">◇</span> Автоматизация</button>
     <button type="button" class="nav-link" data-panel="preview"><span class="nav-icon">▧</span> Предпросмотр</button>
   </nav>
@@ -153,6 +154,59 @@
           <p class="hint">Доступны ревизии, операции и число изменённых записей. Данные клиентов в журнал не записываются.</p>
           <div id="schema-migrations" class="stack" aria-live="polite"><p class="muted">История не загружена</p></div>
         </article>
+      </div>
+      <div class="schema-grid lower">
+        <form id="link-rename-form" class="card">
+          <p class="overline">СВЯЗИ / МИГРАЦИИ</p><h2>Переименовать поле-связь</h2>
+          <p class="hint">Значения записей и индекс связей меняются вместе. Целевая модель не меняется. Если найдена несовместимость, вся операция отменяется.</p>
+          <label for="link-rename-model">Модель с полем</label><select id="link-rename-model"></select>
+          <label for="link-rename-field">Поле-связь</label><select id="link-rename-field"></select>
+          <label for="link-new-name">Новое имя поля</label>
+          <input id="link-new-name" required maxlength="32" pattern="[a-z][a-z0-9_]*" placeholder="customer_ref">
+          <label class="checkbox-row" for="link-rename-confirm">
+            <input id="link-rename-confirm" type="checkbox" required> Проверил зависимые формы и целостность связей
+          </label>
+          <button id="link-rename-submit" type="submit" class="primary top-gap">Мигрировать поле-связь</button>
+        </form>
+        <form id="link-retarget-form" class="card">
+          <p class="overline">СВЯЗИ / БЕЗ ПЕРЕНОСА ДАННЫХ</p><h2>Изменить целевую модель</h2>
+          <p class="hint">Разрешено только для поля без существующих связей, включая удалённые записи. Действующие связи не перенаправляются автоматически.</p>
+          <label for="link-retarget-model">Модель с полем</label><select id="link-retarget-model"></select>
+          <label for="link-retarget-field">Поле-связь</label><select id="link-retarget-field"></select>
+          <label for="link-target-model">Новая целевая модель</label><select id="link-target-model"></select>
+          <label class="checkbox-row" for="link-retarget-confirm">
+            <input id="link-retarget-confirm" type="checkbox" required> Подтверждаю отсутствие значений и ссылок
+          </label>
+          <button id="link-retarget-submit" type="submit" class="primary top-gap">Изменить целевую модель</button>
+        </form>
+      </div>
+    </section>
+    <section id="history" class="panel">
+      <div class="page-heading"><div><p class="overline">РЕВИЗИИ / БЕЗ ПОТЕРИ ДАННЫХ</p>
+        <h1>История и восстановление</h1>
+        <p class="muted">Проверь различия, затем создай новую версию на основе старой. Клиентские записи остаются нетронутыми; несовместимые схемы моделей блокируются.</p>
+      </div><span class="pill">Ручное подтверждение</span></div>
+      <div class="schema-grid">
+        <form id="history-inspect-form" class="card">
+          <h2>Выбрать версию</h2>
+          <label for="history-revision">Исторический снимок</label>
+          <select id="history-revision"></select>
+          <button id="history-inspect" type="submit" class="ghost full">Проверить возможность восстановления</button>
+          <p class="hint">Проверяется исходная SHA-256-сумма, принадлежность проекту и идентичность схем данных. Восстановление не выполняется на этом шаге.</p>
+        </form>
+        <div class="card">
+          <h2>Результат проверки</h2>
+          <p id="history-empty" class="muted">Выбери версию и нажми «Проверить».</p>
+          <div id="history-plan" hidden>
+            <p id="history-plan-summary" class="history-summary"></p>
+            <p id="history-page-changes" class="hint"></p>
+            <p class="hint">Восстановление создаст новую ревизию. Все существующие записи, история и связи останутся без изменения.</p>
+            <label class="checkbox-row" for="history-approve">
+              <input id="history-approve" type="checkbox"> Подтверждаю выбранную версию и создание новой ревизии
+            </label>
+            <button id="history-apply" type="button" class="primary top-gap" disabled>Восстановить проверенную версию</button>
+          </div>
+        </div>
       </div>
     </section>
     <section id="workflows" class="panel">

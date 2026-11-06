@@ -1,9 +1,9 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null};
-const panels = ["dashboard","pages","records","schema","workflows","preview"];
-const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",schema:"Модели и формы",workflows:"Автоматизация",preview:"Предпросмотр"};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null};
+const panels = ["dashboard","pages","records","schema","history","workflows","preview"];
+const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
   const el=$("notice"); el.textContent=message || ""; el.classList.toggle("error",error);
 };
@@ -51,12 +51,18 @@ function switchPanel(name){
   $("crumb").textContent=names[name];
   if(name==="preview" && state.spec) refreshPreview();
   if(name==="schema" && state.spec) refreshMigrationHistory().catch(e=>show(e.message,true));
+  if(name==="history" && state.spec) refreshRevisions().catch(e=>show(e.message,true));
 }
 document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
 async function sync(){
   const [me,result,workflows]=await Promise.all([
     api("/api/v1/me"),api("/api/v1/spec"),api("/api/v1/workflows")]);
   state.me=me;state.spec=result.spec;state.revision=result.revision;
+  state.restorePlan=null;
+  $("history-plan").hidden=true;
+  $("history-empty").hidden=false;
+  $("history-approve").checked=false;
+  $("history-apply").disabled=true;
   state.workflows=workflows.workflows;
   $("role-pill").textContent="Роль: "+me.role;
   $("metric-pages").textContent=result.spec.pages.length;
@@ -71,12 +77,14 @@ async function sync(){
     $(id).disabled=!can("spec.write");
   }
 
-  for(const id of ["schema-create-model","schema-add-field","schema-save-label","schema-rename-submit"]){
+  for(const id of ["schema-create-model","schema-add-field","schema-save-label","schema-rename-submit",
+                   "link-rename-submit","link-retarget-submit"]){
     $(id).disabled=!can("spec.write")||!can("record.write");
   }
   $("save-row").disabled=!can("record.write");
   $("delete-row").disabled=!can("record.write");
   $("wf-create").disabled=!can("workflow.manage");
+  $("history-inspect").disabled=!can("spec.write");
   renderPages();renderModels();renderSchema();renderWorkflows();
   await refreshRows();
 }
@@ -257,7 +265,11 @@ function renderSchema(){
   pick($("schema-reference-model"),options);
   pick($("form-model-select"),options);
   pick($("schema-rename-model"),options);
+  pick($("link-rename-model"),options);
+  pick($("link-retarget-model"),options);
+  pick($("link-target-model"),options);
   populateRenameFields();
+  updateReferenceTargets();
   const labels=[];
   for(const m of models){
     labels.push(["model:"+m.name,"Модель · "+m.label]);
@@ -268,6 +280,108 @@ function renderSchema(){
   updateSchemaFieldType();
   updateNewSectionFormType();
 }
+function relationFields(modelName){
+  const m=state.spec?.models.find(m=>m.name===modelName);
+  return m?m.fields.filter(f=>f.type==="reference"):[];
+}
+function updateReferenceTargets(){
+  const a=relationFields($("link-rename-model").value);
+  const b=relationFields($("link-retarget-model").value);
+  pick($("link-rename-field"),a.map(f=>[f.name,f.label+" → "+f.references]));
+  pick($("link-retarget-field"),b.map(f=>[f.name,f.label+" → "+f.references]));
+}
+$("link-rename-model").addEventListener("change",updateReferenceTargets);
+$("link-retarget-model").addEventListener("change",updateReferenceTargets);
+$("link-rename-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    if(!can("spec.write")||!can("record.write"))throw Error("Нет прав на миграцию связей");
+    if(!$("link-rename-confirm").checked)throw Error("Подтверди проверку связей");
+    const out=await api("/api/v1/schema/models/"+
+      $("link-rename-model").value+"/rename-reference",{
+        method:"POST",body:{expected_revision:state.revision,
+          old_name:$("link-rename-field").value,
+          new_name:$("link-new-name").value.trim()}});
+    await sync();
+    $("link-new-name").value="";
+    $("link-rename-confirm").checked=false;
+    await refreshMigrationHistory();
+    show("Поле-связь мигрировано · "+out.updated_links+" связей · ревизия "+out.revision);
+  }catch(e){show(e.message,true);}
+});
+$("link-retarget-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    if(!can("spec.write")||!can("record.write"))throw Error("Нет прав на смену целевой модели");
+    if(!$("link-retarget-confirm").checked)throw Error("Подтверди отсутствие связей");
+    const out=await api("/api/v1/schema/models/"+
+      $("link-retarget-model").value+"/retarget-unused-reference",{
+        method:"POST",body:{expected_revision:state.revision,
+          field:$("link-retarget-field").value,
+          new_target_model:$("link-target-model").value}});
+    await sync();
+    $("link-retarget-confirm").checked=false;
+    await refreshMigrationHistory();
+    show("Целевая модель изменена для пустой связи · ревизия "+out.revision);
+  }catch(e){show(e.message,true);}
+});
+async function refreshRevisions(){
+  if(!state.token || !state.spec)return;
+  const response=await api("/api/v1/revisions");
+  pick($("history-revision"),response.revisions
+    .filter(x=>x.revision<state.revision)
+    .map(x=>[String(x.revision),"v"+x.revision+" · "+x.pages+" страниц · "+x.sha256.slice(0,12)]));
+}
+$("history-revision").addEventListener("change",()=>{
+  state.restorePlan=null;
+  $("history-plan").hidden=true;
+  $("history-empty").hidden=false;
+  $("history-approve").checked=false;
+  $("history-apply").disabled=true;
+});
+$("history-inspect-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    if(!can("spec.write"))throw Error("Только редактор может восстанавливать страницы");
+    const target=Number($("history-revision").value);
+    if(!Number.isSafeInteger(target)||target<1||target>=state.revision)
+      throw Error("Выбери предыдущую ревизию");
+    const res=await api("/api/v1/revisions/restore/inspect",{method:"POST",
+      body:{expected_revision:state.revision,target_revision:target}});
+    state.restorePlan=res;
+    $("history-plan").hidden=false;
+    $("history-empty").hidden=true;
+    $("history-approve").checked=false;
+    $("history-apply").disabled=true;
+    $("history-plan-summary").textContent="Текущая v"+res.plan.current_revision+
+      " → снимок v"+res.plan.target_revision+" · "+
+      res.plan.pages_after+" страниц · SHA "+res.plan.target_sha256.slice(0,16);
+    $("history-page-changes").textContent="Изменяемые страницы: "+
+      (res.plan.changed_page_slugs.join(", ")||"нет")+
+      (res.plan.site_metadata_changed?" · Метаданные сайта":"");
+    show("План восстановления проверен. Данные записей остаются нетронутыми.");
+  }catch(e){state.restorePlan=null;$("history-plan").hidden=true;
+    $("history-empty").hidden=false;show(e.message,true);}
+});
+$("history-approve").addEventListener("change",()=>{
+  $("history-apply").disabled=!state.restorePlan || !$("history-approve").checked;
+});
+$("history-apply").addEventListener("click",async()=>{
+  try{
+    const plan=state.restorePlan;
+    if(!plan||!$("history-approve").checked)
+      throw Error("Сначала проверь и подтверди план");
+    const data=await api("/api/v1/revisions/restore",{method:"POST",
+      body:{expected_revision:plan.plan.current_revision,
+        target_revision:plan.plan.target_revision,
+        expected_plan_sha256:plan.plan_sha256}});
+    await sync();
+    await refreshRevisions();
+    show("Создана новая версия v"+data.revision+
+      " из v"+data.restored_from+". Клиентские записи не изменены.");
+  }catch(e){state.restorePlan=null;$("history-apply").disabled=true;
+    show(e.message,true);}
+});
 function populateRenameFields(){
   const model=state.spec?.models.find(m=>m.name===$("schema-rename-model").value);
   pick($("schema-rename-source"),model
