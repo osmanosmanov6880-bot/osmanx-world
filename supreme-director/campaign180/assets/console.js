@@ -2,8 +2,8 @@
 "use strict";
 const $ = id => document.getElementById(id);
 const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null};
-const panels = ["dashboard","pages","records","workflows","preview"];
-const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",workflows:"Автоматизация",preview:"Предпросмотр"};
+const panels = ["dashboard","pages","records","schema","workflows","preview"];
+const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",schema:"Модели и формы",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
   const el=$("notice"); el.textContent=message || ""; el.classList.toggle("error",error);
 };
@@ -50,6 +50,7 @@ function switchPanel(name){
   document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("is-active",b.dataset.panel===name));
   $("crumb").textContent=names[name];
   if(name==="preview" && state.spec) refreshPreview();
+  if(name==="schema" && state.spec) refreshMigrationHistory().catch(e=>show(e.message,true));
 }
 document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
 async function sync(){
@@ -70,10 +71,13 @@ async function sync(){
     $(id).disabled=!can("spec.write");
   }
 
+  for(const id of ["schema-create-model","schema-add-field","schema-save-label"]){
+    $(id).disabled=!can("spec.write")||!can("record.write");
+  }
   $("save-row").disabled=!can("record.write");
   $("delete-row").disabled=!can("record.write");
   $("wf-create").disabled=!can("workflow.manage");
-  renderPages();renderModels();renderWorkflows();
+  renderPages();renderModels();renderSchema();renderWorkflows();
   await refreshRows();
 }
 $("auth-form").addEventListener("submit",async ev=>{
@@ -113,6 +117,12 @@ function sectionTemplate(type){
   if(type==="hero")return {type:"hero",heading:"Новая обложка",text:"Опишите ключевую идею."};
   if(type==="features")return {type:"features",heading:"Новые преимущества",items:["Первое преимущество"]};
   if(type==="stats")return {type:"stats",heading:"Новые показатели",items:[{label:"Показатель",value:"—"}]};
+  if(type==="form"){
+    const m=state.spec.models.find(m=>m.name===$("form-model-select").value);
+    if(!m)throw Error("Сначала создай модель для формы");
+    return {type:"form",heading:"Форма: "+m.label,model:m.name,
+            button_label:"Сохранить"};
+  }
   throw Error("Неизвестный тип раздела");
 }
 async function modifyStructure(operation,targetIndex=null){
@@ -168,6 +178,121 @@ $("page-form").addEventListener("submit",async ev=>{
       body:{expected_revision:state.revision,title:$("page-title").value,
             section_index:index,changes}});
     show("Новая ревизия: "+response.revision);await sync();
+  }catch(e){show(e.message,true);}
+});
+function renderSchema(){
+  if(!state.spec)return;
+  const models=state.spec.models;
+  const options=models.map(m=>[m.name,m.label]);
+  pick($("schema-select-model"),options);
+  pick($("schema-reference-model"),options);
+  pick($("form-model-select"),options);
+  const labels=[];
+  for(const m of models){
+    labels.push(["model:"+m.name,"Модель · "+m.label]);
+    for(const f of m.fields)labels.push(["field:"+m.name+":"+f.name,"Поле · "+m.label+" / "+f.label]);
+  }
+  pick($("schema-label-target"),labels);
+  if(labels.length)$("schema-label-value").value="";
+  updateSchemaFieldType();
+  updateNewSectionFormType();
+}
+function updateSchemaFieldType(){
+  const isRef=$("schema-field-type").value==="reference";
+  $("schema-reference-model").disabled=!isRef;
+  $("schema-default").disabled=isRef;
+  if(isRef)$("schema-default").value="";
+}
+function updateNewSectionFormType(){
+  const selected=$("new-section-type").value==="form";
+  $("form-model-label").hidden=!selected;
+  $("form-model-select").hidden=!selected;
+}
+function schemaDefault(type,text){
+  const val=text.trim();
+  if(val==="")return {provided:false};
+  if(type==="integer"){
+    if(!/^-?\d+$/.test(val) || !Number.isSafeInteger(Number(val)))throw Error("Нужно допустимое целое число");
+    return {provided:true,value:Number(val)};
+  }
+  if(type==="boolean"){
+    if(!["true","false"].includes(val))throw Error("Для Да/Нет используй true или false");
+    return {provided:true,value:val==="true"};
+  }
+  return {provided:true,value:val};
+}
+async function refreshMigrationHistory(){
+  if(!state.token || !state.spec)return;
+  const result=await api("/api/v1/schema/migrations");
+  const root=$("schema-migrations");
+  root.replaceChildren();
+  if(!result.migrations.length){
+    root.append(node("p","Миграций пока нет.","muted"));
+    return;
+  }
+  for(const m of result.migrations){
+    const item=node("div",null,"workflow-item");
+    item.append(node("strong","v"+m.spec_revision+" · "+m.operation+" · "+m.model_name));
+    item.append(node("small","Обновлено записей: "+m.rows_migrated));
+    root.append(item);
+  }
+}
+$("schema-field-type").addEventListener("change",updateSchemaFieldType);
+$("new-section-type").addEventListener("change",updateNewSectionFormType);
+$("schema-model-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  try{
+    const model={
+      name:$("schema-model-name").value.trim(),
+      label:$("schema-model-label").value.trim(),
+      fields:[{name:"name",label:"Название",type:"text",required:true}]
+    };
+    const out=await api("/api/v1/schema/models",{method:"POST",
+      body:{expected_revision:state.revision,model}});
+    await sync();
+    $("schema-model-name").value="";
+    $("schema-model-label").value="";
+    await refreshMigrationHistory();
+    show("Модель создана · ревизия "+out.revision);
+  }catch(e){show(e.message,true);}
+});
+$("schema-field-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  try{
+    const type=$("schema-field-type").value;
+    const modelName=$("schema-select-model").value;
+    const field={
+      name:$("schema-field-name").value.trim(),
+      label:$("schema-field-label").value.trim(),
+      type,required:$("schema-field-required").checked
+    };
+    if(type==="reference")field.references=$("schema-reference-model").value;
+    const body={expected_revision:state.revision,field};
+    if(type!=="reference"){
+      const value=schemaDefault(type,$("schema-default").value);
+      if(value.provided)body.default_value=value.value;
+    }
+    const out=await api("/api/v1/schema/models/"+modelName+"/fields",
+      {method:"POST",body});
+    await sync();
+    $("schema-select-model").value=modelName;
+    $("schema-field-name").value="";
+    $("schema-field-label").value="";
+    $("schema-default").value="";
+    await refreshMigrationHistory();
+    show("Поле добавлено · ревизия "+out.revision+" · изменено записей "+out.rows_migrated);
+  }catch(e){show(e.message,true);}
+});
+$("schema-label-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  try{
+    const [kind,model,field]=$("schema-label-target").value.split(":");
+    const suffix=kind==="model"?"":"/fields/"+field;
+    const out=await api("/api/v1/schema/models/"+model+suffix,{method:"PATCH",
+      body:{expected_revision:state.revision,label:$("schema-label-value").value.trim()}});
+    await sync();
+    await refreshMigrationHistory();
+    show("Название обновлено · ревизия "+out.revision);
   }catch(e){show(e.message,true);}
 });
 function renderModels(){

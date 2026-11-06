@@ -67,3 +67,11 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
 .structure-tools{border-top:1px solid #2c405d;margin-top:20px;padding-top:2px}.structure-toolbar{display:flex;gap:8px;margin-top:12px}.structure-toolbar button{flex:1}.structure-tools .danger.full{margin-top:11px}
 
 [hidden]{display:none!important}
+
+.schema-grid{display:grid;grid-template-columns:1fr 1.35fr;gap:18px}
+.schema-grid.lower{grid-template-columns:1fr 1fr;margin-top:18px}
+.schema-fields-two{display:grid;grid-template-columns:1fr 1fr;gap:0 15px}
+.checkbox-row{display:flex;align-items:center;gap:9px;margin-top:20px}
+.checkbox-row input{width:16px;height:16px;flex:none}
+@media(max-width:900px){.schema-grid,.schema-grid.lower{grid-template-columns:1fr}}
+@media(max-width:540px){.schema-fields-two{grid-template-columns:1fr}}

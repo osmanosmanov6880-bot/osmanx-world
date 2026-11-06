@@ -19,6 +19,7 @@
     <button type="button" class="nav-link is-active" data-panel="dashboard"><span class="nav-icon">◈</span> Обзор</button>
     <button type="button" class="nav-link" data-panel="pages"><span class="nav-icon">▣</span> Страницы</button>
     <button type="button" class="nav-link" data-panel="records"><span class="nav-icon">▤</span> Данные</button>
+    <button type="button" class="nav-link" data-panel="schema"><span class="nav-icon">⬡</span> Модели и формы</button>
     <button type="button" class="nav-link" data-panel="workflows"><span class="nav-icon">◇</span> Автоматизация</button>
     <button type="button" class="nav-link" data-panel="preview"><span class="nav-icon">▧</span> Предпросмотр</button>
   </nav>
@@ -57,7 +58,10 @@
           <select id="new-section-type">
             <option value="text">Текст</option><option value="hero">Обложка</option>
             <option value="features">Преимущества</option><option value="stats">Показатели</option>
+            <option value="form">Форма данных</option>
           </select>
+          <label for="form-model-select" id="form-model-label" hidden>Модель формы</label>
+          <select id="form-model-select" hidden></select>
           <button type="button" class="ghost full" id="add-section">+ Добавить после выбранного</button>
           <div class="structure-toolbar">
             <button type="button" class="ghost" id="move-section-up" aria-label="Переместить раздел вверх">↑ Выше</button>
@@ -73,6 +77,60 @@
       <div class="record-grid"><div class="card"><h2>Модель</h2><label for="model-select">Выбери таблицу</label><select id="model-select"></select><div id="model-description" class="small-stat">—</div><label for="row-select">Запись для изменения</label><select id="row-select"></select><button id="new-row" type="button" class="ghost full">+ Новая запись</button></div>
       <form id="row-form" class="card"><h2 id="row-form-title">Новая запись</h2><div id="row-fields" class="fields"></div><div class="editor-actions"><button id="save-row" type="submit" class="primary">Сохранить запись</button><button id="delete-row" type="button" class="danger">Удалить</button></div></form></div>
       <article class="card table-card"><h2>Текущие записи</h2><div id="rows-table" class="scroll-table"></div></article>
+    </section>
+    <section id="schema" class="panel">
+      <div class="page-heading"><div><p class="overline">КОНСТРУКТОР / МОДЕЛИ</p>
+        <h1>Модели данных и формы</h1>
+        <p class="muted">Добавляй таблицы и типизированные поля. Изменения существующих записей выполняются транзакционно с новой ревизией.</p>
+      </div><span class="pill">SQLite · LOCAL</span></div>
+      <div class="schema-grid">
+        <form id="schema-model-form" class="card">
+          <h2>Новая модель</h2>
+          <label for="schema-model-name">Системное имя</label>
+          <input id="schema-model-name" required pattern="[a-z][a-z0-9_]*" maxlength="32" placeholder="orders">
+          <label for="schema-model-label">Название в интерфейсе</label>
+          <input id="schema-model-label" required maxlength="80" placeholder="Заказы">
+          <p class="hint">Модель создаётся с обязательным текстовым полем «Название».</p>
+          <button type="submit" id="schema-create-model" class="primary top-gap">Создать модель</button>
+        </form>
+        <form id="schema-field-form" class="card">
+          <h2>Новое поле</h2>
+          <label for="schema-select-model">Модель</label><select id="schema-select-model"></select>
+          <div class="schema-fields-two">
+            <div><label for="schema-field-name">Системное имя</label><input id="schema-field-name" required pattern="[a-z][a-z0-9_]*" maxlength="32" placeholder="amount"></div>
+            <div><label for="schema-field-label">Название поля</label><input id="schema-field-label" required maxlength="80" placeholder="Сумма"></div>
+            <div><label for="schema-field-type">Тип данных</label>
+              <select id="schema-field-type">
+                <option value="text">Текст</option><option value="integer">Целое число</option>
+                <option value="boolean">Да / Нет</option><option value="email">Почта</option>
+                <option value="date">Дата</option><option value="reference">Связь с моделью</option>
+              </select></div>
+            <div><label for="schema-reference-model">Модель связи</label><select id="schema-reference-model" disabled></select></div>
+          </div>
+          <label class="checkbox-row" for="schema-field-required">
+            <input type="checkbox" id="schema-field-required"> Обязательное поле
+          </label>
+          <label for="schema-default">Начальное значение для существующих записей (необязательно)</label>
+          <input id="schema-default" placeholder="Оставь пустым, если не требуется">
+          <p class="hint">Если в модели есть записи, новое обязательное поле требует допустимое начальное значение. Лимит локальной миграции — 500 записей.</p>
+          <button type="submit" id="schema-add-field" class="primary top-gap">Добавить поле</button>
+        </form>
+      </div>
+      <div class="schema-grid lower">
+        <form id="schema-label-form" class="card">
+          <h2>Названия модели и полей</h2>
+          <label for="schema-label-target">Что переименовать</label>
+          <select id="schema-label-target"></select>
+          <label for="schema-label-value">Новое название</label>
+          <input id="schema-label-value" required maxlength="80">
+          <button type="submit" id="schema-save-label" class="ghost top-gap">Сохранить название</button>
+        </form>
+        <article class="card">
+          <h2>История миграций</h2>
+          <p class="hint">Доступны ревизии, операции и число изменённых записей. Данные клиентов в журнал не записываются.</p>
+          <div id="schema-migrations" class="stack" aria-live="polite"><p class="muted">История не загружена</p></div>
+        </article>
+      </div>
     </section>
     <section id="workflows" class="panel">
       <div class="page-heading"><div><p class="overline">ПРАВИЛА / БЕЗ КОДА</p><h1>Автоматизация процессов</h1><p class="muted">Задавай безопасные действия над полями записей. Без скриптов и сетевых запросов.</p></div></div>
