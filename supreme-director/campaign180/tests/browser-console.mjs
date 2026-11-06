@@ -783,6 +783,68 @@ async function run(){
     "document.querySelector('#calendar-critical').textContent==='1'"),
     "Wave 20 real urgent deadline remains visible after predecessor completes");
   await client.screenshot("23-agenda-dependency-desktop.png");
+  // Wave 21: real stage/milestone planning and immutable baseline checks.
+  const today=await client.eval("new Date().toISOString().slice(0,10)");
+  const shifted=await client.eval(
+    "new Date(Date.parse("+JSON.stringify(tomorrow)+
+    "+'T12:00:00Z')+4*86400000).toISOString().slice(0,10)");
+  await client.eval("document.querySelector('#delivery-phase-name').value='Этап Wave 21';"+
+    "document.querySelector('#delivery-phase-start').value="+JSON.stringify(today)+";"+
+    "document.querySelector('#delivery-phase-end').value="+JSON.stringify(tomorrow)+";"+
+    "document.querySelector('#delivery-phase-form').requestSubmit();");
+  await poll(()=>client.eval(
+    "document.querySelector('#delivery-phases-count').textContent==='1' "+
+    "&& document.querySelector('#delivery-phase-list').textContent.includes('Этап Wave 21')"),
+    "Wave 21 baseline phase saved in SQLite");
+  await client.eval("document.querySelector('#delivery-milestone-name').value='Релиз Wave 21';"+
+    "document.querySelector('#delivery-milestone-due').value="+JSON.stringify(tomorrow)+";"+
+    "document.querySelector('#delivery-milestone-task').value="+
+      "[...document.querySelectorAll('#task-list .task-item')]"+
+      ".find(x=>x.textContent.includes('Запуск Wave 20')).dataset.taskId;"+
+    "document.querySelector('#delivery-milestone-form').requestSubmit();");
+  await poll(()=>client.eval(
+    "document.querySelector('#delivery-done').textContent==='0 / 1' "+
+    "&& document.querySelector('#delivery-phase-list').textContent.includes('Релиз Wave 21')"),
+    "Wave 21 real milestone linked to unfinished task");
+  await client.eval("document.querySelector('.delivery-phase>.delivery-actions input').value="+
+    JSON.stringify(shifted)+";"+
+    "document.querySelector('.delivery-phase>.delivery-actions button').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#delivery-phases-late').textContent==='1' "+
+    "&& document.querySelector('.delivery-phase-meta').textContent.includes("+JSON.stringify(shifted)+")"),
+    "Wave 21 stage forecast revised while baseline remains unchanged");
+  await client.eval("document.querySelector('.delivery-milestone .delivery-actions input').value="+
+    JSON.stringify(shifted)+";"+
+    "document.querySelector('.delivery-milestone .delivery-actions button').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('.delivery-milestone-dates').textContent.includes('Прогноз: "+shifted+"') "+
+    "&& document.querySelector('#delivery-summary').textContent.includes('прогноз сдвинут: 1')"),
+    "Wave 21 milestone forecast revision stored and variance recalculated");
+  await client.eval("document.querySelector('.delivery-milestone .delivery-actions button:nth-of-type(2)').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice').textContent.includes('INVALID_OPERATION') "+
+    "&& document.querySelector('#delivery-done').textContent==='0 / 1'"),
+    "Wave 21 cannot confirm milestone while linked task remains unfinished");
+  await client.eval("(()=>{const row=[...document.querySelectorAll('#task-list .task-item')]"+
+    ".find(x=>x.textContent.includes('Запуск Wave 20'));"+
+    "row.querySelector('.task-actions select').value='done';"+
+    "row.querySelector('.task-actions button').click();})()");
+  await poll(()=>client.eval(
+    "[...document.querySelectorAll('#task-list .task-item')]"+
+    ".some(x=>x.textContent.includes('Запуск Wave 20')&&x.dataset.taskStatus==='done')"),
+    "Wave 21 linked task completed in real SQLite");
+  await client.eval("document.querySelector('.delivery-milestone .delivery-actions button:nth-of-type(2)').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#delivery-done').textContent==='1 / 1' "+
+    "&& document.querySelector('.delivery-phase-heading').textContent.includes('Все вехи завершены')"),
+    "Wave 21 actual milestone completion persisted and phase progress is 100 percent");
+  await client.eval("document.querySelector('.delivery-milestone .delivery-actions button').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#delivery-history-panel').hidden===false "+
+    "&& document.querySelectorAll('#delivery-history-list .delivery-audit-row').length===3"),
+    "Wave 21 immutable delivery audit includes baseline, forecast and actual");
+  await client.screenshot("26-delivery-plan-desktop.png");
+
 
 
 
@@ -856,6 +918,16 @@ async function run(){
   assert.ok(wave20CalendarOverflow390<=2,
     "390px task calendar overflow: "+wave20CalendarOverflow390);
   await client.screenshot("24-mobile-390-calendar.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#delivery-panel').hidden===false "+
+    "&& document.querySelector('#delivery-done').textContent==='1 / 1' "+
+    "&& document.querySelector('#delivery-phase-list').textContent.includes('Этап Wave 21')"),
+    "Wave 21 390px delivery board loaded from SQLite");
+  const deliveryOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(deliveryOverflow390<=2,
+    "390px delivery board horizontal overflow: "+deliveryOverflow390);
+  await client.screenshot("27-delivery-mobile-390.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -926,11 +998,21 @@ async function run(){
   assert.ok(wave20CalendarOverflow320<=2,
     "320px task calendar overflow: "+wave20CalendarOverflow320);
   await client.screenshot("25-mobile-320-calendar.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#delivery-panel').hidden===false "+
+    "&& document.querySelector('#delivery-done').textContent==='1 / 1' "+
+    "&& document.querySelector('#delivery-phase-list').textContent.includes('Этап Wave 21')"),
+    "Wave 21 320px delivery board loaded from SQLite");
+  const deliveryOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(deliveryOverflow320<=2,
+    "320px delivery board horizontal overflow: "+deliveryOverflow320);
+  await client.screenshot("28-delivery-mobile-320.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:25,public_server_started:false,production_deployed:false};
+    screenshots:28,public_server_started:false,production_deployed:false};
 }
 
 try{
