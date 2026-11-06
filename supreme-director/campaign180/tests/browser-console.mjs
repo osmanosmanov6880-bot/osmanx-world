@@ -777,7 +777,7 @@ async function run(){
   await poll(()=>client.eval(
     "document.querySelector('#calendar-critical').textContent==='1'"),
     "Wave 20 real urgent deadline remains visible after predecessor completes");
-  await client.screenshot("23-task-calendar-dependency-desktop.png");
+  await client.screenshot("23-agenda-dependency-desktop.png");
 
 
 
