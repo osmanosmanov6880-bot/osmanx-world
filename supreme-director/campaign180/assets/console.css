@@ -187,3 +187,46 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
  .record-batch .record-operations-header{display:block}
  .record-batch .record-operations-header .pill{display:inline-flex;margin-top:12px}
  .batch-journal-item button{width:100%}}
+
+/* Wave 18 — task management, owner KPI, accessible responsive work list. */
+.team-kpi-grid{margin:16px 0 26px}
+.task-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:18px 0}
+.task-workspace{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:18px;align-items:start}
+.task-workspace>.card{min-width:0}
+#task-form input,#task-form textarea,#task-form select{width:100%;max-width:100%;min-width:0}
+#task-form label{display:block}
+.task-input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 16px}
+.task-input-grid>div{min-width:0}
+.task-input-grid>div:last-child{grid-column:1/-1}
+#task-save{width:100%;white-space:normal}
+.task-list{display:flex;flex-direction:column;gap:12px;margin:18px 0;min-width:0}
+.task-item{padding:15px 16px;border:1px solid #314765;background:#13263f;border-radius:12px;min-width:0}
+.task-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-width:0}
+.task-item-head strong{font-size:15px;line-height:1.5;overflow-wrap:anywhere;min-width:0}
+.task-priority{flex:none;border-radius:5px;border:1px solid #456182;padding:4px 8px;
+  color:#cfddf0;font-size:11px;white-space:nowrap}
+.task-description{font-size:13px;color:#b6c9e4;line-height:1.6;margin:12px 0;overflow-wrap:anywhere}
+.task-meta{display:flex;flex-wrap:wrap;gap:6px 15px;margin:13px 0;color:#9eb4d3}
+.task-meta small{font-size:11px;overflow-wrap:anywhere}
+.task-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.task-actions select{width:auto;max-width:100%;min-width:130px;padding:9px}
+.task-actions button{max-width:100%;white-space:normal}
+.task-filters{display:flex;gap:12px;align-items:center;margin:15px 0}
+.task-filters label{margin:0;font-size:13px}
+.task-filters select{width:auto;min-width:135px}
+.task-events{margin-top:18px}
+.task-event{display:flex;flex-direction:column;gap:5px;padding:12px 0;
+  border-bottom:1px solid #314765;color:#cbd9ef}
+.task-event>small{font-size:11px;color:#95aecf;overflow-wrap:anywhere}
+@media(max-width:1120px){.task-workspace{grid-template-columns:1fr}}
+@media(max-width:880px){.task-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+ .task-summary-grid{gap:9px}
+ .task-item{padding:13px 12px}
+ .task-item-head{flex-wrap:wrap}
+ .task-input-grid{grid-template-columns:1fr}
+ .task-input-grid>div:last-child{grid-column:auto}
+ .task-actions select{width:100%;min-width:0}
+ .task-actions button{flex:1;min-width:115px}
+ .task-workspace .record-operations-header{gap:8px}
+}
