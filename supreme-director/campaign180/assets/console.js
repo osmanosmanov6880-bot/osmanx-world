@@ -440,6 +440,8 @@ function renderTaskList(){
   }
   for(const task of state.tasks){
     const card=node("article",null,"task-item");
+    card.dataset.taskId=task.task_id;
+    card.dataset.taskStatus=task.status;
     const top=node("div",null,"task-item-head");
     const title=node("strong",task.title);
     const info=node("span",TASK_PRIORITY[task.priority],"task-priority");
