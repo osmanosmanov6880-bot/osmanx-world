@@ -107,7 +107,8 @@
       "supreme-director/campaign180/assets/index.html",
       "supreme-director/campaign180/tests/browser-console.mjs",
       "supreme-director/campaign180/campaign180/forms.py",
-      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
+      "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+      "supreme-director/campaign180/assets/console.css"
     ],
     "TITAN-X21": [
       "supreme-director/campaign180/campaign180/builder.py",
@@ -151,7 +152,8 @@
       "supreme-director/campaign180/campaign180/revision_restore.py",
       "supreme-director/campaign180/campaign180/project_recovery.py",
       "supreme-director/campaign180/campaign180/recovery_drill.py",
-      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
+      "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py",
+      "supreme-director/campaign180/assets/console.css"
     ],
     "TITAN-X22": [
       "supreme-director/campaign180/campaign180/app_runtime.py",

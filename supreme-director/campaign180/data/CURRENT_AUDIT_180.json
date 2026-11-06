@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "ccb4bd39426072c157c6f41fa789afc1bc4a18f2",
+  "based_on_code_commit": "661eb9883c01d308c2e0adb82104bede861a03f1",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -329,7 +329,8 @@
         "supreme-director/campaign180/assets/index.html",
         "supreme-director/campaign180/tests/browser-console.mjs",
         "supreme-director/campaign180/campaign180/forms.py",
-        "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
+        "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
+        "supreme-director/campaign180/assets/console.css"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -460,7 +461,8 @@
         "supreme-director/campaign180/campaign180/revision_restore.py",
         "supreme-director/campaign180/campaign180/project_recovery.py",
         "supreme-director/campaign180/campaign180/recovery_drill.py",
-        "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py"
+        "supreme-director/campaign180/tests/test_wave12_tombstone_restore.py",
+        "supreme-director/campaign180/assets/console.css"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2506,6 +2508,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave12 archived tombstone schema migration repair, 12-table source state invariant and dual synthetic restore drill",
-  "notes": "Local code evidence only, Wave12 CI not yet confirmed. 33 locally linked original IDs, 139 no evidence, 8 holds, 0 independently accepted."
+  "last_local_campaign": "Wave13 real GitHub CI diagnostics, safe corrupt-archive error contract, valid workflow fixture, real mobile layouts 390px and 320px",
+  "notes": "Verified 360/360 tests on Python 3.11 and 3.13, and successful Chromium 21 flows and 13 screenshots; Python overall workflow blocked as designed by protected-source/cross-team gate on Draft PR #7. 0/180 independently accepted."
 }

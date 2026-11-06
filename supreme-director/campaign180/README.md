@@ -103,3 +103,11 @@ All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and e
 - Restore drill now hashes and compares 12 project table families and closes SQLite backup descriptors.
 - CI requires both synthetic `demo` and `archived` restore runs; no PASS claimed until a job completes.
 - [Original 180 ledger](docs/CURRENT_AUDIT_180_RU.md): 33 related, 139 without evidence, eight holds, independently accepted 0.
+
+## Wave 13 — real CI diagnostics and 320/390px mobile fixes
+
+- [Wave 13 source, browser, security-gate results](docs/WAVE13_REAL_CI_MOBILE_SECURITY_RU.md).
+- 360/360 local Python tests passed on 3.11 and 3.13; aggregate Python workflow remains FAIL on the intentional protected-source gate.
+- [Chromium acceptance SUCCESS](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42174047330): 21 flows, 13 screenshots, zero JS exceptions, 390/320px mobile checks.
+- Corrupt recovery exports fail closed with stable API domain errors; workflow test now defines a valid dependency instead of an invalid relation-write.
+- [Original 180 audit](docs/CURRENT_AUDIT_180_RU.md): **33 locally related, 139 with no direct proof, 8 holds, 0 independently accepted**. No merge or production deployment.
