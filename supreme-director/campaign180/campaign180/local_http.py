@@ -192,6 +192,41 @@ class LocalConsole:
         if method=="GET" and path=="/api/v1/spec":
             out=runtime.get_spec(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
+        if method=="GET" and path=="/api/v1/tasks/workload":
+            out=runtime.team_workload(tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/tasks/("+_UUID.pattern[1:-1]+
+                           r")/checklist/("+_UUID.pattern[1:-1]+r")",path)
+        if match and method=="PATCH":
+            task_id,item_id=match.groups()
+            data=self._body(environ)
+            self._fields(data,{"expected_version","done","idempotency_key"},
+                         {"expected_version","done","idempotency_key"})
+            out=runtime.set_task_checklist_done(
+                tenant=tid,project_id=project,actor=actor,task_id=task_id,
+                item_id=item_id,**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/tasks/("+_UUID.pattern[1:-1]+
+                           r")/(comments|checklist)",path)
+        if match and method in ("GET","POST"):
+            task_id,resource=match.groups()
+            if method=="GET":
+                out=(runtime.list_task_comments if resource=="comments"
+                     else runtime.list_task_checklist)(
+                         tenant=tid,project_id=project,actor=actor,task_id=task_id)
+                return self._json(start_response,"200 OK",out)
+            data=self._body(environ)
+            if resource=="comments":
+                self._fields(data,{"body","idempotency_key"},
+                             {"body","idempotency_key"})
+                out=runtime.add_task_comment(tenant=tid,project_id=project,
+                                             actor=actor,task_id=task_id,**data)
+            else:
+                self._fields(data,{"label","idempotency_key"},
+                             {"label","idempotency_key"})
+                out=runtime.add_task_checklist_item(
+                    tenant=tid,project_id=project,actor=actor,task_id=task_id,**data)
+            return self._json(start_response,"201 Created",out)
         if method=="GET" and path=="/api/v1/tasks/members":
             out=runtime.task_members(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
