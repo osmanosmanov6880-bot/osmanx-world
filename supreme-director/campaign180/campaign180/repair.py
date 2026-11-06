@@ -45,7 +45,7 @@ class LocalBoundedRepair:
             try:
                 rule = self.runtime._read_rule(row)["rule"]
                 self.runtime._rule(spec, rule)
-            except AppOperationDenied:
+            except ValueError:
                 broken.append({"workflow_id": row["workflow_id"],
                                "revision": row["revision"],
                                "sha256": row["spec_digest"]})

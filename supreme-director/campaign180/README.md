@@ -55,3 +55,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Russian instructions and limitations](docs/WAVE5_LOCAL_CONSOLE.md).
 - [Live 180-task audit](docs/CURRENT_AUDIT_180_RU.md) / [machine registry](data/CURRENT_AUDIT_180.json): 32 locally related, 140 without direct proof, eight holds, 0 independently accepted.
 - Local application roles, idempotent record workflows and browser UI with a loopback-only WSGI API. No production or external server connection. Canonical upstream integration still blocked.
+
+## Wave 6 — interactive editing and browser acceptance (2026-11-06)
+
+- [Original 180 task status](docs/CURRENT_AUDIT_180_RU.md) / [machine ledger](data/CURRENT_AUDIT_180.json): **33 locally related / 139 no direct proof / 8 holds / 0 independently accepted**.
+- Real `record.created/record.updated` transaction-bound rules, no-code section rearrangement, bounded corrupted workflow quarantine, negative tests and [Chromium desktop/mobile E2E](docs/WAVE6_CHROMIUM_ACCEPTANCE.md).
+- [Bounded repair rationale](docs/WAVE6_BOUNDED_REPAIR.md). Browser CI and independent upstream review remain distinct requirements; no production release.
