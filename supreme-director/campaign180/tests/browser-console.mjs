@@ -531,6 +531,30 @@ async function run(){
   assert.equal(afterDrill.bundle_sha256,recovery.bundle_sha256);
   await client.screenshot("11-drill-desktop.png");
 
+  // Wave 15: a configured model-backed form now submits a REAL SQLite row
+  // from the interactive console, while static iframe preview stays inert.
+  await client.eval("document.querySelector('[data-panel=pages]').click();"+
+    "document.querySelector('#page-select').value='home';"+
+    "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#new-section-type').value='form';"+
+    "document.querySelector('#new-section-type').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#form-model-select').value='customers';"+
+    "document.querySelector('#add-section').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#live-form').hidden===false "+
+    "&& document.querySelector('#live-name')!==null"),
+    "Wave 15 active form is visible in the existing console");
+  await client.eval("document.querySelector('#live-name').value='Заявка из формы Wave 15';"+
+    "document.querySelector('#live-form').requestSubmit();");
+  await poll(async()=>{
+    const rows=await localApi("/api/v1/models/customers");
+    return rows.rows.some(r=>r.fields.name==="Заявка из формы Wave 15");
+  },"Wave 15 browser form persisted an actual SQLite customer");
+  await poll(()=>client.eval(
+    "document.querySelector('#live-form-status').textContent.includes('Сохранено в SQLite')"),
+    "Wave 15 submission receipt displayed in Russian UI");
+  await client.screenshot("14-live-form-submission-desktop.png");
+
   // Use a genuine touch-enabled device viewport and reload so Chromium
   // recomputes meta viewport and responsive layout from navigation start.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -611,9 +635,9 @@ async function run(){
   assert.ok(overflow320<=2,"320px mobile horizontal overflow: "+overflow320);
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","mobile-390","mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","mobile-390","mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:13,public_server_started:false,production_deployed:false};
+    screenshots:14,public_server_started:false,production_deployed:false};
 }
 
 try{
