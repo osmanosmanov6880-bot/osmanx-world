@@ -85,3 +85,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Implementation and safety documentation](docs/WAVE10_MAPPED_RELATIONS_RECOVERY_RU.md)
 - [Original 180-task audit](docs/CURRENT_AUDIT_180_RU.md) / [machine ledger](data/CURRENT_AUDIT_180.json): 33 local-code links, 139 without direct evidence, 8 holds, 0 accepted.
 - Inspect-and-confirm mapped live relations; project-only offline recovery bundle and create-only restore. Chromium QA extends to manual mapping and recovery diagnostics. Main and production unchanged.
+
+## Wave 11 — CI queue hygiene and real isolated SQLite recovery drill (2026-11-06)
+
+- [Wave 11 report and limitation disclosure](docs/WAVE11_ISOLATED_RESTORE_AND_CI_RU.md).
+- [180 original IDs](docs/CURRENT_AUDIT_180_RU.md) / [machine ledger](data/CURRENT_AUDIT_180.json): 33 locally related, 139 without direct proof, 8 holds, independently accepted 0.
+- Python CI now verifies a full synthetic recovery into a scratch project; Chromium clicks the owner-only restore drill. PR checks are deduplicated and superseded runs canceled. No deployed services or source database modifications.
