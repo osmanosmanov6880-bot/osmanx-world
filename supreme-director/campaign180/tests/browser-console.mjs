@@ -557,8 +557,19 @@ async function run(){
     "mobile recovery panel");
   const overflow=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
-  assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
   await client.screenshot("12-mobile-390.png");
+  if(overflow>2){
+    const offending=await client.eval(`JSON.stringify(
+      [...document.querySelectorAll('body *')]
+        .map(el=>{const r=el.getBoundingClientRect();return {
+          tag:el.tagName.toLowerCase(),id:el.id,cls:String(el.className||'').slice(0,100),
+          left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width)};})
+        .filter(x=>x.right>document.documentElement.clientWidth+2
+                && x.width>0 && x.left<document.documentElement.clientWidth+2)
+        .sort((a,b)=>b.right-a.right).slice(0,16))`);
+    console.error("OSGARD_MOBILE_LAYOUT_OFFENDERS "+offending);
+  }
+  assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
     "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","mobile"],
