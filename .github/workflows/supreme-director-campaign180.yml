@@ -56,6 +56,20 @@ jobs:
           python -m campaign180.preview verify /tmp/osgard-offline-preview/demo-a
           cmp /tmp/osgard-offline-preview/demo-a/index.html /tmp/osgard-offline-preview/demo-b/index.html
           cmp /tmp/osgard-offline-preview/demo-a/PREVIEW_MANIFEST.json /tmp/osgard-offline-preview/demo-b/PREVIEW_MANIFEST.json
+      - name: Local UI JavaScript parsing and one-shot demo provisioning
+        run: |
+          node --check supreme-director/campaign180/assets/console.js
+          python -m campaign180.local_http init --database /tmp/osgard-console-ci.sqlite3 --spec supreme-director/campaign180/examples/demo-site.json --actor owner-abc
+          python - <<'PY'
+          from campaign180.app_policy import LocalAppPolicy
+          from campaign180.drafts import LocalDraftStore
+          from pathlib import Path
+          store=LocalDraftStore('/tmp/osgard-console-ci.sqlite3')
+          role=LocalAppPolicy(store).get_role(tenant='tenant_demo',project_id='0b83c3f2-b4ab-4a6f-a83e-a48cb39b9c6f',actor='owner-abc')
+          assert role['role']=='owner'
+          assert 'workflow.manage' in role['capabilities']
+          print('LOCAL_CONSOLE_INIT_PASS: no network service started')
+          PY
       - name: Generate exact original 180 coverage and read-only inventory
         run: |
           python -m campaign180 audit --root . --output /tmp/osgard-180-audit
