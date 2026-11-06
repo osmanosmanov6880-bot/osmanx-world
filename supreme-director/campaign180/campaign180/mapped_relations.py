@@ -163,6 +163,63 @@ class LocalMappedReferenceMigration:
               "external_actions":0}
         return plan,new_spec,pending,mapped
 
+    def mapping_options(self,*,tenant:str,project_id:str,actor:str,
+                        model:str,field:str,new_target_model:str)->dict:
+        """Small browser wizard options; no auto-matching of foreign keys."""
+        with self.runtime.drafts._db() as db:
+            self.runtime._guard(db,tenant,project_id,actor,"spec.write")
+            self.runtime._guard(db,tenant,project_id,actor,"record.read")
+            spec,_=self.runtime.drafts._head(db,tenant,project_id)
+            src=self.runtime.records._model(spec,model)
+            target=self.runtime.records._model(spec,new_target_model)
+            fields=[f for f in src["fields"] if f["name"]==field]
+            if len(fields)!=1 or fields[0]["type"]!="reference":
+                raise MappedReferenceDenied("Reference field must be selected")
+            old_target=fields[0]["references"]
+            if old_target==new_target_model:
+                raise MappedReferenceDenied("Target must differ")
+            active=db.execute("""SELECT row_id FROM builder_rows
+                WHERE tenant=? AND project_id=? AND model=?
+                ORDER BY row_id LIMIT ?""",
+                (tenant,project_id,model,MAX_ROWS_MIGRATED+1)).fetchall()
+            if len(active)>MAX_ROWS_MIGRATED:
+                raise MappedReferenceDenied("Local mapping row budget exceeded")
+            needed=set()
+            for row in active:
+                body,_=self.runtime.records._row(db,tenant,project_id,
+                    model,row["row_id"],deleted_allowed=True)
+                val=body.get(field)
+                if val is not None:needed.add(val)
+            old_model=self.runtime.records._model(spec,old_target)
+            old_label=next((f["name"] for f in old_model["fields"]
+                            if f["type"]=="text"),None)
+            new_label=next((f["name"] for f in target["fields"]
+                            if f["type"]=="text"),None)
+            sources=[]
+            for old_id in sorted(needed)[:100]:
+                try:
+                    data,_=self.runtime.records._row(db,tenant,project_id,
+                        old_target,old_id,deleted_allowed=True)
+                    label=str(data.get(old_label) or old_id)[:96]
+                except ValueError:
+                    label="Архивная связь · "+old_id[:8]
+                sources.append({"id":old_id,"label":label})
+            targets=db.execute("""SELECT row_id FROM builder_rows WHERE tenant=?
+                AND project_id=? AND model=? AND deleted=0
+                ORDER BY row_id LIMIT 101""",
+                (tenant,project_id,new_target_model)).fetchall()
+            choices=[]
+            for row in targets[:100]:
+                value,_=self.runtime.records._row(db,tenant,project_id,
+                    new_target_model,row["row_id"])
+                choices.append({"id":row["row_id"],
+                                "label":str(value.get(new_label) or row["row_id"])[:96]})
+            return {"old_target_model":old_target,"new_target_model":new_target_model,
+                    "sources":sources,"targets":choices,
+                    "too_many_for_browser":len(needed)>100 or len(targets)>100,
+                    "requires_explicit_mapping":True,
+                    "production_published":False}
+
     def inspect(self,*,tenant:str,project_id:str,actor:str,
                 expected_revision:int,model:str,field:str,new_target_model:str,
                 mapping:list[dict])->dict:
