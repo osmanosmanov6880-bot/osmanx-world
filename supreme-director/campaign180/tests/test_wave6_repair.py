@@ -95,9 +95,9 @@ class RepairTests(unittest.TestCase):
         self.damage()
         with self.assertRaises(AppAccessDenied):
             self.inspect(actor="viewer-abc")
-        with self.assertRaises(AppAccessDenied):
-            self.inspect(actor=OWNER,limit=2) if False else self.repair.inspect(
-                tenant="tenant_other",project_id=PROJECT,actor=OWNER,limit=2)
+        with self.assertRaises(ValueError):
+            self.repair.inspect(tenant="tenant_other",project_id=PROJECT,
+                                 actor=OWNER,limit=2)
 
     def test_invalid_limits_fail_closed(self):
         for val in (0,-1,4,True,1.5):
