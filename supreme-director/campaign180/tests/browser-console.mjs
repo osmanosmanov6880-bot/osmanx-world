@@ -575,10 +575,25 @@ async function run(){
   await client.send("Emulation.setDeviceMetricsOverride",{
     width:320,height:700,screenWidth:320,screenHeight:700,
     deviceScaleFactor:1,mobile:true});
+  // Chrome's layout viewport may remain cached when transitioning between
+  // two mobile device sizes; force a fresh navigation and auth handshake.
+  await client.send("Page.reload",{ignoreCache:true});
+  await poll(()=>client.eval(
+    "document.readyState==='complete' && !!document.querySelector('#auth-form')"),
+    "narrow mobile navigation");
   await poll(()=>client.eval(
     "innerWidth===320 && document.documentElement.clientWidth===320"+
     " && matchMedia('(max-width:560px)').matches"),
     "narrow mobile device viewport");
+  await client.eval("document.querySelector('#token').value="+JSON.stringify(token)+
+    ";document.querySelector('#auth-form').requestSubmit();true");
+  await poll(()=>client.eval(
+    "document.querySelector('#connect').hidden && "+
+    "document.querySelector('#metric-pages').textContent.trim()==='3'"),
+    "narrow mobile authenticated dashboard");
+  await client.eval("document.querySelector('[data-panel=history]').click();");
+  await poll(()=>client.eval("document.querySelector('#history').classList.contains('active')"),
+    "narrow mobile recovery panel");
   const overflow320=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   await client.screenshot("13-mobile-320.png");
