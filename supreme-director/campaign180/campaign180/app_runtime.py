@@ -236,9 +236,11 @@ class LocalAppRuntime:
                                 changes=changes,idempotency_key=idempotency_key)
 
     def query_team_tasks(self,*,tenant:str,project_id:str,actor:str,
-                         limit:int=25,offset:int=0,status:str|None=None)->dict:
+                         limit:int=25,offset:int=0,status:str|None=None,
+                         assignee:str|None=None,due:str|None=None)->dict:
         return query_team_tasks(self,tenant=tenant,project_id=project_id,
-                                actor=actor,limit=limit,offset=offset,status=status)
+                                actor=actor,limit=limit,offset=offset,status=status,
+                                assignee=assignee,due=due)
 
     def team_task_summary(self,*,tenant:str,project_id:str,actor:str)->dict:
         return team_task_summary(self,tenant=tenant,project_id=project_id,actor=actor)
