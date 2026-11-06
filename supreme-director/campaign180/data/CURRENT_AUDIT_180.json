@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "b643c2b4bd3b0a74836e1a8c44345aa388535e7c",
+  "based_on_code_commit": "13529248aae0ddfe8a676495c2b67af3fc022715",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -353,7 +353,9 @@
         "supreme-director/campaign180/tests/test_wave7_schema.py",
         "supreme-director/campaign180/campaign180/app_runtime.py",
         "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
-        "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
+        "supreme-director/campaign180/tests/test_wave9_reference_restore.py",
+        "supreme-director/campaign180/campaign180/mapped_relations.py",
+        "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -398,7 +400,10 @@
         "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
         "supreme-director/campaign180/campaign180/model_editor.py",
         "supreme-director/campaign180/campaign180/revision_restore.py",
-        "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
+        "supreme-director/campaign180/tests/test_wave9_reference_restore.py",
+        "supreme-director/campaign180/campaign180/mapped_relations.py",
+        "supreme-director/campaign180/campaign180/project_recovery.py",
+        "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -419,7 +424,10 @@
         "supreme-director/campaign180/tests/test_wave7_schema.py",
         "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
         "supreme-director/campaign180/campaign180/revision_restore.py",
-        "supreme-director/campaign180/tests/test_wave9_reference_restore.py"
+        "supreme-director/campaign180/tests/test_wave9_reference_restore.py",
+        "supreme-director/campaign180/campaign180/mapped_relations.py",
+        "supreme-director/campaign180/campaign180/project_recovery.py",
+        "supreme-director/campaign180/tests/test_wave10_mapped_recovery.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -439,7 +447,8 @@
         "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py",
         "supreme-director/campaign180/campaign180/builder.py",
         "supreme-director/campaign180/tests/browser-console.mjs",
-        "supreme-director/campaign180/campaign180/revision_restore.py"
+        "supreme-director/campaign180/campaign180/revision_restore.py",
+        "supreme-director/campaign180/campaign180/project_recovery.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2485,6 +2494,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave9 relation-index preserving schema migrations and inspected page-version restore",
-  "notes": "33 related local IDs only, 139 without proof, 8 holds; Wave9 CI pending, 0/180 independently accepted. All changes remain Draft PR, no main/production."
+  "last_local_campaign": "Wave10 explicit live reference mapping with inspected SHA and project-scoped non-destructive data recovery",
+  "notes": "33 locally related original IDs, 139 without direct proof, 8 holds. CI queued, no independent acceptance. Main/production unchanged."
 }

@@ -79,3 +79,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Implementation, safety/rollback and negative tests](docs/WAVE9_RELATIONS_RESTORE_RU.md).
 - [Updated 180 original ID ledger](docs/CURRENT_AUDIT_180_RU.md) and [machine registry](data/CURRENT_AUDIT_180.json): 33 local-code links, 139 without direct evidence, eight holds, **0 independently accepted**.
 - Atomic relation field rename with verified link index, blocked live retarget, inspect-first compatible page restore to a new revision, Russian UI. No production deployment or upstream acceptance.
+
+## Wave 10 — explicit live relationship remapping and isolated recovery (2026-11-06)
+
+- [Implementation and safety documentation](docs/WAVE10_MAPPED_RELATIONS_RECOVERY_RU.md)
+- [Original 180-task audit](docs/CURRENT_AUDIT_180_RU.md) / [machine ledger](data/CURRENT_AUDIT_180.json): 33 local-code links, 139 without direct evidence, 8 holds, 0 accepted.
+- Inspect-and-confirm mapped live relations; project-only offline recovery bundle and create-only restore. Chromium QA extends to manual mapping and recovery diagnostics. Main and production unchanged.
