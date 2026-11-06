@@ -275,6 +275,8 @@ async function run(){
     return data.rows.some(row=>row.fields.name==="Поставщик CI" &&
       row.fields.level===2 && row.version===2);
   },"typed field migration of existing vendor row");
+  await poll(()=>client.eval("document.querySelector('#notice')?.textContent.startsWith('Поле добавлено')"),
+    "browser schema migration refresh complete");
   const changes=await localApi("/api/v1/schema/migrations");
   assert.ok(changes.migrations.some(x=>x.operation==="ADD_FIELD"&&x.rows_migrated===1));
   // Add a form section generated from the updated typed model.
@@ -287,6 +289,8 @@ async function run(){
     const spec=await localApi("/api/v1/spec");
     return spec.spec.pages[0].sections.some(x=>x.type==="form"&&x.model==="vendors");
   },"form section saved by editor");
+  await poll(()=>client.eval("document.querySelector('#notice')?.textContent.startsWith('Структура обновлена')"),
+    "form section editor UI refresh complete");
   const serverRendered=await poll(async()=>{
     const result=await localApi("/api/v1/preview/home");
     return result.html.includes('<form class="demo-form">') &&
@@ -323,6 +327,8 @@ async function run(){
       form.button_label==="Отправить";
   },"selected form fields and button saved by UI");
 
+  await poll(()=>client.eval("document.querySelector('#notice')?.textContent.startsWith('Настройки формы сохранены')"),
+    "form properties UI refresh complete");
   // Relational records use tenant-bound dropdowns, not raw UUID input.
   await client.eval("document.querySelector('[data-panel=records]').click();"+
     "document.querySelector('#model-select').value='requests';"+
@@ -339,6 +345,8 @@ async function run(){
     return data.rows.some(x=>x.fields.summary==="Связанная заявка из Chromium"
       && x.fields.customer===clientRow.row_id);
   },"relational record persisted via dropdown");
+  await poll(()=>client.eval("document.querySelector('#notice')?.textContent.startsWith('Запись сохранена')"),
+    "related record editor refresh complete");
   await client.screenshot("05-reference-editor-desktop.png");
 
   // Schema rename must preserve actual vendor data and selected form fields.
@@ -357,6 +365,8 @@ async function run(){
     return row?.fields.tier===2 && !Object.hasOwn(row.fields,"level") &&
       row.version===3 && JSON.stringify(form?.fields)===JSON.stringify(["tier"]);
   },"atomic field rename rewrote row and form metadata");
+  await poll(()=>client.eval("document.querySelector('#notice')?.textContent.startsWith('Поле переименовано')"),
+    "field rename visual refresh complete");
   await client.eval("document.querySelector('[data-panel=preview]').click();"+
     "document.querySelector('#preview-select').value='home';"+
     "document.querySelector('#refresh-preview').click();");
