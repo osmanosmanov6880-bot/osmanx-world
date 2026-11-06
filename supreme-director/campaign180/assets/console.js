@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0};
 const panels = ["dashboard","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -52,6 +52,7 @@ function switchPanel(name){
   if(name==="preview" && state.spec) refreshPreview();
   if(name==="schema" && state.spec) refreshMigrationHistory().catch(e=>show(e.message,true));
   if(name==="history" && state.spec) refreshRevisions().catch(e=>show(e.message,true));
+  if(name==="records" && state.spec)refreshBatchHistory().catch(e=>show(e.message,true));
 }
 document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
 async function sync(){
@@ -59,6 +60,7 @@ async function sync(){
     api("/api/v1/me"),api("/api/v1/spec"),api("/api/v1/workflows")]);
   state.me=me;state.spec=result.spec;state.revision=result.revision;
   state.csvPending=null;state.csvRetryKey=null;state.rowOffset=0;
+  state.batchSelection.clear();clearBatchPlan(true);
   state.restorePlan=null;
   clearMapPlan(true);
   $("history-plan").hidden=true;
@@ -724,7 +726,7 @@ function renderModels(){
   pick($("model-select"),state.spec.models.map(m=>[m.name,m.label]));
   pick($("wf-model"),state.spec.models.map(m=>[m.name,m.label]));
   state.model=$("model-select").value;
-  renderModelFields();updateWorkflowFields();
+  renderModelFields();updateWorkflowFields();renderBatchFields();
 }
 function renderModelFields(data={}){
   const m=model();
@@ -806,6 +808,8 @@ async function refreshRows({resetOffset=false}={}){
       search:$("record-search").value.trim()}});
   if(targetModel!==state.model || sequence!==state.rowGeneration)return;
   state.rows=result.rows;
+  state.batchSelection.clear();clearBatchPlan(true);
+  $("batch-selected-count").textContent="Выбрано: 0";
   $("record-page-info").textContent=(result.total===0?"Нет записей":
     "Показаны "+(result.offset+1)+"–"+(result.offset+result.rows.length)+
     " из "+result.total);
@@ -918,15 +922,229 @@ $("record-csv-apply").addEventListener("click",async()=>{
     button.disabled=!state.csvPending || !$("record-csv-approve").checked;
   }
 });
+function clearBatchPlan(clearRestore=false){
+  state.batchPlan=null;
+  state.batchRetryKey=null;
+  $("batch-approve").checked=false;
+  $("batch-approve").disabled=true;
+  $("batch-apply").disabled=true;
+  $("batch-summary").textContent="";
+  if(clearRestore){
+    state.batchRestorePlan=null;state.batchRestoreRetryKey=null;
+    $("batch-restore-review").hidden=true;
+    $("batch-restore-approve").checked=false;
+    $("batch-restore-apply").disabled=true;
+  }
+}
+function renderBatchFields(){
+  const available=model()?.fields||[];
+  const previous=$("batch-field").value;
+  pick($("batch-field"),available.map(f=>[f.name,f.label+" · "+f.type]));
+  if(available.some(f=>f.name===previous))$("batch-field").value=previous;
+  updateBatchValueControl();
+}
+function updateBatchValueControl(){
+  clearBatchPlan();
+  const field=model()?.fields.find(f=>f.name===$("batch-field").value);
+  const root=$("batch-value-control");root.replaceChildren();
+  if(!field)return;
+  const generation=++state.batchFieldGeneration;
+  const input=(field.type==="reference"||field.type==="boolean")?
+    node("select"):node("input");
+  input.id="batch-value";
+  if(field.type==="reference"){
+    input.disabled=true;pick(input,[["","Загрузка вариантов…"]]);
+    api("/api/v1/models/"+encodeURIComponent(field.references)+"/choices")
+      .then(result=>{
+        if(generation!==state.batchFieldGeneration)return;
+        pick(input,[["","Без связи"],...result.choices.map(x=>[x.row_id,x.label])]);
+        input.disabled=!can("record.write");
+      })
+      .catch(e=>{
+        if(generation!==state.batchFieldGeneration)return;
+        pick(input,[["","Ошибка загрузки"]]);input.disabled=true;
+        show(e.message,true);
+      });
+  }else if(field.type==="boolean"){
+    pick(input,[["true","Да"],["false","Нет"]]);
+  }else{
+    input.type=field.type==="integer"?"number":
+      field.type==="email"?"email":field.type==="date"?"date":"text";
+    if(field.type==="integer")input.step="1";
+    if(field.type==="text")input.maxLength=1000;
+  }
+  input.disabled=input.disabled||!can("record.write");
+  input.addEventListener("input",()=>clearBatchPlan());
+  input.addEventListener("change",()=>clearBatchPlan());
+  root.append(input);
+}
+$("batch-field").addEventListener("change",updateBatchValueControl);
+function selectedBatchPatches(){
+  if(!can("record.write"))throw Error("Нет прав для изменения записей");
+  const selected=state.rows.filter(r=>state.batchSelection.has(r.row_id));
+  if(!selected.length)throw Error("Отметь хотя бы одну запись на текущей странице");
+  if(selected.length>25)throw Error("Лимит одного пакета — 25 записей");
+  const field=model()?.fields.find(f=>f.name===$("batch-field").value);
+  const input=$("batch-value");
+  if(!field||!input||input.disabled)throw Error("Выбери доступное поле и значение");
+  if(!input.checkValidity())throw Error("Недопустимое значение поля");
+  const raw=input.value.trim();
+  const value=field.type==="boolean"?raw==="true":typed(field,raw);
+  return selected.map(row=>({
+    row_id:row.row_id,expected_version:row.version,changes:{[field.name]:value}
+  }));
+}
+$("batch-inspect").addEventListener("click",async()=>{
+  clearBatchPlan();
+  try{
+    const modelName=state.model,revision=state.revision;
+    const patches=selectedBatchPatches();
+    const plan=await api("/api/v1/models/"+encodeURIComponent(modelName)+
+      "/batch/inspect",{method:"POST",body:{expected_revision:revision,patches}});
+    if(state.model!==modelName||state.revision!==revision)
+      throw Error("Модель изменилась; заново проверьте пакет");
+    state.batchPlan={model:modelName,revision,patches,plan};
+    $("batch-summary").textContent="Проверено: "+plan.count+
+      " записей · SHA-256 "+plan.expected_plan_sha256.slice(0,16)+"…";
+    $("batch-approve").disabled=false;
+    show("План массового изменения проверен. Записи пока не изменены.");
+  }catch(e){$("batch-summary").textContent="Не удалось проверить: "+e.message;
+    show(e.message,true);}
+});
+$("batch-approve").addEventListener("change",()=>{
+  $("batch-apply").disabled=!state.batchPlan||!$("batch-approve").checked;
+});
+$("batch-apply").addEventListener("click",async()=>{
+  const pending=state.batchPlan;
+  if(!pending||!$("batch-approve").checked)return;
+  $("batch-apply").disabled=true;
+  try{
+    if(pending.model!==state.model||pending.revision!==state.revision)
+      throw Error("Схема изменена; проверьте пакет повторно");
+    const key=state.batchRetryKey||safeId();
+    state.batchRetryKey=key;
+    const receipt=await api("/api/v1/models/"+encodeURIComponent(pending.model)+
+      "/batch/apply",{method:"POST",body:{
+        expected_revision:pending.revision,patches:pending.patches,
+        expected_plan_sha256:pending.plan.expected_plan_sha256,
+        idempotency_key:key}});
+    clearBatchPlan(true);
+    await refreshRows({resetOffset:true});
+    await refreshBatchHistory();
+    show("Массовое изменение сохранено: "+receipt.updated+
+      " записей · журнал "+receipt.batch_id.slice(0,8));
+  }catch(e){$("batch-summary").textContent="Изменения не подтверждены: "+e.message;
+    show(e.message,true);
+  }finally{
+    $("batch-apply").disabled=!state.batchPlan||!$("batch-approve").checked;
+  }
+});
+async function refreshBatchHistory(){
+  if(!state.spec||!can("record.read"))return;
+  const selected=state.model;
+  const result=await api("/api/v1/models/"+encodeURIComponent(selected)+
+    "/batch/history",{method:"POST",body:{limit:20}});
+  if(selected!==state.model)return;
+  const root=$("batch-history-list");root.replaceChildren();
+  if(!result.history.length){
+    root.append(node("p","Пакетных операций пока нет.","muted"));return;
+  }
+  const restored=new Set(result.history.filter(x=>x.operation==="RESTORE")
+    .map(x=>x.parent_batch_id));
+  for(const entry of result.history){
+    const card=node("div",null,"batch-journal-item");
+    card.append(node("strong",
+      entry.operation==="RESTORE"?"Откат":"Изменение"));
+    card.append(node("small",entry.count+" записей · "+
+      new Date(entry.created_epoch*1000).toLocaleString("ru-RU")+
+      " · "+entry.batch_id.slice(0,8)));
+    card.append(node("small","SHA-256 "+entry.entry_digest.slice(0,20)+"…"));
+    if(entry.operation==="UPDATE"){
+      const button=node("button",restored.has(entry.batch_id)?
+        "Откат уже выполнен":"Проверить откат","ghost");
+      button.type="button";
+      button.disabled=restored.has(entry.batch_id)||
+        !can("record.write")||!can("spec.write");
+      button.addEventListener("click",()=>inspectBatchRestore(entry.batch_id)
+        .catch(e=>show(e.message,true)));
+      card.append(button);
+    }
+    root.append(card);
+  }
+}
+async function inspectBatchRestore(batchId){
+  state.batchRestorePlan=null;
+  state.batchRestoreRetryKey=null;
+  $("batch-restore-review").hidden=true;
+  const modelName=state.model,revision=state.revision;
+  const plan=await api("/api/v1/models/"+encodeURIComponent(modelName)+
+    "/batch/restore/inspect",{method:"POST",
+      body:{batch_id:batchId,expected_revision:revision}});
+  if(modelName!==state.model||revision!==state.revision)
+    throw Error("Версия модели изменилась во время проверки");
+  state.batchRestorePlan={model:modelName,revision,batchId,plan};
+  $("batch-restore-review").hidden=false;
+  $("batch-restore-approve").checked=false;
+  $("batch-restore-apply").disabled=true;
+  $("batch-restore-summary").textContent="Готов откат "+plan.count+
+    " записей · SHA-256 "+plan.expected_plan_sha256.slice(0,16)+
+    "… Новая ревизия сохранит историю. Автоматизации повторно не запускаются.";
+}
+$("batch-history-refresh").addEventListener("click",()=>{
+  refreshBatchHistory().catch(e=>show(e.message,true));
+});
+$("batch-restore-approve").addEventListener("change",()=>{
+  $("batch-restore-apply").disabled=!$("batch-restore-approve").checked||
+    !state.batchRestorePlan;
+});
+$("batch-restore-apply").addEventListener("click",async()=>{
+  const pending=state.batchRestorePlan;
+  if(!pending||!$("batch-restore-approve").checked)return;
+  $("batch-restore-apply").disabled=true;
+  try{
+    if(pending.model!==state.model||pending.revision!==state.revision)
+      throw Error("Версия проекта изменилась");
+    const key=state.batchRestoreRetryKey||safeId();
+    state.batchRestoreRetryKey=key;
+    const out=await api("/api/v1/models/"+encodeURIComponent(pending.model)+
+      "/batch/restore/apply",{method:"POST",body:{
+        batch_id:pending.batchId,expected_revision:pending.revision,
+        expected_plan_sha256:pending.plan.expected_plan_sha256,
+        idempotency_key:key}});
+    clearBatchPlan(true);
+    await refreshRows({resetOffset:true});
+    await refreshBatchHistory();
+    show("Откат выполнен: "+out.restored+" записей. История сохранена.");
+  }catch(e){$("batch-restore-summary").textContent="Откат отклонён: "+e.message;
+    show(e.message,true);
+  }finally{
+    $("batch-restore-apply").disabled=!state.batchRestorePlan||
+      !$("batch-restore-approve").checked;
+  }
+});
 function drawTable(){
   const root=$("rows-table");root.replaceChildren();
   const m=model();if(!m)return;
   const table=node("table"),head=node("thead"),hrow=node("tr");
+  hrow.append(node("th","Выбрать"));
   for(const field of m.fields)hrow.append(node("th",field.label));
   hrow.append(node("th","Версия"));head.append(hrow);table.append(head);
   const tbody=node("tbody");
   for(const r of state.rows){
     const tr=node("tr");
+    const selectCell=node("td");
+    const mark=node("input");mark.type="checkbox";
+    mark.dataset.batchRowId=r.row_id;
+    mark.setAttribute("aria-label","Выбрать запись "+r.row_id.slice(0,8));
+    mark.checked=state.batchSelection.has(r.row_id);
+    mark.disabled=!can("record.write");
+    mark.addEventListener("change",()=>{
+      if(mark.checked)state.batchSelection.add(r.row_id);
+      else state.batchSelection.delete(r.row_id);
+      clearBatchPlan();
+      $("batch-selected-count").textContent="Выбрано: "+state.batchSelection.size;
+    });
+    selectCell.append(mark);tr.append(selectCell);
     for(const f of m.fields){
       const v=r.fields[f.name];tr.append(node("td",v==null?"—":String(v)));
     }
@@ -945,6 +1163,7 @@ $("model-select").addEventListener("change",async()=>{
   $("record-search").value="";
   $("record-csv-file").value="";
   clearCsvPlan();
+  renderBatchFields();
   try{await refreshRows({resetOffset:true});}catch(e){show(e.message,true);}
 });
 $("row-select").addEventListener("change",selectRow);

@@ -23,6 +23,10 @@ from .structure import mutate_structure
 from .forms import edit_form
 from .form_submissions import submit_form
 from .record_bulk import query_rows, export_csv, inspect_import, apply_import
+from .record_batches import (
+    init_journal, inspect_batch_update, apply_batch_update,
+    list_batch_history, inspect_batch_restore, apply_batch_restore,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -57,6 +61,7 @@ class LocalAppRuntime:
                 tenant TEXT NOT NULL,project_id TEXT NOT NULL,workflow_id TEXT NOT NULL,
                 event_id TEXT NOT NULL,run_digest TEXT NOT NULL,response_json TEXT NOT NULL,
                 PRIMARY KEY(tenant,project_id,workflow_id,event_id));""")
+        init_journal(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -162,6 +167,41 @@ class LocalAppRuntime:
                             actor=actor,model=model,expected_revision=expected_revision,
                             csv_text=csv_text,expected_plan_sha256=expected_plan_sha256,
                             idempotency_key=idempotency_key)
+
+    def inspect_batch_update(self,*,tenant:str,project_id:str,actor:str,
+                             model:str,expected_revision:int,patches:list[dict])->dict:
+        return inspect_batch_update(self,tenant=tenant,project_id=project_id,
+                                    actor=actor,model=model,
+                                    expected_revision=expected_revision,patches=patches)
+
+    def apply_batch_update(self,*,tenant:str,project_id:str,actor:str,
+                           model:str,expected_revision:int,patches:list[dict],
+                           expected_plan_sha256:str,idempotency_key:str)->dict:
+        return apply_batch_update(self,tenant=tenant,project_id=project_id,
+                                  actor=actor,model=model,
+                                  expected_revision=expected_revision,patches=patches,
+                                  expected_plan_sha256=expected_plan_sha256,
+                                  idempotency_key=idempotency_key)
+
+    def list_batch_history(self,*,tenant:str,project_id:str,actor:str,
+                           model:str,limit:int=20)->dict:
+        return list_batch_history(self,tenant=tenant,project_id=project_id,
+                                  actor=actor,model=model,limit=limit)
+
+    def inspect_batch_restore(self,*,tenant:str,project_id:str,actor:str,
+                              model:str,batch_id:str,expected_revision:int)->dict:
+        return inspect_batch_restore(self,tenant=tenant,project_id=project_id,
+                                     actor=actor,model=model,batch_id=batch_id,
+                                     expected_revision=expected_revision)
+
+    def apply_batch_restore(self,*,tenant:str,project_id:str,actor:str,
+                            model:str,batch_id:str,expected_revision:int,
+                            expected_plan_sha256:str,idempotency_key:str)->dict:
+        return apply_batch_restore(self,tenant=tenant,project_id=project_id,
+                                   actor=actor,model=model,batch_id=batch_id,
+                                   expected_revision=expected_revision,
+                                   expected_plan_sha256=expected_plan_sha256,
+                                   idempotency_key=idempotency_key)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:

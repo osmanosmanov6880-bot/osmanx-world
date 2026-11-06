@@ -605,6 +605,50 @@ async function run(){
     "Wave 16 local UTF-8 CSV export completes");
   await client.screenshot("15-records-import-export-desktop.png");
 
+  // Wave 17: edit an existing SQLite record through the real multi-select
+  // and verify immutable journal + guarded forward-revision undo from the UI.
+  await poll(()=>client.eval(
+    "document.querySelector('#rows-table input[data-batch-row-id]')!==null "+
+    "&& document.querySelector('#batch-field')?.options.length>=2"),
+    "Wave 17 checkable model rows and typed field control");
+  await client.eval("document.querySelector('#rows-table input[data-batch-row-id]').click();"+
+    "document.querySelector('#batch-field').value='name';"+
+    "document.querySelector('#batch-field').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#batch-value').value='Изменение Wave 17';"+
+    "document.querySelector('#batch-inspect').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#batch-summary').textContent.includes('Проверено: 1') "+
+    "&& !document.querySelector('#batch-approve').disabled"),
+    "Wave 17 multi-edit inspection returned one SHA-256 plan");
+  await client.eval("document.querySelector('#batch-approve').checked=true;"+
+    "document.querySelector('#batch-approve').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#batch-apply').click();");
+  await poll(async()=>{
+    const result=await localApi("/api/v1/models/customers");
+    return result.rows.some(r=>r.fields.name==="Изменение Wave 17");
+  },"Wave 17 confirmed batch update persisted in SQLite");
+  await poll(()=>client.eval(
+    "document.querySelector('#batch-history-list').textContent.includes('Изменение') "+
+    "&& document.querySelector('#notice').textContent.includes('Массовое изменение сохранено')"),
+    "Wave 17 immutable journal listed in browser");
+  await client.eval("document.querySelector('#batch-history-list button:not([disabled])').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#batch-restore-review').hidden===false "+
+    "&& document.querySelector('#batch-restore-summary').textContent.includes('Готов откат 1')"),
+    "Wave 17 rollback inspection uses the live row versions");
+  await client.eval("document.querySelector('#batch-restore-approve').checked=true;"+
+    "document.querySelector('#batch-restore-approve').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#batch-restore-apply').click();");
+  await poll(async()=>{
+    const rows=await localApi("/api/v1/models/customers");
+    return rows.rows.some(r=>r.fields.name==="Клиент Wave 16" && r.version>=3);
+  },"Wave 17 forward-version undo restored original customer data");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice').textContent.includes('Откат выполнен: 1') "+
+    "&& document.querySelector('#batch-history-list').textContent.includes('Откат')"),
+    "Wave 17 rollback journal remains visible");
+  await client.screenshot("16-batch-edit-undo-desktop.png");
+
   // Use a genuine touch-enabled device viewport and reload so Chromium
   // recomputes meta viewport and responsive layout from navigation start.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -685,9 +729,9 @@ async function run(){
   assert.ok(overflow320<=2,"320px mobile horizontal overflow: "+overflow320);
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","mobile-390","mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","mobile-390","mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:15,public_server_started:false,production_deployed:false};
+    screenshots:16,public_server_started:false,production_deployed:false};
 }
 
 try{

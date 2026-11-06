@@ -366,6 +366,41 @@ class LocalConsole:
                 model=match.group(1),**data)
             return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/models/("+_MODEL.pattern[1:-1]+
+                           r")/batch/(inspect|apply|history|restore/inspect|restore/apply)",path)
+        if method=="POST" and match:
+            model,operation=match.groups()
+            data=self._body(environ)
+            if operation=="inspect":
+                self._fields(data,{"expected_revision","patches"},
+                             {"expected_revision","patches"})
+                out=runtime.inspect_batch_update(tenant=tid,project_id=project,
+                                                 actor=actor,model=model,**data)
+            elif operation=="apply":
+                self._fields(data,{"expected_revision","patches",
+                                   "expected_plan_sha256","idempotency_key"},
+                             {"expected_revision","patches",
+                              "expected_plan_sha256","idempotency_key"})
+                out=runtime.apply_batch_update(tenant=tid,project_id=project,
+                                               actor=actor,model=model,**data)
+            elif operation=="history":
+                self._fields(data,{"limit"},set())
+                out=runtime.list_batch_history(tenant=tid,project_id=project,
+                                               actor=actor,model=model,**data)
+            elif operation=="restore/inspect":
+                self._fields(data,{"batch_id","expected_revision"},
+                             {"batch_id","expected_revision"})
+                out=runtime.inspect_batch_restore(tenant=tid,project_id=project,
+                                                  actor=actor,model=model,**data)
+            else:
+                self._fields(data,{"batch_id","expected_revision",
+                                   "expected_plan_sha256","idempotency_key"},
+                             {"batch_id","expected_revision",
+                              "expected_plan_sha256","idempotency_key"})
+                out=runtime.apply_batch_restore(tenant=tid,project_id=project,
+                                                actor=actor,model=model,**data)
+            code="201 Created" if operation in ("apply","restore/apply") else "200 OK"
+            return self._json(start_response,code,out)
+        match=re.fullmatch(r"/api/v1/models/("+_MODEL.pattern[1:-1]+
                            r")/(query|csv-export|csv-import/inspect|csv-import/apply)",path)
         if method=="POST" and match:
             model,action=match.groups()
