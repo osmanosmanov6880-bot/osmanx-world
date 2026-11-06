@@ -1,23 +1,20 @@
-# OSGARD SUPREME DIRECTOR — проверяемый реестр 180 задач
+# OSGARD SUPREME DIRECTOR — актуальный аудит 180 оригинальных задач
 
-Обновление: 6 ноября 2026 · Исходный мастер: 17 октября 2026, SHA-256 `71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c`.
-Реализации кода Wave 4 зафиксированы коммитом `f56c62567fa24aee50d1cdf16824469616892624`.
+Сверка: 6 ноября 2026. Исходный мастер 17 октября 2026, SHA-256 `71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c`.
+Wave 5: коммит `261cc593348875eb96dd2edda4c261cf9a0ba83c`.
 
-**30 задач имеют связанный локальный код (не приняты), 142 не имеют прямого доказательства, 4 исключены из scope, 4 заблокированы отсутствующими исходниками. 0/180 независимо принято.**
+**32 локально связанные задачи (не приняты); 140 без прямого доказательства; 4 удержаны по scope; 4 удержаны по отсутствующим исходникам. Независимо принято: 0/180.**
 
-## Новый локальный функционал Wave 4
+## Wave 5: написанный локальный код (не интеграционная приёмка)
 
-- TITAN-X17 — строгая проверяемая спецификация сайта и детерминированная генерация HTML/CSS.
-- TITAN-X20 — программный no-AI редактор разделов, сохранение и восстановление версий.
-- TITAN-X21 — модели с типами полей, реальными SQLite CRUD-операциями и проверкой ссылок внутри организации.
-- TITAN-X24 — контроль ревизий, откат новой версией, импорт/экспорт по SHA в новый проект.
-- TITAN-X25 — локальное статическое превью, проверка файлов, блокировка публикации и перезаписи.
+- TITAN-X22: серверный WSGI API только на 127.0.0.1 с токеном, редактирование страниц и данных, строго проверяемые workflows без внешних действий, русская визуальная консоль.
+- TITAN-X23: явное назначение ролей по организации и проекту, право владельца делегировать, отзыв разрешений, транзакционное выполнение операций с проверкой прав.
+- Изменения вне исходных канонических модулей KRAKEN/NEXUS/Command. Внешний IdP, production-авторизация, полноценные workflow-события, деплой, платежи и межсерверная интеграция отсутствуют.
+- Негативные/интеграционные тесты: `tests/test_app_console.py`. Контроль синтаксиса JavaScript — `node --check`. Результаты CI нужно смотреть в GitHub; запись кода не равна успешной приёмке.
 
-Демонстрационный сайт — `examples/demo-site.json`. Внешняя аутентификация, работающие HTTP-формы, production, деплой и полная оригинальная команда KRAKEN **не** реализованы. Этот вертикальный срез — только связанность с задачами исходного плана.
+## Все 180 оригинальных ID
 
-## Все оригинальные ID
-
-| ID | Приоритет | Оригинальная задача | Текущее доказательство | Файлы локального кода |
+| ID | Приоритет | Оригинальная задача | Доказательство реализации | Связанный локальный код |
 |---|---|---|---|---|
 | TITAN-X01 | P0 | Канонические Git baseline всех инженерных компонентов | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/recovery/ORIGINAL_180_TASKS.json`, `supreme-director/campaign180/campaign180/registry.py` |
 | TITAN-X02 | P0 | Реестр исходников, пакетов и зависимостей | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/scripts/verify_source_transfer.py`, `supreme-director/campaign180/campaign180/registry.py` |
@@ -40,8 +37,8 @@
 | TITAN-X19 | P1 | Автоматизированное исправление ошибок с лимитами | NO_DIRECT_PROOF | — |
 | TITAN-X20 | P1 | Полноценный no-AI редактор страниц | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/builder.py`, `supreme-director/campaign180/campaign180/drafts.py` |
 | TITAN-X21 | P1 | Визуальные формы, таблицы и связи данных | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/builder.py`, `supreme-director/campaign180/campaign180/records.py` |
-| TITAN-X22 | P1 | API и workflows в визуальном конструкторе | NO_DIRECT_PROOF | — |
-| TITAN-X23 | P1 | Политики и разрешения в созданных приложениях | NO_DIRECT_PROOF | — |
+| TITAN-X22 | P1 | API и workflows в визуальном конструкторе | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/campaign180/local_http.py`, `supreme-director/campaign180/assets/console.js`, `supreme-director/campaign180/tests/test_app_console.py` |
+| TITAN-X23 | P1 | Политики и разрешения в созданных приложениях | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/app_policy.py`, `supreme-director/campaign180/campaign180/app_runtime.py`, `supreme-director/campaign180/campaign180/local_http.py`, `supreme-director/campaign180/tests/test_app_console.py` |
 | TITAN-X24 | P1 | Версионирование, импорт и экспорт проектов | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/drafts.py`, `supreme-director/campaign180/examples/demo-site.json` |
 | TITAN-X25 | P1 | Система превью, тестовых окружений и публикации | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/preview.py`, `supreme-director/campaign180/examples/demo-site.json`, `supreme-director/campaign180/tests/test_builder_drafts_records_preview.py` |
 | TITAN-X26 | P2 | CI/CD, dependency и secrets scanning | RELATED_LOCAL_CODE_NOT_ACCEPTED | `supreme-director/campaign180/campaign180/supplychain.py`, `supreme-director/campaign180/tests/test_review_supplychain.py` |
@@ -200,4 +197,4 @@
 | ORBITAL-X29 | P2 | Ledger: независимая проверка и audit report | NO_DIRECT_PROOF | — |
 | ORBITAL-X30 | P2 | Решение research GO/NO-GO по доказательствам | NO_DIRECT_PROOF | — |
 
-Исторический INITIAL_AUDIT_180 не переписывается. Все локальные проверки автора остаются предварительными до независимой приёмки на оригинальных канонических upstream. Draft PR #7, main и production неизменны относительно выпуска.
+Исторический файл `INITIAL_AUDIT_180_RU.md` оставлен неизменным. Действующий Draft PR #7 не означает приёмку, публикацию или разрешение изменять production.

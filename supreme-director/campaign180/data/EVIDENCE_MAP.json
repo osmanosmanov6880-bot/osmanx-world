@@ -114,6 +114,18 @@
       "supreme-director/campaign180/campaign180/preview.py",
       "supreme-director/campaign180/examples/demo-site.json",
       "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+    ],
+    "TITAN-X22": [
+      "supreme-director/campaign180/campaign180/app_runtime.py",
+      "supreme-director/campaign180/campaign180/local_http.py",
+      "supreme-director/campaign180/assets/console.js",
+      "supreme-director/campaign180/tests/test_app_console.py"
+    ],
+    "TITAN-X23": [
+      "supreme-director/campaign180/campaign180/app_policy.py",
+      "supreme-director/campaign180/campaign180/app_runtime.py",
+      "supreme-director/campaign180/campaign180/local_http.py",
+      "supreme-director/campaign180/tests/test_app_console.py"
     ]
   }
 }

@@ -49,3 +49,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Live status of all original 180 tasks](docs/CURRENT_AUDIT_180_RU.md) / [machine registry](data/CURRENT_AUDIT_180.json): **30 locally related, 142 unproven, 8 holds, 0 independently accepted**.
 - Working local site specification compiler, versioned project editor, typed tenant-scoped SQLite data models, import/export and offline static preview. [Repro and safety notes](docs/WAVE4_NOAI_SITE_BUILDER.md).
 - Not yet integrated with original KRAKEN/NEXUS/Command upstream or authenticated HTTP; production remains NO-GO.
+
+## Wave 5: functional local console and APIs (2026-11-06)
+
+- [Russian instructions and limitations](docs/WAVE5_LOCAL_CONSOLE.md).
+- [Live 180-task audit](docs/CURRENT_AUDIT_180_RU.md) / [machine registry](data/CURRENT_AUDIT_180.json): 32 locally related, 140 without direct proof, eight holds, 0 independently accepted.
+- Local application roles, idempotent record workflows and browser UI with a loopback-only WSGI API. No production or external server connection. Canonical upstream integration still blocked.

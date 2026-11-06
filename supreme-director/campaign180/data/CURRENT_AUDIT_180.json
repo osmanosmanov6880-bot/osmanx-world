@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "f56c62567fa24aee50d1cdf16824469616892624",
+  "based_on_code_commit": "261cc593348875eb96dd2edda4c261cf9a0ba83c",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -8,8 +8,8 @@
   "independently_accepted": 0,
   "production_accepted": 0,
   "counts": {
-    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 30,
-    "NO_DIRECT_PROOF": 142,
+    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 32,
+    "NO_DIRECT_PROOF": 140,
     "HOLD_SCOPE_EXCLUDED": 4,
     "HOLD_SOURCE_MISSING": 4
   },
@@ -349,8 +349,13 @@
       "title": "API и workflows в визуальном конструкторе",
       "original_status": "PLANNED",
       "original_source_line": 305,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/app_runtime.py",
+        "supreme-director/campaign180/campaign180/local_http.py",
+        "supreme-director/campaign180/assets/console.js",
+        "supreme-director/campaign180/tests/test_app_console.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -362,8 +367,13 @@
       "title": "Политики и разрешения в созданных приложениях",
       "original_status": "PLANNED",
       "original_source_line": 318,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/app_policy.py",
+        "supreme-director/campaign180/campaign180/app_runtime.py",
+        "supreme-director/campaign180/campaign180/local_http.py",
+        "supreme-director/campaign180/tests/test_app_console.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -2440,6 +2450,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave4 no-AI schema, project drafts, model CRUD, static preview",
-  "notes": "30 related local implementations only. All canonical upstream team integration and independent review remain blocked. 0/180 accepted."
+  "last_local_campaign": "Wave5 local authenticated API, deterministic workflows, browser editor and project-scoped roles",
+  "notes": "32 locally related tasks are code links only. Original upstream integration and independent acceptance remain blocked; production NO-GO."
 }
