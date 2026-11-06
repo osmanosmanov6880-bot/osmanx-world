@@ -67,3 +67,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Schema editor implementation and safety](docs/WAVE7_VISUAL_SCHEMA.md)
 - [Machine readable original 180 ledger](data/CURRENT_AUDIT_180.json) and [full status table](docs/CURRENT_AUDIT_180_RU.md): 33 locally related, 139 without proof, 8 holds, 0 independently accepted.
 - API-backed model editor, add-field migrations, disabled static form preview, browser acceptance. No production deployment or original upstream acceptance.
+
+## Wave 8 — no-AI form field editor, tenant-safe relations and bounded schema rename
+
+- [Wave 8 design, migration and rollback notes](docs/WAVE8_FORMS_RELATIONS_MIGRATIONS_RU.md)
+- [Current 180-task ledger](docs/CURRENT_AUDIT_180_RU.md) and [machine registry](data/CURRENT_AUDIT_180.json): **33 local-code links / 139 no evidence / 8 holds / 0 independently accepted**.
+- Preview forms cannot submit, API is loopback-only, and field renames are bounded to 500 records with immutable local receipts. No production deployment.

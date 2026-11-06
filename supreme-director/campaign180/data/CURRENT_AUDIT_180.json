@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "1465b32833326d43f43d69cdee6f8f6c71b3539b",
+  "based_on_code_commit": "30099046ccdc67ca222371dc98bd8d03c5b9010a",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -327,7 +327,9 @@
         "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
         "supreme-director/campaign180/assets/console.js",
         "supreme-director/campaign180/assets/index.html",
-        "supreme-director/campaign180/tests/browser-console.mjs"
+        "supreme-director/campaign180/tests/browser-console.mjs",
+        "supreme-director/campaign180/campaign180/forms.py",
+        "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -348,7 +350,9 @@
         "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
         "supreme-director/campaign180/campaign180/model_editor.py",
         "supreme-director/campaign180/assets/index.html",
-        "supreme-director/campaign180/tests/test_wave7_schema.py"
+        "supreme-director/campaign180/tests/test_wave7_schema.py",
+        "supreme-director/campaign180/campaign180/app_runtime.py",
+        "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -388,7 +392,8 @@
         "supreme-director/campaign180/campaign180/app_policy.py",
         "supreme-director/campaign180/campaign180/app_runtime.py",
         "supreme-director/campaign180/campaign180/local_http.py",
-        "supreme-director/campaign180/tests/test_app_console.py"
+        "supreme-director/campaign180/tests/test_app_console.py",
+        "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -406,7 +411,8 @@
         "supreme-director/campaign180/campaign180/drafts.py",
         "supreme-director/campaign180/examples/demo-site.json",
         "supreme-director/campaign180/campaign180/model_editor.py",
-        "supreme-director/campaign180/tests/test_wave7_schema.py"
+        "supreme-director/campaign180/tests/test_wave7_schema.py",
+        "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2471,6 +2477,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave7 model editor, safe 500-row typed field migrations, static forms and browser schema acceptance",
-  "notes": "33 original IDs have related local code; Wave7 did not claim new independently accepted tasks. Only local demo SQLite; upstream and security review remain pending."
+  "last_local_campaign": "Wave8 per-form editable fields, relation picklists, bounded non-reference field renames and full browser/API negatives",
+  "notes": "33 locally related task IDs only, 139 without direct proof and 8 holds. CI Wave8 separately pending; 0/180 independent acceptance. Main/production unchanged."
 }
