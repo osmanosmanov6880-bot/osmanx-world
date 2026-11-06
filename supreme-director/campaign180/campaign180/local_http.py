@@ -20,6 +20,7 @@ from wsgiref.simple_server import make_server
 
 from .app_policy import AppPrincipal,AppAccessDenied
 from .app_runtime import LocalAppRuntime,AppOperationDenied
+from .model_editor import LocalModelEditor
 from .builder import validate_site_spec
 from .contracts import ACTOR_RE,TENANT_RE
 from .drafts import DraftDenied,_identity
@@ -68,6 +69,7 @@ class LocalConsole:
         self.token=token
         self.port=port
         self.runtime=LocalAppRuntime(str(database))
+        self.model_editor=LocalModelEditor(self.runtime)
         # Fail early when the trusted local principal was not provisioned.
         self.runtime.policy.get_role(tenant=tenant,project_id=project_id,actor=actor)
 
@@ -220,6 +222,47 @@ class LocalConsole:
                          {"expected_revision"})
             out=runtime.edit_page(tenant=tid,project_id=project,actor=actor,
                                   slug=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="GET" and path=="/api/v1/schema/migrations":
+            out=self.model_editor.list_migrations(
+                tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",{"migrations":out})
+        if method=="POST" and path=="/api/v1/schema/models":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","model"},
+                         {"expected_revision","model"})
+            out=self.model_editor.add_model(
+                tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")/fields/("+_MODEL.pattern[1:-1]+r")",path)
+        if method=="PATCH" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","label"},
+                         {"expected_revision","label"})
+            out=self.model_editor.label_field(
+                tenant=tid,project_id=project,actor=actor,
+                model=match.group(1),field=match.group(2),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")/fields",path)
+        if method=="POST" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","field","default_value"},
+                         {"expected_revision","field"})
+            supplied="default_value" in data
+            out=self.model_editor.add_field(
+                tenant=tid,project_id=project,actor=actor,
+                model=match.group(1),expected_revision=data["expected_revision"],
+                field=data["field"],default_provided=supplied,
+                default_value=data.get("default_value"))
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")",path)
+        if method=="PATCH" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","label"},
+                         {"expected_revision","label"})
+            out=self.model_editor.label_model(
+                tenant=tid,project_id=project,actor=actor,
+                model=match.group(1),**data)
             return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/models/("+_MODEL.pattern[1:-1]+r")",path)
         if match and method=="GET":
