@@ -763,8 +763,9 @@ async function run(){
     "row.querySelector('.task-actions select').value='done';"+
     "row.querySelector('.task-actions button').click();})()");
   await poll(()=>client.eval(
-    "document.querySelector('#notice').textContent.includes('Complete prerequisite tasks before closing')"),
-    "Wave 20 blocked dependent cannot be marked done early");
+    "document.querySelector('#notice').textContent.includes('INVALID_OPERATION') "+
+    "&& state.tasks.some(x=>x.title==='Запуск Wave 20'&&x.status==='todo')"),
+    "Wave 20 API rejects premature completion without exposing sensitive details");
   await client.eval("(()=>{const row=[...document.querySelectorAll('#task-list .task-item')]"+
     ".find(x=>x.textContent.includes('Подготовка Wave 20'));"+
     "row.querySelector('.task-actions select').value='done';"+
