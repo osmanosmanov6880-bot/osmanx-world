@@ -22,6 +22,7 @@ from .automatic import apply_record_event
 from .structure import mutate_structure
 from .forms import edit_form
 from .form_submissions import submit_form
+from .record_bulk import query_rows, export_csv, inspect_import, apply_import
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -136,6 +137,31 @@ class LocalAppRuntime:
                            actor=actor,slug=slug,section_index=section_index,
                            expected_revision=expected_revision,data=data,
                            idempotency_key=idempotency_key)
+
+    def query_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
+                   limit:int=25,offset:int=0,search:str="",field:str|None=None)->dict:
+        return query_rows(self,tenant=tenant,project_id=project_id,actor=actor,
+                          model=model,limit=limit,offset=offset,
+                          search=search,field=field)
+
+    def export_csv(self,*,tenant:str,project_id:str,actor:str,model:str,
+                   limit:int=100,search:str="",field:str|None=None)->dict:
+        return export_csv(self,tenant=tenant,project_id=project_id,actor=actor,
+                          model=model,limit=limit,search=search,field=field)
+
+    def inspect_csv_import(self,*,tenant:str,project_id:str,actor:str,
+                           model:str,expected_revision:int,csv_text:str)->dict:
+        return inspect_import(self,tenant=tenant,project_id=project_id,
+                              actor=actor,model=model,
+                              expected_revision=expected_revision,csv_text=csv_text)
+
+    def apply_csv_import(self,*,tenant:str,project_id:str,actor:str,
+                         model:str,expected_revision:int,csv_text:str,
+                         expected_plan_sha256:str,idempotency_key:str)->dict:
+        return apply_import(self,tenant=tenant,project_id=project_id,
+                            actor=actor,model=model,expected_revision=expected_revision,
+                            csv_text=csv_text,expected_plan_sha256=expected_plan_sha256,
+                            idempotency_key=idempotency_key)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
