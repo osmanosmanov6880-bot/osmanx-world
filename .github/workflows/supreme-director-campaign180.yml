@@ -46,6 +46,8 @@ jobs:
           python -m campaign180.repro verify-signature --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.pub --signature /tmp/campaign180-ci-test.sig
       - name: Static scan only changed source paths (no secret output)
         run: python -m campaign180.supplychain --root . --base HEAD^
+      - name: Bounded synthetic crash recovery and restore (no production effects)
+        run: python -m campaign180.resilience --tasks-per-tenant 12 > /tmp/osgard-180-audit-resilience.json
       - name: Generate exact original 180 coverage and read-only inventory
         run: |
           python -m campaign180 audit --root . --output /tmp/osgard-180-audit
