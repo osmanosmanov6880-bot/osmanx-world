@@ -274,6 +274,11 @@ class LocalConsole:
                 tenant=tid,project_id=project,actor=actor,
                 model=match.group(1),**data)
             return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/models/("+_MODEL.pattern[1:-1]+r")/choices",path)
+        if method=="GET" and match:
+            out=runtime.reference_choices(tenant=tid,project_id=project,
+                                          actor=actor,model=match.group(1))
+            return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/models/("+_MODEL.pattern[1:-1]+r")",path)
         if match and method=="GET":
             out=runtime.list_rows(tenant=tid,project_id=project,actor=actor,

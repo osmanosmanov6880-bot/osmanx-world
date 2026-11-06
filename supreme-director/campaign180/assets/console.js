@@ -306,24 +306,56 @@ function renderModelFields(data={}){
   const target=$("row-fields");
   target.replaceChildren();
   if(!m)return;
+  const generation=(state.referenceGeneration=(state.referenceGeneration||0)+1);
   $("model-description").textContent=m.fields.length+" полей · типизированные данные";
   for(const field of m.fields){
     const box=node("div");
     const label=node("label",field.label+(field.required?" *":""));
     label.setAttribute("for","field-"+field.name);
-    const input=node("input");
+    let input;
+    if(field.type==="reference"){
+      input=node("select");
+      input.append(option("","Загрузка связанных записей…"));
+      input.disabled=true;
+      api("/api/v1/models/"+encodeURIComponent(field.references)+"/choices")
+        .then(result=>{
+          if(state.referenceGeneration!==generation || state.model!==m.name
+             || $("field-"+field.name)!==input)return;
+          const requested=data[field.name]??"";
+          const available=result.choices.map(r=>[r.row_id,r.label+" · "+r.row_id.slice(0,8)]);
+          if(requested && !available.some(([id])=>id===requested)){
+            available.unshift([requested,"Ранее выбранная запись · "+requested.slice(0,8)]);
+          }
+          pick(input,[["","Без связи"],...available]);
+          input.value=requested;
+          input.disabled=!can("record.write");
+          if(result.truncated){
+            box.append(node("small","Показаны первые 100 записей. Уже выбранная связь сохранена.","hint"));
+          }
+        })
+        .catch(err=>{
+          if(state.referenceGeneration!==generation || $("field-"+field.name)!==input)return;
+          pick(input,[["","Не удалось загрузить доступные записи"]]);
+          input.disabled=true;
+          show("Связи не загружены: "+err.message,true);
+        });
+    }else{
+      input=node("input");
+      if(field.type==="integer")input.type="number";
+      else if(field.type==="date")input.type="date";
+      else if(field.type==="email")input.type="email";
+      else if(field.type==="boolean")input.type="checkbox";
+      else input.type="text";
+      if(field.type==="boolean")input.checked=Boolean(data[field.name]);
+      else if(data[field.name]!==undefined && data[field.name]!==null)input.value=String(data[field.name]);
+      input.disabled=!can("record.write");
+    }
     input.id="field-"+field.name;
     input.dataset.field=field.name;
-    if(field.type==="integer")input.type="number";
-    else if(field.type==="date")input.type="date";
-    else if(field.type==="email")input.type="email";
-    else if(field.type==="boolean")input.type="checkbox";
-    else input.type="text";
     input.required=Boolean(field.required);
-    if(field.type==="boolean")input.checked=Boolean(data[field.name]);
-    else if(data[field.name]!==undefined && data[field.name]!==null)input.value=String(data[field.name]);
-    input.disabled=!can("record.write");
-    box.append(label,input);target.append(box);
+    box.prepend(label);
+    box.append(input);
+    target.append(box);
   }
 }
 function readForm(){
@@ -331,7 +363,10 @@ function readForm(){
   for(const f of model().fields){
     const el=$("field-"+f.name);
     const raw=f.type==="boolean"?el.checked:el.value.trim();
-    if(raw==="" && !f.required)continue;
+    if(raw==="" && !f.required){
+      if(state.selectedRow && Object.hasOwn(state.selectedRow.fields,f.name))data[f.name]=null;
+      continue;
+    }
     data[f.name]=typed(f,raw);
   }
   return data;

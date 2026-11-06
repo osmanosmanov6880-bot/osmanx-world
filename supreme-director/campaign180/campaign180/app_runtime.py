@@ -148,6 +148,27 @@ class LocalAppRuntime:
                                "fields":validated,"sha256":row["content_digest"]})
             return output
 
+    def reference_choices(self,*,tenant:str,project_id:str,actor:str,
+                          model:str)->dict:
+        """List at most 100 tenant-authorized row labels, not arbitrary raw fields."""
+        with self.drafts._db() as db:
+            self._guard(db,tenant,project_id,actor,"record.read")
+            spec,_=self.drafts._head(db,tenant,project_id)
+            definition=self.records._model(spec,model)
+            text_field=next((f["name"] for f in definition["fields"]
+                             if f["type"]=="text"),None)
+            rows=db.execute("""SELECT row_id FROM builder_rows WHERE tenant=?
+                AND project_id=? AND model=? AND deleted=0 ORDER BY rowid
+                LIMIT 101""",(tenant,project_id,model)).fetchall()
+            choices=[]
+            for row in rows[:100]:
+                body,_=self.records._row(db,tenant,project_id,model,row["row_id"])
+                checked=validate_row(definition,body)
+                label=str(checked.get(text_field) or row["row_id"])[:96]
+                choices.append({"row_id":row["row_id"],"label":label})
+            return {"choices":choices,"truncated":len(rows)>100,
+                    "total_included":len(choices),"tenant_bound":True}
+
     def create_row(self,*,tenant:str,project_id:str,actor:str,model:str,
                    data:dict,idempotency_key:str)->dict:
         self.records._key(idempotency_key)
