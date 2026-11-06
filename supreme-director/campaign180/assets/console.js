@@ -1,9 +1,9 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0};
-const panels = ["dashboard","pages","records","schema","history","workflows","preview"];
-const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null};
+const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
+const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
   const el=$("notice"); el.textContent=message || ""; el.classList.toggle("error",error);
 };
@@ -53,6 +53,8 @@ function switchPanel(name){
   if(name==="schema" && state.spec) refreshMigrationHistory().catch(e=>show(e.message,true));
   if(name==="history" && state.spec) refreshRevisions().catch(e=>show(e.message,true));
   if(name==="records" && state.spec)refreshBatchHistory().catch(e=>show(e.message,true));
+  if(name==="tasks" && state.spec)refreshTasks().catch(e=>show(e.message,true));
+  if(name==="dashboard" && state.spec)refreshTaskSummary().catch(e=>show(e.message,true));
 }
 document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
 async function sync(){
@@ -69,6 +71,12 @@ async function sync(){
   $("history-apply").disabled=true;
   state.workflows=workflows.workflows;
   $("role-pill").textContent="Роль: "+me.role;
+  $("tasks-nav").hidden=!can("task.read");
+  $("task-form").hidden=!can("task.manage");
+  $("task-refresh").disabled=!can("task.read");
+  $("team-kpis").hidden=!can("task.read");
+  state.taskEditing=null;state.taskOffset=0;state.taskPendingKey=null;
+  if(can("task.manage"))await loadTaskMembers();
   $("metric-pages").textContent=result.spec.pages.length;
   $("metric-models").textContent=result.spec.models.length;
   $("metric-workflows").textContent=state.workflows.filter(w=>w.enabled).length;
@@ -94,6 +102,7 @@ async function sync(){
   $("map-load-options").disabled=!can("spec.write")||!can("record.read");
   renderPages();renderModels();renderSchema();renderWorkflows();
   await refreshRows();
+  if(can("task.read"))await refreshTaskSummary();
 }
 $("auth-form").addEventListener("submit",async ev=>{
   ev.preventDefault();
@@ -103,6 +112,196 @@ $("auth-form").addEventListener("submit",async ev=>{
   $("token").value="";
   try{await sync();$("connect").hidden=true;show("Локальная сессия подключена. Изменения сохраняются только на этом компьютере.");}
   catch(e){state.token="";$("connect").hidden=false;show(e.message,true);}
+});
+const TASK_STATUS={todo:"Ожидает",in_progress:"В работе",
+  blocked:"Заблокирована",done:"Выполнена"};
+const TASK_PRIORITY={low:"Низкий",normal:"Обычный",high:"Высокий",urgent:"Критический"};
+const TASK_TRANSITIONS={
+  todo:["in_progress","blocked"],in_progress:["blocked","done"],
+  blocked:["in_progress"],done:[]};
+async function loadTaskMembers(){
+  if(!can("task.manage"))return;
+  const reply=await api("/api/v1/tasks/members");
+  state.taskMembers=reply.members;
+  pick($("task-assignee"),[["","Не назначено"],
+    ...state.taskMembers.map(m=>[m.actor,m.actor+" · "+m.role])]);
+}
+function resetTaskForm(){
+  state.taskEditing=null;state.taskPendingKey=null;
+  $("task-form").reset();
+  $("task-form-title").textContent="Новая задача";
+  $("task-save").textContent="Создать задачу";
+  $("task-priority").value="normal";
+}
+async function refreshTaskSummary(){
+  if(!can("task.read"))return;
+  const result=await api("/api/v1/tasks/summary");
+  const m=result.metrics;
+  $("metric-tasks-open").textContent=m.total-m.done;
+  $("metric-tasks-overdue").textContent=m.overdue;
+  $("metric-tasks-blocked").textContent=m.blocked;
+  $("metric-tasks-done").textContent=m.done;
+  $("tasks-total").textContent=m.total;
+  $("tasks-progress").textContent=m.in_progress;
+  $("tasks-overdue").textContent=m.overdue;
+  $("tasks-done").textContent=m.done;
+}
+async function refreshTasks({resetOffset=false}={}){
+  if(!can("task.read"))return;
+  if(resetOffset)state.taskOffset=0;
+  const sequence=++state.taskGeneration;
+  const status=$("task-status-filter").value||null;
+  const result=await api("/api/v1/tasks/query",{
+    method:"POST",body:{limit:25,offset:state.taskOffset,status}});
+  if(sequence!==state.taskGeneration)return;
+  state.tasks=result.tasks;
+  $("task-count").textContent=result.total===0?"Задач пока нет":
+    "Задачи "+(result.offset+1)+"–"+(result.offset+result.tasks.length)+
+    " из "+result.total+" · "+(result.scope==="all"?"Вся команда":"Мои поручения");
+  $("task-prev").disabled=result.offset===0;
+  $("task-next").disabled=!result.has_more;
+  renderTaskList();
+  await refreshTaskSummary();
+}
+function renderTaskList(){
+  const root=$("task-list");root.replaceChildren();
+  if(!state.tasks.length){
+    root.append(node("p","Нет задач с выбранным статусом.","muted"));return;
+  }
+  for(const task of state.tasks){
+    const card=node("article",null,"task-item");
+    const top=node("div",null,"task-item-head");
+    const title=node("strong",task.title);
+    const info=node("span",TASK_PRIORITY[task.priority],"task-priority");
+    top.append(title,info);card.append(top);
+    if(task.description)card.append(node("p",task.description,"task-description"));
+    const meta=node("div",null,"task-meta");
+    const assigned=task.assignee?"Исполнитель: "+task.assignee:"Без исполнителя";
+    const due=task.due_date?"Срок: "+task.due_date:"Срок не установлен";
+    meta.append(node("small",assigned),node("small",due),
+                node("small","Версия "+task.version));
+    card.append(meta);
+    const actions=node("div",null,"task-actions");
+    if(can("task.progress")){
+      const allowed=can("task.manage")?Object.keys(TASK_STATUS):
+        TASK_TRANSITIONS[task.status];
+      const statusSelect=node("select");
+      statusSelect.setAttribute("aria-label","Статус задачи "+task.title);
+      const options=can("task.manage")?allowed:[task.status,...allowed];
+      pick(statusSelect,options.map(key=>[key,TASK_STATUS[key]]));
+      statusSelect.value=task.status;
+      const save=node("button","Сохранить статус","ghost");
+      save.type="button";
+      save.disabled=allowed.length===0;
+      save.addEventListener("click",async()=>{
+        if(statusSelect.value===task.status)return;
+        save.disabled=true;
+        try{
+          await api("/api/v1/tasks/"+encodeURIComponent(task.task_id),{
+            method:"PATCH",body:{
+              expected_version:task.version,
+              changes:{status:statusSelect.value},
+              idempotency_key:safeId()}});
+          await refreshTasks();
+          show("Статус задачи сохранён в SQLite");
+        }catch(e){show(e.message,true);save.disabled=false;}
+      });
+      actions.append(statusSelect,save);
+    }
+    if(can("task.manage")){
+      const edit=node("button","Изменить","ghost");
+      edit.type="button";
+      edit.addEventListener("click",()=>{
+        state.taskEditing=task;
+        state.taskPendingKey=null;
+        $("task-form-title").textContent="Редактирование задачи";
+        $("task-save").textContent="Сохранить изменения";
+        $("task-title").value=task.title;
+        $("task-description").value=task.description;
+        $("task-priority").value=task.priority;
+        $("task-assignee").value=task.assignee||"";
+        $("task-due").value=task.due_date||"";
+        $("task-title").focus();
+      });
+      actions.append(edit);
+    }
+    const history=node("button","История","ghost");
+    history.type="button";
+    history.addEventListener("click",()=>showTaskHistory(task.task_id)
+      .catch(e=>show(e.message,true)));
+    actions.append(history);
+    card.append(actions);root.append(card);
+  }
+}
+async function showTaskHistory(taskId){
+  const result=await api("/api/v1/tasks/"+encodeURIComponent(taskId)+"/history",{
+    method:"POST",body:{limit:25}});
+  const root=$("task-events-list");root.replaceChildren();
+  for(const event of result.events){
+    const item=node("div",null,"task-event");
+    item.append(node("strong",event.operation==="CREATE"?"Создана":"Изменена"));
+    item.append(node("span","Версия "+event.version+" · "+event.actor+" · "+
+      new Date(event.at_epoch*1000).toLocaleString("ru-RU")));
+    item.append(node("small","Поля: "+event.changed_fields.join(", ")));
+    item.append(node("small","SHA-256: "+event.sha256.slice(0,18)+"…"));
+    root.append(item);
+  }
+  $("task-events-panel").hidden=false;
+}
+$("task-events-close").addEventListener("click",()=>{
+  $("task-events-panel").hidden=true;
+});
+$("task-refresh").addEventListener("click",()=>{
+  refreshTasks().catch(e=>show(e.message,true));
+});
+$("task-status-filter").addEventListener("change",()=>{
+  refreshTasks({resetOffset:true}).catch(e=>show(e.message,true));
+});
+$("task-prev").addEventListener("click",()=>{
+  state.taskOffset=Math.max(0,state.taskOffset-25);
+  refreshTasks().catch(e=>show(e.message,true));
+});
+$("task-next").addEventListener("click",()=>{
+  state.taskOffset+=25;
+  refreshTasks().catch(e=>show(e.message,true));
+});
+$("task-reset").addEventListener("click",resetTaskForm);
+$("task-form").addEventListener("input",()=>{state.taskPendingKey=null;});
+$("task-form").addEventListener("change",()=>{state.taskPendingKey=null;});
+$("task-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!can("task.manage"))return;
+  const button=$("task-save");button.disabled=true;
+  try{
+    const payload={
+      title:$("task-title").value.trim(),
+      description:$("task-description").value.trim(),
+      assignee:$("task-assignee").value||null,
+      priority:$("task-priority").value,
+      due_date:$("task-due").value||null,
+    };
+    const previous=state.taskEditing;
+    const key=state.taskPendingKey||safeId();
+    state.taskPendingKey=key;
+    if(previous){
+      const changes={};
+      for(const [name,value] of Object.entries(payload)){
+        if(previous[name]!==value)changes[name]=value;
+      }
+      if(!Object.keys(changes).length)throw Error("У задачи нет изменений");
+      await api("/api/v1/tasks/"+encodeURIComponent(previous.task_id),{
+        method:"PATCH",body:{expected_version:previous.version,
+                              changes,idempotency_key:key}});
+      show("Задача обновлена с проверкой версии");
+    }else{
+      await api("/api/v1/tasks",{
+        method:"POST",body:{...payload,idempotency_key:key}});
+      show("Задача создана в SQLite");
+    }
+    resetTaskForm();
+    await refreshTasks({resetOffset:true});
+  }catch(error){show(error.message,true);}
+  finally{button.disabled=false;}
 });
 function renderPages(){
   pick($("page-select"),state.spec.pages.map(p=>[p.slug,p.title]));
