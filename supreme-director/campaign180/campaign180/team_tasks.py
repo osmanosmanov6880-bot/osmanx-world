@@ -380,6 +380,11 @@ def update_task(runtime: "LocalAppRuntime", *, tenant: str, project_id: str,
             return replay
         if current["version"] != expected_version:
             raise TaskDenied("Stale task version")
+        if "status" in patch:
+            # Wave 20: check dependency closure in the SAME write transaction.
+            from .task_planning import ensure_transition_safe
+            ensure_transition_safe(db,tenant=tenant,project_id=project_id,
+                                   current=current,new_status=patch["status"])
         if is_manager and "assignee" in patch:
             _eligible(db, tenant, project_id, patch["assignee"])
         if all(current.get(key) == value for key, value in patch.items()):
