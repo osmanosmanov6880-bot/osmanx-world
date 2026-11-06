@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -55,6 +55,7 @@ function switchPanel(name){
   if(name==="records" && state.spec)refreshBatchHistory().catch(e=>show(e.message,true));
   if(name==="tasks" && state.spec)refreshTasks().catch(e=>show(e.message,true));
   if(name==="tasks" && state.spec)refreshTaskCalendar().catch(e=>show(e.message,true));
+  if(name==="tasks" && can("task.manage"))refreshDelivery().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))
     refreshTeamWorkload().catch(e=>show(e.message,true));
   if(name==="dashboard" && state.spec)refreshTaskSummary().catch(e=>show(e.message,true));
@@ -77,6 +78,7 @@ async function sync(){
   $("tasks-nav").hidden=!can("task.read");
   $("task-form").hidden=!can("task.manage");
   $("team-workload-panel").hidden=!can("task.manage");
+  $("delivery-panel").hidden=!can("task.manage");
   $("task-assignee-filter-wrap").hidden=!can("task.manage");
   $("task-checklist-form").hidden=!can("task.manage");
   $("task-refresh").disabled=!can("task.read");
@@ -175,6 +177,236 @@ async function refreshTasks({resetOffset=false}={}){
   if(can("task.manage"))await refreshTeamWorkload();
   await refreshTaskCalendar();
 }
+const DELIVERY_RISK={
+  completed:"Выполнено",completed_late:"Выполнено с опозданием",
+  overdue:"Просрочено",slipped:"Прогноз сдвинут",on_track:"По плану",
+};
+const DELIVERY_PHASE_STATUS={
+  completed:"Все вехи завершены",overdue:"Этап просрочен",
+  active:"В процессе",unplanned:"Нет контрольных вех",
+};
+function dateInput(value,ariaLabel){
+  const input=node("input");
+  input.type="date";input.min="2000-01-01";input.max="2100-12-31";
+  input.value=value||"";input.required=true;
+  input.setAttribute("aria-label",ariaLabel);
+  return input;
+}
+async function refreshDelivery(){
+  if(!can("task.manage"))return;
+  const serial=++state.deliveryGeneration;
+  const [report,tasks]=await Promise.all([
+    api("/api/v1/delivery"),
+    api("/api/v1/tasks/query",{method:"POST",body:{limit:100,offset:0}}),
+  ]);
+  if(serial!==state.deliveryGeneration)return;
+  state.deliveryData=report;
+  $("delivery-phases-count").textContent=report.metrics.phases;
+  $("delivery-phases-late").textContent=report.metrics.phases_slipping;
+  $("delivery-done").textContent=report.metrics.milestones_done+
+    " / "+report.metrics.milestones;
+  $("delivery-overdue").textContent=report.metrics.milestones_overdue_open;
+  $("delivery-summary").textContent="Базовые сроки неизменяемы · "+report.as_of_utc+
+    " UTC · выполнены с опозданием: "+report.metrics.milestones_completed_late+
+    " · прогноз сдвинут: "+report.metrics.milestones_forecast_slipping;
+  const selected=$("delivery-milestone-phase").value;
+  pick($("delivery-milestone-phase"),[["","Выберите этап"],
+    ...report.phases.map(p=>[p.phase_id,p.name+" · до "+p.baseline_end])]);
+  if(report.phases.some(p=>p.phase_id===selected)){
+    $("delivery-milestone-phase").value=selected;
+  }else if(report.phases.length){
+    $("delivery-milestone-phase").value=report.phases[0].phase_id;
+  }
+  pick($("delivery-milestone-task"),[["","Без задачи"],
+    ...tasks.tasks.map(t=>[t.task_id,t.title+" · "+TASK_STATUS[t.status]])]);
+  renderDeliveryPlan(report);
+}
+function renderDeliveryPlan(report){
+  const root=$("delivery-phase-list");root.replaceChildren();
+  if(!report.phases.length){
+    root.append(node("p","Этапов пока нет. Создайте этап с исходными сроками.","hint"));
+    return;
+  }
+  for(const phase of report.phases){
+    const group=node("article",null,"delivery-phase");
+    const top=node("div",null,"delivery-phase-heading");
+    const left=node("div");
+    left.append(node("h3",phase.name),
+      node("small","Базовый период: "+phase.baseline_start+" — "+phase.baseline_end));
+    top.append(left,node("span",DELIVERY_PHASE_STATUS[phase.status],"delivery-status"));
+    group.append(top);
+    const metrics=node("div",null,"delivery-phase-meta");
+    metrics.append(node("span","Прогноз завершения: "+phase.forecast_end),
+      node("span","Выполнено: "+phase.milestones_done+"/"+phase.milestone_count),
+      node("span","Отклонение: "+(phase.variance_days>0?"+":"")+
+        phase.variance_days+" дн."));
+    if(phase.actual_end)metrics.append(node("span","Фактически: "+phase.actual_end));
+    group.append(metrics);
+    const progress=node("div",null,"delivery-progress");
+    progress.setAttribute("role","progressbar");
+    progress.setAttribute("aria-valuemin","0");
+    progress.setAttribute("aria-valuemax","100");
+    progress.setAttribute("aria-valuenow",String(phase.progress_percent));
+    progress.setAttribute("aria-label","Выполнено вех этапа "+phase.name);
+    const fill=node("div",null,"delivery-progress-fill");
+    fill.style.width=phase.progress_percent+"%";progress.append(fill);
+    group.append(progress);
+    const phaseActions=node("div",null,"delivery-actions");
+    const phaseDate=dateInput(phase.forecast_end,"Новый прогноз этапа "+phase.name);
+    const savePhase=node("button","Изменить прогноз этапа","ghost");
+    savePhase.type="button";
+    savePhase.addEventListener("click",async()=>{
+      if(phaseDate.value===phase.forecast_end)return;
+      savePhase.disabled=true;
+      try{
+        await api("/api/v1/delivery/phases/"+encodeURIComponent(phase.phase_id)+
+          "/forecast",{method:"PATCH",body:{
+            expected_version:phase.version,forecast_end:phaseDate.value,
+            idempotency_key:safeId()}});
+        await refreshDelivery();show("Прогноз этапа сохранён; исходный срок не изменён");
+      }catch(e){show(e.message,true);}
+      finally{savePhase.disabled=false;}
+    });
+    phaseActions.append(phaseDate,savePhase);
+    const audit=node("button","История этапа","ghost");
+    audit.type="button";
+    audit.addEventListener("click",()=>
+      showDeliveryHistory(phase.phase_id).catch(e=>show(e.message,true)));
+    phaseActions.append(audit);group.append(phaseActions);
+    const list=node("div",null,"delivery-milestone-list");
+    const items=report.milestones.filter(m=>m.phase_id===phase.phase_id);
+    if(!items.length)list.append(node("p","В этом этапе ещё нет контрольных вех.","hint"));
+    for(const milestone of items){
+      const row=node("div",null,"delivery-milestone");
+      row.dataset.risk=milestone.risk;
+      const label=node("div",null,"delivery-milestone-heading");
+      label.append(node("strong",milestone.name),
+        node("span",DELIVERY_RISK[milestone.risk],"delivery-risk"));
+      row.append(label);
+      const dates=node("div",null,"delivery-milestone-dates");
+      dates.append(node("small","База: "+milestone.baseline_due),
+        node("small","Прогноз: "+milestone.forecast_due));
+      if(milestone.completed_on){
+        dates.append(node("small","Факт: "+milestone.completed_on));
+      }
+      dates.append(node("small","Отклонение: "+
+        (milestone.variance_days>0?"+":"")+milestone.variance_days+" дн."));
+      row.append(dates);
+      const actions=node("div",null,"delivery-actions");
+      if(!milestone.completed_on){
+        const input=dateInput(milestone.forecast_due,
+          "Прогноз вехи "+milestone.name);
+        const forecast=node("button","Обновить прогноз","ghost");
+        forecast.type="button";
+        forecast.addEventListener("click",async()=>{
+          if(input.value===milestone.forecast_due)return;
+          forecast.disabled=true;
+          try{
+            await api("/api/v1/delivery/milestones/"+encodeURIComponent(
+              milestone.milestone_id),{method:"PATCH",body:{
+                expected_version:milestone.version,operation:"forecast",
+                value:input.value,idempotency_key:safeId()}});
+            await refreshDelivery();show("Прогноз вехи обновлён, базовая дата сохранена");
+          }catch(e){show(e.message,true);}
+          finally{forecast.disabled=false;}
+        });
+        actions.append(input,forecast);
+        const actual=dateInput(new Date().toISOString().slice(0,10),
+          "Фактическая дата завершения "+milestone.name);
+        const complete=node("button","Подтвердить выполнение","ghost");
+        complete.type="button";
+        complete.addEventListener("click",async()=>{
+          if(!actual.value){show("Укажите дату фактического выполнения",true);return;}
+          complete.disabled=true;
+          try{
+            await api("/api/v1/delivery/milestones/"+encodeURIComponent(
+              milestone.milestone_id),{method:"PATCH",body:{
+                expected_version:milestone.version,operation:"complete",
+                value:actual.value,idempotency_key:safeId()}});
+            await refreshDelivery();
+            show("Веха завершена; фактическая дата зафиксирована в SQLite");
+          }catch(e){show(e.message,true);}
+          finally{complete.disabled=false;}
+        });
+        actions.append(actual,complete);
+      }
+      const events=node("button","История вехи","ghost");
+      events.type="button";
+      events.addEventListener("click",()=>
+        showDeliveryHistory(milestone.milestone_id).catch(e=>show(e.message,true)));
+      actions.append(events);
+      row.append(actions);list.append(row);
+    }
+    group.append(list);root.append(group);
+  }
+}
+async function showDeliveryHistory(id){
+  const response=await api("/api/v1/delivery/"+encodeURIComponent(id)+"/history",{
+    method:"POST",body:{limit:30}});
+  const list=$("delivery-history-list");list.replaceChildren();
+  if(!response.events.length)list.append(node("p","Изменений пока нет.","hint"));
+  for(const entry of response.events){
+    const row=node("div",null,"delivery-audit-row");
+    row.append(node("strong",entry.operation==="CREATE"?"Создание":
+      entry.operation==="COMPLETE"?"Выполнение":"Изменение прогноза"),
+      node("small",entry.actor+" · версия "+entry.version+" · "+
+        new Date(entry.at_epoch*1000).toLocaleString("ru-RU")),
+      node("small","SHA-256: "+entry.sha256.slice(0,18)+"…"));
+    list.append(row);
+  }
+  $("delivery-history-panel").hidden=false;
+}
+$("delivery-history-close").addEventListener("click",()=>{
+  $("delivery-history-panel").hidden=true;
+});
+$("delivery-refresh").addEventListener("click",()=>{
+  refreshDelivery().catch(e=>show(e.message,true));
+});
+$("delivery-phase-form").addEventListener("input",()=>{state.deliveryPhaseKey=null;});
+$("delivery-phase-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!can("task.manage"))return;
+  const button=$("delivery-phase-create");button.disabled=true;
+  try{
+    const key=state.deliveryPhaseKey||safeId();
+    state.deliveryPhaseKey=key;
+    await api("/api/v1/delivery/phases",{method:"POST",body:{
+      name:$("delivery-phase-name").value.trim(),
+      baseline_start:$("delivery-phase-start").value,
+      baseline_end:$("delivery-phase-end").value,idempotency_key:key}});
+    state.deliveryPhaseKey=null;
+    $("delivery-phase-form").reset();
+    await refreshDelivery();show("Этап записан в SQLite с неизменяемыми базовыми датами");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+$("delivery-milestone-form").addEventListener("input",()=>{
+  state.deliveryMilestoneKey=null;
+});
+$("delivery-milestone-form").addEventListener("change",()=>{
+  state.deliveryMilestoneKey=null;
+});
+$("delivery-milestone-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!can("task.manage"))return;
+  const button=$("delivery-milestone-create");button.disabled=true;
+  try{
+    const key=state.deliveryMilestoneKey||safeId();
+    state.deliveryMilestoneKey=key;
+    await api("/api/v1/delivery/phases/"+
+      encodeURIComponent($("delivery-milestone-phase").value)+
+      "/milestones",{method:"POST",body:{
+      name:$("delivery-milestone-name").value.trim(),
+      baseline_due:$("delivery-milestone-due").value,
+      linked_task_id:$("delivery-milestone-task").value||null,
+      idempotency_key:key}});
+    state.deliveryMilestoneKey=null;
+    $("delivery-milestone-form").reset();
+    await refreshDelivery();show("Контрольная веха добавлена в реальный план");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+
 const TASK_CALENDAR_RISK={
   overdue:"Просрочена",blocked:"Ожидает предшественников",
   urgent:"Критический срок",normal:"По графику",
