@@ -15,7 +15,7 @@ import uuid
 from campaign180.app_runtime import LocalAppRuntime,RULE_SCHEMA
 from campaign180.model_editor import LocalModelEditor,ModelMigrationDenied
 from campaign180.project_recovery import LocalProjectRecovery,RecoveryDenied
-from campaign180.recovery_drill import LocalRecoveryDrill,RecoveryDrillDenied
+from campaign180.recovery_drill import LocalRecoveryDrill,RecoveryDrillDenied,_archived_demo
 from campaign180.contracts import canonical,digest
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -200,6 +200,14 @@ class ArchivedSchemaMigrationTests(unittest.TestCase):
                           new=alter_receipt_on_scratch):
             with self.assertRaises(RecoveryDrillDenied):
                 self.drill.run(**self.kw)
+
+    def test_real_archived_cli_fixture_recovers_three_records_and_one_edge(self):
+        report=_archived_demo()
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["rows_verified"],3)
+        self.assertEqual(report["links_verified"],1)
+        self.assertEqual(report["source_tables_verified"],12)
+        self.assertFalse(report["source_database_modified"])
 
     def test_verify_clone_does_not_expose_sensitive_personal_fields(self):
         self.customer("Контрольное имя клиента")

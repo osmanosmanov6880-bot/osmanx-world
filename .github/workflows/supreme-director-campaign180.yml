@@ -49,8 +49,10 @@ jobs:
         run: python -m campaign180.supplychain --root . --base HEAD^
       - name: Bounded synthetic crash recovery and restore (no production effects)
         run: python -m campaign180.resilience --tasks-per-tenant 12 > /tmp/osgard-180-audit-resilience.json
-      - name: Isolated synthetic data restore drill — source remains unchanged
-        run: python -m campaign180.recovery_drill demo
+      - name: Active + archived synthetic data restore drills — isolated source
+        run: |
+          python -m campaign180.recovery_drill demo
+          python -m campaign180.recovery_drill archived
       - name: Offline no-AI site generator integration and deterministic preview
         run: |
           mkdir -p /tmp/osgard-offline-preview

@@ -209,12 +209,50 @@ def _demo()->dict:
         return LocalRecoveryDrill(engine).run(tenant=tenant,project_id=project_id,actor=actor)
 
 
+def _archived_demo()->dict:
+    """Regression: deleted rows must remain restorable after required-field add."""
+    from .model_editor import LocalModelEditor
+    root=Path(__file__).resolve().parent.parent
+    with tempfile.TemporaryDirectory(prefix="osgard-archive-proof-") as temp:
+        db=Path(temp)/"archived.sqlite3"
+        spec=json.loads((root/"examples"/"demo-site.json").read_text(encoding="utf-8"))
+        engine=LocalAppRuntime(str(db))
+        tenant,project_id=spec["tenant_id"],spec["project_id"]
+        actor="owner-abc"
+        kw={"tenant":tenant,"project_id":project_id,"actor":actor}
+        engine.drafts.create(spec,tenant=tenant)
+        engine.policy.bootstrap_owner(**kw,now=1799971200)
+        active=engine.create_row(**kw,model="customers",
+            data={"name":"Synthetic Active"},idempotency_key="wave12-archived-active")
+        archive=engine.create_row(**kw,model="customers",
+            data={"name":"Synthetic Archived"},idempotency_key="wave12-archived-row")
+        engine.create_row(**kw,model="requests",
+            data={"summary":"Retained active relation","customer":active["row_id"]},
+            idempotency_key="wave12-archived-link")
+        engine.delete_row(**kw,model="customers",row_id=archive["row_id"],
+                          expected_version=1,idempotency_key="wave12-archived-delete")
+        edit=LocalModelEditor(engine)
+        change=edit.add_field(**kw,model="customers",expected_revision=1,
+            field={"name":"tier","label":"Tier","type":"integer","required":True},
+            default_provided=True,default_value=3)
+        if change["rows_migrated"]!=2:
+            raise RecoveryDrillDenied("Schema migration failed to include tombstone")
+        with engine.drafts._db() as original:
+            old,archived=engine.records._row(original,tenant,project_id,
+                "customers",archive["row_id"],deleted_allowed=True)
+        if archived["deleted"]!=1 or archived["version"]!=3 or old["tier"]!=3:
+            raise RecoveryDrillDenied("Archived record lost or not migrated")
+        return LocalRecoveryDrill(engine).run(**kw)
+
+
 def main():
     parser=argparse.ArgumentParser(description="No-network synthetic recovery drill")
-    parser.add_argument("mode",choices=("demo",),help="Run isolated synthetic fixture")
-    parser.parse_args()
-    report=_demo()
-    if not report["passed"] or report["rows_verified"]!=2 or report["links_verified"]!=1:
+    parser.add_argument("mode",choices=("demo","archived"),
+                        help="Run isolated active or archived synthetic fixture")
+    args=parser.parse_args()
+    report=_archived_demo() if args.mode=="archived" else _demo()
+    expected_rows=3 if args.mode=="archived" else 2
+    if not report["passed"] or report["rows_verified"]!=expected_rows or report["links_verified"]!=1:
         raise SystemExit("DRILL_FAIL")
     print("OSGARD_LOCAL_RESTORE_DRILL_PASS "+json.dumps(report,sort_keys=True))
 
