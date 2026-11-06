@@ -63,8 +63,8 @@ async function poll(predicate,description,timeout=20000){
   let diagnostic="";
   if(client){
     try{
-      const state=await client.eval("JSON.stringify({notice:document.querySelector('#notice')?.textContent,revision:document.querySelector('#editor-revision')?.textContent,active:document.querySelector('.panel.active')?.id,visibility:document.querySelector('#connect')?.hidden})");
-      diagnostic="; browser state="+state;
+      const state=await client.eval("JSON.stringify({notice:document.querySelector('#notice')?.textContent,revision:document.querySelector('#editor-revision')?.textContent,active:document.querySelector('.panel.active')?.id,visibility:document.querySelector('#connect')?.hidden,ready:document.documentElement.dataset.consoleReady,tokenLength:document.querySelector('#token')?.value.length,formValid:document.querySelector('#auth-form')?.checkValidity(),scripts:[...document.scripts].map(s=>s.src)})");
+      diagnostic="; browser state="+state+"; runtime errors="+client.errors.slice(-5).join("|");
     }catch(error){diagnostic="; diagnostic failed="+error.message;}
   }
   throw Error("Browser wait timed out: "+description+(last?": "+last.message:"")+diagnostic);
@@ -171,6 +171,8 @@ async function run(){
   await client.send("Page.navigate",{url:baseUrl+"/console"});
   await poll(()=>client.eval("document.readyState==='complete' && !!document.querySelector('#auth-form')"),
              "console DOM ready");
+  await poll(()=>client.eval("document.documentElement.dataset.consoleReady==='1'"),
+             "application JavaScript initialized");
   await client.eval("document.querySelector('#token').value="+JSON.stringify(token)+
                     ";document.querySelector('#auth-form').requestSubmit();true");
   await poll(()=>client.eval("document.querySelector('#connect').hidden && "+
