@@ -103,22 +103,31 @@
       "supreme-director/campaign180/campaign180/drafts.py",
       "supreme-director/campaign180/campaign180/structure.py",
       "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
-      "supreme-director/campaign180/assets/console.js"
+      "supreme-director/campaign180/assets/console.js",
+      "supreme-director/campaign180/assets/index.html",
+      "supreme-director/campaign180/tests/browser-console.mjs"
     ],
     "TITAN-X21": [
       "supreme-director/campaign180/campaign180/builder.py",
       "supreme-director/campaign180/campaign180/records.py",
       "supreme-director/campaign180/campaign180/automatic.py",
-      "supreme-director/campaign180/tests/test_wave6_structure_automatic.py"
+      "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
+      "supreme-director/campaign180/campaign180/model_editor.py",
+      "supreme-director/campaign180/assets/index.html",
+      "supreme-director/campaign180/tests/test_wave7_schema.py"
     ],
     "TITAN-X24": [
       "supreme-director/campaign180/campaign180/drafts.py",
-      "supreme-director/campaign180/examples/demo-site.json"
+      "supreme-director/campaign180/examples/demo-site.json",
+      "supreme-director/campaign180/campaign180/model_editor.py",
+      "supreme-director/campaign180/tests/test_wave7_schema.py"
     ],
     "TITAN-X25": [
       "supreme-director/campaign180/campaign180/preview.py",
       "supreme-director/campaign180/examples/demo-site.json",
-      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py",
+      "supreme-director/campaign180/campaign180/builder.py",
+      "supreme-director/campaign180/tests/browser-console.mjs"
     ],
     "TITAN-X22": [
       "supreme-director/campaign180/campaign180/app_runtime.py",

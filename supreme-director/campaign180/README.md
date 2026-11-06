@@ -61,3 +61,9 @@ never execute user-supplied tasks, and do not perform payments/deployments.
 - [Original 180 task status](docs/CURRENT_AUDIT_180_RU.md) / [machine ledger](data/CURRENT_AUDIT_180.json): **33 locally related / 139 no direct proof / 8 holds / 0 independently accepted**.
 - Real `record.created/record.updated` transaction-bound rules, no-code section rearrangement, bounded corrupted workflow quarantine, negative tests and [Chromium desktop/mobile E2E](docs/WAVE6_CHROMIUM_ACCEPTANCE.md).
 - [Bounded repair rationale](docs/WAVE6_BOUNDED_REPAIR.md). Browser CI and independent upstream review remain distinct requirements; no production release.
+
+## Wave 7 — visual typed schema migrations and forms (2026-11-06)
+
+- [Schema editor implementation and safety](docs/WAVE7_VISUAL_SCHEMA.md)
+- [Machine readable original 180 ledger](data/CURRENT_AUDIT_180.json) and [full status table](docs/CURRENT_AUDIT_180_RU.md): 33 locally related, 139 without proof, 8 holds, 0 independently accepted.
+- API-backed model editor, add-field migrations, disabled static form preview, browser acceptance. No production deployment or original upstream acceptance.

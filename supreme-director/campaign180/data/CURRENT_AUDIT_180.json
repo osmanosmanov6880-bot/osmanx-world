@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "2ca1d2c9034ac2b6ac86af12bfa21a1caec3f06c",
+  "based_on_code_commit": "1465b32833326d43f43d69cdee6f8f6c71b3539b",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -325,7 +325,9 @@
         "supreme-director/campaign180/campaign180/drafts.py",
         "supreme-director/campaign180/campaign180/structure.py",
         "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
-        "supreme-director/campaign180/assets/console.js"
+        "supreme-director/campaign180/assets/console.js",
+        "supreme-director/campaign180/assets/index.html",
+        "supreme-director/campaign180/tests/browser-console.mjs"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -343,7 +345,10 @@
         "supreme-director/campaign180/campaign180/builder.py",
         "supreme-director/campaign180/campaign180/records.py",
         "supreme-director/campaign180/campaign180/automatic.py",
-        "supreme-director/campaign180/tests/test_wave6_structure_automatic.py"
+        "supreme-director/campaign180/tests/test_wave6_structure_automatic.py",
+        "supreme-director/campaign180/campaign180/model_editor.py",
+        "supreme-director/campaign180/assets/index.html",
+        "supreme-director/campaign180/tests/test_wave7_schema.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -399,7 +404,9 @@
       "original_source_line": 331,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/drafts.py",
-        "supreme-director/campaign180/examples/demo-site.json"
+        "supreme-director/campaign180/examples/demo-site.json",
+        "supreme-director/campaign180/campaign180/model_editor.py",
+        "supreme-director/campaign180/tests/test_wave7_schema.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -416,7 +423,9 @@
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/preview.py",
         "supreme-director/campaign180/examples/demo-site.json",
-        "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+        "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py",
+        "supreme-director/campaign180/campaign180/builder.py",
+        "supreme-director/campaign180/tests/browser-console.mjs"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2462,6 +2471,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave6 local automatic event workflows, page structure editing, bounded rule repair and Chromium e2e",
-  "notes": "33 related-local-code IDs; none independently accepted. Browser CI and original upstream integrations must be verified before acceptance."
+  "last_local_campaign": "Wave7 model editor, safe 500-row typed field migrations, static forms and browser schema acceptance",
+  "notes": "33 original IDs have related local code; Wave7 did not claim new independently accepted tasks. Only local demo SQLite; upstream and security review remain pending."
 }
