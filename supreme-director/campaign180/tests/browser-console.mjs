@@ -910,8 +910,9 @@ async function run(){
     "390px task discussion horizontal overflow: "+collabOverflow390);
   await client.screenshot("21-mobile-390-task-discussion.png");
   await poll(()=>client.eval(
-    "document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20') "+
-    "&& document.querySelector('#calendar-critical').textContent==='1'"),
+    "document.querySelector('#task-calendar-summary').textContent.includes('0 задач') "+
+    "&& document.querySelector('#calendar-critical').textContent==='0' "+
+    "&& document.querySelector('#calendar-in-window').textContent==='0'"),
     "Wave 20 390px real calendar data loaded");
   const wave20CalendarOverflow390=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
@@ -990,8 +991,9 @@ async function run(){
     "320px task discussion horizontal overflow: "+collabOverflow320);
   await client.screenshot("22-mobile-320-task-discussion.png");
   await poll(()=>client.eval(
-    "document.querySelector('#task-calendar-list').textContent.includes('Запуск Wave 20') "+
-    "&& document.querySelector('#calendar-critical').textContent==='1'"),
+    "document.querySelector('#task-calendar-summary').textContent.includes('0 задач') "+
+    "&& document.querySelector('#calendar-critical').textContent==='0' "+
+    "&& document.querySelector('#calendar-in-window').textContent==='0'"),
     "Wave 20 320px real calendar data loaded");
   const wave20CalendarOverflow320=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
