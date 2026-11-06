@@ -27,6 +27,11 @@ from .record_batches import (
     init_journal, inspect_batch_update, apply_batch_update,
     list_batch_history, inspect_batch_restore, apply_batch_restore,
 )
+from .team_tasks import (
+    init_tasks, list_members as task_members, create_task as create_team_task,
+    update_task as update_team_task, query_tasks as query_team_tasks,
+    task_summary as team_task_summary, task_history as team_task_history,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -62,6 +67,7 @@ class LocalAppRuntime:
                 event_id TEXT NOT NULL,run_digest TEXT NOT NULL,response_json TEXT NOT NULL,
                 PRIMARY KEY(tenant,project_id,workflow_id,event_id));""")
         init_journal(self)
+        init_tasks(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -202,6 +208,40 @@ class LocalAppRuntime:
                                    expected_revision=expected_revision,
                                    expected_plan_sha256=expected_plan_sha256,
                                    idempotency_key=idempotency_key)
+
+    def task_members(self,*,tenant:str,project_id:str,actor:str)->dict:
+        return task_members(self,tenant=tenant,project_id=project_id,actor=actor)
+
+    def create_team_task(self,*,tenant:str,project_id:str,actor:str,
+                         title:str,idempotency_key:str,description:str="",
+                         assignee:str|None=None,due_date:str|None=None,
+                         priority:str="normal")->dict:
+        return create_team_task(self,tenant=tenant,project_id=project_id,
+                                actor=actor,title=title,
+                                idempotency_key=idempotency_key,
+                                description=description,assignee=assignee,
+                                due_date=due_date,priority=priority)
+
+    def update_team_task(self,*,tenant:str,project_id:str,actor:str,
+                         task_id:str,expected_version:int,changes:dict,
+                         idempotency_key:str)->dict:
+        return update_team_task(self,tenant=tenant,project_id=project_id,
+                                actor=actor,task_id=task_id,
+                                expected_version=expected_version,
+                                changes=changes,idempotency_key=idempotency_key)
+
+    def query_team_tasks(self,*,tenant:str,project_id:str,actor:str,
+                         limit:int=25,offset:int=0,status:str|None=None)->dict:
+        return query_team_tasks(self,tenant=tenant,project_id=project_id,
+                                actor=actor,limit=limit,offset=offset,status=status)
+
+    def team_task_summary(self,*,tenant:str,project_id:str,actor:str)->dict:
+        return team_task_summary(self,tenant=tenant,project_id=project_id,actor=actor)
+
+    def team_task_history(self,*,tenant:str,project_id:str,actor:str,
+                          task_id:str,limit:int=25)->dict:
+        return team_task_history(self,tenant=tenant,project_id=project_id,
+                                 actor=actor,task_id=task_id,limit=limit)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
