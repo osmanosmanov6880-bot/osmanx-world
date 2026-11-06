@@ -98,6 +98,37 @@
       <div class="page-heading"><div><p class="overline">МОДЕЛИ / СВЯЗИ</p><h1>Данные приложения</h1><p class="muted">Собственные записи, связи и версии. Доступ ограничен ролью.</p></div></div>
       <div class="record-grid"><div class="card"><h2>Модель</h2><label for="model-select">Выбери таблицу</label><select id="model-select"></select><div id="model-description" class="small-stat">—</div><label for="row-select">Запись для изменения</label><select id="row-select"></select><button id="new-row" type="button" class="ghost full">+ Новая запись</button></div>
       <form id="row-form" class="card"><h2 id="row-form-title">Новая запись</h2><div id="row-fields" class="fields"></div><div class="editor-actions"><button id="save-row" type="submit" class="primary">Сохранить запись</button><button id="delete-row" type="button" class="danger">Удалить</button></div></form></div>
+      <article class="card record-operations">
+        <div class="record-operations-header">
+          <div><p class="overline">НАСТОЯЩИЕ ДАННЫЕ / SQLITE</p><h2>Поиск и импорт</h2></div>
+          <span class="pill">Локально · без облака</span>
+        </div>
+        <div class="record-search-grid">
+          <div><label for="record-search">Найти по содержимому полей</label>
+            <input id="record-search" maxlength="80" autocomplete="off" placeholder="Имя, адрес или номер"></div>
+          <button id="record-find" type="button" class="ghost">Найти</button>
+          <button id="record-clear" type="button" class="ghost">Сбросить</button>
+          <button id="record-export" type="button" class="ghost">CSV-экспорт</button>
+        </div>
+        <div class="record-page-toolbar">
+          <button id="record-prev" type="button" class="ghost" disabled>← Назад</button>
+          <span id="record-page-info" role="status" aria-live="polite">Загрузка записей</span>
+          <button id="record-next" type="button" class="ghost" disabled>Вперёд →</button>
+        </div>
+        <div class="record-import-box">
+          <h3>Импорт CSV с предварительной проверкой</h3>
+          <p class="hint">До 50 строк за операцию. Названия столбцов должны совпадать с системными именами полей модели. Для связей используется UUID существующей записи. Данные не отправляются за пределы 127.0.0.1.</p>
+          <label for="record-csv-file">CSV-файл UTF-8</label>
+          <input id="record-csv-file" type="file" accept=".csv,text/csv">
+          <button id="record-csv-inspect" type="button" class="ghost">Проверить CSV</button>
+          <p id="record-csv-summary" class="hint" role="status" aria-live="polite"></p>
+          <label class="checkbox-row" for="record-csv-approve">
+            <input id="record-csv-approve" type="checkbox" disabled>
+            Подтверждаю количество строк и проверенный SHA-256 пакета
+          </label>
+          <button id="record-csv-apply" type="button" class="primary" disabled>Импортировать проверенные записи</button>
+        </div>
+      </article>
       <article class="card table-card"><h2>Текущие записи</h2><div id="rows-table" class="scroll-table"></div></article>
     </section>
     <section id="schema" class="panel">
