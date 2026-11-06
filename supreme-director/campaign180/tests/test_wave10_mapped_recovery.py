@@ -157,8 +157,9 @@ class Cases(unittest.TestCase):
         c1,c2,r1,r2,params=self.fixture()
         rule={"schema":RULE_SCHEMA,"name":"Не менять без проверки",
               "model":"requests","trigger":"manual",
-              "condition":None,"action":{"type":"set_field","field":"customer",
-                           "value":c1["row_id"]}}
+              "condition":{"field":"customer","equals":c1["row_id"]},
+              "action":{"type":"set_field","field":"summary",
+                        "value":"Действующая зависимость"}}
         self.app.add_workflow(**self.kw,rule=rule)
         with self.assertRaises(MappedReferenceDenied):
             self.migrator.inspect(**params)

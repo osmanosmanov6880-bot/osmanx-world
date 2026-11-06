@@ -22,6 +22,7 @@ import uuid
 
 from .app_runtime import LocalAppRuntime
 from .project_recovery import LocalProjectRecovery,RecoveryDenied
+from .records import RecordDenied
 
 
 class RecoveryDrillDenied(RecoveryDenied):
@@ -91,6 +92,13 @@ class LocalRecoveryDrill:
             (tenant,project_id)).fetchall()]
 
     def run(self,*,tenant:str,project_id:str,actor:str)->dict:
+        """Treat corrupt records as a failed restore, never raw backend errors."""
+        try:
+            return self._run_isolated(tenant=tenant,project_id=project_id,actor=actor)
+        except RecordDenied as exc:
+            raise RecoveryDrillDenied("Archived data failed integrity verification") from exc
+
+    def _run_isolated(self,*,tenant:str,project_id:str,actor:str)->dict:
         # Auth is checked *before* opening any copied database. In particular,
         # a viewer cannot obtain an archive-size or customer-count side channel.
         with self.runtime.drafts._db() as db:

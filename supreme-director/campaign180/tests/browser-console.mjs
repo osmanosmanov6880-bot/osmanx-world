@@ -531,10 +531,30 @@ async function run(){
   assert.equal(afterDrill.bundle_sha256,recovery.bundle_sha256);
   await client.screenshot("11-drill-desktop.png");
 
-  // Mobile viewport must not leak navigation or overflow the viewport.
+  // Use a genuine touch-enabled device viewport and reload so Chromium
+  // recomputes meta viewport and responsive layout from navigation start.
   await client.send("Emulation.setDeviceMetricsOverride",{
-    width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await poll(()=>client.eval("innerWidth===390"),"mobile viewport");
+    width:390,height:844,screenWidth:390,screenHeight:844,
+    deviceScaleFactor:1,mobile:true});
+  await client.send("Emulation.setTouchEmulationEnabled",{
+    enabled:true,maxTouchPoints:5});
+  await client.send("Page.reload",{ignoreCache:true});
+  await poll(()=>client.eval(
+    "document.readyState==='complete' && !!document.querySelector('#auth-form')"),
+    "mobile browser navigation");
+  await poll(()=>client.eval(
+    "innerWidth===390 && document.documentElement.clientWidth===390 "+
+    "&& matchMedia('(max-width: 800px)').matches"),
+    "mobile viewport and responsive CSS");
+  await client.eval("document.querySelector('#token').value="+JSON.stringify(token)+
+    ";document.querySelector('#auth-form').requestSubmit();true");
+  await poll(()=>client.eval(
+    "document.querySelector('#connect').hidden && "+
+    "document.querySelector('#metric-pages').textContent.trim()==='3'"),
+    "mobile authentication");
+  await client.eval("document.querySelector('[data-panel=history]').click();");
+  await poll(()=>client.eval("document.querySelector('#history').classList.contains('active')"),
+    "mobile recovery panel");
   const overflow=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
