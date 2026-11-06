@@ -66,7 +66,9 @@ class BulkSetup(unittest.TestCase):
 
     def apply(self, csv_text, plan=None, **extra):
         if plan is None:
-            plan = self.inspect(csv_text)
+            plan = self.inspect(csv_text, model=extra.get("model", "customers"),
+                                actor=extra.get("actor", OWNER),
+                                expected_revision=extra.get("expected_revision", 1))
         return self.runtime.apply_csv_import(**{
             **self.opts(), "expected_revision": 1,
             "csv_text": csv_text,
@@ -129,10 +131,10 @@ class SearchTests(BulkSetup):
         self.assertEqual(self.runtime.query_rows(
             **self.opts(actor=VIEWER))["total"], 1)
         with self.assertRaises(AppAccessDenied):
-            self.runtime.query_rows(**self.opts(actor=OWNER), tenant="other-tenant")
+            self.runtime.query_rows(**{**self.opts(actor=OWNER),"tenant":"tenant_other"})
         with self.assertRaises(ValueError):
-            self.runtime.query_rows(**self.opts(actor=OWNER),
-                                    project_id=str(uuid.uuid4()))
+            self.runtime.query_rows(**{**self.opts(actor=OWNER),
+                                    "project_id":str(uuid.uuid4())})
 
     def test_csv_export_quotes_and_defuses_spreadsheet_formula(self):
         self.create("=2+2", email="valid@example.org")
@@ -247,7 +249,8 @@ class ImportTests(BulkSetup):
             "action": {"type": "set_field", "field": "email",
                        "value": "auto@example.org"},
         }
-        self.runtime.add_workflow(**self.opts(), rule=rule)
+        self.runtime.add_workflow(tenant=TENANT, project_id=self.project,
+                                  actor=OWNER, rule=rule)
         receipt = self.apply("name\nCSV 1\nCSV 2\n")
         self.assertEqual(receipt["imported"], 2)
         self.assertEqual(receipt["workflow_runs"], 2)
@@ -262,7 +265,8 @@ class ImportTests(BulkSetup):
             "action": {"type": "set_field", "field": "email",
                        "value": "auto@example.org"},
         }
-        workflow = self.runtime.add_workflow(**self.opts(), rule=rule)
+        workflow = self.runtime.add_workflow(tenant=TENANT, project_id=self.project,
+                                  actor=OWNER, rule=rule)
         with self.runtime.drafts._tx() as db:
             db.execute("UPDATE app_workflows SET spec_digest=? WHERE workflow_id=?",
                        ("tampered", workflow["workflow_id"]))
