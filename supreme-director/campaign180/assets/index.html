@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>OSGARD Director — локальная мастерская</title>
+<link rel="stylesheet" href="/assets/console.css">
+<script src="/assets/console.js" defer></script>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar" aria-label="Навигация проекта">
+  <a class="brand" href="/console" aria-label="Director">
+    <span class="sigil">O</span><span>OSGARD<small>SUPREME DIRECTOR</small></span>
+  </a>
+  <div class="workspace-label">ЛОКАЛЬНАЯ МАСТЕРСКАЯ <span class="local-dot"></span></div>
+  <nav class="nav" aria-label="Разделы">
+    <button type="button" class="nav-link is-active" data-panel="dashboard"><span class="nav-icon">◈</span> Обзор</button>
+    <button type="button" class="nav-link" data-panel="pages"><span class="nav-icon">▣</span> Страницы</button>
+    <button type="button" class="nav-link" data-panel="records"><span class="nav-icon">▤</span> Данные</button>
+    <button type="button" class="nav-link" data-panel="workflows"><span class="nav-icon">◇</span> Автоматизация</button>
+    <button type="button" class="nav-link" data-panel="preview"><span class="nav-icon">▧</span> Предпросмотр</button>
+  </nav>
+  <div class="sidebar-bottom"><span class="shield-icon">✦</span><span>Без облака и публикации<small>Доступ только по 127.0.0.1</small></span></div>
+</aside>
+<div class="main-area">
+  <header class="topbar">
+    <div><span class="breadcrumb">РАБОЧАЯ ОБЛАСТЬ</span><span class="crumb-sep">/</span><span id="crumb">Обзор</span></div>
+    <div class="topbar-meta"><span id="role-pill" class="role-pill">Не подключено</span><span class="mark-local">● LOCAL ONLY</span></div>
+  </header>
+  <main>
+    <section id="connect" class="connect card" aria-label="Доступ к локальной консоли">
+      <div><p class="overline">ЗАЩИЩЁННЫЙ ВХОД</p><h1>Твоя мастерская. Твои правила.</h1><p class="muted">Введи локальный токен, заданный при запуске. Он хранится только в памяти этой вкладки.</p></div>
+      <form id="auth-form" class="auth-form"><label for="token">Локальный токен доступа</label><div class="input-line"><input id="token" type="password" autocomplete="off" spellcheck="false" required placeholder="Токен из переменной окружения"><button class="primary" type="submit">Подключиться</button></div></form>
+    </section>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+    <section id="dashboard" class="panel active">
+      <div class="page-heading"><div><p class="overline">OSGARD / ПЛАТФОРМА</p><h1>Панель управления</h1><p class="muted">Проверяемая архитектура. Никаких фиктивных показателей.</p></div><span class="status-ring">DEV / LOCAL</span></div>
+      <div class="kpi-grid">
+        <article class="kpi"><span>СТРАНИЦЫ</span><strong id="metric-pages">—</strong><small>Из спецификации</small></article>
+        <article class="kpi"><span>МОДЕЛИ ДАННЫХ</span><strong id="metric-models">—</strong><small>Типизированные связи</small></article>
+        <article class="kpi"><span>WORKFLOWS</span><strong id="metric-workflows">—</strong><small>Локальные правила</small></article>
+        <article class="kpi"><span>РЕВИЗИЯ</span><strong id="metric-version">—</strong><small>Контроль изменений</small></article>
+      </div>
+      <div class="dashboard-layout">
+        <article class="card"><p class="overline">АРХИТЕКТУРА</p><h2 id="project-name">Проект не загружен</h2><p class="muted" id="project-description">Подключись, чтобы увидеть состояние.</p><div class="divider"></div><p class="mini-label">Гарантии текущего окружения</p><div class="feature-row"><span class="success-dot"></span> SQLite с историей ревизий</div><div class="feature-row"><span class="success-dot"></span> Проверки прав в транзакциях</div><div class="feature-row"><span class="success-dot"></span> Детерминированное статическое превью</div><div class="feature-row"><span class="warning-dot"></span> Публичный деплой отключён</div></article>
+        <article class="card diagram"><p class="overline">ПУТЬ ПРИЛОЖЕНИЯ</p><div class="stage">01 · СПЕЦИФИКАЦИЯ<span>JSON / схема</span></div><div class="stage-line"></div><div class="stage">02 · СТРАНИЦЫ И ДАННЫЕ<span>Версии / SQLite</span></div><div class="stage-line"></div><div class="stage">03 · ПРАВИЛА И ДОСТУП<span>RBAC / идемпотентность</span></div><div class="stage-line"></div><div class="stage dim">04 · ПУБЛИКАЦИЯ<span>Не подключена</span></div></article>
+      </div>
+    </section>
+    <section id="pages" class="panel">
+      <div class="page-heading"><div><p class="overline">РЕДАКТОР / NO-AI</p><h1>Страницы и содержимое</h1><p class="muted">Меняй заголовки и текст. Каждая правка создаёт новую ревизию.</p></div><span id="editor-revision" class="pill">Версия —</span></div>
+      <div class="editor-grid">
+        <div class="card"><h2>Структура</h2><label for="page-select">Страница</label><select id="page-select"></select><label for="section-select">Секция</label><select id="section-select"></select><p class="hint">Выбирай раздел, чтобы редактировать его содержимое.</p><div id="section-count" class="small-stat">—</div></div>
+        <form id="page-form" class="card"><h2>Свойства</h2><label for="page-title">Название страницы</label><input id="page-title" required maxlength="100"><label for="section-heading">Заголовок секции</label><input id="section-heading" required maxlength="140"><label for="section-text">Основной текст</label><textarea id="section-text" rows="5" maxlength="1600"></textarea><div class="editor-actions"><button class="primary" id="save-page" type="submit">Сохранить версию</button><span class="hint">Сохраняется в локальную SQLite</span></div></form>
+      </div>
+    </section>
+    <section id="records" class="panel">
+      <div class="page-heading"><div><p class="overline">МОДЕЛИ / СВЯЗИ</p><h1>Данные приложения</h1><p class="muted">Собственные записи, связи и версии. Доступ ограничен ролью.</p></div></div>
+      <div class="record-grid"><div class="card"><h2>Модель</h2><label for="model-select">Выбери таблицу</label><select id="model-select"></select><div id="model-description" class="small-stat">—</div><label for="row-select">Запись для изменения</label><select id="row-select"></select><button id="new-row" type="button" class="ghost full">+ Новая запись</button></div>
+      <form id="row-form" class="card"><h2 id="row-form-title">Новая запись</h2><div id="row-fields" class="fields"></div><div class="editor-actions"><button id="save-row" type="submit" class="primary">Сохранить запись</button><button id="delete-row" type="button" class="danger">Удалить</button></div></form></div>
+      <article class="card table-card"><h2>Текущие записи</h2><div id="rows-table" class="scroll-table"></div></article>
+    </section>
+    <section id="workflows" class="panel">
+      <div class="page-heading"><div><p class="overline">ПРАВИЛА / БЕЗ КОДА</p><h1>Автоматизация процессов</h1><p class="muted">Задавай безопасные действия над полями записей. Без скриптов и сетевых запросов.</p></div></div>
+      <div class="editor-grid">
+        <form id="workflow-form" class="card"><h2>Новое правило</h2><label for="wf-name">Название</label><input id="wf-name" required maxlength="64" placeholder="Например: Назначить статус"><label for="wf-model">Модель</label><select id="wf-model"></select><label for="wf-trigger">Событие</label><select id="wf-trigger"><option value="manual">Ручной запуск</option><option value="record.created">Создание записи</option><option value="record.updated">Изменение записи</option></select><label for="wf-condition-field">Условие (необязательно)</label><select id="wf-condition-field"></select><label for="wf-condition-value">Значение условия</label><input id="wf-condition-value" placeholder="Сравнить с полем"><label for="wf-action-field">Изменить поле</label><select id="wf-action-field"></select><label for="wf-action-value">Присвоить значение</label><input id="wf-action-value" required><button type="submit" class="primary top-gap" id="wf-create">Создать правило</button></form>
+        <div class="card"><h2>Активные правила</h2><div id="workflow-list" class="stack"></div><div class="divider"></div><label for="wf-run-row">UUID записи для запуска</label><input id="wf-run-row" placeholder="UUID существующей записи"><p class="hint">Запуск выполняется только вручную, с контролем роли и защитой от повторов.</p></div>
+      </div>
+    </section>
+    <section id="preview" class="panel">
+      <div class="page-heading"><div><p class="overline">ПРЕДПРОСМОТР / БЕЗ ПУБЛИКАЦИИ</p><h1>Как выглядит результат</h1><p class="muted">Отображается в изолированном iframe. Сценарии и формы не выполняются.</p></div><div class="preview-tools"><select id="preview-select" aria-label="Страница для предпросмотра"></select><button id="refresh-preview" class="ghost" type="button">Обновить</button></div></div>
+      <div class="preview-frame"><div class="preview-chrome"><span></span><span></span><span></span><em>127.0.0.1 · статический результат</em></div><iframe title="Изолированный предпросмотр" id="preview-frame" sandbox="" referrerpolicy="no-referrer"></iframe></div>
+    </section>
+  </main>
+</div>
+</div>
+</body>
+</html>

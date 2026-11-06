@@ -1,0 +1,300 @@
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null};
+const panels = ["dashboard","pages","records","workflows","preview"];
+const names = {dashboard:"Обзор",pages:"Страницы",records:"Данные",workflows:"Автоматизация",preview:"Предпросмотр"};
+const show = (message, error=false) => {
+  const el=$("notice"); el.textContent=message || ""; el.classList.toggle("error",error);
+};
+const can = permission => Boolean(state.me && state.me.capabilities.includes(permission));
+const node = (tag,text,cls) => {
+  const el=document.createElement(tag);
+  if(text!==undefined && text!==null) el.textContent=String(text);
+  if(cls) el.className=cls;
+  return el;
+};
+const option = (value,label) => {const o=node("option",label);o.value=value;return o;};
+function pick(select,values) {
+  select.replaceChildren(...values.map(([v,t])=>option(v,t)));
+}
+function safeId(){return crypto.randomUUID();}
+async function api(path,{method="GET",body=null}={}){
+  if(!state.token) throw Error("Сначала подключи локальный токен");
+  const headers={"Authorization":"Bearer "+state.token};
+  if(body!==null) headers["Content-Type"]="application/json";
+  const response=await fetch(path,{method,headers,body:body===null?undefined:JSON.stringify(body),
+                                   credentials:"omit",cache:"no-store",redirect:"error"});
+  let data;
+  try{data=await response.json();}catch{throw Error("Сервер вернул неверный ответ");}
+  if(!response.ok){if(response.status===401) state.token="";throw Error("Операция отклонена: "+(data.error||response.status));}
+  return data;
+}
+function model(){return state.spec?.models.find(m=>m.name===state.model);}
+function typed(field,raw) {
+  if(field.type==="boolean") return Boolean(raw);
+  if(raw===null || raw==="") {
+    if(field.required) throw Error("Заполни обязательное поле: "+field.label);
+    return null;
+  }
+  if(field.type==="integer") {
+    if(!/^-?\d+$/.test(String(raw))) throw Error("Поле «"+field.label+"» должно быть целым числом");
+    const n=Number(raw);
+    if(!Number.isSafeInteger(n))throw Error("Слишком большое число");
+    return n;
+  }
+  return String(raw);
+}
+function switchPanel(name){
+  for(const p of panels)$(p).classList.toggle("active",p===name);
+  document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("is-active",b.dataset.panel===name));
+  $("crumb").textContent=names[name];
+  if(name==="preview" && state.spec) refreshPreview();
+}
+document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
+async function sync(){
+  const [me,result,workflows]=await Promise.all([
+    api("/api/v1/me"),api("/api/v1/spec"),api("/api/v1/workflows")]);
+  state.me=me;state.spec=result.spec;state.revision=result.revision;
+  state.workflows=workflows.workflows;
+  $("role-pill").textContent="Роль: "+me.role;
+  $("metric-pages").textContent=result.spec.pages.length;
+  $("metric-models").textContent=result.spec.models.length;
+  $("metric-workflows").textContent=state.workflows.filter(w=>w.enabled).length;
+  $("metric-version").textContent=result.revision;
+  $("editor-revision").textContent="Версия "+result.revision;
+  $("project-name").textContent=result.spec.title;
+  $("project-description").textContent=result.spec.description||"Без описания";
+  $("save-page").disabled=!can("spec.write");
+  $("save-row").disabled=!can("record.write");
+  $("delete-row").disabled=!can("record.write");
+  $("wf-create").disabled=!can("workflow.manage");
+  renderPages();renderModels();renderWorkflows();
+  await refreshRows();
+}
+$("auth-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const candidate=$("token").value.trim();
+  if(!candidate)return;
+  state.token=candidate;
+  $("token").value="";
+  try{await sync();$("connect").hidden=true;show("Локальная сессия подключена. Изменения сохраняются только на этом компьютере.");}
+  catch(e){state.token="";$("connect").hidden=false;show(e.message,true);}
+});
+function renderPages(){
+  pick($("page-select"),state.spec.pages.map(p=>[p.slug,p.title]));
+  pick($("preview-select"),state.spec.pages.map(p=>[p.slug,p.title]));
+  pageChanged();
+}
+function pageChanged(){
+  const page=state.spec.pages.find(p=>p.slug===$("page-select").value);
+  if(!page)return;
+  $("page-title").value=page.title;
+  pick($("section-select"),page.sections.map((s,i)=>[String(i),(i+1)+". "+s.heading]));
+  $("section-count").textContent=page.sections.length+" секций на странице";
+  sectionChanged();
+}
+function sectionChanged(){
+  const page=state.spec.pages.find(p=>p.slug===$("page-select").value);
+  const section=page?.sections[Number($("section-select").value)];
+  if(!section)return;
+  $("section-heading").value=section.heading;
+  $("section-text").value=section.text||"";
+  $("section-text").disabled=!Object.hasOwn(section,"text") || !can("spec.write");
+  $("section-heading").disabled=!can("spec.write");
+  $("page-title").disabled=!can("spec.write");
+}
+$("page-select").addEventListener("change",pageChanged);
+$("section-select").addEventListener("change",sectionChanged);
+$("page-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    const page=state.spec.pages.find(p=>p.slug===$("page-select").value);
+    const index=Number($("section-select").value);
+    const section=page.sections[index];
+    const changes={heading:$("section-heading").value};
+    if(Object.hasOwn(section,"text"))changes.text=$("section-text").value;
+    const response=await api("/api/v1/pages/"+page.slug,{method:"PATCH",
+      body:{expected_revision:state.revision,title:$("page-title").value,
+            section_index:index,changes}});
+    show("Новая ревизия: "+response.revision);await sync();
+  }catch(e){show(e.message,true);}
+});
+function renderModels(){
+  pick($("model-select"),state.spec.models.map(m=>[m.name,m.label]));
+  pick($("wf-model"),state.spec.models.map(m=>[m.name,m.label]));
+  state.model=$("model-select").value;
+  renderModelFields();updateWorkflowFields();
+}
+function renderModelFields(data={}){
+  const m=model();
+  const target=$("row-fields");
+  target.replaceChildren();
+  if(!m)return;
+  $("model-description").textContent=m.fields.length+" полей · типизированные данные";
+  for(const field of m.fields){
+    const box=node("div");
+    const label=node("label",field.label+(field.required?" *":""));
+    label.setAttribute("for","field-"+field.name);
+    const input=node("input");
+    input.id="field-"+field.name;
+    input.dataset.field=field.name;
+    if(field.type==="integer")input.type="number";
+    else if(field.type==="date")input.type="date";
+    else if(field.type==="email")input.type="email";
+    else if(field.type==="boolean")input.type="checkbox";
+    else input.type="text";
+    input.required=Boolean(field.required);
+    if(field.type==="boolean")input.checked=Boolean(data[field.name]);
+    else if(data[field.name]!==undefined && data[field.name]!==null)input.value=String(data[field.name]);
+    input.disabled=!can("record.write");
+    box.append(label,input);target.append(box);
+  }
+}
+function readForm(){
+  const data={};
+  for(const f of model().fields){
+    const el=$("field-"+f.name);
+    const raw=f.type==="boolean"?el.checked:el.value.trim();
+    if(raw==="" && !f.required)continue;
+    data[f.name]=typed(f,raw);
+  }
+  return data;
+}
+async function refreshRows(){
+  if(!state.spec || !can("record.read"))return;
+  const targetModel=state.model;
+  const answer=await api("/api/v1/models/"+encodeURIComponent(targetModel));
+  if(targetModel!==state.model)return;
+  state.rows=answer.rows;
+  pick($("row-select"),[["","Новая запись"],...state.rows.map(r=>
+    [r.row_id,(r.fields[model().fields[0].name]??r.row_id)+" · v"+r.version])]);
+  state.selectedRow=null;
+  renderModelFields();
+  $("row-form-title").textContent="Новая запись";
+  $("delete-row").disabled=true;
+  drawTable();
+}
+function drawTable(){
+  const root=$("rows-table");root.replaceChildren();
+  const m=model();if(!m)return;
+  const table=node("table"),head=node("thead"),hrow=node("tr");
+  for(const field of m.fields)hrow.append(node("th",field.label));
+  hrow.append(node("th","Версия"));head.append(hrow);table.append(head);
+  const tbody=node("tbody");
+  for(const r of state.rows){
+    const tr=node("tr");
+    for(const f of m.fields){
+      const v=r.fields[f.name];tr.append(node("td",v==null?"—":String(v)));
+    }
+    tr.append(node("td",r.version));tbody.append(tr);
+  }
+  table.append(tbody);root.append(table);
+}
+function selectRow(){
+  state.selectedRow=state.rows.find(x=>x.row_id===$("row-select").value)||null;
+  renderModelFields(state.selectedRow?.fields||{});
+  $("row-form-title").textContent=state.selectedRow?"Изменение записи":"Новая запись";
+  $("delete-row").disabled=!can("record.write")||!state.selectedRow;
+}
+$("model-select").addEventListener("change",async()=>{
+  state.model=$("model-select").value;
+  try{await refreshRows();}catch(e){show(e.message,true);}
+});
+$("row-select").addEventListener("change",selectRow);
+$("new-row").addEventListener("click",()=>{
+  $("row-select").value="";selectRow();
+});
+$("row-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    const data=readForm();
+    const current=state.selectedRow;
+    const path="/api/v1/models/"+state.model;
+    if(current){
+      await api(path+"/"+current.row_id,{method:"PATCH",
+        body:{expected_version:current.version,changes:data,idempotency_key:safeId()}});
+    }else{
+      await api(path,{method:"POST",body:{data,idempotency_key:safeId()}});
+    }
+    await refreshRows();show("Запись сохранена в SQLite");
+  }catch(e){show(e.message,true);}
+});
+$("delete-row").addEventListener("click",async()=>{
+  const current=state.selectedRow;
+  if(!current || !confirm("Удалить эту запись? Связанные записи не будут удалены."))return;
+  try{
+    await api("/api/v1/models/"+state.model+"/"+current.row_id,{method:"DELETE",
+      body:{expected_version:current.version,idempotency_key:safeId()}});
+    await refreshRows();show("Запись удалена");
+  }catch(e){show(e.message,true);}
+});
+function updateWorkflowFields(){
+  const m=state.spec?.models.find(x=>x.name===$("wf-model").value);
+  if(!m)return;
+  pick($("wf-condition-field"),[["","Без условия"],...m.fields.map(f=>[f.name,f.label])]);
+  pick($("wf-action-field"),m.fields.filter(f=>f.type!=="reference").map(f=>[f.name,f.label]));
+}
+$("wf-model").addEventListener("change",updateWorkflowFields);
+$("workflow-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  try{
+    const m=state.spec.models.find(x=>x.name===$("wf-model").value);
+    const actionField=m.fields.find(f=>f.name===$("wf-action-field").value);
+    const conditionField=m.fields.find(f=>f.name===$("wf-condition-field").value);
+    const rule={schema:"osgard.original180.app-workflow/1",name:$("wf-name").value,
+      model:m.name,trigger:$("wf-trigger").value,
+      condition:conditionField?{field:conditionField.name,
+        equals:typed(conditionField,$("wf-condition-value").value.trim())}:null,
+      action:{type:"set_field",field:actionField.name,
+              value:typed(actionField,$("wf-action-value").value.trim())}};
+    await api("/api/v1/workflows",{method:"POST",body:{rule}});
+    $("wf-name").value="";$("wf-action-value").value="";
+    await sync();show("Правило создано. Для запуска выбери запись.");
+  }catch(e){show(e.message,true);}
+});
+function renderWorkflows(){
+  const target=$("workflow-list");target.replaceChildren();
+  if(!state.workflows.length){target.append(node("p","Правил пока нет.","muted"));return;}
+  for(const w of state.workflows){
+    const card=node("div",null,"workflow-item");
+    card.append(node("strong",w.rule.name));
+    card.append(node("small",w.rule.model+" · "+w.rule.trigger+(w.enabled?" · активно":" · выключено")));
+    if(w.enabled){
+      const run=node("button","Запустить","ghost");
+      run.type="button";run.disabled=!can("workflow.run");
+      run.addEventListener("click",async()=>{
+        const rowId=$("wf-run-row").value.trim();
+        if(!rowId){show("Укажи UUID записи для запуска правила",true);return;}
+        try{
+          const result=await api("/api/v1/workflows/"+w.workflow_id+"/run",
+            {method:"POST",body:{event_id:safeId(),trigger:w.rule.trigger,row_id:rowId}});
+          show(result.changed?"Правило изменило запись":"Правило выполнено без изменения");
+          if(state.model===w.rule.model)await refreshRows();
+        }catch(e){show(e.message,true);}
+      });card.append(run);
+      const disable=node("button","Отключить","danger");
+      disable.type="button";disable.disabled=!can("workflow.manage");
+      disable.addEventListener("click",async()=>{
+        try{
+          await api("/api/v1/workflows/"+w.workflow_id+"/disable",
+            {method:"POST",body:{expected_revision:w.revision}});
+          await sync();show("Правило отключено");
+        }catch(e){show(e.message,true);}
+      });card.append(disable);
+    }
+    target.append(card);
+  }
+}
+async function refreshPreview(){
+  try{
+    const page=$("preview-select").value;
+    if(!page)return;
+    const response=await api("/api/v1/preview/"+page);
+    $("preview-frame").srcdoc=response.html;
+    show("Обновлено локальное статическое превью");
+  }catch(e){show(e.message,true);}
+}
+$("preview-select").addEventListener("change",refreshPreview);
+$("refresh-preview").addEventListener("click",refreshPreview);
+})();
