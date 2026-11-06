@@ -241,6 +241,59 @@ async function run(){
   },"record.created rule automatically fired");
   await client.screenshot("03-data-desktop.png");
 
+  // Wave 7: create a model from the visual schema editor.
+  await client.eval("document.querySelector('[data-panel=schema]').click();"+
+    "document.querySelector('#schema-model-name').value='vendors';"+
+    "document.querySelector('#schema-model-label').value='Поставщики';"+
+    "document.querySelector('#schema-model-form').requestSubmit();");
+  await poll(()=>client.eval("document.querySelector('#metric-models').textContent.trim()==='3'"),
+    "schema model created through browser");
+  // Create one real vendor row, then migrate it with a required typed default.
+  await client.eval("document.querySelector('[data-panel=records]').click();"+
+    "document.querySelector('#model-select').value='vendors';"+
+    "document.querySelector('#model-select').dispatchEvent(new Event('change'));");
+  await poll(()=>client.eval("document.querySelector('#row-fields #field-name')?.disabled===false"),
+    "vendor data entry form active");
+  await client.eval("document.querySelector('#field-name').value='Поставщик CI';"+
+    "document.querySelector('#row-form').requestSubmit();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/models/vendors");
+    return data.rows.some(row=>row.fields.name==="Поставщик CI");
+  },"vendor row created");
+  await client.eval("document.querySelector('[data-panel=schema]').click();"+
+    "document.querySelector('#schema-select-model').value='vendors';"+
+    "document.querySelector('#schema-field-name').value='level';"+
+    "document.querySelector('#schema-field-label').value='Уровень';"+
+    "document.querySelector('#schema-field-type').value='integer';"+
+    "document.querySelector('#schema-field-type').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#schema-field-required').checked=true;"+
+    "document.querySelector('#schema-default').value='2';"+
+    "document.querySelector('#schema-field-form').requestSubmit();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/models/vendors");
+    return data.rows.some(row=>row.fields.name==="Поставщик CI" &&
+      row.fields.level===2 && row.version===2);
+  },"typed field migration of existing vendor row");
+  const changes=await localApi("/api/v1/schema/migrations");
+  assert.ok(changes.migrations.some(x=>x.operation==="ADD_FIELD"&&x.rows_migrated===1));
+  // Add a form section generated from the updated typed model.
+  await client.eval("document.querySelector('[data-panel=pages]').click();"+
+    "document.querySelector('#new-section-type').value='form';"+
+    "document.querySelector('#new-section-type').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#form-model-select').value='vendors';"+
+    "document.querySelector('#add-section').click();");
+  await poll(async()=>{
+    const spec=await localApi("/api/v1/spec");
+    return spec.spec.pages[0].sections.some(x=>x.type==="form"&&x.model==="vendors");
+  },"form section saved by editor");
+  await client.eval("document.querySelector('[data-panel=preview]').click();");
+  await poll(()=>client.eval("document.querySelector('#preview-frame').srcdoc.includes('demo-form')"),
+    "read-only model form preview");
+  const formIsDisabled=await client.eval(
+    "document.querySelector('#preview-frame').srcdoc.includes('type=\"button\" disabled')");
+  assert.equal(formIsDisabled,true,"offline preview form must not submit");
+  await client.screenshot("04-schema-form-desktop.png");
+
   // Mobile viewport must not leak navigation or overflow the viewport.
   await client.send("Emulation.setDeviceMetricsOverride",{
     width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -248,12 +301,12 @@ async function run(){
   const overflow=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
-  await client.screenshot("04-mobile-390.png");
+  await client.screenshot("05-mobile-390.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","mobile"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","mobile"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:4,public_server_started:false,production_deployed:false};
+    screenshots:5,public_server_started:false,production_deployed:false};
 }
 
 try{
