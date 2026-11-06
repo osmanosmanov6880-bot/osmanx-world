@@ -21,6 +21,7 @@ from wsgiref.simple_server import make_server
 from .app_policy import AppPrincipal,AppAccessDenied
 from .app_runtime import LocalAppRuntime,AppOperationDenied
 from .model_editor import LocalModelEditor
+from .revision_restore import LocalRevisionRestorer
 from .builder import validate_site_spec
 from .contracts import ACTOR_RE,TENANT_RE
 from .drafts import DraftDenied,_identity
@@ -70,6 +71,7 @@ class LocalConsole:
         self.port=port
         self.runtime=LocalAppRuntime(str(database))
         self.model_editor=LocalModelEditor(self.runtime)
+        self.restorer=LocalRevisionRestorer(self.runtime)
         # Fail early when the trusted local principal was not provisioned.
         self.runtime.policy.get_role(tenant=tenant,project_id=project_id,actor=actor)
 
@@ -233,6 +235,21 @@ class LocalConsole:
             out=runtime.edit_page(tenant=tid,project_id=project,actor=actor,
                                   slug=match.group(1),**data)
             return self._json(start_response,"200 OK",out)
+        if method=="GET" and path=="/api/v1/revisions":
+            out=self.restorer.list_revisions(tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",{"revisions":out})
+        if method=="POST" and path=="/api/v1/revisions/restore/inspect":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","target_revision"},
+                         {"expected_revision","target_revision"})
+            out=self.restorer.inspect(tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/revisions/restore":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","target_revision","expected_plan_sha256"},
+                         {"expected_revision","target_revision","expected_plan_sha256"})
+            out=self.restorer.restore(tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/schema/migrations":
             out=self.model_editor.list_migrations(
                 tenant=tid,project_id=project,actor=actor)
@@ -244,6 +261,24 @@ class LocalConsole:
             out=self.model_editor.add_model(
                 tenant=tid,project_id=project,actor=actor,**data)
             return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")/rename-reference",path)
+        if method=="POST" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","old_name","new_name"},
+                         {"expected_revision","old_name","new_name"})
+            out=self.model_editor.rename_reference_field(
+                tenant=tid,project_id=project,actor=actor,
+                model=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")/retarget-unused-reference",path)
+        if method=="POST" and match:
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","field","new_target_model"},
+                         {"expected_revision","field","new_target_model"})
+            out=self.model_editor.retarget_unused_reference(
+                tenant=tid,project_id=project,actor=actor,
+                model=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/schema/models/("+_MODEL.pattern[1:-1]+r")/rename-field",path)
         if method=="POST" and match:
             data=self._body(environ)
