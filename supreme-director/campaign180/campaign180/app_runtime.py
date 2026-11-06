@@ -32,6 +32,10 @@ from .team_tasks import (
     update_task as update_team_task, query_tasks as query_team_tasks,
     task_summary as team_task_summary, task_history as team_task_history,
 )
+from .task_collaboration import (
+    init_collaboration,add_comment,list_comments,add_checklist_item,
+    list_checklist,set_checklist_done,team_workload,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -68,6 +72,7 @@ class LocalAppRuntime:
                 PRIMARY KEY(tenant,project_id,workflow_id,event_id));""")
         init_journal(self)
         init_tasks(self)
+        init_collaboration(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -242,6 +247,38 @@ class LocalAppRuntime:
                           task_id:str,limit:int=25)->dict:
         return team_task_history(self,tenant=tenant,project_id=project_id,
                                  actor=actor,task_id=task_id,limit=limit)
+
+    def add_task_comment(self,*,tenant:str,project_id:str,actor:str,
+                         task_id:str,body:str,idempotency_key:str)->dict:
+        return add_comment(self,tenant=tenant,project_id=project_id,actor=actor,
+                           task_id=task_id,body=body,idempotency_key=idempotency_key)
+
+    def list_task_comments(self,*,tenant:str,project_id:str,actor:str,
+                           task_id:str,limit:int=25,offset:int=0)->dict:
+        return list_comments(self,tenant=tenant,project_id=project_id,
+                             actor=actor,task_id=task_id,limit=limit,offset=offset)
+
+    def add_task_checklist_item(self,*,tenant:str,project_id:str,actor:str,
+                                task_id:str,label:str,idempotency_key:str)->dict:
+        return add_checklist_item(self,tenant=tenant,project_id=project_id,
+                                  actor=actor,task_id=task_id,label=label,
+                                  idempotency_key=idempotency_key)
+
+    def list_task_checklist(self,*,tenant:str,project_id:str,actor:str,
+                            task_id:str)->dict:
+        return list_checklist(self,tenant=tenant,project_id=project_id,
+                              actor=actor,task_id=task_id)
+
+    def set_task_checklist_done(self,*,tenant:str,project_id:str,actor:str,
+                                task_id:str,item_id:str,expected_version:int,
+                                done:bool,idempotency_key:str)->dict:
+        return set_checklist_done(self,tenant=tenant,project_id=project_id,
+                                  actor=actor,task_id=task_id,item_id=item_id,
+                                  expected_version=expected_version,done=done,
+                                  idempotency_key=idempotency_key)
+
+    def team_workload(self,*,tenant:str,project_id:str,actor:str)->dict:
+        return team_workload(self,tenant=tenant,project_id=project_id,actor=actor)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
