@@ -20,6 +20,7 @@ from wsgiref.simple_server import make_server
 
 from .app_policy import AppPrincipal,AppAccessDenied
 from .app_runtime import LocalAppRuntime,AppOperationDenied
+from .form_submissions import FormSubmissionDenied
 from .model_editor import LocalModelEditor
 from .revision_restore import LocalRevisionRestorer
 from .mapped_relations import LocalMappedReferenceMigration
@@ -163,7 +164,7 @@ class LocalConsole:
                               {"error":"METHOD_NOT_ALLOWED"})
         try:
             return self._api(environ,start_response,method,path)
-        except (ConsoleDenied,AppAccessDenied,DraftDenied,AppOperationDenied,ValueError) as exc:
+        except (ConsoleDenied,AppAccessDenied,DraftDenied,AppOperationDenied,FormSubmissionDenied,ValueError) as exc:
             # Deliberately do not disclose tenant, actor, secrets or raw content.
             error="PERMISSION_DENIED" if isinstance(exc,AppAccessDenied) else "INVALID_OPERATION"
             status="403 Forbidden" if error=="PERMISSION_DENIED" else "400 Bad Request"
@@ -191,6 +192,16 @@ class LocalConsole:
         if method=="GET" and path=="/api/v1/spec":
             out=runtime.get_spec(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/forms/("+_SLUG.pattern[1:-1]+r")/submit",path)
+        if method=="POST" and match:
+            data=self._body(environ)
+            self._fields(data,{"section_index","expected_revision","data",
+                               "idempotency_key"},
+                         {"section_index","expected_revision","data",
+                          "idempotency_key"})
+            out=runtime.submit_form(tenant=tid,project_id=project,actor=actor,
+                                    slug=match.group(1),**data)
+            return self._json(start_response,"201 Created",out)
         if method=="GET" and path=="/api/v1/workflows":
             out=runtime.list_workflows(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",{"workflows":out})
