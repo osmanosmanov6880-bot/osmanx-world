@@ -697,8 +697,6 @@ async function run(){
     "Wave 19 active task discussion opened");
   await client.eval("document.querySelector('#task-checklist-title').value='Проверить критерий';"+
     "document.querySelector('#task-checklist-form').requestSubmit();");
-  const taskId=await client.eval(
-    "document.querySelector('#task-collaboration-hint').textContent.slice(7,15)");
   await poll(()=>client.eval(
     "document.querySelector('#task-checklist-count').textContent==='0/1' "+
     "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий')"),
@@ -777,6 +775,17 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow390<=2,"390px task board horizontal overflow: "+taskOverflow390);
   await client.screenshot("18-mobile-390-tasks.png");
+  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-collaboration').hidden===false "+
+    "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
+    "&& document.querySelector('#task-comment-list').textContent.includes('Готово, результат проверен')"),
+    "Wave 19 390px task discussion and checklist loaded");
+  const collabOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(collabOverflow390<=2,
+    "390px task discussion horizontal overflow: "+collabOverflow390);
+  await client.screenshot("21-mobile-390-task-discussion.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -825,11 +834,22 @@ async function run(){
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(taskOverflow320<=2,"320px task board horizontal overflow: "+taskOverflow320);
   await client.screenshot("19-mobile-320-tasks.png");
+  await client.eval("document.querySelector('#task-list .task-collab-open').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-collaboration').hidden===false "+
+    "&& document.querySelector('#task-checklist-list').textContent.includes('Проверить критерий') "+
+    "&& document.querySelector('#task-comment-list').textContent.includes('Готово, результат проверен')"),
+    "Wave 19 320px task discussion and checklist loaded");
+  const collabOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(collabOverflow320<=2,
+    "320px task discussion horizontal overflow: "+collabOverflow320);
+  await client.screenshot("22-mobile-320-task-discussion.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter,"task-collab-mobile-390","task-collab-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:20,public_server_started:false,production_deployed:false};
+    screenshots:22,public_server_started:false,production_deployed:false};
 }
 
 try{
