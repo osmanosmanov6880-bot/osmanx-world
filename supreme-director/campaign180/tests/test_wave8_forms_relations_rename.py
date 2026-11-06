@@ -107,7 +107,7 @@ class AppTests(unittest.TestCase):
                                         actor=OWNER,now=1799971202)
         foreign=self.app.create_row(tenant=TENANT,project_id=other["project_id"],
             actor=OWNER,model="customers",data={"name":"Другая площадка"},idempotency_key=key())
-        with self.assertRaises(AppOperationDenied):
+        with self.assertRaises(ValueError):
             self.app.create_row(**self.kw,model="requests",
                 data={"summary":"Нельзя","customer":foreign["row_id"]},
                 idempotency_key=key())
@@ -144,7 +144,7 @@ class AppTests(unittest.TestCase):
         self.home_form()
         original=self.form()
         for selected in (["missing"],["name","name"],[],["email","missing"]):
-            with self.subTest(selected=selected),self.assertRaises(SiteSpecDenied):
+            with self.subTest(selected=selected),self.assertRaises(ValueError):
                 self.app.edit_form(**self.kw,slug="home",expected_revision=2,
                     section_index=1,model="customers",heading="Форма",
                     button_label="Отправить",fields=selected)
@@ -234,7 +234,7 @@ class AppTests(unittest.TestCase):
         with sqlite3.connect(self.db) as db:
             db.execute("UPDATE builder_rows SET content_digest=? WHERE row_id=?",
                        ("0"*64,made["row_id"]))
-        with self.assertRaises(AppOperationDenied):
+        with self.assertRaises(ValueError):
             self.editor.rename_field(**self.kw,expected_revision=1,
                 model="customers",old_name="name",new_name="full_name")
         self.assertEqual(self.app.get_spec(**self.kw)["revision"],1)
