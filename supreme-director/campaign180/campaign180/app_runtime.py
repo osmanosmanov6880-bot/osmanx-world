@@ -18,6 +18,7 @@ from .builder import validate_site_spec,validate_row,render_site
 from .contracts import canonical,digest
 from .drafts import LocalDraftStore,_identity,DraftDenied
 from .records import LocalRecordStore,RecordDenied
+from .automatic import apply_record_event
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -149,7 +150,13 @@ class LocalAppRuntime:
                 VALUES(?,?,?,?,1,?,?,0)""",
                 (tenant,project_id,model,rid,h,canonical(normalized).decode("utf-8")))
             self.records._replace_links(db,tenant,project_id,model,rid,definition,normalized)
-            receipt={"row_id":rid,"version":1,"sha256":h,"production_visible":False}
+            auto=apply_record_event(self,db,tenant=tenant,project_id=project_id,
+                model=model,row_id=rid,trigger="record.created",
+                mutation_key=idempotency_key)
+            final,row=self.records._row(db,tenant,project_id,model,rid)
+            receipt={"row_id":rid,"version":row["version"],
+                "sha256":row["content_digest"],"automatic_workflows":auto,
+                "production_visible":False}
             self.records._remember(db,tenant,project_id,idempotency_key,req,receipt)
             return receipt
 
@@ -185,7 +192,12 @@ class LocalAppRuntime:
             if count!=1:
                 raise AppOperationDenied("Concurrent row edit failed")
             self.records._replace_links(db,tenant,project_id,model,row_id,definition,data)
-            receipt={"row_id":row_id,"version":version,"sha256":h,
+            auto=apply_record_event(self,db,tenant=tenant,project_id=project_id,
+                model=model,row_id=row_id,trigger="record.updated",
+                mutation_key=idempotency_key)
+            final,row=self.records._row(db,tenant,project_id,model,row_id)
+            receipt={"row_id":row_id,"version":row["version"],
+                     "sha256":row["content_digest"],"automatic_workflows":auto,
                      "production_visible":False}
             self.records._remember(db,tenant,project_id,idempotency_key,req,receipt)
             return receipt
@@ -321,8 +333,8 @@ class LocalAppRuntime:
         _uuid(workflow_id)
         _uuid(event_id)
         _uuid(row_id)
-        if trigger not in TRIGGERS:
-            raise AppOperationDenied("Unknown trigger")
+        if trigger!="manual":
+            raise AppOperationDenied("Automatic record events cannot be forged by API callers")
         with self.drafts._tx() as db:
             self._guard(db,tenant,project_id,actor,"workflow.run")
             found=db.execute("""SELECT * FROM app_workflows WHERE tenant=?
