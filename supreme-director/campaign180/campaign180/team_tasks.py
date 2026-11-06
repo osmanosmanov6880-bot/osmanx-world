@@ -436,21 +436,53 @@ def _visible(db, tenant: str, project: str, actor: str, role: str) -> list[dict]
 
 def query_tasks(runtime: "LocalAppRuntime", *, tenant: str, project_id: str,
                 actor: str, limit: int = 25, offset: int = 0,
-                status: str | None = None) -> dict:
+                status: str | None = None, assignee: str | None = None,
+                due: str | None = None) -> dict:
+    """Bounded, ACL-checked status/assignee/due filters with stable pagination."""
+    due_allowed = (None, "overdue", "today", "next7", "undated")
     if (type(limit) is not int or not 1 <= limit <= PAGE_LIMIT
             or type(offset) is not int or not 0 <= offset <= MAX_TASKS
-            or (status is not None and (type(status) is not str or status not in STATUSES))):
-        raise TaskDenied("Invalid task listing parameters")
+            or (status is not None and (type(status) is not str or status not in STATUSES))
+            or due not in due_allowed or (due is not None and type(due) is not str)
+            or (assignee is not None and
+                (type(assignee) is not str or
+                 (assignee != "__unassigned__" and not ACTOR_RE.fullmatch(assignee))))):
+        raise TaskDenied("Invalid bounded task filter parameters")
     with runtime.drafts._db() as db:
         role = _principal(runtime, db, tenant, project_id, actor, "task.read")
+        if assignee is not None and role not in MANAGERS and assignee != actor:
+            raise TaskDenied("Assignee filter outside assigned task scope")
         visible = _visible(db, tenant, project_id, actor, role)
-        filtered = [x for x in visible if status is None or x["status"] == status]
+        today = datetime.now(timezone.utc).date()
+        filtered = []
+        for task in visible:
+            if status is not None and task["status"] != status:
+                continue
+            if assignee is not None and task["assignee"] != (
+                    None if assignee == "__unassigned__" else assignee):
+                continue
+            if due is not None:
+                target = date.fromisoformat(task["due_date"]) if task["due_date"] else None
+                if due == "undated":
+                    if target is not None:
+                        continue
+                else:
+                    if target is None or task["status"] == "done":
+                        continue
+                    if due == "overdue" and target >= today:
+                        continue
+                    if due == "today" and target != today:
+                        continue
+                    if due == "next7" and not today <= target <= today + timedelta(days=7):
+                        continue
+            filtered.append(task)
         result = filtered[offset:offset + limit]
         return {
             "tasks": [_projected(x) for x in result],
             "total": len(filtered), "offset": offset, "limit": limit,
             "has_more": offset + limit < len(filtered),
             "scope": "all" if role in MANAGERS else "assigned",
+            "filters": {"status": status, "assignee": assignee, "due": due},
             "local_only": True,
         }
 
