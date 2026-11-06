@@ -365,6 +365,34 @@ class LocalConsole:
                 tenant=tid,project_id=project,actor=actor,
                 model=match.group(1),**data)
             return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/models/("+_MODEL.pattern[1:-1]+
+                           r")/(query|csv-export|csv-import/inspect|csv-import/apply)",path)
+        if method=="POST" and match:
+            model,action=match.groups()
+            data=self._body(environ)
+            if action=="query":
+                self._fields(data,{"limit","offset","search","field"},set())
+                out=runtime.query_rows(tenant=tid,project_id=project,actor=actor,
+                                       model=model,**data)
+            elif action=="csv-export":
+                self._fields(data,{"limit","search","field"},set())
+                out=runtime.export_csv(tenant=tid,project_id=project,actor=actor,
+                                       model=model,**data)
+            elif action=="csv-import/inspect":
+                self._fields(data,{"expected_revision","csv_text"},
+                             {"expected_revision","csv_text"})
+                out=runtime.inspect_csv_import(tenant=tid,project_id=project,
+                                                actor=actor,model=model,**data)
+            else:
+                self._fields(data,{"expected_revision","csv_text",
+                                   "expected_plan_sha256","idempotency_key"},
+                             {"expected_revision","csv_text",
+                              "expected_plan_sha256","idempotency_key"})
+                out=runtime.apply_csv_import(tenant=tid,project_id=project,
+                                              actor=actor,model=model,**data)
+            return self._json(start_response,
+                              "201 Created" if action=="csv-import/apply" else "200 OK",
+                              out)
         match=re.fullmatch(r"/api/v1/models/("+_MODEL.pattern[1:-1]+r")/choices",path)
         if method=="GET" and match:
             out=runtime.reference_choices(tenant=tid,project_id=project,

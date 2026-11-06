@@ -555,6 +555,56 @@ async function run(){
     "Wave 15 submission receipt displayed in Russian UI");
   await client.screenshot("14-live-form-submission-desktop.png");
 
+  // Wave 16: casefold-aware search, inspected CSV file and transactional import
+  // from the real browser UI; new rows must exist in the loopback SQLite service.
+  await client.eval("document.querySelector('[data-panel=records]').click();"+
+    "document.querySelector('#model-select').value='customers';"+
+    "document.querySelector('#model-select').dispatchEvent(new Event('change'));");
+  await poll(()=>client.eval(
+    "document.querySelector('#model-select').value==='customers' && "+
+    "document.querySelector('#record-page-info').textContent.includes('Показаны')"),
+    "Wave 16 model query initialized");
+  await client.eval("document.querySelector('#record-search').value='wAvE 15';"+
+    "document.querySelector('#record-find').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#record-page-info').textContent.includes('из 1') && "+
+    "document.querySelector('#rows-table').textContent.includes('Wave 15')"),
+    "Wave 16 casefold-aware real model search");
+  await client.eval("(()=>{"+
+    "const csv='name,email\\nКлиент Wave 16,wave16@example.org\\n';"+
+    "const file=new File([csv],'wave16.csv',{type:'text/csv'});"+
+    "const transfer=new DataTransfer();transfer.items.add(file);"+
+    "const input=document.querySelector('#record-csv-file');"+
+    "input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));"+
+    "document.querySelector('#record-csv-inspect').click();return true;})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#record-csv-summary').textContent.includes('Проверено: 1') "+
+    "&& !document.querySelector('#record-csv-approve').disabled"),
+    "Wave 16 CSV inspection returned deterministic plan digest");
+  await client.eval("document.querySelector('#record-csv-approve').checked=true;"+
+    "document.querySelector('#record-csv-approve').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#record-csv-apply').click();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/models/customers");
+    // The existing record.created workflow normalizes the email during import.
+    return data.rows.some(x=>x.fields.name==="Клиент Wave 16" &&
+                              x.fields.email==="auto@example.org" && x.version===2);
+  },"Wave 16 CSV apply persisted an actual SQLite row");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice').textContent.includes('Импортировано в SQLite: 1')"),
+    "Wave 16 CSV import receipt visible in UI");
+  await client.eval("document.querySelector('#record-search').value='wAvE 16';"+
+    "document.querySelector('#record-find').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#rows-table').textContent.includes('Клиент Wave 16') "+
+    "&& document.querySelector('#record-page-info').textContent.includes('из 1')"),
+    "Wave 16 imported row is searchable");
+  await client.eval("document.querySelector('#record-export').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#notice').textContent.includes('CSV подготовлен: 1')"),
+    "Wave 16 local UTF-8 CSV export completes");
+  await client.screenshot("15-records-import-export-desktop.png");
+
   // Use a genuine touch-enabled device viewport and reload so Chromium
   // recomputes meta viewport and responsive layout from navigation start.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -635,9 +685,9 @@ async function run(){
   assert.ok(overflow320<=2,"320px mobile horizontal overflow: "+overflow320);
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","mobile-390","mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","mobile-390","mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:14,public_server_started:false,production_deployed:false};
+    screenshots:15,public_server_started:false,production_deployed:false};
 }
 
 try{
