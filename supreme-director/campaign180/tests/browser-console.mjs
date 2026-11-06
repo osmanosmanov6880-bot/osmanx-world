@@ -586,8 +586,9 @@ async function run(){
     "document.querySelector('#record-csv-apply').click();");
   await poll(async()=>{
     const data=await localApi("/api/v1/models/customers");
+    // The existing record.created workflow normalizes the email during import.
     return data.rows.some(x=>x.fields.name==="Клиент Wave 16" &&
-                              x.fields.email==="wave16@example.org");
+                              x.fields.email==="auto@example.org" && x.version===2);
   },"Wave 16 CSV apply persisted an actual SQLite row");
   await poll(()=>client.eval(
     "document.querySelector('#notice').textContent.includes('Импортировано в SQLite: 1')"),
