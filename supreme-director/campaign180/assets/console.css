@@ -158,3 +158,32 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
   .record-page-toolbar span{grid-row:1;grid-column:1/-1}
   .record-page-toolbar button{min-width:0}
 }
+
+/* Wave 17: compact, keyboard-accessible batch editor and append-only journal */
+.record-batch{min-width:0;margin:18px 0}
+.batch-edit-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
+ gap:14px;align-items:end;margin:14px 0 16px}
+.batch-edit-grid>div{min-width:0}
+.batch-edit-grid select,.batch-edit-grid input{width:100%;max-width:100%;min-width:0}
+.batch-edit-grid button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#batch-selected-count{margin:12px 0}
+#batch-summary,#batch-restore-summary{max-width:100%;overflow-wrap:anywhere}
+#batch-apply,#batch-restore-apply{max-width:100%;white-space:normal;line-height:1.4}
+.batch-journal{margin-top:24px;padding-top:18px;border-top:1px solid #334a65;min-width:0}
+.batch-journal .record-operations-header h3{font-size:18px;margin:0}
+#batch-history-list{margin-top:16px;display:grid;grid-template-columns:
+ repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px}
+.batch-journal-item{min-width:0;display:flex;flex-direction:column;gap:7px;
+ background:#12243a;border:1px solid #304968;border-radius:12px;padding:14px}
+.batch-journal-item strong{font-size:15px;color:#e4edfa}
+.batch-journal-item small{color:#a8bfdc;overflow-wrap:anywhere;line-height:1.5}
+.batch-journal-item button{align-self:flex-start;margin-top:5px;max-width:100%}
+.batch-restore-review{border-top:1px solid #304968;padding:16px 0;margin-top:16px}
+#rows-table input[data-batch-row-id]{width:17px;height:17px;cursor:pointer}
+@media(max-width:850px){.batch-edit-grid{grid-template-columns:1fr 1fr}
+ .batch-edit-grid button{grid-column:1/-1}}
+@media(max-width:560px){.batch-edit-grid{grid-template-columns:minmax(0,1fr)}
+ .batch-edit-grid button{grid-column:auto;width:100%}
+ .record-batch .record-operations-header{display:block}
+ .record-batch .record-operations-header .pill{display:inline-flex;margin-top:12px}
+ .batch-journal-item button{width:100%}}
