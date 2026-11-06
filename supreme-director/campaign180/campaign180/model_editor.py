@@ -239,6 +239,146 @@ class LocalModelEditor:
             return self._record(db,tenant,project_id,head,verified,
                                 "RENAME_FIELD",model,len(rows))
 
+    def rename_reference_field(self,*,tenant:str,project_id:str,actor:str,
+                               expected_revision:int,model:str,
+                               old_name:str,new_name:str)->dict:
+        """Atomically rename a relation field *without changing its target*.
+
+        Both JSON keys and builder_links.field change in the same transaction.
+        Active links must already match verified row data; unexpected/missing
+        indexes, deleted-row edges, stale versions and workflow dependencies
+        cause a complete rollback. No foreign tenant or project identifiers
+        can be supplied by the caller.
+        """
+        if (type(old_name) is not str or type(new_name) is not str
+            or not FIELD.fullmatch(old_name) or not FIELD.fullmatch(new_name)
+            or old_name==new_name or new_name in SECRET_NAMES or new_name=="id"):
+            raise ModelMigrationDenied("Invalid or sensitive relation field name")
+        with self.runtime.drafts._tx() as db:
+            doc,head=self._context(db,tenant,project_id,actor,
+                                   expected_revision,write_records=True)
+            definition=self.runtime.records._model(doc,model)
+            old_definition=json.loads(canonical(definition))
+            selected=[f for f in definition["fields"] if f["name"]==old_name]
+            if len(selected)!=1 or selected[0]["type"]!="reference":
+                raise ModelMigrationDenied("Existing reference field required")
+            if any(f["name"]==new_name for f in definition["fields"]):
+                raise ModelMigrationDenied("Duplicate relation field name")
+            for wf in db.execute("""SELECT * FROM app_workflows WHERE tenant=?
+                    AND project_id=?""",(tenant,project_id)).fetchall():
+                rule=self.runtime._read_rule(wf)["rule"]
+                if rule["model"]==model and (
+                    rule["action"]["field"]==old_name or
+                    (rule["condition"] is not None and rule["condition"]["field"]==old_name)):
+                    raise ModelMigrationDenied("Workflow references this relation: migrate rule first")
+            target_model=selected[0]["references"]
+            selected[0]["name"]=new_name
+            for page in doc["pages"]:
+                for section in page["sections"]:
+                    if section["type"]=="form" and section["model"]==model and "fields" in section:
+                        section["fields"]=[new_name if f==old_name else f
+                                           for f in section["fields"]]
+            new_spec=validate_site_spec(doc)
+            changed_def=self.runtime.records._model(new_spec,model)
+            rows=db.execute("""SELECT row_id,deleted FROM builder_rows
+                WHERE tenant=? AND project_id=? AND model=?
+                ORDER BY row_id LIMIT ?""",
+                (tenant,project_id,model,MAX_ROWS_MIGRATED+1)).fetchall()
+            if len(rows)>MAX_ROWS_MIGRATED:
+                raise ModelMigrationDenied("Relation rename exceeds 500 rows")
+            linked=0
+            for entry in rows:
+                body,header=self.runtime.records._row(
+                    db,tenant,project_id,model,entry["row_id"],deleted_allowed=True)
+                validate_row(old_definition,body)
+                old_value=body.get(old_name)
+                indexes=db.execute("""SELECT field,target_model,target_row_id
+                    FROM builder_links WHERE tenant=? AND project_id=?
+                    AND model=? AND row_id=? AND field IN (?,?)""",
+                    (tenant,project_id,model,entry["row_id"],old_name,new_name)).fetchall()
+                if (len(indexes)!=int(old_value is not None and not entry["deleted"])
+                    or (indexes and
+                        (indexes[0]["field"]!=old_name or
+                         indexes[0]["target_model"]!=target_model or
+                         indexes[0]["target_row_id"]!=old_value))):
+                    raise ModelMigrationDenied("Stored relation index differs from JSON value")
+                if old_value is not None and not entry["deleted"]:
+                    self.runtime.records._refs(db,tenant,project_id,old_definition,body)
+                    linked+=1
+                new_body={new_name if key==old_name else key:value
+                          for key,value in body.items()}
+                verified=validate_row(changed_def,new_body)
+                rewritten=db.execute("""UPDATE builder_rows SET
+                    data_json=?,content_digest=?,version=version+1
+                    WHERE tenant=? AND project_id=? AND model=? AND row_id=?
+                    AND version=? AND deleted=?""",
+                    (canonical(verified).decode("utf-8"),digest(verified),tenant,
+                     project_id,model,entry["row_id"],header["version"],entry["deleted"])).rowcount
+                if rewritten!=1:
+                    raise ModelMigrationDenied("Record changed during reference rename")
+                if indexes:
+                    changed=db.execute("""UPDATE builder_links SET field=?
+                        WHERE tenant=? AND project_id=? AND model=?
+                        AND row_id=? AND field=? AND target_model=? AND target_row_id=?""",
+                        (new_name,tenant,project_id,model,entry["row_id"],old_name,
+                         target_model,old_value)).rowcount
+                    if changed!=1:
+                        raise ModelMigrationDenied("Reference index changed during rename")
+            orphan=db.execute("""SELECT 1 FROM builder_links WHERE tenant=?
+                AND project_id=? AND model=? AND field=? LIMIT 1""",
+                (tenant,project_id,model,old_name)).fetchone()
+            if orphan:
+                raise ModelMigrationDenied("Orphaned relation index prevents migration")
+            output=self._record(db,tenant,project_id,head,new_spec,
+                                "RENAME_REFERENCE_FIELD",model,len(rows))
+            return {**output,"updated_links":linked,
+                    "reference_target_unchanged":True}
+
+    def retarget_unused_reference(self,*,tenant:str,project_id:str,actor:str,
+                                  expected_revision:int,model:str,
+                                  field:str,new_target_model:str)->dict:
+        """Rebind only an unused reference, never move a live relation silently."""
+        if (type(field) is not str or type(new_target_model) is not str
+            or not FIELD.fullmatch(field) or not FIELD.fullmatch(new_target_model)):
+            raise ModelMigrationDenied("Invalid relationship model names")
+        with self.runtime.drafts._tx() as db:
+            spec,head=self._context(db,tenant,project_id,actor,
+                                    expected_revision,write_records=True)
+            src=self.runtime.records._model(spec,model)
+            selected=[f for f in src["fields"] if f["name"]==field]
+            if len(selected)!=1 or selected[0]["type"]!="reference":
+                raise ModelMigrationDenied("Reference field required")
+            old_target=selected[0]["references"]
+            if old_target==new_target_model:
+                raise ModelMigrationDenied("No target change requested")
+            self.runtime.records._model(spec,new_target_model)
+            # All active or deleted rows with a value, plus *all* link rows,
+            # block rebind. This prevents silent data loss and dangling edges.
+            rows=db.execute("""SELECT row_id FROM builder_rows WHERE
+                tenant=? AND project_id=? AND model=? ORDER BY row_id LIMIT ?""",
+                (tenant,project_id,model,MAX_ROWS_MIGRATED+1)).fetchall()
+            if len(rows)>MAX_ROWS_MIGRATED:
+                raise ModelMigrationDenied("Reference retarget exceeds row budget")
+            if db.execute("""SELECT 1 FROM builder_links WHERE tenant=?
+                AND project_id=? AND model=? AND field=? LIMIT 1""",
+                (tenant,project_id,model,field)).fetchone():
+                raise ModelMigrationDenied("Existing relation edges require explicit mapped migration")
+            for row in rows:
+                data,_=self.runtime.records._row(db,tenant,project_id,
+                    model,row["row_id"],deleted_allowed=True)
+                if data.get(field) is not None:
+                    raise ModelMigrationDenied("Existing relationship data prevents retarget")
+            # Workflow references to a relation are not automatically rewritten.
+            for wf in db.execute("""SELECT * FROM app_workflows WHERE tenant=?
+                    AND project_id=?""",(tenant,project_id)).fetchall():
+                rule=self.runtime._read_rule(wf)["rule"]
+                if rule["model"]==model and rule["condition"] is not None and (
+                    rule["condition"]["field"]==field):
+                    raise ModelMigrationDenied("Workflow requires manual review")
+            selected[0]["references"]=new_target_model
+            return self._record(db,tenant,project_id,head,spec,
+                                "RETARGET_EMPTY_REFERENCE",model,0)
+
     def list_migrations(self,*,tenant:str,project_id:str,actor:str,
                         limit:int=50)->list[dict]:
         if type(limit) is not int or not 1<=limit<=100:
