@@ -306,6 +306,70 @@ async function run(){
   })()`),"actual non-submittable form DOM in preview");
   await client.screenshot("04-schema-form-desktop.png");
 
+  // Wave 8: edit actual form properties and select only a typed field.
+  await client.eval("document.querySelector('[data-panel=pages]').click();");
+  await poll(()=>client.eval("document.querySelector('#form-editor').hidden===false && "+
+    "document.querySelector('#edit-form-fields [data-name=level]')!==null"),
+    "form properties editor with model fields");
+  await client.eval("document.querySelector('#edit-form-heading').value='Заявка поставщика';"+
+    "document.querySelector('#edit-form-button').value='Отправить';"+
+    "document.querySelector('#edit-form-fields [data-name=name] input').checked=false;"+
+    "document.querySelector('#form-editor').requestSubmit();");
+  await poll(async()=>{
+    const snapshot=await localApi("/api/v1/spec");
+    const form=snapshot.spec.pages[0].sections.find(x=>x.type==="form"&&x.model==="vendors");
+    return form?.heading==="Заявка поставщика" &&
+      JSON.stringify(form.fields)===JSON.stringify(["level"]) &&
+      form.button_label==="Отправить";
+  },"selected form fields and button saved by UI");
+
+  // Relational records use tenant-bound dropdowns, not raw UUID input.
+  await client.eval("document.querySelector('[data-panel=records]').click();"+
+    "document.querySelector('#model-select').value='requests';"+
+    "document.querySelector('#model-select').dispatchEvent(new Event('change'));");
+  await poll(()=>client.eval("document.querySelector('#field-customer')?.tagName==='SELECT'"+
+    " && !document.querySelector('#field-customer').disabled "+
+    " && document.querySelector('#field-customer').options.length>=2"),
+    "reference options loaded within tenant");
+  await client.eval("document.querySelector('#field-customer').value="+JSON.stringify(clientRow.row_id)+
+    ";document.querySelector('#field-summary').value='Связанная заявка из Chromium';"+
+    "document.querySelector('#row-form').requestSubmit();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/models/requests");
+    return data.rows.some(x=>x.fields.summary==="Связанная заявка из Chromium"
+      && x.fields.customer===clientRow.row_id);
+  },"relational record persisted via dropdown");
+  await client.screenshot("05-reference-editor-desktop.png");
+
+  // Schema rename must preserve actual vendor data and selected form fields.
+  await client.eval("document.querySelector('[data-panel=schema]').click();"+
+    "document.querySelector('#schema-rename-model').value='vendors';"+
+    "document.querySelector('#schema-rename-model').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#schema-rename-source').value='level';"+
+    "document.querySelector('#schema-rename-target').value='tier';"+
+    "document.querySelector('#schema-rename-approve').checked=true;"+
+    "document.querySelector('#schema-rename-form').requestSubmit();");
+  await poll(async()=>{
+    const [vendors,spec]=await Promise.all([
+      localApi("/api/v1/models/vendors"),localApi("/api/v1/spec")]);
+    const row=vendors.rows.find(x=>x.fields.name==="Поставщик CI");
+    const form=spec.spec.pages[0].sections.find(x=>x.type==="form"&&x.model==="vendors");
+    return row?.fields.tier===2 && !Object.hasOwn(row.fields,"level") &&
+      row.version===3 && JSON.stringify(form?.fields)===JSON.stringify(["tier"]);
+  },"atomic field rename rewrote row and form metadata");
+  await client.eval("document.querySelector('[data-panel=preview]').click();"+
+    "document.querySelector('#preview-select').value='home';"+
+    "document.querySelector('#refresh-preview').click();");
+  await poll(()=>client.eval(
+    "(()=>{const src=document.querySelector('#preview-frame').srcdoc;"+
+    "const doc=new DOMParser().parseFromString(src,'text/html');"+
+    "const form=doc.querySelector('form.demo-form');"+
+    "return !!form && form.querySelectorAll('input[type=number]:disabled').length===1"+
+    " && form.querySelectorAll('input').length===1"+
+    " && form.querySelector('button[type=button]:disabled')!==null;})()"),
+    "migrated form remains non-submittable");
+  await client.screenshot("06-renamed-form-desktop.png");
+
   // Mobile viewport must not leak navigation or overflow the viewport.
   await client.send("Emulation.setDeviceMetricsOverride",{
     width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -313,12 +377,12 @@ async function run(){
   const overflow=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(overflow<=2,"mobile horizontal overflow: "+overflow);
-  await client.screenshot("05-mobile-390.png");
+  await client.screenshot("07-mobile-390.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","mobile"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","mobile"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:5,public_server_started:false,production_deployed:false};
+    screenshots:7,public_server_started:false,production_deployed:false};
 }
 
 try{
