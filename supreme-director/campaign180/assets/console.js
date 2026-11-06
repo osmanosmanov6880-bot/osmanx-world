@@ -87,6 +87,7 @@ async function sync(){
   $("wf-create").disabled=!can("workflow.manage");
   $("history-inspect").disabled=!can("spec.write");
   $("recovery-inspect").disabled=!can("members.manage");
+  $("recovery-drill").disabled=!can("members.manage");
   $("map-load-options").disabled=!can("spec.write")||!can("record.read");
   renderPages();renderModels();renderSchema();renderWorkflows();
   await refreshRows();
@@ -379,6 +380,26 @@ $("map-apply").addEventListener("click",async()=>{
     show("Связи перенесены: "+out.changed_links+
       " · новая ревизия "+out.revision+". Без сетевых операций.");
   }catch(err){clearMapPlan();show(err.message,true);}
+});
+$("recovery-drill").addEventListener("click",async()=>{
+  try{
+    if(!can("members.manage"))throw Error("Проверка доступна только владельцу");
+    $("recovery-drill").disabled=true;
+    $("recovery-drill-summary").textContent="Проверка копии…";
+    const result=await api("/api/v1/recovery/drill",{method:"POST",body:{}});
+    if(result.passed!==true||result.scratch_only!==true||result.source_database_modified!==false)
+      throw Error("Восстановление на отдельной копии не подтверждено");
+    $("recovery-drill-summary").textContent="PASS · "+result.rows_verified+
+      " записей · "+result.links_verified+
+      " связей · SHA "+result.verified_bundle_sha256.slice(0,16)+"…"+
+      " · исходная база без изменений";
+    show("Изолированная проверка восстановления пройдена");
+  }catch(e){
+    $("recovery-drill-summary").textContent="Проверка не прошла.";
+    show(e.message,true);
+  }finally{
+    $("recovery-drill").disabled=!can("members.manage");
+  }
 });
 $("recovery-inspect").addEventListener("click",async()=>{
   try{
