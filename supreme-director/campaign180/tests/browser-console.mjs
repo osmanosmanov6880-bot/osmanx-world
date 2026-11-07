@@ -48,6 +48,15 @@ function seededInit(){
     "--database",database,"--spec",
     path.join(packageRoot,"examples","demo-site.json"),"--actor",actor],{
     env:pyEnv,stdio:["ignore","pipe","pipe"],timeout:30000});
+  // Disposable worker for the browser's strictly non-persistent Wave23 preview.
+  const addWorker = "from campaign180.app_runtime import LocalAppRuntime; " +
+    "import sys; rt=LocalAppRuntime(sys.argv[1]); " +
+    "rt.policy.add_member(tenant='tenant_demo'," +
+    "project_id='0b83c3f2-b4ab-4a6f-a83e-a48cb39b9c6f'," +
+    "owner_actor='owner-abc',member_actor='operator-abc'," +
+    "role='operator',now=1799971201)";
+  execFileSync(python,["-c",addWorker,database],{
+    env:pyEnv,stdio:["ignore","pipe","pipe"],timeout:30000});
 }
 
 async function poll(predicate,description,timeout=20000){
@@ -888,6 +897,65 @@ async function run(){
     "&& document.querySelectorAll('#forecast-history-list .forecast-audit-item').length===3"),
     "Wave 22 immutable resource input audit displayed");
   await client.screenshot("29-resource-forecast-desktop.png");
+  // Wave 23: enter realistic demand, then compare one reassignment without
+  // changing any assignment, version or forecast-input journal in SQLite.
+  await client.eval("document.querySelector('#task-title').value='Задача перераспределения Wave 23';"+
+    "document.querySelector('#task-assignee').value='owner-abc';"+
+    "document.querySelector('#task-due').value='2027-11-06';"+
+    "document.querySelector('#task-form').requestSubmit();");
+  await poll(()=>client.eval(
+    "document.querySelector('#task-list').textContent.includes('Задача перераспределения Wave 23')"),
+    "Wave 23 second owner task persisted in SQLite");
+  await client.eval("(()=>{const select=document.querySelector('#forecast-task');"+
+    "const option=[...select.options].find(x=>x.textContent.includes('Задача перераспределения Wave 23'));"+
+    "if(!option)throw Error('Wave 23 task not in effort input');"+
+    "select.value=option.value;select.dispatchEvent(new Event('change'));"+
+    "document.querySelector('#forecast-effort-hours').value='32';"+
+    "document.querySelector('#forecast-effort-form').requestSubmit();})()");
+  await poll(async()=>{
+    const forecast=await localApi("/api/v1/forecast");
+    return forecast.efforts.some(x=>x.effort_hours===32);
+  },"Wave 23 32 productive hours were explicitly estimated");
+  await client.eval("document.querySelector('#forecast-worker').value='operator-abc';"+
+    "document.querySelector('#forecast-worker').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#forecast-hours-per-day').value='8';"+
+    "document.querySelector('#forecast-capacity-form').requestSubmit();");
+  await poll(async()=>{
+    const forecast=await localApi("/api/v1/forecast");
+    return forecast.capacities.some(x=>x.worker==='operator-abc'&&x.hours_per_day===8);
+  },"Wave 23 alternative worker capacity explicitly saved");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-panel').hidden===false "+
+    "&& [...document.querySelector('#scenario-worker').options]"+
+    ".some(x=>x.value==='operator-abc') "+
+    "&& [...document.querySelector('#scenario-task').options]"+
+    ".some(x=>x.textContent.includes('Задача перераспределения Wave 23'))"),
+    "Wave 23 scenario builder populated from current SQLite data");
+  const sourceBeforeScenario=await localApi("/api/v1/forecast");
+  const unchangedTask=sourceBeforeScenario.tasks.find(x=>
+    x.title==="Задача перераспределения Wave 23");
+  assert.equal(unchangedTask.assignee,"owner-abc");
+  await client.eval("(()=>{const select=document.querySelector('#scenario-task');"+
+    "const option=[...select.options].find(x=>x.textContent.includes('Задача перераспределения Wave 23'));"+
+    "select.value=option.value;document.querySelector('#scenario-worker').value='operator-abc';"+
+    "document.querySelector('#scenario-add').click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-moves').textContent.includes('operator-abc') "+
+    "&& !document.querySelector('#scenario-compare').disabled"),
+    "Wave 23 hypothetical move staged only in UI");
+  await client.eval("document.querySelector('#scenario-compare').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-results').hidden===false "+
+    "&& document.querySelector('#scenario-comparison').textContent.includes('Альтернатива') "+
+    "&& document.querySelector('#scenario-comparison').textContent.includes('Текущий план')"),
+    "Wave 23 real baseline and alternative rendered from same snapshot");
+  const afterScenario=await localApi("/api/v1/forecast");
+  assert.equal(afterScenario.tasks.find(x=>x.task_id===unchangedTask.task_id).assignee,
+               "owner-abc","Wave 23 preview must NOT reassign real tasks");
+  assert.equal(afterScenario.input_snapshot,sourceBeforeScenario.input_snapshot,
+               "Wave 23 preview must NOT change any stored input");
+  await client.screenshot("32-reassignment-simulation-desktop.png");
+
 
 
 
@@ -984,6 +1052,16 @@ async function run(){
   assert.ok(forecastOverflow390<=2,
     "390px forecast panel horizontal overflow: "+forecastOverflow390);
   await client.screenshot("30-resource-forecast-390.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-panel').hidden===false "+
+    "&& document.querySelector('#scenario-worker-list').textContent.includes('owner-abc') "+
+    "&& document.querySelector('#scenario-moves').textContent.includes('operator-abc')"),
+    "Wave 23 390px scenario management visible and unchanged");
+  const scenarioOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(scenarioOverflow390<=2,
+    "390px scenario planner horizontal overflow: "+scenarioOverflow390);
+  await client.screenshot("33-scenario-mobile-390.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -1075,11 +1153,21 @@ async function run(){
   assert.ok(forecastOverflow320<=2,
     "320px forecast panel horizontal overflow: "+forecastOverflow320);
   await client.screenshot("31-resource-forecast-320.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-panel').hidden===false "+
+    "&& document.querySelector('#scenario-worker-list').textContent.includes('owner-abc') "+
+    "&& document.querySelector('#scenario-moves').textContent.includes('operator-abc')"),
+    "Wave 23 320px scenario management visible and unchanged");
+  const scenarioOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(scenarioOverflow320<=2,
+    "320px scenario planner horizontal overflow: "+scenarioOverflow320);
+  await client.screenshot("34-scenario-mobile-320.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:31,public_server_started:false,production_deployed:false};
+    screenshots:34,public_server_started:false,production_deployed:false};
 }
 
 try{
