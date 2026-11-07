@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -56,6 +56,7 @@ function switchPanel(name){
   if(name==="tasks" && state.spec)refreshTasks().catch(e=>show(e.message,true));
   if(name==="tasks" && state.spec)refreshTaskCalendar().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))refreshDelivery().catch(e=>show(e.message,true));
+  if(name==="tasks" && can("task.manage"))refreshResourceForecast().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))
     refreshTeamWorkload().catch(e=>show(e.message,true));
   if(name==="dashboard" && state.spec)refreshTaskSummary().catch(e=>show(e.message,true));
@@ -79,6 +80,7 @@ async function sync(){
   $("task-form").hidden=!can("task.manage");
   $("team-workload-panel").hidden=!can("task.manage");
   $("delivery-panel").hidden=!can("task.manage");
+  $("resource-forecast-panel").hidden=!can("task.manage");
   $("task-assignee-filter-wrap").hidden=!can("task.manage");
   $("task-checklist-form").hidden=!can("task.manage");
   $("task-refresh").disabled=!can("task.read");
@@ -176,7 +178,172 @@ async function refreshTasks({resetOffset=false}={}){
   await refreshTaskSummary();
   if(can("task.manage"))await refreshTeamWorkload();
   await refreshTaskCalendar();
+  if(can("task.manage"))await refreshResourceForecast();
 }
+const FORECAST_STATES={
+  scheduled:"Расчёт выполнен",
+  completed:"Завершена",
+  unassigned:"Нет исполнителя",
+  inactive_assignee:"Исполнитель неактивен",
+  capacity_missing:"Не указаны часы исполнителя",
+  incomplete_assignee_inputs:"Не все задачи сотрудника оценены",
+  effort_missing:"Нет оценки работы",
+  blocked_status:"Задача заблокирована",
+  prerequisite_unforecastable:"Неизвестен срок предшественника",
+  beyond_2_year_horizon:"Вне горизонта 730 дней",
+  unforecastable:"Недостаточно данных",
+};
+async function refreshResourceForecast(){
+  if(!can("task.manage"))return;
+  const seq=++state.forecastGeneration;
+  const [data,members]=await Promise.all([
+    api("/api/v1/forecast"),api("/api/v1/tasks/members")
+  ]);
+  if(seq!==state.forecastGeneration)return;
+  state.forecastData=data;
+  const m=data.metrics;
+  $("forecast-scheduled").textContent=m.scheduled_tasks+" / "+m.open_tasks;
+  $("forecast-unknown").textContent=m.unforecastable_tasks;
+  $("forecast-risk").textContent=m.at_risk_tasks+" задач · "+
+    m.at_risk_milestones+" вех";
+  $("forecast-finish").textContent=m.potential_finish||"Нет полного прогноза";
+  $("forecast-coverage").textContent=m.coverage_complete?
+    "Все открытые задачи имеют расчётные даты. Это сценарный прогноз, не гарантия завершения.":
+    "Прогноз неполный: "+m.unforecastable_tasks+
+    " задач без расчётной даты. Общую дату завершения выдавать нельзя.";
+  const workerSelect=$("forecast-worker");
+  const selectedWorker=workerSelect.value;
+  pick(workerSelect,[["","Выберите сотрудника"],
+    ...members.members.map(x=>[x.actor,x.actor+" · "+x.role])]);
+  if(members.members.some(x=>x.actor===selectedWorker))workerSelect.value=selectedWorker;
+  const taskSelect=$("forecast-task");
+  const selectedTask=taskSelect.value;
+  const incomplete=data.tasks.filter(x=>x.status!=="done");
+  pick(taskSelect,[["","Выберите задачу"],
+    ...incomplete.slice(0,100).map(x=>[x.task_id,x.title])]);
+  if(incomplete.slice(0,100).some(x=>x.task_id===selectedTask)){
+    taskSelect.value=selectedTask;
+  }
+  const list=$("forecast-task-list");list.replaceChildren();
+  if(!incomplete.length)list.append(node("p","Открытых задач нет.","hint"));
+  for(const task of incomplete.slice(0,100)){
+    const card=node("article",null,"forecast-task");
+    card.dataset.state=task.state;
+    const top=node("div",null,"task-item-head");
+    top.append(node("strong",task.title),
+      node("span",FORECAST_STATES[task.state]||"Неизвестно","forecast-state"));
+    card.append(top);
+    const stats=node("div",null,"forecast-task-meta");
+    stats.append(
+      node("small",task.assignee?"Исполнитель: "+task.assignee:"Без исполнителя"),
+      node("small",task.effort_hours?"Осталось: "+task.effort_hours+" ч":"Нет оценки"),
+      node("small",task.due_date?"План: "+task.due_date:"Срок не назначен"),
+      node("small",task.estimated_finish?"Расчёт: "+task.estimated_finish:"Расчётной даты нет"));
+    if(task.variance_calendar_days!==null){
+      stats.append(node("small","Отклонение от срока: "+
+        (task.variance_calendar_days>0?"+":"")+task.variance_calendar_days+" дн."));
+    }
+    card.append(stats);
+    list.append(card);
+  }
+  if(incomplete.length>100)list.append(node("p","Показаны первые 100 задач, расчёт включает весь проект.","hint"));
+  const exposure=$("forecast-milestone-list");exposure.replaceChildren();
+  if(data.milestone_exposure.length){
+    exposure.append(node("h3","Риски контрольных вех"));
+    for(const item of data.milestone_exposure.slice(0,100)){
+      const row=node("div",null,"forecast-milestone");
+      row.append(node("strong",item.name),
+        node("small",item.state==="potential_slip"?
+          "Риск сдвига на "+item.potential_slip_days+" дн. от прогноза":
+          item.state==="ready_for_confirmation"?"Задача готова, веха ждёт подтверждения":
+          item.state==="within_forecast"?"Укладывается в текущий прогноз":
+          "Не хватает данных для расчёта вехи"));
+      exposure.append(row);
+    }
+  }
+}
+function forecastSelectedVersion(kind,id){
+  const data=state.forecastData;
+  if(!data)return 0;
+  const items=kind==="capacity"?data.capacities:data.efforts;
+  const entry=items.find(x=>
+    (kind==="capacity"?x.worker:x.task_id)===id);
+  return entry?entry.version:0;
+}
+$("forecast-worker").addEventListener("change",()=>{
+  state.forecastCapacityKey=null;
+  const id=$("forecast-worker").value;
+  const entry=state.forecastData?.capacities.find(x=>x.worker===id);
+  $("forecast-hours-per-day").value=entry?String(entry.hours_per_day):"";
+});
+$("forecast-task").addEventListener("change",()=>{
+  state.forecastEffortKey=null;
+  const id=$("forecast-task").value;
+  const entry=state.forecastData?.efforts.find(x=>x.task_id===id);
+  $("forecast-effort-hours").value=entry?String(entry.effort_hours):"";
+});
+$("forecast-capacity-form").addEventListener("input",()=>{state.forecastCapacityKey=null;});
+$("forecast-effort-form").addEventListener("input",()=>{state.forecastEffortKey=null;});
+$("forecast-capacity-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!can("task.manage"))return;
+  const button=$("forecast-capacity-save");button.disabled=true;
+  try{
+    const worker=$("forecast-worker").value;
+    const key=state.forecastCapacityKey||safeId();
+    state.forecastCapacityKey=key;
+    await api("/api/v1/forecast/capacity",{method:"POST",body:{
+      worker,hours_per_day:Number($("forecast-hours-per-day").value),
+      expected_version:forecastSelectedVersion("capacity",worker),
+      idempotency_key:key}});
+    state.forecastCapacityKey=null;
+    await refreshResourceForecast();
+    show("Реальная мощность сотрудника сохранена с контролем версии");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+$("forecast-effort-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!can("task.manage"))return;
+  const button=$("forecast-effort-save");button.disabled=true;
+  try{
+    const task_id=$("forecast-task").value;
+    const key=state.forecastEffortKey||safeId();
+    state.forecastEffortKey=key;
+    await api("/api/v1/forecast/effort",{method:"POST",body:{
+      task_id,effort_hours:Number($("forecast-effort-hours").value),
+      expected_version:forecastSelectedVersion("effort",task_id),
+      idempotency_key:key}});
+    state.forecastEffortKey=null;
+    await refreshResourceForecast();
+    show("Оценка работы сохранена; прогноз пересчитан");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+$("forecast-refresh").addEventListener("click",()=>
+  refreshResourceForecast().catch(e=>show(e.message,true)));
+$("forecast-audit-open").addEventListener("click",async()=>{
+  try{
+    const result=await api("/api/v1/forecast/history",{
+      method:"POST",body:{limit:30}});
+    const list=$("forecast-history-list");list.replaceChildren();
+    if(!result.events.length)list.append(node("p","Изменений пока нет.","hint"));
+    for(const item of result.events){
+      const row=node("div",null,"forecast-audit-item");
+      row.append(node("strong",item.subject_type==="capacity"?
+        "Мощность: "+item.subject_id:"Оценка задачи: "+item.subject_id.slice(0,8)),
+        node("small","Версия "+item.version+" · "+item.actor+" · "+
+          new Date(item.at_epoch*1000).toLocaleString("ru-RU")),
+        node("small","SHA-256: "+item.sha256.slice(0,20)+"…"));
+      list.append(row);
+    }
+    $("forecast-history-panel").hidden=false;
+  }catch(e){show(e.message,true);}
+});
+$("forecast-audit-close").addEventListener("click",()=>{
+  $("forecast-history-panel").hidden=true;
+});
+
 const DELIVERY_RISK={
   completed:"Выполнено",completed_late:"Выполнено с опозданием",
   overdue:"Просрочено",slipped:"Прогноз сдвинут",on_track:"По плану",
