@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 from .contracts import canonical, digest
 from .resource_forecast import _project_forecast_db
 from .resource_scenarios import _compact
-from .team_tasks import _principal, _read, _eligible, _event
+from .team_tasks import TaskDenied, _principal, _read, _eligible, _event
 from .scenario_library import (
     ScenarioLibraryDenied, _find, _owner, _snapshot, _uuid, _version,
 )
@@ -198,12 +198,18 @@ def _rollback_preflight(db,*,tenant:str,project_id:str,
                         application:dict)->list[tuple[dict,dict]]:
     tasks=[]
     for saved in application["task_changes"]:
-        current=_read(db,tenant,project_id,saved["task_id"])
-        if (current["version"]!=saved["version_after"] or
-            current["assignee"]!=saved["after_assignee"] or
-            digest(current)!=saved["digest_after"]):
-            raise ScenarioLibraryDenied("Tasks changed after application; rollback denied")
-        _eligible(db,tenant,project_id,saved["before_assignee"])
+        try:
+            current=_read(db,tenant,project_id,saved["task_id"])
+            if (current["version"]!=saved["version_after"] or
+                current["assignee"]!=saved["after_assignee"] or
+                digest(current)!=saved["digest_after"]):
+                raise ScenarioLibraryDenied(
+                    "Tasks changed after application; rollback denied")
+            _eligible(db,tenant,project_id,saved["before_assignee"])
+        except TaskDenied as exc:
+            raise ScenarioLibraryDenied(
+                "Rollback blocked by changed task or inactive previous assignee"
+            ) from exc
         tasks.append((current,saved))
     return tasks
 
