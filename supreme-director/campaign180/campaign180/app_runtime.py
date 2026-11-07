@@ -48,6 +48,10 @@ from .resource_forecast import (
     init_forecast,set_effort,set_capacity,project_forecast,forecast_history,
 )
 from .resource_scenarios import workload_report,compare_reassignment
+from .scenario_library import (
+    init_scenario_library,save_variant,list_variants,select_variant,
+    apply_variant,decision_history,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -88,6 +92,7 @@ class LocalAppRuntime:
         init_planning(self)
         init_delivery(self)
         init_forecast(self)
+        init_scenario_library(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -411,6 +416,41 @@ class LocalAppRuntime:
         return compare_reassignment(self,tenant=tenant,project_id=project_id,
                                     actor=actor,expected_snapshot=expected_snapshot,
                                     moves=moves)
+
+    def save_resource_variant(self,*,tenant:str,project_id:str,actor:str,
+                              title:str,expected_snapshot:str,moves:list[dict],
+                              idempotency_key:str)->dict:
+        return save_variant(self,tenant=tenant,project_id=project_id,
+                            actor=actor,title=title,expected_snapshot=expected_snapshot,
+                            moves=moves,idempotency_key=idempotency_key)
+
+    def list_resource_variants(self,*,tenant:str,project_id:str,actor:str)->dict:
+        return list_variants(self,tenant=tenant,project_id=project_id,actor=actor)
+
+    def select_resource_variant(self,*,tenant:str,project_id:str,actor:str,
+                                scenario_id:str,expected_version:int,
+                                expected_snapshot:str,idempotency_key:str)->dict:
+        return select_variant(self,tenant=tenant,project_id=project_id,
+                              actor=actor,scenario_id=scenario_id,
+                              expected_version=expected_version,
+                              expected_snapshot=expected_snapshot,
+                              idempotency_key=idempotency_key)
+
+    def apply_resource_variant(self,*,tenant:str,project_id:str,actor:str,
+                               scenario_id:str,expected_version:int,
+                               expected_snapshot:str,confirmation:str,
+                               idempotency_key:str)->dict:
+        return apply_variant(self,tenant=tenant,project_id=project_id,
+                             actor=actor,scenario_id=scenario_id,
+                             expected_version=expected_version,
+                             expected_snapshot=expected_snapshot,
+                             confirmation=confirmation,
+                             idempotency_key=idempotency_key)
+
+    def resource_variant_history(self,*,tenant:str,project_id:str,actor:str,
+                                 scenario_id:str,limit:int=30)->dict:
+        return decision_history(self,tenant=tenant,project_id=project_id,
+                                actor=actor,scenario_id=scenario_id,limit=limit)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
