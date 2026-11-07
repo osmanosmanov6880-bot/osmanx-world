@@ -596,3 +596,46 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
  .scenario-saved-actions{display:grid}
  .scenario-saved-actions button{width:100%}
 }
+
+/* Wave 25: non-decorative factual outcomes with accessible rollback gate. */
+.scenario-outcome-report{margin-top:17px;padding:16px;
+ background:#142941;border:1px solid #486683;border-radius:12px;min-width:0}
+.scenario-outcome-report h3{font-size:17px;margin:0}
+.scenario-outcome-report h4{font-size:14px;margin:15px 0 8px}
+.scenario-outcome-summary{display:grid;grid-template-columns:
+ repeat(auto-fit,minmax(min(100%,175px),1fr));gap:9px;margin:14px 0}
+.scenario-outcome-metric{display:grid;gap:9px;min-width:0;
+ padding:12px;background:#192e47;border-radius:9px;
+ border:1px solid #385573}
+.scenario-outcome-metric span{font-size:11px;color:#a7c4e3}
+.scenario-outcome-metric strong{font-size:13px;overflow-wrap:anywhere;
+ font-variant-numeric:tabular-nums}
+.scenario-outcome-assignments{display:grid;grid-template-columns:
+ repeat(auto-fit,minmax(min(100%,230px),1fr));gap:9px;margin-bottom:15px}
+.scenario-outcome-assignment{display:grid;gap:8px;min-width:0;
+ padding:12px;background:#14253c;border:1px solid #3c5876;border-radius:9px}
+.scenario-outcome-assignment strong{font-size:12px}
+.scenario-outcome-assignment span,.scenario-outcome-assignment small{
+ font-size:11px;line-height:1.5;overflow-wrap:anywhere;color:#c2d8f0}
+.scenario-outcome-live,.scenario-outcome-returned{display:grid;gap:8px;
+ padding:14px;background:#1d334e;border-left:2px solid #93b6de;
+ border-radius:8px;margin:13px 0}
+.scenario-outcome-returned{border-left-color:#98c2a8}
+.scenario-outcome-live strong,.scenario-outcome-returned strong{font-size:13px}
+.scenario-outcome-live small,.scenario-outcome-returned small{
+ font-size:11px;color:#b9d0ea;overflow-wrap:anywhere}
+.scenario-rollback-guard{display:grid;gap:11px;padding:14px;margin-top:15px;
+ background:#20334c;border:1px solid #c69e80;border-radius:10px}
+.scenario-rollback-guard label{display:flex;gap:9px;align-items:flex-start;
+ font-size:12px;line-height:1.5}
+.scenario-rollback-guard label input{flex:none;margin-top:2px}
+.scenario-rollback-guard input[type=text]{width:100%;max-width:100%;min-width:0}
+.scenario-rollback-guard button{white-space:normal}
+@media(max-width:480px){
+ .scenario-outcome-report{padding:11px}
+ .scenario-outcome-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .scenario-outcome-metric{padding:9px}
+ .scenario-outcome-metric strong{font-size:11px}
+ .scenario-rollback-guard{padding:11px}
+ .scenario-rollback-guard button{width:100%}
+}
