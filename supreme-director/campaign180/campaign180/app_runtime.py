@@ -52,6 +52,9 @@ from .scenario_library import (
     init_scenario_library,save_variant,list_variants,select_variant,
     apply_variant,decision_history,
 )
+from .scenario_outcomes import (
+    init_outcomes,outcome_detail,rollback_application,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -93,6 +96,7 @@ class LocalAppRuntime:
         init_delivery(self)
         init_forecast(self)
         init_scenario_library(self)
+        init_outcomes(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -451,6 +455,21 @@ class LocalAppRuntime:
                                  scenario_id:str,limit:int=30)->dict:
         return decision_history(self,tenant=tenant,project_id=project_id,
                                 actor=actor,scenario_id=scenario_id,limit=limit)
+
+    def scenario_outcome(self,*,tenant:str,project_id:str,actor:str,
+                         scenario_id:str)->dict:
+        return outcome_detail(self,tenant=tenant,project_id=project_id,
+                              actor=actor,scenario_id=scenario_id)
+
+    def rollback_resource_variant(self,*,tenant:str,project_id:str,actor:str,
+                                  scenario_id:str,expected_version:int,
+                                  expected_snapshot:str,confirmation:str,
+                                  idempotency_key:str)->dict:
+        return rollback_application(
+            self,tenant=tenant,project_id=project_id,actor=actor,
+            scenario_id=scenario_id,expected_version=expected_version,
+            expected_snapshot=expected_snapshot,confirmation=confirmation,
+            idempotency_key=idempotency_key)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
