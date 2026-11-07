@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{}};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -183,6 +183,164 @@ async function refreshTasks({resetOffset=false}={}){
   if(can("task.manage"))await refreshResourceForecast();
   if(can("task.manage"))await refreshScenarioWorkload();
 }
+const SCENARIO_LIBRARY_STATUS={
+  draft:"Черновик",approved:"Выбран владельцем",
+  superseded:"Выбор отменён",applied:"Применён к задачам",
+};
+function renderSavedScenarios(){
+  const root=$("scenario-library-list");root.replaceChildren();
+  const data=state.scenarioLibrary;
+  if(!data)return;
+  const variants=data.variants;
+  $("scenario-library-summary").textContent="Сохранено вариантов: "+variants.length+
+    " / 50 · выбрать и применить может только владелец проекта.";
+  const isOwner=state.me?.role==="owner";
+  if(!variants.length)root.append(node("p","Вариантов пока нет. Добавьте перестановки и сохраните сценарий.","hint"));
+  for(const item of variants){
+    const card=node("article",null,"scenario-saved-card");
+    card.dataset.status=item.status;
+    card.dataset.current=String(item.snapshot_current);
+    card.dataset.id=item.scenario_id;
+    const top=node("div",null,"scenario-saved-header");
+    top.append(node("strong",item.title),
+      node("span",SCENARIO_LIBRARY_STATUS[item.status]||item.status,"scenario-saved-status"));
+    card.append(top);
+    card.append(node("p",item.move_count+" перестановок · версия "+item.version+
+      " · "+(item.snapshot_current?"Данные актуальны":"Исходные данные изменились"),
+      "scenario-saved-subtitle"));
+    const stats=node("div",null,"scenario-saved-metrics");
+    const original=item.preview.baseline.metrics;
+    const alternative=item.preview.scenario.metrics;
+    for(const [label,before,after] of [
+      ["Задачи с риском",original.at_risk_tasks,alternative.at_risk_tasks],
+      ["Перегрузка",original.overloaded_workers,alternative.overloaded_workers],
+      ["Расчётная дата",original.potential_finish||"неизвестна",
+                        alternative.potential_finish||"неизвестна"]]){
+      stats.append(node("p",label+": "+before+" → "+after));
+    }
+    card.append(stats);
+    const actions=node("div",null,"scenario-saved-actions");
+    const history=node("button","История","ghost");
+    history.type="button";
+    history.addEventListener("click",async()=>{
+      try{
+        const data=await api("/api/v1/scenarios/saved/"+
+          encodeURIComponent(item.scenario_id)+"/history",{
+            method:"POST",body:{limit:50}});
+        const target=$("scenario-decision-list");target.replaceChildren();
+        for(const e of data.events){
+          const action={SAVE:"Сохранение",APPROVE:"Выбор владельцем",
+            SUPERSEDE:"Отмена выбора",APPLY:"Применение"}[e.action]||e.action;
+          const line=node("div",null,"scenario-decision-entry");
+          line.append(node("strong",action),
+            node("small","Автор: "+e.actor+" · версия "+e.version+" · "+
+              new Date(e.at_epoch*1000).toLocaleString("ru-RU")),
+            node("small","Проверка SHA-256: "+e.sha256.slice(0,20)+"…"));
+          target.append(line);
+        }
+        $("scenario-decision-history").hidden=false;
+      }catch(e){show(e.message,true);}
+    });
+    actions.append(history);
+    if(isOwner && item.snapshot_current &&
+        (item.status==="draft"||item.status==="superseded")){
+      const choose=node("button","Выбрать этот вариант","ghost");
+      choose.type="button";
+      choose.addEventListener("click",async()=>{
+        choose.disabled=true;
+        try{
+          const key=state.scenarioSelectKeys[item.scenario_id]||safeId();
+          state.scenarioSelectKeys[item.scenario_id]=key;
+          await api("/api/v1/scenarios/saved/"+encodeURIComponent(item.scenario_id)+
+            "/select",{method:"POST",body:{
+              expected_version:item.version,expected_snapshot:item.input_snapshot,
+              idempotency_key:key}});
+          delete state.scenarioSelectKeys[item.scenario_id];
+          await refreshScenarioWorkload();
+          show("Вариант выбран владельцем. Реальные назначения ещё не менялись");
+        }catch(e){show(e.message,true);}
+        finally{choose.disabled=false;}
+      });
+      actions.append(choose);
+    }
+    if(isOwner && item.status==="approved"){
+      const guard=node("div",null,"scenario-apply-guard");
+      const warning=node("p","Подтвердите применение. Все указанные "+
+        "задачи будут реально переназначены одним действием.","hint");
+      const checkbox=node("input");
+      checkbox.type="checkbox";
+      checkbox.setAttribute("aria-label","Подтверждаю переназначение задач");
+      const label=node("label","Я проверил исполнителей и последствия");
+      label.prepend(checkbox);
+      const input=node("input");
+      input.type="text";input.placeholder="Введите ПРИМЕНИТЬ";
+      input.setAttribute("aria-label","Введите ПРИМЕНИТЬ");
+      input.autocomplete="off";
+      const apply=node("button","Применить выбранный план","primary");
+      apply.type="button";
+      const enabled=()=>{apply.disabled=!(checkbox.checked&&input.value==="ПРИМЕНИТЬ"&&
+        item.snapshot_current);};
+      checkbox.addEventListener("change",enabled);
+      input.addEventListener("input",enabled);
+      enabled();
+      apply.addEventListener("click",async()=>{
+        if(!checkbox.checked||input.value!=="ПРИМЕНИТЬ")return;
+        apply.disabled=true;
+        try{
+          const key=state.scenarioApplyKeys[item.scenario_id]||safeId();
+          state.scenarioApplyKeys[item.scenario_id]=key;
+          const result=await api("/api/v1/scenarios/saved/"+
+            encodeURIComponent(item.scenario_id)+"/apply",{
+              method:"POST",body:{
+                expected_version:item.version,
+                expected_snapshot:item.input_snapshot,
+                confirmation:"ПРИМЕНИТЬ",
+                idempotency_key:key}});
+          delete state.scenarioApplyKeys[item.scenario_id];
+          await refreshTasks();
+          await refreshResourceForecast();
+          await refreshScenarioWorkload();
+          show("Реально переназначено задач: "+result.applied_count+
+            ". Изменения сохранены атомарно и записаны в журнал");
+        }catch(e){show(e.message,true);}
+        finally{apply.disabled=false;enabled();}
+      });
+      guard.append(warning,label,input,apply);
+      card.append(guard);
+    }
+    card.append(actions);root.append(card);
+  }
+}
+$("scenario-library-refresh").addEventListener("click",()=>
+  refreshScenarioWorkload().catch(e=>show(e.message,true)));
+$("scenario-decision-close").addEventListener("click",()=>{
+  $("scenario-decision-history").hidden=true;
+});
+$("scenario-save-title").addEventListener("input",()=>{
+  state.scenarioSaveKey=null;
+});
+$("scenario-save-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!state.scenarioMoves.length||!state.scenarioSnapshot){
+    show("Сначала добавьте хотя бы одну виртуальную перестановку",true);return;
+  }
+  const button=$("scenario-save");
+  button.disabled=true;
+  try{
+    const key=state.scenarioSaveKey||safeId();
+    state.scenarioSaveKey=key;
+    await api("/api/v1/scenarios/saved",{method:"POST",body:{
+      title:$("scenario-save-title").value.trim(),
+      expected_snapshot:state.scenarioSnapshot,
+      moves:state.scenarioMoves,idempotency_key:key}});
+    state.scenarioSaveKey=null;
+    $("scenario-save-form").reset();
+    await refreshScenarioWorkload();
+    show("Вариант сохранён. Для изменения реальных задач нужен выбор владельца и подтверждение");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+
 const SCENARIO_WINDOW=10;
 function renderScenarioMoves(){
   const root=$("scenario-moves");root.replaceChildren();
@@ -207,10 +365,11 @@ function renderScenarioMoves(){
 async function refreshScenarioWorkload(){
   if(!can("task.manage"))return;
   const seq=++state.scenarioGeneration;
-  const [view,members,forecast]=await Promise.all([
+  const [view,members,forecast,library]=await Promise.all([
     api("/api/v1/scenarios/workload"),
     api("/api/v1/tasks/members"),
     api("/api/v1/forecast"),
+    api("/api/v1/scenarios/saved"),
   ]);
   if(seq!==state.scenarioGeneration)return;
   if(state.scenarioSnapshot!==view.input_snapshot){
@@ -219,6 +378,7 @@ async function refreshScenarioWorkload(){
   }
   state.scenarioSnapshot=view.input_snapshot;
   state.scenarioData={workload:view,members:members.members,forecast};
+  state.scenarioLibrary=library;
   const m=view.metrics;
   $("scenario-overloaded").textContent=m.overloaded_workers;
   $("scenario-unknown").textContent=m.unknown_load_workers;
@@ -258,6 +418,7 @@ async function refreshScenarioWorkload(){
     ...members.members.map(x=>[x.actor,x.actor+" · "+x.role])]);
   if(members.members.some(x=>x.actor===selectedWorker))workerSelect.value=selectedWorker;
   renderScenarioMoves();
+  renderSavedScenarios();
 }
 $("scenario-refresh").addEventListener("click",()=>
   refreshScenarioWorkload().catch(e=>show(e.message,true)));
