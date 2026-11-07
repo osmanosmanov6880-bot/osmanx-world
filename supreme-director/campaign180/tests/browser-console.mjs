@@ -12,6 +12,7 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {randomBytes} from "node:crypto";
 import {fileURLToPath} from "node:url";
+import {request as httpRequest} from "node:http";
 
 const thisFile=fileURLToPath(import.meta.url);
 const repoRoot=path.resolve(path.dirname(thisFile),"../../..");
@@ -137,8 +138,43 @@ async function createSession(url){
   return new Devtools(ws);
 }
 
+// Node 22.x built-in undici can crash on a closed HTTP/1.0 WSGI response
+// (AssertionError Parser.finish assert(!this.paused)); do NOT use pooled fetch
+// for this local test harness. The browser itself still tests real fetch().
+function requestLocal(url,options={}){
+  return new Promise((resolve,reject)=>{
+    const target=new URL(url);
+    const headers={Connection:"close",...(options.headers||{})};
+    const req=httpRequest(target,{
+      method:options.method||"GET",headers,
+      agent:false,
+    },res=>{
+      const chunks=[];let length=0;
+      res.on("data",chunk=>{
+        length+=chunk.length;
+        if(length>8*1024*1024){
+          req.destroy(new Error("Local test HTTP response exceeded bound"));
+        }else chunks.push(chunk);
+      });
+      res.on("error",reject);
+      res.on("end",()=>{
+        const raw=Buffer.concat(chunks).toString("utf8");
+        const status=res.statusCode||0;
+        resolve({
+          status,ok:status>=200&&status<300,
+          json:async()=>JSON.parse(raw),
+          text:async()=>raw,
+        });
+      });
+    });
+    req.setTimeout(15000,()=>req.destroy(new Error("Local HTTP request timed out")));
+    req.on("error",reject);
+    if(options.body!==undefined)req.write(options.body);
+    req.end();
+  });
+}
 async function localApi(url,options={}){
-  const response=await fetch(baseUrl+url,{
+  const response=await requestLocal(baseUrl+url,{
     headers:{"Authorization":"Bearer "+token},...options});
   assert.equal(response.ok,true,url+" returned "+response.status);
   return response.json();
@@ -153,7 +189,7 @@ async function run(){
     env:{...pyEnv,OSGARD_LOCAL_API_TOKEN:token},stdio:"ignore"});
   await poll(async()=>{
     try{
-      const response=await fetch(baseUrl+"/console");
+      const response=await requestLocal(baseUrl+"/console");
       return response.ok;
     }catch{return false;}
   },"loopback WSGI startup",30000);
@@ -170,7 +206,7 @@ async function run(){
   const debugPort=Number(readFileSync(activePort,"utf8").split("\n")[0]);
   assert.ok(debugPort>1024);
   const target=await poll(async()=>{
-    const response=await fetch("http://127.0.0.1:"+debugPort+"/json/list");
+    const response=await requestLocal("http://127.0.0.1:"+debugPort+"/json/list");
     const targets=await response.json();
     return targets.find(t=>t.type==="page" && t.webSocketDebuggerUrl);
   },"Chromium page target");
