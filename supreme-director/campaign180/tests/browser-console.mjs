@@ -931,6 +931,15 @@ async function run(){
     "&& [...document.querySelector('#scenario-task').options]"+
     ".some(x=>x.textContent.includes('Задача перераспределения Wave 23'))"),
     "Wave 23 scenario builder populated from current SQLite data");
+  // The added saved-plan fetch makes initial GETs more concurrent; wait until
+  // the mounted scenario view has the SAME authoritative input digest.
+  await client.eval("document.querySelector('#scenario-refresh').click();");
+  await poll(async()=>{
+    const real=await localApi("/api/v1/scenarios/workload");
+    const visible=await client.eval(
+      "document.querySelector('#scenario-panel').dataset.sourceSnapshot");
+    return visible===real.input_snapshot;
+  },"Wave 23 scenario source fully refreshed before staging an alternative");
   const sourceBeforeScenario=await localApi("/api/v1/forecast");
   const unchangedTask=sourceBeforeScenario.tasks.find(x=>
     x.title==="Задача перераспределения Wave 23");
