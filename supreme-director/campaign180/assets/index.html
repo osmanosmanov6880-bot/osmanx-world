@@ -70,6 +70,49 @@
         <article class="kpi"><span>ПРОСРОЧЕНЫ</span><strong id="tasks-overdue">—</strong><small>По дате UTC</small></article>
         <article class="kpi"><span>ВЫПОЛНЕНЫ</span><strong id="tasks-done">—</strong><small>Закрытые задачи</small></article>
       </div>
+      <section id="scenario-panel" class="card scenario-panel" hidden>
+        <div class="record-operations-header">
+          <div>
+            <p class="overline">WAVE 23 / КОМАНДА / ЧТО ЕСЛИ</p>
+            <h2>Перегрузка и перераспределение</h2>
+          </div>
+          <button id="scenario-refresh" type="button" class="ghost">Обновить исходные данные</button>
+        </div>
+        <p class="hint">Сравните текущие назначения с альтернативным вариантом, не изменяя настоящие задачи. Расчёт учитывает введённые часы, рабочие дни и зависимости; при неизвестных данных не обещает дату окончания.</p>
+        <div class="scenario-summary">
+          <article><span>ПЕРЕГРУЖЕНЫ (10 ДНЕЙ)</span><strong id="scenario-overloaded">—</strong></article>
+          <article><span>НАГРУЗКА НЕИЗВЕСТНА</span><strong id="scenario-unknown">—</strong></article>
+          <article><span>ЗАДАЧИ С РИСКОМ</span><strong id="scenario-late">—</strong></article>
+          <article><span>ПОЛНОТА РАСЧЁТА</span><strong id="scenario-coverage">—</strong></article>
+        </div>
+        <p class="hint">Перегрузка за 10 дней — отношение <strong>всего оставшегося объёма</strong> к доступным часам за 10 рабочих дней. Это показатель накопленной нагрузки, а не обещание выполнить все задачи за 10 дней.</p>
+        <div id="scenario-worker-list" class="scenario-worker-list" aria-live="polite"></div>
+        <div class="scenario-editor">
+          <h3>Примерить другое назначение</h3>
+          <div class="scenario-controls">
+            <div><label for="scenario-task">Открытая задача</label>
+              <select id="scenario-task"><option value="">Выберите задачу</option></select></div>
+            <div><label for="scenario-worker">Новый исполнитель</label>
+              <select id="scenario-worker"><option value="">Выберите сотрудника</option></select></div>
+            <button id="scenario-add" type="button" class="ghost">Добавить изменение</button>
+          </div>
+          <p class="hint">До 20 перестановок в одном сценарии. Изменения существуют только на экране и в расчёте, не сохраняются.</p>
+          <div id="scenario-moves" class="scenario-moves" aria-live="polite"></div>
+          <div class="scenario-actions">
+            <button id="scenario-compare" type="button" class="primary">Сравнить варианты</button>
+            <button id="scenario-clear" type="button" class="ghost">Сбросить сценарий</button>
+          </div>
+        </div>
+        <div id="scenario-results" class="scenario-results" hidden>
+          <div class="record-operations-header">
+            <div><p class="overline">СРАВНЕНИЕ ИЗ ОДНОГО СНИМКА SQLITE</p>
+              <h3>Текущий план и альтернатива</h3></div>
+          </div>
+          <div id="scenario-comparison" class="scenario-comparison" aria-live="polite"></div>
+          <div id="scenario-changes" class="scenario-changes" aria-live="polite"></div>
+          <p class="hint">Результат — сценарная оценка, не приказ о переводе сотрудника и не гарантия даты. Для реального переназначения используйте отдельную подтверждаемую операцию управления задачами.</p>
+        </div>
+      </section>
       <section id="resource-forecast-panel" class="card resource-forecast-panel" hidden>
         <div class="record-operations-header">
           <div><p class="overline">ПРОГНОЗ ЗАВЕРШЕНИЯ / ЗАВИСИМОСТИ / МОЩНОСТЬ КОМАНДЫ</p>

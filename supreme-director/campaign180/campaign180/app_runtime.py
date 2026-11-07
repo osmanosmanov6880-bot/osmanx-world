@@ -47,6 +47,7 @@ from .delivery_plan import (
 from .resource_forecast import (
     init_forecast,set_effort,set_capacity,project_forecast,forecast_history,
 )
+from .resource_scenarios import workload_report,compare_reassignment
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -400,6 +401,16 @@ class LocalAppRuntime:
                                  actor:str,limit:int=30)->dict:
         return forecast_history(self,tenant=tenant,project_id=project_id,
                                 actor=actor,limit=limit)
+
+    def resource_workload(self,*,tenant:str,project_id:str,actor:str)->dict:
+        return workload_report(self,tenant=tenant,project_id=project_id,
+                               actor=actor)
+
+    def compare_resource_scenario(self,*,tenant:str,project_id:str,actor:str,
+                                  expected_snapshot:str,moves:list[dict])->dict:
+        return compare_reassignment(self,tenant=tenant,project_id=project_id,
+                                    actor=actor,expected_snapshot=expected_snapshot,
+                                    moves=moves)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:

@@ -253,194 +253,226 @@ def _finish(start: date, days: int) -> date | None:
 
 def project_forecast(runtime: "LocalAppRuntime", *, tenant: str,
                      project_id: str, actor: str) -> dict:
+    """Read-only current forecast, with a digest snapshot for safe scenarios."""
     with runtime.drafts._db() as db:
-        role=_principal(runtime,db,tenant,project_id,actor,"task.manage")
-        tasks=_visible(db,tenant,project_id,actor,role)
-        if len(tasks)>MAX_REPORT_TASKS:
-            raise ForecastDenied("Forecast requires a smaller project scope")
-        task_map={task["task_id"]:task for task in tasks}
-        effort_rows=db.execute(
-            """SELECT * FROM director_task_effort
-               WHERE tenant=? AND project_id=? LIMIT ?""",
-            (tenant,project_id,MAX_REPORT_TASKS+1)).fetchall()
-        capacities=db.execute(
-            """SELECT * FROM director_worker_capacity
-               WHERE tenant=? AND project_id=? LIMIT ?""",
-            (tenant,project_id,MAX_REPORT_TASKS+1)).fetchall()
-        if len(effort_rows)>MAX_REPORT_TASKS or len(capacities)>MAX_REPORT_TASKS:
-            raise ForecastDenied("Resource inputs exceed reporting bounds")
-        effort={}
-        for raw in effort_rows:
-            e=_checked(raw,capacity=False)
-            if e["task_id"] not in task_map:
-                raise ForecastDenied("Orphaned effort input")
-            effort[e["task_id"]]=e
-        capacity={}
-        for raw in capacities:
-            e=_checked(raw,capacity=True)
-            capacity[e["worker"]]=e
-        members=db.execute(
-            """SELECT actor,role,active FROM app_memberships
-               WHERE tenant=? AND project_id=? LIMIT ?""",
-            (tenant,project_id,MAX_REPORT_TASKS+1)).fetchall()
-        if len(members)>MAX_REPORT_TASKS:
-            raise ForecastDenied("Member list exceeds planning bound")
-        active={m["actor"] for m in members if m["active"]==1}
-        graph=_all_edges(db,tenant,project_id)
-        if any(child not in task_map or
-               any(pred not in task_map for pred in before)
-               for child,before in graph.items()):
-            raise ForecastDenied("Dangling or cross-project prerequisite")
-        # Conservative resource safety: if any open task lacks effort or is
-        # blocked, all its assignee's serial workload is indeterminate.
-        incomplete_workers=set()
-        open_items=[t for t in tasks if t["status"]!="done"]
-        for t in open_items:
-            if t["assignee"] is not None and (
-                t["task_id"] not in effort or t["status"]=="blocked"):
-                incomplete_workers.add(t["assignee"])
-        successors={tid:set() for tid in task_map}
-        remaining={tid:len(graph.get(tid,set())) for tid in task_map}
-        for child,befores in graph.items():
-            for pred in befores:
-                successors[pred].add(child)
-        weight={"urgent":0,"high":1,"normal":2,"low":3}
-        def ranking(tid):
-            t=task_map[tid]
-            return (t["due_date"] or "9999-12-31",weight[t["priority"]],tid)
-        ready=[]
-        for tid,degree in remaining.items():
-            if degree==0:heapq.heappush(ready,ranking(tid))
-        as_of=datetime.now(timezone.utc).date()
-        today=_business_day(as_of)
-        resource_next:dict[str,date]={}
-        scheduled:dict[str,dict]={}
-        processed=0
-        for _ in range(len(task_map)):
-            if not ready:break
-            _,__,tid=heapq.heappop(ready)
-            task=task_map[tid]
-            prior=graph.get(tid,set())
-            result={
-                "task_id":tid,"title":task["title"],
-                "assignee":task["assignee"],"due_date":task["due_date"],
-                "status":task["status"],"priority":task["priority"],
-                "effort_hours":effort[tid]["effort_hours"] if tid in effort else None,
-                "estimated_start":None,"estimated_finish":None,
-                "estimated_workdays":None,"variance_calendar_days":None,
-                "state":"unforecastable",
-            }
-            if task["status"]=="done":
-                result["state"]="completed"
-            elif task["status"]=="blocked":
-                result["state"]="blocked_status"
-            elif task["assignee"] is None:
-                result["state"]="unassigned"
-            elif task["assignee"] not in active:
-                result["state"]="inactive_assignee"
-            elif task["assignee"] not in capacity:
-                result["state"]="capacity_missing"
-            elif task["assignee"] in incomplete_workers:
-                result["state"]="incomplete_assignee_inputs"
-            elif tid not in effort:
-                result["state"]="effort_missing"
-            elif any(task_map[pred]["status"]!="done" and
-                     scheduled[pred]["estimated_finish"] is None for pred in prior):
-                result["state"]="prerequisite_unforecastable"
-            else:
-                release=today
-                for pred in prior:
-                    if task_map[pred]["status"]!="done":
-                        release=max(release,_after(date.fromisoformat(
-                            scheduled[pred]["estimated_finish"])))
-                earliest=max(release,resource_next.get(task["assignee"],today))
-                duration=math.ceil(effort[tid]["effort_hours"]/
-                                   capacity[task["assignee"]]["hours_per_day"])
-                finish=_finish(earliest,duration)
-                if (finish-as_of).days>MAX_HORIZON_DAYS:
-                    result["state"]="beyond_2_year_horizon"
-                else:
-                    result.update({
-                        "state":"scheduled","estimated_start":earliest.isoformat(),
-                        "estimated_finish":finish.isoformat(),
-                        "estimated_workdays":duration,
-                    })
-                    if task["due_date"]:
-                        result["variance_calendar_days"]=(
-                            finish-date.fromisoformat(task["due_date"])).days
-                    resource_next[task["assignee"]]=_after(finish)
-            scheduled[tid]=result
-            processed+=1
-            for dependent in successors[tid]:
-                remaining[dependent]-=1
-                if remaining[dependent]==0:
-                    heapq.heappush(ready,ranking(dependent))
-        if processed!=len(task_map):
-            raise ForecastDenied("Dependency cycle detected while forecasting")
-        # Milestone exposure is calculated from saved links and baseline; no
-        # conclusion is inferred for milestones without linked/forecastable work.
-        _,milestones=_phase_and_milestones(db,tenant,project_id)
-        milestones_out=[]
-        for mile in milestones:
-            if mile["completed_on"] is not None or mile["linked_task_id"] is None:
-                continue
-            task=scheduled.get(mile["linked_task_id"])
-            if task is None:
-                raise ForecastDenied("Milestone references a foreign or missing task")
-            task_done=task["state"]=="completed"
-            forecast=task["estimated_finish"]
-            slip=(date.fromisoformat(forecast)-date.fromisoformat(
-                mile["forecast_due"])).days if forecast else None
-            milestones_out.append({
-                "milestone_id":mile["milestone_id"],"name":mile["name"],
-                "linked_task_id":mile["linked_task_id"],
-                "baseline_due":mile["baseline_due"],
-                "current_forecast_due":mile["forecast_due"],
-                "task_estimated_finish":forecast,
-                "state":"ready_for_confirmation" if task_done else
-                    ("unforecastable" if forecast is None else
-                     "potential_slip" if slip>0 else "within_forecast"),
-                "potential_slip_days":slip,
-            })
-        output=sorted(scheduled.values(),key=lambda x:(
-            x["estimated_finish"] is None,
-            x["estimated_finish"] or "9999-12-31",x["task_id"]))
-        open_results=[x for x in output if x["status"]!="done"]
-        forecastable=[x for x in open_results if x["state"]=="scheduled"]
-        missing=[x for x in open_results if x["state"]!="scheduled"]
-        latest=max((x["estimated_finish"] for x in forecastable),default=None)
-        return {
-            "as_of_utc":as_of.isoformat(),
-            "policy":{
-                "workdays":"Monday-Friday UTC; public holidays not modeled",
-                "resource_model":"One serial task per assignee; due-date priority",
-                "inputs":"Only explicit effort hours and team hours per workday",
-                "horizon_days":MAX_HORIZON_DAYS,
-                "no_predictive_model":True,
-            },
-            "capacities":[{
-                "worker":x["worker"],"hours_per_day":x["hours_per_day"],
-                "version":x["version"],"active":x["worker"] in active}
-                for x in sorted(capacity.values(),key=lambda c:c["worker"])],
-            "efforts":[{
-                "task_id":x["task_id"],"effort_hours":x["effort_hours"],
-                "version":x["version"]} for x in
-                sorted(effort.values(),key=lambda t:t["task_id"])],
-            "tasks":output,
-            "milestone_exposure":milestones_out,
-            "metrics":{
-                "open_tasks":len(open_items),
-                "scheduled_tasks":len(forecastable),
-                "unforecastable_tasks":len(missing),
-                "at_risk_tasks":sum((x["variance_calendar_days"] or 0)>0
-                                    for x in forecastable),
-                "at_risk_milestones":sum(m["state"]=="potential_slip"
-                                          for m in milestones_out),
-                "potential_finish":latest if not missing and open_items else None,
-                "coverage_complete":not missing,
-            },
-            "local_only":True,"production_published":False,
+        return _project_forecast_db(runtime,db,tenant=tenant,
+                                    project_id=project_id,actor=actor)
+
+
+def _project_forecast_db(runtime: "LocalAppRuntime",db, *, tenant: str,
+                         project_id: str,actor: str,
+                         overrides: dict[str,str] | None=None) -> dict:
+    role=_principal(runtime,db,tenant,project_id,actor,"task.manage")
+    tasks=_visible(db,tenant,project_id,actor,role)
+    if len(tasks)>MAX_REPORT_TASKS:
+        raise ForecastDenied("Forecast requires a smaller project scope")
+    task_map={task["task_id"]:task for task in tasks}
+    original_tasks=tasks
+    if overrides:
+        if len(overrides)>20:
+            raise ForecastDenied("Scenario move limit exceeded")
+        for task_id,assignee in overrides.items():
+            if task_id not in task_map or task_map[task_id]["status"]=="done":
+                raise ForecastDenied("Cannot simulate unknown or completed task")
+            task_map[task_id]={**task_map[task_id],"assignee":assignee}
+        tasks=list(task_map.values())
+    effort_rows=db.execute(
+        """SELECT * FROM director_task_effort
+           WHERE tenant=? AND project_id=? LIMIT ?""",
+        (tenant,project_id,MAX_REPORT_TASKS+1)).fetchall()
+    capacities=db.execute(
+        """SELECT * FROM director_worker_capacity
+           WHERE tenant=? AND project_id=? LIMIT ?""",
+        (tenant,project_id,MAX_REPORT_TASKS+1)).fetchall()
+    if len(effort_rows)>MAX_REPORT_TASKS or len(capacities)>MAX_REPORT_TASKS:
+        raise ForecastDenied("Resource inputs exceed reporting bounds")
+    effort={}
+    for raw in effort_rows:
+        e=_checked(raw,capacity=False)
+        if e["task_id"] not in task_map:
+            raise ForecastDenied("Orphaned effort input")
+        effort[e["task_id"]]=e
+    capacity={}
+    for raw in capacities:
+        e=_checked(raw,capacity=True)
+        capacity[e["worker"]]=e
+    members=db.execute(
+        """SELECT actor,role,active FROM app_memberships
+           WHERE tenant=? AND project_id=? LIMIT ?""",
+        (tenant,project_id,MAX_REPORT_TASKS+1)).fetchall()
+    if len(members)>MAX_REPORT_TASKS:
+        raise ForecastDenied("Member list exceeds planning bound")
+    active={m["actor"] for m in members if m["active"]==1}
+    graph=_all_edges(db,tenant,project_id)
+    if any(child not in task_map or
+           any(pred not in task_map for pred in before)
+           for child,before in graph.items()):
+        raise ForecastDenied("Dangling or cross-project prerequisite")
+    # Conservative resource safety: if any open task lacks effort or is
+    # blocked, all its assignee's serial workload is indeterminate.
+    incomplete_workers=set()
+    open_items=[t for t in tasks if t["status"]!="done"]
+    for t in open_items:
+        if t["assignee"] is not None and (
+            t["task_id"] not in effort or t["status"]=="blocked"):
+            incomplete_workers.add(t["assignee"])
+    successors={tid:set() for tid in task_map}
+    remaining={tid:len(graph.get(tid,set())) for tid in task_map}
+    for child,befores in graph.items():
+        for pred in befores:
+            successors[pred].add(child)
+    weight={"urgent":0,"high":1,"normal":2,"low":3}
+    def ranking(tid):
+        t=task_map[tid]
+        return (t["due_date"] or "9999-12-31",weight[t["priority"]],tid)
+    ready=[]
+    for tid,degree in remaining.items():
+        if degree==0:heapq.heappush(ready,ranking(tid))
+    as_of=datetime.now(timezone.utc).date()
+    today=_business_day(as_of)
+    resource_next:dict[str,date]={}
+    scheduled:dict[str,dict]={}
+    processed=0
+    for _ in range(len(task_map)):
+        if not ready:break
+        _,__,tid=heapq.heappop(ready)
+        task=task_map[tid]
+        prior=graph.get(tid,set())
+        result={
+            "task_id":tid,"title":task["title"],
+            "assignee":task["assignee"],"due_date":task["due_date"],
+            "status":task["status"],"priority":task["priority"],
+            "effort_hours":effort[tid]["effort_hours"] if tid in effort else None,
+            "estimated_start":None,"estimated_finish":None,
+            "estimated_workdays":None,"variance_calendar_days":None,
+            "state":"unforecastable",
         }
+        if task["status"]=="done":
+            result["state"]="completed"
+        elif task["status"]=="blocked":
+            result["state"]="blocked_status"
+        elif task["assignee"] is None:
+            result["state"]="unassigned"
+        elif task["assignee"] not in active:
+            result["state"]="inactive_assignee"
+        elif task["assignee"] not in capacity:
+            result["state"]="capacity_missing"
+        elif task["assignee"] in incomplete_workers:
+            result["state"]="incomplete_assignee_inputs"
+        elif tid not in effort:
+            result["state"]="effort_missing"
+        elif any(task_map[pred]["status"]!="done" and
+                 scheduled[pred]["estimated_finish"] is None for pred in prior):
+            result["state"]="prerequisite_unforecastable"
+        else:
+            release=today
+            for pred in prior:
+                if task_map[pred]["status"]!="done":
+                    release=max(release,_after(date.fromisoformat(
+                        scheduled[pred]["estimated_finish"])))
+            earliest=max(release,resource_next.get(task["assignee"],today))
+            duration=math.ceil(effort[tid]["effort_hours"]/
+                               capacity[task["assignee"]]["hours_per_day"])
+            finish=_finish(earliest,duration)
+            if (finish-as_of).days>MAX_HORIZON_DAYS:
+                result["state"]="beyond_2_year_horizon"
+            else:
+                result.update({
+                    "state":"scheduled","estimated_start":earliest.isoformat(),
+                    "estimated_finish":finish.isoformat(),
+                    "estimated_workdays":duration,
+                })
+                if task["due_date"]:
+                    result["variance_calendar_days"]=(
+                        finish-date.fromisoformat(task["due_date"])).days
+                resource_next[task["assignee"]]=_after(finish)
+        scheduled[tid]=result
+        processed+=1
+        for dependent in successors[tid]:
+            remaining[dependent]-=1
+            if remaining[dependent]==0:
+                heapq.heappush(ready,ranking(dependent))
+    if processed!=len(task_map):
+        raise ForecastDenied("Dependency cycle detected while forecasting")
+    # Milestone exposure is calculated from saved links and baseline; no
+    # conclusion is inferred for milestones without linked/forecastable work.
+    _,milestones=_phase_and_milestones(db,tenant,project_id)
+    # Snapshot includes all inputs which could alter a plan, including
+    # membership activity, DAG links and the project milestone forecast.
+    # It reflects original records, not speculative assignee overrides.
+    input_snapshot=digest({
+        "as_of_utc":as_of.isoformat(),
+        "tasks":sorted(original_tasks,key=lambda t:t["task_id"]),
+        "efforts":sorted(effort.values(),key=lambda x:x["task_id"]),
+        "capacities":sorted(capacity.values(),key=lambda x:x["worker"]),
+        "members":sorted([
+            {"actor":m["actor"],"role":m["role"],"active":m["active"]}
+            for m in members],key=lambda m:m["actor"]),
+        "edges":sorted([[child,sorted(parents)] for child,parents in graph.items()]),
+        "milestones":sorted(milestones,key=lambda m:m["milestone_id"]),
+    })
+    milestones_out=[]
+    for mile in milestones:
+        if mile["completed_on"] is not None or mile["linked_task_id"] is None:
+            continue
+        task=scheduled.get(mile["linked_task_id"])
+        if task is None:
+            raise ForecastDenied("Milestone references a foreign or missing task")
+        task_done=task["state"]=="completed"
+        forecast=task["estimated_finish"]
+        slip=(date.fromisoformat(forecast)-date.fromisoformat(
+            mile["forecast_due"])).days if forecast else None
+        milestones_out.append({
+            "milestone_id":mile["milestone_id"],"name":mile["name"],
+            "linked_task_id":mile["linked_task_id"],
+            "baseline_due":mile["baseline_due"],
+            "current_forecast_due":mile["forecast_due"],
+            "task_estimated_finish":forecast,
+            "state":"ready_for_confirmation" if task_done else
+                ("unforecastable" if forecast is None else
+                 "potential_slip" if slip>0 else "within_forecast"),
+            "potential_slip_days":slip,
+        })
+    output=sorted(scheduled.values(),key=lambda x:(
+        x["estimated_finish"] is None,
+        x["estimated_finish"] or "9999-12-31",x["task_id"]))
+    open_results=[x for x in output if x["status"]!="done"]
+    forecastable=[x for x in open_results if x["state"]=="scheduled"]
+    missing=[x for x in open_results if x["state"]!="scheduled"]
+    latest=max((x["estimated_finish"] for x in forecastable),default=None)
+    return {
+        "input_snapshot":input_snapshot,
+        "as_of_utc":as_of.isoformat(),
+        "policy":{
+            "workdays":"Monday-Friday UTC; public holidays not modeled",
+            "resource_model":"One serial task per assignee; due-date priority",
+            "inputs":"Only explicit effort hours and team hours per workday",
+            "horizon_days":MAX_HORIZON_DAYS,
+            "no_predictive_model":True,
+        },
+        "capacities":[{
+            "worker":x["worker"],"hours_per_day":x["hours_per_day"],
+            "version":x["version"],"active":x["worker"] in active}
+            for x in sorted(capacity.values(),key=lambda c:c["worker"])],
+        "efforts":[{
+            "task_id":x["task_id"],"effort_hours":x["effort_hours"],
+            "version":x["version"]} for x in
+            sorted(effort.values(),key=lambda t:t["task_id"])],
+        "tasks":output,
+        "milestone_exposure":milestones_out,
+        "metrics":{
+            "open_tasks":len(open_items),
+            "scheduled_tasks":len(forecastable),
+            "unforecastable_tasks":len(missing),
+            "at_risk_tasks":sum((x["variance_calendar_days"] or 0)>0
+                                for x in forecastable),
+            "at_risk_milestones":sum(m["state"]=="potential_slip"
+                                      for m in milestones_out),
+            "potential_finish":latest if not missing and open_items else None,
+            "coverage_complete":not missing,
+        },
+        "local_only":True,"production_published":False,
+    }
 
 
 def forecast_history(runtime: "LocalAppRuntime", *, tenant: str,
