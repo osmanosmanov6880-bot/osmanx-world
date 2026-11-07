@@ -300,8 +300,15 @@ def list_variants(runtime:"LocalAppRuntime",*,tenant:str,
             (tenant,project_id,MAX_VARIANTS+1)).fetchall()
         if len(rows)>MAX_VARIANTS:
             raise ScenarioLibraryDenied("Scenario list exceeds allowed size")
+        from .scenario_outcomes import saved_outcome_flags
+        variants=[]
+        for row in rows:
+            record=_record(row)
+            flags=saved_outcome_flags(
+                db,tenant,project_id,record["scenario_id"],record["status"])
+            variants.append({**_public(record,snapshot),**flags})
         return {
-            "variants":[_public(_record(row),snapshot) for row in rows],
+            "variants":variants,
             "input_snapshot":snapshot,"local_only":True,
             "production_published":False,
         }
@@ -374,6 +381,9 @@ def apply_variant(runtime:"LocalAppRuntime",*,tenant:str,project_id:str,
             _eligible(db,tenant,project_id,move["assignee"])
             updates.append((task,move["assignee"]))
         changed=[]
+        receipt_changes=[]
+        before_report=_project_forecast_db(runtime,db,
+            tenant=tenant,project_id=project_id,actor=actor)
         for old,new_assignee in updates:
             now=max(int(time.time()),old["updated_epoch"])
             current={**old,"assignee":new_assignee,
@@ -393,8 +403,23 @@ def apply_variant(runtime:"LocalAppRuntime",*,tenant:str,project_id:str,
                    before=old,changed=["assignee"])
             changed.append({"task_id":old["task_id"],
                             "assignee":new_assignee,"version":current["version"]})
+            receipt_changes.append({
+                "task_id":old["task_id"],
+                "before_assignee":old["assignee"],
+                "after_assignee":new_assignee,
+                "version_before":old["version"],
+                "version_after":current["version"],
+                "digest_before":digest(old),
+                "digest_after":digest(current),
+            })
         applied=_transition(db,rec,actor,"applied","APPLY")
+        from .scenario_outcomes import record_application
+        receipt=record_application(
+            db,runtime=runtime,tenant=tenant,project_id=project_id,
+            actor=actor,scenario_id=scenario_id,before=before_report,
+            applied=applied,changes=receipt_changes)
         result={"scenario_id":scenario_id,"status":applied["status"],
+                "application_sha256":receipt["sha256"],
                 "version":applied["version"],"applied_count":len(changed),
                 "tasks":changed,"atomic":True,"production_published":False,
                 "persisted_locally":True}
@@ -435,4 +460,18 @@ def decision_history(runtime:"LocalAppRuntime",*,tenant:str,project_id:str,
                 "at_epoch":event["at_epoch"],"sha256":row["event_digest"],
                 "scenario_digest":event["scenario_digest"],
             })
-        return {"events":output,"immutable":True,"local_only":True}
+        # Legacy decision table cannot be altered without a destructive
+        # migration. A verified append-only reversal receipt is surfaced
+        # as a unified decision event, never spliced into historical rows.
+        from .scenario_outcomes import _read_receipt
+        reversal=_read_receipt(db,"rollback",tenant,project_id,scenario_id)
+        if reversal is not None:
+            output.append({
+                "action":"ROLLBACK","status":"rolled_back",
+                "actor":reversal["actor"],"version":reversal["scenario_version"],
+                "at_epoch":reversal["at_epoch"],
+                "sha256":reversal["sha256"],
+                "scenario_digest":reversal["application_sha256"],
+            })
+        output.sort(key=lambda x:(x["at_epoch"],x["action"]),reverse=True)
+        return {"events":output[:limit],"immutable":True,"local_only":True}
