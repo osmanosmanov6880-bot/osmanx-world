@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 import uuid
 
 from .contracts import canonical, digest
+from .app_policy import AppAccessDenied
 from .team_tasks import TaskDenied, _principal, _read, _eligible, _event
 from .resource_forecast import _project_forecast_db
 from .resource_scenarios import compare_reassignment
@@ -164,7 +165,7 @@ def _public(record:dict,current_snapshot:str|None=None)->dict:
 def _owner(runtime,db,tenant,project_id,actor)->None:
     role=_principal(runtime,db,tenant,project_id,actor,"task.manage")
     if role!="owner":
-        raise ScenarioLibraryDenied("Only the project owner may approve or apply a scenario")
+        raise AppAccessDenied("Only the project owner may approve or apply a scenario")
 
 
 def _decision(db,record:dict,actor:str,action:str)->None:
@@ -230,6 +231,14 @@ def save_variant(runtime:"LocalAppRuntime",*,tenant:str,project_id:str,
     request=digest({
         "op":"scenario.save","tenant":tenant,"project":project_id,
         "actor":actor,"title":title,"snapshot":expected_snapshot,"moves":moves})
+    # Return an idempotent prior response even if the real plan subsequently
+    # changes, but recheck the current principal before any replay.
+    with runtime.drafts._db() as read_db:
+        _principal(runtime,read_db,tenant,project_id,actor,"task.manage")
+        prior=runtime.records._seen(read_db,tenant,project_id,
+                                    idempotency_key,request)
+        if prior is not None:
+            return prior
     # Simulate first; the write transaction revalidates the source hash.
     analysis=compare_reassignment(runtime,tenant=tenant,project_id=project_id,
                                    actor=actor,expected_snapshot=expected_snapshot,
