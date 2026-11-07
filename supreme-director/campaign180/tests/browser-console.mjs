@@ -1047,6 +1047,54 @@ async function run(){
   assert.equal(appliedOutcome.application.task_changes[0].after_assignee,"operator-abc");
   assert.equal(appliedOutcome.application.snapshot_after,postApply.input_snapshot);
   assert.equal(appliedOutcome.rollback_ready,true);
+  // Wave 26: five functional monitoring features over the actual
+  // applied Wave24 task, before owner executes the guarded rollback.
+  const monitorBase="/api/v1/scenarios/saved/"+
+    encodeURIComponent(applied.scenario_id)+"/monitor";
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Контроль исполнения');"+
+    "if(!open)throw Error('Wave 26 monitor action missing');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-monitor-panel').hidden===false "+
+    "&& document.querySelector('#monitor-task-list').textContent.includes('Задача перераспределения Wave 23') "+
+    "&& document.querySelector('#monitor-done').textContent==='0 / 1'"),
+    "Wave 26 actual task monitoring dashboard renders real SQLite state");
+  const monitorBefore=await localApi(monitorBase);
+  assert.equal(monitorBefore.affected_tasks.length,1);
+  assert.equal(monitorBefore.checkpoint_count,0);
+  assert.equal(monitorBefore.history_chain_verified,true);
+  await client.eval("document.querySelector('#monitor-note').value='Проверка исполнения 1';"+
+    "document.querySelector('#monitor-checkpoint-form').requestSubmit();");
+  await poll(async()=>{
+    const r=await localApi(monitorBase);
+    return r.checkpoint_count===1;
+  },"Wave 26 first immutable SQLite checkpoint saved through real browser UI");
+  await poll(()=>client.eval(
+    "document.querySelector('#monitor-history-list').textContent.includes('Замер №1')"),
+    "Wave 26 verified checkpoint history visible in Russian UI");
+  await client.eval("document.querySelector('#monitor-note').value='Проверка исполнения 2';"+
+    "document.querySelector('#monitor-note').dispatchEvent(new Event('input'));"+
+    "document.querySelector('#monitor-checkpoint-form').requestSubmit();");
+  await poll(async()=>{
+    const r=await localApi(monitorBase);
+    return r.checkpoint_count===2 && r.series.length===2;
+  },"Wave 26 second digest-chained checkpoint captured without task mutation");
+  const monitoring=await localApi(monitorBase);
+  assert.equal(monitoring.affected_progress.total,1);
+  assert.equal(monitoring.affected_progress.done,0);
+  assert.equal(monitoring.projected_finish_shift_calendar_days,0);
+  assert.equal(monitoring.history_chain_verified,true);
+  const csv=await localApi(monitorBase+"/export");
+  assert.equal(csv.verified_history,true);
+  assert.equal(csv.rows,3,"Two checkpoints plus one actual task");
+  assert.equal(csv.csv.charCodeAt(0),65279,"UTF-8 BOM present");
+  assert.ok(csv.csv.includes('task_current'));
+  assert.ok(csv.csv.includes('checkpoint'));
+  assert.ok(csv.csv.includes('Задача перераспределения Wave 23'));
+  await client.screenshot("41-actual-outcomes-desktop.png");
+
   await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
     ".find(x=>x.textContent.includes('Вариант Бета'));"+
     "const open=[...card.querySelectorAll('button')]"+
@@ -1090,6 +1138,11 @@ async function run(){
     new Set(["SAVE","APPROVE","APPLY","ROLLBACK"]),
     "Unified scenario decision journal must include verified rollback");
   await client.screenshot("38-scenario-rollback-desktop.png");
+  const afterRollbackMonitor=await localApi(monitorBase);
+  assert.equal(afterRollbackMonitor.effective_status,"rolled_back");
+  assert.equal(afterRollbackMonitor.checkpoint_count,2);
+  assert.equal(afterRollbackMonitor.risks.length,0,
+    "Rolled-back historical plans must not present stale active alerts");
 
 
 
@@ -1223,6 +1276,21 @@ async function run(){
   assert.ok(outcomeOverflow390<=2,
     "390px factual rollback report horizontal overflow: "+outcomeOverflow390);
   await client.screenshot("39-rollback-outcome-mobile-390.png");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Контроль исполнения');"+
+    "if(!open)throw Error('Wave 26 monitor 390px missing');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-monitor-panel').hidden===false "+
+    "&& document.querySelector('#monitor-checkpoints').textContent==='2' "+
+    "&& document.querySelector('#monitor-history-status').textContent.includes('SHA-256')"),
+    "Wave 26 390px verified persisted monitoring timeline");
+  const monitorOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(monitorOverflow390<=2,
+    "390px Wave 26 monitor horizontal overflow: "+monitorOverflow390);
+  await client.screenshot("42-monitor-mobile-390.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -1348,11 +1416,26 @@ async function run(){
   assert.ok(outcomeOverflow320<=2,
     "320px factual rollback report horizontal overflow: "+outcomeOverflow320);
   await client.screenshot("40-rollback-outcome-mobile-320.png");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Контроль исполнения');"+
+    "if(!open)throw Error('Wave 26 monitor 320px missing');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-monitor-panel').hidden===false "+
+    "&& document.querySelector('#monitor-checkpoints').textContent==='2' "+
+    "&& document.querySelector('#monitor-history-status').textContent.includes('SHA-256')"),
+    "Wave 26 320px verified persisted monitoring timeline");
+  const monitorOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(monitorOverflow320<=2,
+    "320px Wave 26 monitor horizontal overflow: "+monitorOverflow320);
+  await client.screenshot("43-monitor-mobile-320.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320","factual-apply-receipt","guarded-rollback","rollback-audit","rollback-mobile-390","rollback-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320","factual-apply-receipt","guarded-rollback","rollback-audit","rollback-mobile-390","rollback-mobile-320","monitor-dashboard","monitor-checkpoint-one","monitor-checkpoint-chain","monitor-variance","monitor-risk-rules","monitor-csv","monitor-rollback-history","monitor-mobile-390","monitor-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:40,public_server_started:false,production_deployed:false};
+    screenshots:43,public_server_started:false,production_deployed:false};
 }
 
 try{
