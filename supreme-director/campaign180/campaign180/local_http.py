@@ -200,6 +200,64 @@ class LocalConsole:
         # Wave 25: verified application outcome and owner-confirmed rollback.
         # Wave 26: real observed checkpoints, verified history, monitoring
         # metrics/rules and formula-safe CSV. All remain loopback+manager only.
+        # Wave29: genuine per-action checklists, SQLite evidence and owner reviews.
+        if path=="/api/v1/risk/queue" and method=="GET":
+            return self._json(start_response,"200 OK",runtime.risk_portfolio(
+                tenant=tid,project_id=project,actor=actor))
+        if path=="/api/v1/risk/queue/export" and method=="GET":
+            return self._json(start_response,"200 OK",runtime.risk_portfolio_csv(
+                tenant=tid,project_id=project,actor=actor))
+        workbook_base=(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                       r")/actions/("+_UUID.pattern[1:-1]+r")")
+        match=re.fullmatch(workbook_base+r"/workbook",path)
+        if match and method=="GET":
+            out=runtime.risk_workbook(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),action_id=match.group(2))
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(workbook_base+r"/steps",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"title","assignee","due_date","idempotency_key"},
+                         {"title","assignee","due_date","idempotency_key"})
+            out=runtime.create_risk_step(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),action_id=match.group(2),**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(workbook_base+r"/steps/("+_UUID.pattern[1:-1]+r")",path)
+        if match and method=="PATCH":
+            data=self._body(environ)
+            self._fields(data,{"expected_version","changes","idempotency_key"},
+                         {"expected_version","changes","idempotency_key"})
+            out=runtime.revise_risk_step(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),action_id=match.group(2),
+                step_id=match.group(3),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(workbook_base+r"/evidence",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"kind","expected_snapshot","note",
+                               "checkpoint_sha256","idempotency_key"},
+                         {"kind","expected_snapshot","note",
+                          "checkpoint_sha256","idempotency_key"})
+            out=runtime.capture_risk_evidence(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),action_id=match.group(2),**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(workbook_base+r"/reviews",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"expected_action_version","expected_snapshot",
+                               "expected_evidence_sha256","expected_review_sha256",
+                               "decision","note","idempotency_key"},
+                         {"expected_action_version","expected_snapshot",
+                          "expected_evidence_sha256","expected_review_sha256",
+                          "decision","note","idempotency_key"})
+            out=runtime.review_risk_execution(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),action_id=match.group(2),**data)
+            return self._json(start_response,"201 Created",out)
         # Wave 28: manually created actions grounded in active Wave26 risks.
         action_base=r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+r")/actions"
         match=re.fullmatch(action_base,path)

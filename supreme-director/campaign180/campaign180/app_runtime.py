@@ -64,6 +64,10 @@ from .scenario_actions import (
     init_risk_actions, create_action, change_action,
     list_actions, action_history, action_csv,
 )
+from .risk_execution import (
+    init_execution,create_step,revise_step,capture_evidence,
+    workbook,review_execution,portfolio_queue,portfolio_csv,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -108,6 +112,7 @@ class LocalAppRuntime:
         init_outcomes(self)
         init_checkpoints(self)
         init_risk_actions(self)
+        init_execution(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -543,6 +548,64 @@ class LocalAppRuntime:
                          scenario_id:str)->dict:
         return action_csv(self,tenant=tenant,project_id=project_id,actor=actor,
                           scenario_id=scenario_id)
+
+    # Wave29: executable risk mitigation and separate owner review.
+    def create_risk_step(self, *, tenant:str,project_id:str,actor:str,
+                         scenario_id:str,action_id:str,title:str,
+                         assignee:str|None,due_date:str|None,
+                         idempotency_key:str)->dict:
+        return create_step(self,tenant=tenant,project_id=project_id,actor=actor,
+                           scenario_id=scenario_id,action_id=action_id,title=title,
+                           assignee=assignee,due_date=due_date,
+                           idempotency_key=idempotency_key)
+
+    def revise_risk_step(self, *, tenant:str,project_id:str,actor:str,
+                         scenario_id:str,action_id:str,step_id:str,
+                         expected_version:int,changes:dict,
+                         idempotency_key:str)->dict:
+        return revise_step(self,tenant=tenant,project_id=project_id,actor=actor,
+                           scenario_id=scenario_id,action_id=action_id,step_id=step_id,
+                           expected_version=expected_version,changes=changes,
+                           idempotency_key=idempotency_key)
+
+    def capture_risk_evidence(self, *, tenant:str,project_id:str,actor:str,
+                              scenario_id:str,action_id:str,kind:str,
+                              expected_snapshot:str,note:str,
+                              checkpoint_sha256:str|None,
+                              idempotency_key:str)->dict:
+        return capture_evidence(self,tenant=tenant,project_id=project_id,actor=actor,
+                                scenario_id=scenario_id,action_id=action_id,kind=kind,
+                                expected_snapshot=expected_snapshot,note=note,
+                                checkpoint_sha256=checkpoint_sha256,
+                                idempotency_key=idempotency_key)
+
+    def risk_workbook(self, *, tenant:str,project_id:str,actor:str,
+                      scenario_id:str,action_id:str)->dict:
+        return workbook(self,tenant=tenant,project_id=project_id,actor=actor,
+                        scenario_id=scenario_id,action_id=action_id)
+
+    def review_risk_execution(self, *, tenant:str,project_id:str,actor:str,
+                              scenario_id:str,action_id:str,
+                              expected_action_version:int,expected_snapshot:str,
+                              expected_evidence_sha256:str|None,
+                              expected_review_sha256:str|None,
+                              decision:str,note:str,idempotency_key:str)->dict:
+        return review_execution(self,tenant=tenant,project_id=project_id,actor=actor,
+                                scenario_id=scenario_id,action_id=action_id,
+                                expected_action_version=expected_action_version,
+                                expected_snapshot=expected_snapshot,
+                                expected_evidence_sha256=expected_evidence_sha256,
+                                expected_review_sha256=expected_review_sha256,
+                                decision=decision,note=note,
+                                idempotency_key=idempotency_key)
+
+    def risk_portfolio(self, *, tenant:str,project_id:str,actor:str,
+                       limit:int=50,offset:int=0)->dict:
+        return portfolio_queue(self,tenant=tenant,project_id=project_id,actor=actor,
+                               limit=limit,offset=offset)
+
+    def risk_portfolio_csv(self, *, tenant:str,project_id:str,actor:str)->dict:
+        return portfolio_csv(self,tenant=tenant,project_id=project_id,actor=actor)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
