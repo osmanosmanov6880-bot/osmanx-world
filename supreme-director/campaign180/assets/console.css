@@ -650,3 +650,52 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
   overflow-wrap:anywhere;
   word-break:break-word;
 }
+
+/* Wave 26 — sober, responsive, data-led outcome monitoring. */
+.scenario-monitor-panel{min-width:0;margin-top:17px;padding:17px;background:#122640;
+ border:1px solid #365776;border-radius:12px}
+.scenario-monitor-panel h3{font-size:17px;margin:0}
+.scenario-monitor-panel h4{font-size:15px;margin:8px 0}
+.monitor-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:10px;margin:17px 0}
+.monitor-kpis article{display:grid;gap:9px;min-width:0;border-radius:9px;
+ background:#172e48;border:1px solid #3b5676;padding:13px}
+.monitor-kpis span{font-size:10px;letter-spacing:.06em;color:#a8c2e1;
+ overflow-wrap:anywhere}
+.monitor-kpis strong{font-size:clamp(16px,2vw,25px);
+ font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.monitor-variance{padding:13px;border-left:3px solid #80abd5;
+ background:#1a354f;border-radius:7px;margin-bottom:18px;
+ font-size:12px;color:#c7dcf3;line-height:1.6;overflow-wrap:anywhere}
+.monitor-task-list,.monitor-risk-list,.monitor-history-list{display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));
+ gap:9px;min-width:0;margin:12px 0 20px}
+.monitor-task,.monitor-risk,.monitor-history-item{display:grid;gap:7px;
+ min-width:0;padding:13px;border:1px solid #38536f;
+ background:#152a44;border-radius:9px;overflow-wrap:anywhere}
+.monitor-task strong,.monitor-risk strong,.monitor-history-item strong{
+ font-size:13px;line-height:1.5}
+.monitor-task span,.monitor-risk span,.monitor-history-item span,
+.monitor-task small,.monitor-risk small,.monitor-history-item small{
+ font-size:11px;line-height:1.5;color:#b9d2ec;overflow-wrap:anywhere}
+.monitor-risk[data-severity=high]{border-left:3px solid #d4a27a}
+.monitor-risk[data-severity=medium]{border-left:3px solid #8baed5}
+.monitor-risk[data-severity=low]{border-left:3px solid #91ad9e}
+.monitor-checkpoint-form{display:grid;gap:10px;background:#1a304a;
+ border:1px solid #45617c;border-radius:9px;padding:15px;margin:15px 0}
+.monitor-checkpoint-form h4,.monitor-checkpoint-form p{margin:0}
+.monitor-checkpoint-form label{font-size:12px;color:#b5cbe7}
+.monitor-checkpoint-form textarea{width:100%;min-width:0;max-width:100%;
+ resize:vertical;line-height:1.6}
+.monitor-checkpoint-form button{justify-self:start;white-space:normal}
+@media(max-width:750px){
+ .monitor-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .monitor-checkpoint-form button{width:100%}
+}
+@media(max-width:390px){
+ .scenario-monitor-panel{padding:11px}
+ .monitor-kpis{gap:7px}
+ .monitor-kpis article{padding:10px}
+ .monitor-kpis strong{font-size:17px}
+ .monitor-task-list,.monitor-risk-list,.monitor-history-list{grid-template-columns:1fr}
+}
