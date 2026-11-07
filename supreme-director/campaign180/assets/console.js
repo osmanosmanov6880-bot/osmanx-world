@@ -377,6 +377,7 @@ async function refreshScenarioWorkload(){
     $("scenario-results").hidden=true;
   }
   state.scenarioSnapshot=view.input_snapshot;
+  $("scenario-panel").dataset.sourceSnapshot=view.input_snapshot;
   state.scenarioData={workload:view,members:members.members,forecast};
   state.scenarioLibrary=library;
   const m=view.metrics;
