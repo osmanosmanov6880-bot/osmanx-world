@@ -1045,7 +1045,7 @@ async function run(){
   await poll(()=>client.eval(
     "document.querySelector('#resource-forecast-panel').hidden===false "+
     "&& document.querySelector('#forecast-task-list').textContent.includes('Поручение из Chromium') "+
-    "&& document.querySelector('#forecast-scheduled').textContent.includes('1')"),
+    "&& document.querySelector('#forecast-scheduled').textContent==='2 / 2'"),
     "Wave 22 390px resource planning content loaded");
   const forecastOverflow390=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
@@ -1055,7 +1055,7 @@ async function run(){
   await poll(()=>client.eval(
     "document.querySelector('#scenario-panel').hidden===false "+
     "&& document.querySelector('#scenario-worker-list').textContent.includes('owner-abc') "+
-    "&& document.querySelector('#scenario-moves').textContent.includes('operator-abc')"),
+    "&& document.querySelector('#scenario-moves').textContent.includes('Сценарий пуст')"),
     "Wave 23 390px scenario management visible and unchanged");
   const scenarioOverflow390=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
@@ -1146,7 +1146,7 @@ async function run(){
   await poll(()=>client.eval(
     "document.querySelector('#resource-forecast-panel').hidden===false "+
     "&& document.querySelector('#forecast-task-list').textContent.includes('Поручение из Chromium') "+
-    "&& document.querySelector('#forecast-scheduled').textContent.includes('1')"),
+    "&& document.querySelector('#forecast-scheduled').textContent==='2 / 2'"),
     "Wave 22 320px resource planning content loaded");
   const forecastOverflow320=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
@@ -1156,7 +1156,7 @@ async function run(){
   await poll(()=>client.eval(
     "document.querySelector('#scenario-panel').hidden===false "+
     "&& document.querySelector('#scenario-worker-list').textContent.includes('owner-abc') "+
-    "&& document.querySelector('#scenario-moves').textContent.includes('operator-abc')"),
+    "&& document.querySelector('#scenario-moves').textContent.includes('Сценарий пуст')"),
     "Wave 23 320px scenario management visible and unchanged");
   const scenarioOverflow320=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
