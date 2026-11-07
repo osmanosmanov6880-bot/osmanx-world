@@ -1,9 +1,9 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{},scenarioRollbackKeys:{},monitorScenarioId:null,monitorData:null,monitorGeneration:0,monitorCaptureKey:null,riskActionRetry:{},riskActionGeneration:0};
-const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
-const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{},scenarioRollbackKeys:{},monitorScenarioId:null,monitorData:null,monitorGeneration:0,monitorCaptureKey:null,riskActionRetry:{},riskActionGeneration:0,riskQueueGeneration:0,riskQueueOffset:0};
+const panels = ["dashboard","tasks","risks","pages","records","schema","history","workflows","preview"];
+const names = {dashboard:"Обзор",tasks:"Задачи",risks:"Контроль рисков",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
   const el=$("notice"); el.textContent=message || ""; el.classList.toggle("error",error);
 };
@@ -60,6 +60,7 @@ function switchPanel(name){
   if(name==="tasks" && can("task.manage"))refreshScenarioWorkload().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))
     refreshTeamWorkload().catch(e=>show(e.message,true));
+  if(name==="risks" && can("task.manage"))refreshRiskQueue(0).catch(e=>show(e.message,true));
   if(name==="dashboard" && state.spec)refreshTaskSummary().catch(e=>show(e.message,true));
 }
 document.querySelectorAll(".nav-link").forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
@@ -78,6 +79,7 @@ async function sync(){
   state.workflows=workflows.workflows;
   $("role-pill").textContent="Роль: "+me.role;
   $("tasks-nav").hidden=!can("task.read");
+  $("risks-nav").hidden=!can("task.manage");
   $("task-form").hidden=!can("task.manage");
   $("team-workload-panel").hidden=!can("task.manage");
   $("delivery-panel").hidden=!can("task.manage");
@@ -597,7 +599,11 @@ function renderRiskActions(report,actions){
         if(old)old.remove();card.append(proof);
       }catch(err){show(err.message,true);}
     });
-    tools.append(status,note,apply,audit);
+    const workbookButton=node("button","Этапы и доказательства","ghost");
+    workbookButton.type="button";
+    workbookButton.addEventListener("click",()=>
+      openRiskWorkbook(action,card).catch(e=>show(e.message,true)));
+    tools.append(status,note,apply,workbookButton,audit);
     card.append(title,line,facts,evidence,tools);
     holder.append(card);
   }
@@ -611,6 +617,259 @@ $("risk-action-export").addEventListener("click",async()=>{
     const file=await api(actionBase()+"/export");
     actionDownload(file);
     show("Экспортировано действий: "+file.rows+" · SHA-256: "+file.sha256.slice(0,16)+"…");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+
+
+const STEP_STATES={todo:"К выполнению",doing:"В работе",done:"Отмечено выполненным"};
+function actionPath(action){return actionBase()+"/"+encodeURIComponent(action.action_id);}
+function fieldLabel(title,input){
+  const label=node("label",title);label.append(input);return label;
+}
+async function openRiskWorkbook(action,card){
+  const scenario=state.monitorScenarioId;
+  const data=await api(actionPath(action)+"/workbook");
+  if(!card.isConnected||scenario!==state.monitorScenarioId)return;
+  const previous=card.querySelector(".risk-workbook");
+  if(previous)previous.remove();
+  const box=node("section",null,"risk-workbook");
+  const verified=data.verification.review_verified_on_current_data;
+  const status=node("p",verified?
+    "Сверено с текущими локальными данными":
+    "Нет действующего подтверждения результата","risk-workbook-status");
+  status.dataset.verified=String(verified);
+  box.append(node("h5","Исполнение корректирующего действия"),status);
+  box.append(node("small","Подзадачи: "+data.steps.length+"/12 · доказательства: "+
+    data.evidence.length+"/30 · проверок: "+data.reviews.length+
+    " · источник SHA-256: "+(data.source_snapshot||"архив")));
+  const write=!data.rolled_back&&data.action_status!=="resolved";
+  const stepList=node("div",null,"risk-workbook-steps");
+  for(const step of data.steps){
+    const row=node("article",null,"risk-workbook-step");
+    row.append(node("strong",step.position+". "+step.title),
+      node("small","Статус: "+(STEP_STATES[step.status]||step.status)+
+        " · версия "+step.version+" · "+(step.assignee||"без исполнителя")));
+    const controls=node("div",null,"risk-workbook-controls");
+    const selection=node("select");
+    pick(selection,Object.entries(STEP_STATES));
+    selection.value=step.status;selection.disabled=!write;
+    selection.setAttribute("aria-label","Статус этапа "+step.position);
+    const note=node("input");note.type="text";note.maxLength=300;
+    note.placeholder="Пояснение, обязательное при завершении";note.disabled=!write;
+    const update=node("button","Сохранить этап","ghost");
+    update.type="button";update.disabled=!write;
+    update.addEventListener("click",async()=>{
+      if(selection.value===step.status&&!note.value.trim()){
+        show("Измените статус или добавьте комментарий.",true);return;
+      }
+      const changes={status:selection.value};
+      if(note.value.trim())changes.note=note.value;
+      const fingerprint="step:"+step.step_id+":"+step.version+":"+
+        selection.value+":"+note.value;
+      const idem=state.riskActionRetry[fingerprint]||safeId();
+      state.riskActionRetry[fingerprint]=idem;update.disabled=true;
+      try{
+        await api(actionPath(action)+"/steps/"+encodeURIComponent(step.step_id),{
+          method:"PATCH",body:{expected_version:step.version,changes,
+                               idempotency_key:idem}});
+        delete state.riskActionRetry[fingerprint];
+        await openRiskWorkbook(action,card);
+        show("Факт выполнения этапа записан в SQLite и журнал SHA-256.");
+      }catch(err){show(err.message,true);update.disabled=false;}
+    });
+    controls.append(selection,note,update);
+    row.append(controls);stepList.append(row);
+  }
+  if(!data.steps.length)stepList.append(node("p",
+    "Подзадачи не заданы. Укажите проверяемый результат.","hint"));
+  box.append(stepList);
+  if(write&&data.steps.length<12){
+    const form=node("form",null,"risk-workbook-form");
+    const input=node("input");input.required=true;input.maxLength=160;
+    input.placeholder="Что нужно выполнить или проверить";
+    input.setAttribute("aria-label","Новая подзадача");
+    const assigned=node("select");
+    assigned.setAttribute("aria-label","Ответственный по этапу");
+    pick(assigned,[["","Без исполнителя"],
+      ...state.taskMembers.map(m=>[m.actor,m.actor+" · "+m.role])]);
+    const due=node("input");due.type="date";
+    due.setAttribute("aria-label","Срок выполнения этапа");
+    const button=node("button","Добавить этап","ghost");button.type="submit";
+    form.append(input,assigned,due,button);
+    form.addEventListener("submit",async e=>{
+      e.preventDefault();
+      const key="newstep:"+action.action_id+":"+input.value+":"+
+        assigned.value+":"+due.value;
+      const idem=state.riskActionRetry[key]||safeId();
+      state.riskActionRetry[key]=idem;button.disabled=true;
+      try{
+        await api(actionPath(action)+"/steps",{method:"POST",body:{
+          title:input.value,assignee:assigned.value||null,
+          due_date:due.value||null,idempotency_key:idem}});
+        delete state.riskActionRetry[key];
+        await openRiskWorkbook(action,card);
+        show("Подзадача добавлена с независимой историей изменений.");
+      }catch(err){show(err.message,true);button.disabled=false;}
+    });
+    box.append(form);
+  }
+  const evidenceTitle=node("h5","Доказательства из SQLite");
+  box.append(evidenceTitle);
+  const evidenceList=node("div",null,"risk-workbook-evidence");
+  for(const e of data.evidence){
+    evidenceList.append(node("p","№"+e.seq+" · "+
+      (e.kind==="task"?"Снимок задачи":"Контрольный замер")+
+      " · "+e.note+" · SHA: "+e.sha256.slice(0,16)+"…"));
+  }
+  if(!data.evidence.length)evidenceList.append(node("p",
+    "Факты пока не зафиксированы.","hint"));
+  box.append(evidenceList);
+  if(!data.rolled_back&&data.evidence.length<30){
+    const form=node("form",null,"risk-workbook-form");
+    const kind=node("select");
+    pick(kind,action.task_id?
+      [["task","Фактический статус связанной задачи"],
+       ["checkpoint","Последний проверенный замер"]]:
+      [["checkpoint","Последний проверенный замер"]]);
+    kind.setAttribute("aria-label","Источник доказательства");
+    const note=node("input");note.required=true;note.maxLength=400;
+    note.placeholder="Что именно было проверено";
+    note.setAttribute("aria-label","Описание проверки");
+    const save=node("button","Записать факт","ghost");save.type="submit";
+    form.append(kind,note,save);
+    form.addEventListener("submit",async e=>{
+      e.preventDefault();
+      const checkpoint=kind.value==="checkpoint"?
+        state.monitorData?.last_checkpoint_sha256:null;
+      if(kind.value==="checkpoint"&&!checkpoint){
+        show("Сначала выполните контрольный замер в мониторе.",true);return;
+      }
+      const key="fact:"+action.action_id+":"+kind.value+":"+
+        note.value+":"+checkpoint;
+      const idem=state.riskActionRetry[key]||safeId();
+      state.riskActionRetry[key]=idem;save.disabled=true;
+      try{
+        await api(actionPath(action)+"/evidence",{method:"POST",body:{
+          kind:kind.value,expected_snapshot:data.source_snapshot,
+          checkpoint_sha256:checkpoint,note:note.value,idempotency_key:idem}});
+        delete state.riskActionRetry[key];
+        await openRiskWorkbook(action,card);
+        show("Факт записан напрямую из проверенного источника SQLite.");
+      }catch(err){show(err.message,true);save.disabled=false;}
+    });
+    box.append(form);
+  }
+  box.append(node("h5","Решение владельца"));
+  const reviewInfo=node("p",data.verification.ready_for_local_verification?
+    "Данные позволяют проверить устранение сигнала риска.":
+    "Для проверки требуются закрытая карточка, выполненные этапы, свежий "+
+    "факт SQLite и отсутствие исходного риска.","hint");
+  box.append(reviewInfo);
+  const reviewList=node("div",null,"risk-workbook-reviews");
+  for(const review of data.reviews){
+    reviewList.append(node("p","№"+review.seq+" · "+
+      (review.decision==="verified"?"Сверено с локальными данными":"Нужна доработка")+
+      " · "+review.note+" · "+review.sha256.slice(0,16)+"…"));
+  }
+  box.append(reviewList);
+  if(state.me?.role==="owner"&&!data.rolled_back&&data.reviews.length<20){
+    const form=node("form",null,"risk-workbook-form");
+    const decision=node("select");
+    pick(decision,[["needs_work","Вернуть на доработку"],
+      ["verified","Подтвердить по локальным данным"]]);
+    decision.setAttribute("aria-label","Решение владельца");
+    const note=node("input");note.required=true;note.maxLength=400;
+    note.placeholder="Обязательное обоснование решения";
+    note.setAttribute("aria-label","Основание решения владельца");
+    const save=node("button","Записать решение","primary");save.type="submit";
+    form.append(decision,note,save);
+    form.addEventListener("submit",async e=>{
+      e.preventDefault();
+      if(decision.value==="verified"&&!data.verification.ready_for_local_verification){
+        show("Условия проверки результата ещё не выполнены.",true);return;
+      }
+      const key="review:"+action.action_id+":"+data.action_version+
+        ":"+decision.value+":"+note.value;
+      const idem=state.riskActionRetry[key]||safeId();
+      state.riskActionRetry[key]=idem;save.disabled=true;
+      try{
+        await api(actionPath(action)+"/reviews",{method:"POST",body:{
+          expected_action_version:data.action_version,
+          expected_snapshot:data.source_snapshot,
+          expected_evidence_sha256:data.last_evidence_sha256,
+          expected_review_sha256:data.last_review_sha256,
+          decision:decision.value,note:note.value,idempotency_key:idem}});
+        delete state.riskActionRetry[key];
+        await openRiskWorkbook(action,card);
+        show("Решение владельца сохранено; внешняя приёмка не подразумевается.");
+      }catch(err){show(err.message,true);save.disabled=false;}
+    });
+    box.append(form);
+  }
+  card.append(box);
+}
+async function refreshRiskQueue(offset=state.riskQueueOffset){
+  if(!can("task.manage"))return;
+  const seq=++state.riskQueueGeneration;
+  const report=await api("/api/v1/risk/queue",{
+    method:"POST",body:{limit:50,offset}});
+  if(seq!==state.riskQueueGeneration)return;
+  state.riskQueueOffset=offset;
+  $("risk-queue-counter").textContent="Всего: "+report.total+
+    " · открыто: "+report.counts.open+
+    " · в работе: "+report.counts.doing+
+    " · решено: "+report.counts.resolved+
+    " · просрочено: "+report.counts.overdue+
+    " · подтверждено по локальным данным: "+report.counts.reviewed_current;
+  const list=$("risk-queue-list");list.replaceChildren();
+  if(!report.actions.length)list.append(node("p",
+    "Поручений по действующим планам нет. Создайте их через «Задачи → Контроль исполнения».","hint"));
+  for(const action of report.actions){
+    const card=node("article",null,"risk-queue-card");
+    card.dataset.severity=action.severity;
+    card.append(node("strong",action.scenario_title+" · "+action.risk_code),
+      node("p",action.plan),
+      node("small","Исполнитель: "+(action.assignee||"не указан")+
+        " · срок: "+(action.due_date||"не указан")+
+        " · статус: "+(ACTION_STATUS[action.status]||action.status)),
+      node("small","Этапы: "+action.step_done+"/"+action.step_count+
+        " · источники: "+action.evidence_count+
+        " · сигнал сейчас: "+(action.risk_still_observed?"есть":"нет")),
+      node("small",action.review_verified_on_current_data?
+        "Сверено с локальными данными":"Независимого подтверждения нет"));
+    const button=node("button","Открыть сценарий","ghost");
+    button.type="button";
+    button.addEventListener("click",async()=>{
+      try{
+        switchPanel("tasks");
+        await refreshScenarioWorkload();
+        await openScenarioMonitor(action.scenario_id);
+        const target=$("scenario-monitor-panel");
+        target.scrollIntoView({behavior:"smooth",block:"start"});
+      }catch(e){show(e.message,true);}
+    });
+    card.append(button);
+    list.append(card);
+  }
+  $("risk-queue-page").textContent="Показано "+
+    (report.total===0?0:offset+1)+"–"+(offset+report.actions.length)+
+    " из "+report.total;
+  $("risk-queue-prev").disabled=offset===0;
+  $("risk-queue-next").disabled=!report.has_more;
+}
+$("risk-queue-refresh").addEventListener("click",()=>
+  refreshRiskQueue(0).catch(e=>show(e.message,true)));
+$("risk-queue-prev").addEventListener("click",()=>
+  refreshRiskQueue(Math.max(0,state.riskQueueOffset-50)).catch(e=>show(e.message,true)));
+$("risk-queue-next").addEventListener("click",()=>
+  refreshRiskQueue(state.riskQueueOffset+50).catch(e=>show(e.message,true)));
+$("risk-queue-export").addEventListener("click",async()=>{
+  const button=$("risk-queue-export");button.disabled=true;
+  try{
+    const file=await api("/api/v1/risk/queue/export");
+    actionDownload(file);
+    show("Проверена и выгружена общая очередь: "+file.rows+" карточек.");
   }catch(e){show(e.message,true);}
   finally{button.disabled=false;}
 });

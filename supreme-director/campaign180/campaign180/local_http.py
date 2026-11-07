@@ -201,9 +201,14 @@ class LocalConsole:
         # Wave 26: real observed checkpoints, verified history, monitoring
         # metrics/rules and formula-safe CSV. All remain loopback+manager only.
         # Wave29: genuine per-action checklists, SQLite evidence and owner reviews.
-        if path=="/api/v1/risk/queue" and method=="GET":
+        if path=="/api/v1/risk/queue" and method in ("GET","POST"):
+            extra={}
+            if method=="POST":
+                data=self._body(environ)
+                self._fields(data,{"limit","offset"},{"limit","offset"})
+                extra=data
             return self._json(start_response,"200 OK",runtime.risk_portfolio(
-                tenant=tid,project_id=project,actor=actor))
+                tenant=tid,project_id=project,actor=actor,**extra))
         if path=="/api/v1/risk/queue/export" and method=="GET":
             return self._json(start_response,"200 OK",runtime.risk_portfolio_csv(
                 tenant=tid,project_id=project,actor=actor))
