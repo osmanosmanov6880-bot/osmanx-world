@@ -446,6 +446,7 @@ $("forecast-capacity-form").addEventListener("submit",async event=>{
       idempotency_key:key}});
     state.forecastCapacityKey=null;
     await refreshResourceForecast();
+    await refreshScenarioWorkload();
     show("Реальная мощность сотрудника сохранена с контролем версии");
   }catch(e){show(e.message,true);}
   finally{button.disabled=false;}
@@ -464,6 +465,7 @@ $("forecast-effort-form").addEventListener("submit",async event=>{
       idempotency_key:key}});
     state.forecastEffortKey=null;
     await refreshResourceForecast();
+    await refreshScenarioWorkload();
     show("Оценка работы сохранена; прогноз пересчитан");
   }catch(e){show(e.message,true);}
   finally{button.disabled=false;}
