@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{}};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{},scenarioRollbackKeys:{}};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -186,6 +186,7 @@ async function refreshTasks({resetOffset=false}={}){
 const SCENARIO_LIBRARY_STATUS={
   draft:"Черновик",approved:"Выбран владельцем",
   superseded:"Выбор отменён",applied:"Применён к задачам",
+  rolled_back:"Назначения возвращены",
 };
 function renderSavedScenarios(){
   const root=$("scenario-library-list");root.replaceChildren();
@@ -198,12 +199,13 @@ function renderSavedScenarios(){
   if(!variants.length)root.append(node("p","Вариантов пока нет. Добавьте перестановки и сохраните сценарий.","hint"));
   for(const item of variants){
     const card=node("article",null,"scenario-saved-card");
-    card.dataset.status=item.status;
+    card.dataset.status=item.effective_status||item.status;
     card.dataset.current=String(item.snapshot_current);
     card.dataset.id=item.scenario_id;
     const top=node("div",null,"scenario-saved-header");
     top.append(node("strong",item.title),
-      node("span",SCENARIO_LIBRARY_STATUS[item.status]||item.status,"scenario-saved-status"));
+      node("span",SCENARIO_LIBRARY_STATUS[item.effective_status]||
+        SCENARIO_LIBRARY_STATUS[item.status]||item.status,"scenario-saved-status"));
     card.append(top);
     card.append(node("p",item.move_count+" перестановок · версия "+item.version+
       " · "+(item.snapshot_current?"Данные актуальны":"Исходные данные изменились"),
@@ -230,7 +232,8 @@ function renderSavedScenarios(){
         const target=$("scenario-decision-list");target.replaceChildren();
         for(const e of data.events){
           const action={SAVE:"Сохранение",APPROVE:"Выбор владельцем",
-            SUPERSEDE:"Отмена выбора",APPLY:"Применение"}[e.action]||e.action;
+            SUPERSEDE:"Отмена выбора",APPLY:"Применение",
+            ROLLBACK:"Откат назначения"}[e.action]||e.action;
           const line=node("div",null,"scenario-decision-entry");
           line.append(node("strong",action),
             node("small","Автор: "+e.actor+" · версия "+e.version+" · "+
@@ -242,6 +245,13 @@ function renderSavedScenarios(){
       }catch(e){show(e.message,true);}
     });
     actions.append(history);
+    if(item.status==="applied"){
+      const outcome=node("button","Фактический результат","ghost");
+      outcome.type="button";
+      outcome.addEventListener("click",()=>
+        showScenarioOutcome(item.scenario_id).catch(e=>show(e.message,true)));
+      actions.append(outcome);
+    }
     if(isOwner && item.snapshot_current &&
         (item.status==="draft"||item.status==="superseded")){
       const choose=node("button","Выбрать этот вариант","ghost");
@@ -315,6 +325,128 @@ $("scenario-library-refresh").addEventListener("click",()=>
   refreshScenarioWorkload().catch(e=>show(e.message,true)));
 $("scenario-decision-close").addEventListener("click",()=>{
   $("scenario-decision-history").hidden=true;
+});
+const OUTCOME_METRICS={
+  open_tasks:"Открытые задачи",
+  scheduled_tasks:"Задачи с прогнозом",
+  unforecastable_tasks:"Задачи без прогноза",
+  at_risk_tasks:"Риски по сроку",
+  at_risk_milestones:"Риски вех",
+  potential_finish:"Расчётная дата",
+  coverage_complete:"Полнота расчёта",
+  overloaded_workers:"Перегруженные сотрудники",
+  unknown_load_workers:"Неизвестная нагрузка",
+};
+function fmtOutcomeMetric(v){
+  if(v===null||v===undefined)return "Неизвестно";
+  if(typeof v==="boolean")return v?"Да":"Нет";
+  return String(v);
+}
+async function showScenarioOutcome(scenarioId){
+  const data=await api("/api/v1/scenarios/saved/"+
+    encodeURIComponent(scenarioId)+"/outcome");
+  const root=$("scenario-outcome-body");root.replaceChildren();
+  const application=data.application;
+  if(!application){
+    root.append(node("p","Для этого применения нет подписанного журнала "+
+      "исходных назначений (более ранняя версия). Автоматический откат "+
+      "заблокирован, чтобы не восстановить неверного исполнителя.","hint"));
+    $("scenario-outcome-report").hidden=false;
+    return;
+  }
+  const summary=node("div",null,"scenario-outcome-summary");
+  const heading=node("p",
+    "Применено "+new Date(application.at_epoch*1000).toLocaleString("ru-RU")+
+    " · задач: "+application.task_changes.length,"hint");
+  root.append(heading);
+  for(const [key,label] of Object.entries(OUTCOME_METRICS)){
+    const item=node("div",null,"scenario-outcome-metric");
+    item.append(node("span",label),node("strong",
+      fmtOutcomeMetric(application.metrics_before[key])+" → "+
+      fmtOutcomeMetric(application.metrics_after[key])));
+    summary.append(item);
+  }
+  root.append(summary);
+  root.append(node("h4","Фактические назначения"));
+  const assignments=node("div",null,"scenario-outcome-assignments");
+  for(const change of application.task_changes){
+    const entry=node("div",null,"scenario-outcome-assignment");
+    entry.append(node("strong","Задача "+change.task_id.slice(0,8)),
+      node("span",(change.before_assignee||"Без исполнителя")+
+        " → "+change.after_assignee),
+      node("small","Версия "+change.version_before+
+        " → "+change.version_after));
+    assignments.append(entry);
+  }
+  root.append(assignments);
+  root.append(node("p","Журнал SHA-256: "+application.sha256,"hint"));
+  if(data.rollback){
+    const complete=node("div",null,"scenario-outcome-returned");
+    complete.append(node("strong","Назначения возвращены владельцем"),
+      node("small","Время: "+new Date(data.rollback.at_epoch*1000).toLocaleString("ru-RU")+
+        " · проверка SHA-256: "+data.rollback.sha256),
+      node("small","Отмена изменила версии задач — история выполненных операций сохранена."));
+    root.append(complete);
+  }else{
+    const box=node("div",null,"scenario-outcome-live");
+    box.append(node("strong",data.changed_since_application?
+      "После применения исходные данные менялись":
+      "Текущие исходные данные совпадают с применённым вариантом"));
+    box.append(node("small","Дата последнего снимка: "+
+      data.current_snapshot.slice(0,16)+"…"));
+    root.append(box);
+    if(state.me?.role==="owner" && data.rollback_ready){
+      const guard=node("div",null,"scenario-rollback-guard");
+      guard.append(node("p","Откат вернёт прежних исполнителей только для "+
+        application.task_changes.length+
+        " задач из этого плана. Операция необратимо запишется в историю.","hint"));
+      const agree=node("input");agree.type="checkbox";
+      agree.setAttribute("aria-label","Проверил исходные назначения перед откатом");
+      const label=node("label","Проверил исходных исполнителей и подтверждаю откат");
+      label.prepend(agree);
+      const phrase=node("input");phrase.type="text";
+      phrase.placeholder="Введите ОТКАТИТЬ";
+      phrase.setAttribute("aria-label","Введите ОТКАТИТЬ");
+      phrase.autocomplete="off";
+      const button=node("button","Вернуть предыдущие назначения","primary");
+      button.type="button";
+      const gate=()=>{button.disabled=!(agree.checked&&phrase.value==="ОТКАТИТЬ");};
+      agree.addEventListener("change",gate);phrase.addEventListener("input",gate);
+      gate();
+      button.addEventListener("click",async()=>{
+        if(!agree.checked||phrase.value!=="ОТКАТИТЬ")return;
+        button.disabled=true;
+        try{
+          const key=state.scenarioRollbackKeys[scenarioId]||safeId();
+          state.scenarioRollbackKeys[scenarioId]=key;
+          const receipt=await api("/api/v1/scenarios/saved/"+
+            encodeURIComponent(scenarioId)+"/rollback",{
+              method:"POST",body:{
+                expected_version:data.scenario_version,
+                expected_snapshot:data.current_snapshot,
+                confirmation:"ОТКАТИТЬ",idempotency_key:key,
+              }});
+          delete state.scenarioRollbackKeys[scenarioId];
+          await refreshTasks();await refreshResourceForecast();
+          await refreshScenarioWorkload();
+          await showScenarioOutcome(scenarioId);
+          show("Атомарно возвращено назначений: "+receipt.reverted_count+
+            ". История изменений сохранена.");
+        }catch(e){show(e.message,true);}
+        finally{button.disabled=false;gate();}
+      });
+      guard.append(label,phrase,button);
+      root.append(guard);
+    }else if(state.me?.role==="owner"){
+      root.append(node("p","Автоматический откат сейчас запрещён: задачи "+
+        "менялись после применения или прежний исполнитель недоступен. "+
+        "Изменения не внесены.","hint"));
+    }
+  }
+  $("scenario-outcome-report").hidden=false;
+}
+$("scenario-outcome-close").addEventListener("click",()=>{
+  $("scenario-outcome-report").hidden=true;
 });
 $("scenario-save-title").addEventListener("input",()=>{
   state.scenarioSaveKey=null;
