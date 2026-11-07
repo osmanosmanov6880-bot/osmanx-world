@@ -38,12 +38,18 @@ jobs:
           OSGARD_BROWSER_ARTIFACT_DIR: /tmp/osgard-browser-artifacts
         run: |
           mkdir -p "$OSGARD_BROWSER_ARTIFACT_DIR"
-          node supreme-director/campaign180/tests/browser-console.mjs
+          set -o pipefail
+          node supreme-director/campaign180/tests/browser-console.mjs | tee "$OSGARD_BROWSER_ARTIFACT_DIR/acceptance.log"
+          node supreme-director/campaign180/tests/build-qa-gallery.mjs "$OSGARD_BROWSER_ARTIFACT_DIR"
+          rm -f "$OSGARD_BROWSER_ARTIFACT_DIR/acceptance.log"
       - name: Preserve screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: osgard-original180-browser-screenshots
-          path: /tmp/osgard-browser-artifacts/*.png
+          path: |
+            /tmp/osgard-browser-artifacts/*.png
+            /tmp/osgard-browser-artifacts/index.html
+            /tmp/osgard-browser-artifacts/QA_RESULTS.json
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 30
