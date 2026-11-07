@@ -291,9 +291,10 @@ class RollbackTests(Fixture):
     def test_rollback_one_time_and_identical_key_replays(self):
         variant,_=self.apply_plan()
         key=nonce()
-        first=self.rollback(variant,key=key)
+        applied_snapshot=self.snapshot()
+        first=self.rollback(variant,key=key,snapshot=applied_snapshot)
         existing=self.active_tasks()
-        replay=self.rollback(variant,key=key)
+        replay=self.rollback(variant,key=key,snapshot=applied_snapshot)
         self.assertEqual(first,replay)
         self.assertEqual(self.active_tasks(),existing)
         with self.assertRaises(ScenarioLibraryDenied):
