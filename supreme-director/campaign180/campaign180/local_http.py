@@ -197,6 +197,41 @@ class LocalConsole:
         # computed on demand with explicitly persisted capacity/effort.
         # Wave 24: save candidate plans; owner explicitly selects and applies.
         # Wave 25: verified application outcome and owner-confirmed rollback.
+        # Wave 26: real observed checkpoints, verified history, monitoring
+        # metrics/rules and formula-safe CSV. All remain loopback+manager only.
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/monitor",path)
+        if match and method=="GET":
+            out=runtime.scenario_monitor_report(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1))
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/monitor/checkpoints",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"expected_snapshot","note","idempotency_key"},
+                         {"expected_snapshot","note","idempotency_key"})
+            out=runtime.capture_scenario_checkpoint(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/monitor/history",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"limit","offset"},set())
+            out=runtime.scenario_checkpoint_history(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/monitor/export",path)
+        if match and method=="GET":
+            out=runtime.scenario_monitor_csv(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1))
+            return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
                            r")/outcome",path)
         if match and method=="GET":
