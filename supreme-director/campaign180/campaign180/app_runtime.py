@@ -44,6 +44,9 @@ from .delivery_plan import (
     init_delivery,create_phase,revise_phase_forecast,create_milestone,
     change_milestone,delivery_report,delivery_history,
 )
+from .resource_forecast import (
+    init_forecast,set_effort,set_capacity,project_forecast,forecast_history,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -83,6 +86,7 @@ class LocalAppRuntime:
         init_collaboration(self)
         init_planning(self)
         init_delivery(self)
+        init_forecast(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -370,6 +374,32 @@ class LocalAppRuntime:
                                entity_id:str,limit:int=30)->dict:
         return delivery_history(self,tenant=tenant,project_id=project_id,
                                 actor=actor,entity_id=entity_id,limit=limit)
+
+    def set_forecast_effort(self,*,tenant:str,project_id:str,actor:str,
+                            task_id:str,effort_hours:int,expected_version:int,
+                            idempotency_key:str)->dict:
+        return set_effort(self,tenant=tenant,project_id=project_id,actor=actor,
+                          task_id=task_id,effort_hours=effort_hours,
+                          expected_version=expected_version,
+                          idempotency_key=idempotency_key)
+
+    def set_forecast_capacity(self,*,tenant:str,project_id:str,actor:str,
+                              worker:str,hours_per_day:int,expected_version:int,
+                              idempotency_key:str)->dict:
+        return set_capacity(self,tenant=tenant,project_id=project_id,actor=actor,
+                            worker=worker,hours_per_day=hours_per_day,
+                            expected_version=expected_version,
+                            idempotency_key=idempotency_key)
+
+    def project_resource_forecast(self,*,tenant:str,project_id:str,
+                                  actor:str)->dict:
+        return project_forecast(self,tenant=tenant,project_id=project_id,
+                                actor=actor)
+
+    def project_forecast_history(self,*,tenant:str,project_id:str,
+                                 actor:str,limit:int=30)->dict:
+        return forecast_history(self,tenant=tenant,project_id=project_id,
+                                actor=actor,limit=limit)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
