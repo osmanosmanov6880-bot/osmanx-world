@@ -196,6 +196,26 @@ class LocalConsole:
         # Wave 22: all resource forecasts are manager-only, local and
         # computed on demand with explicitly persisted capacity/effort.
         # Wave 24: save candidate plans; owner explicitly selects and applies.
+        # Wave 25: verified application outcome and owner-confirmed rollback.
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/outcome",path)
+        if match and method=="GET":
+            out=runtime.scenario_outcome(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1))
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/rollback",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"expected_version","expected_snapshot",
+                               "confirmation","idempotency_key"},
+                         {"expected_version","expected_snapshot",
+                          "confirmation","idempotency_key"})
+            out=runtime.rollback_resource_variant(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/scenarios/saved":
             out=runtime.list_resource_variants(
                 tenant=tid,project_id=project,actor=actor)
