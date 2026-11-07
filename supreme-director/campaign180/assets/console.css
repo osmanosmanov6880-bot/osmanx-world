@@ -639,3 +639,14 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
  .scenario-rollback-guard{padding:11px}
  .scenario-rollback-guard button{width:100%}
 }
+
+/* Wave 25: long immutable SHA-256 hashes wrap on 320/390px screens. */
+#scenario-outcome-body,
+#scenario-outcome-body .hint,
+#scenario-outcome-body .scenario-outcome-assignment,
+#scenario-outcome-body .scenario-outcome-returned{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
