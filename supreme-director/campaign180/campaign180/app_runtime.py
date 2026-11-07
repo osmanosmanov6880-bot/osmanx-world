@@ -55,6 +55,11 @@ from .scenario_library import (
 from .scenario_outcomes import (
     init_outcomes,outcome_detail,rollback_application,
 )
+from .scenario_checkpoints import (
+    init_checkpoints,capture_checkpoint,checkpoint_history,
+)
+from .scenario_monitoring import monitoring_report
+from .scenario_monitor_export import export_monitor_csv
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -97,6 +102,7 @@ class LocalAppRuntime:
         init_forecast(self)
         init_scenario_library(self)
         init_outcomes(self)
+        init_checkpoints(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -470,6 +476,34 @@ class LocalAppRuntime:
             scenario_id=scenario_id,expected_version=expected_version,
             expected_snapshot=expected_snapshot,confirmation=confirmation,
             idempotency_key=idempotency_key)
+
+    def capture_scenario_checkpoint(self,*,tenant:str,project_id:str,
+                                   actor:str,scenario_id:str,
+                                   expected_snapshot:str,note:str,
+                                   idempotency_key:str)->dict:
+        return capture_checkpoint(
+            self,tenant=tenant,project_id=project_id,actor=actor,
+            scenario_id=scenario_id,expected_snapshot=expected_snapshot,
+            note=note,idempotency_key=idempotency_key)
+
+    def scenario_checkpoint_history(self,*,tenant:str,project_id:str,
+                                    actor:str,scenario_id:str,
+                                    limit:int=20,offset:int=0)->dict:
+        return checkpoint_history(
+            self,tenant=tenant,project_id=project_id,actor=actor,
+            scenario_id=scenario_id,limit=limit,offset=offset)
+
+    def scenario_monitor_report(self,*,tenant:str,project_id:str,
+                                actor:str,scenario_id:str)->dict:
+        return monitoring_report(
+            self,tenant=tenant,project_id=project_id,actor=actor,
+            scenario_id=scenario_id)
+
+    def scenario_monitor_csv(self,*,tenant:str,project_id:str,
+                             actor:str,scenario_id:str)->dict:
+        return export_monitor_csv(
+            self,tenant=tenant,project_id=project_id,actor=actor,
+            scenario_id=scenario_id)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
