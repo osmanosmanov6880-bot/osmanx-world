@@ -193,6 +193,36 @@ class LocalConsole:
             out=runtime.get_spec(tenant=tid,project_id=project,actor=actor)
             return self._json(start_response,"200 OK",out)
         # Wave 21: manager-only project baselines and actual delivery.
+        # Wave 22: all resource forecasts are manager-only, local and
+        # computed on demand with explicitly persisted capacity/effort.
+        if method=="GET" and path=="/api/v1/forecast":
+            out=runtime.project_resource_forecast(
+                tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/forecast/effort":
+            data=self._body(environ)
+            self._fields(data,{"task_id","effort_hours","expected_version",
+                               "idempotency_key"},
+                         {"task_id","effort_hours","expected_version",
+                          "idempotency_key"})
+            out=runtime.set_forecast_effort(
+                tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/forecast/capacity":
+            data=self._body(environ)
+            self._fields(data,{"worker","hours_per_day","expected_version",
+                               "idempotency_key"},
+                         {"worker","hours_per_day","expected_version",
+                          "idempotency_key"})
+            out=runtime.set_forecast_capacity(
+                tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/forecast/history":
+            data=self._body(environ)
+            self._fields(data,{"limit"},set())
+            out=runtime.project_forecast_history(
+                tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/delivery":
             out=runtime.delivery_schedule(tenant=tid,project_id=project,
                                           actor=actor)

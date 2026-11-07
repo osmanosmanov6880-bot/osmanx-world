@@ -844,6 +844,51 @@ async function run(){
     "&& document.querySelectorAll('#delivery-history-list .delivery-audit-row').length===3"),
     "Wave 21 immutable delivery audit includes baseline, forecast and actual");
   await client.screenshot("26-delivery-plan-desktop.png");
+  // Wave 22: all hours are entered via real UI, never guessed by the service.
+  await poll(()=>client.eval(
+    "document.querySelector('#resource-forecast-panel').hidden===false "+
+    "&& document.querySelector('#forecast-unknown').textContent!=='—'"),
+    "Wave 22 manager resource planner opens");
+  await client.eval("document.querySelector('#forecast-worker').value='owner-abc';"+
+    "document.querySelector('#forecast-worker').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#forecast-hours-per-day').value='4';"+
+    "document.querySelector('#forecast-capacity-form').requestSubmit();");
+  await poll(async()=>{
+    const result=await localApi("/api/v1/forecast");
+    return result.capacities.some(x=>x.worker==="owner-abc"&&x.hours_per_day===4);
+  },"Wave 22 real employee capacity saved in SQLite");
+  await client.eval("(()=>{const select=document.querySelector('#forecast-task');"+
+    "const option=[...select.options].find(x=>x.textContent.includes('Поручение из Chromium'));"+
+    "if(!option)throw Error('Original assigned task not in forecast editor');"+
+    "select.value=option.value;select.dispatchEvent(new Event('change'));"+
+    "document.querySelector('#forecast-effort-hours').value='16';"+
+    "document.querySelector('#forecast-effort-form').requestSubmit();})()");
+  await poll(async()=>{
+    const result=await localApi("/api/v1/forecast");
+    return result.tasks.some(x=>x.title==="Поручение из Chromium"&&
+           x.state==="scheduled"&&x.estimated_workdays===4);
+  },"Wave 22 16h task scheduled across four 4h workdays");
+  await poll(()=>client.eval(
+    "document.querySelector('#forecast-task-list').textContent.includes('Поручение из Chromium') "+
+    "&& document.querySelector('#forecast-task-list').textContent.includes('Расчёт:')"),
+    "Wave 22 non-fabricated task finish visible in Russian UI");
+  await client.eval("document.querySelector('#forecast-worker').value='owner-abc';"+
+    "document.querySelector('#forecast-worker').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#forecast-hours-per-day').value='8';"+
+    "document.querySelector('#forecast-capacity-form').requestSubmit();");
+  await poll(async()=>{
+    const result=await localApi("/api/v1/forecast");
+    return result.capacities.some(x=>x.worker==="owner-abc"&&x.version===2)&&
+           result.tasks.some(x=>x.title==="Поручение из Chromium"&&
+           x.estimated_workdays===2);
+  },"Wave 22 changing capacity recalculates forecast and increments revision");
+  await client.eval("document.querySelector('#forecast-audit-open').click();");
+  await poll(()=>client.eval(
+    "document.querySelector('#forecast-history-panel').hidden===false "+
+    "&& document.querySelectorAll('#forecast-history-list .forecast-audit-item').length===3"),
+    "Wave 22 immutable resource input audit displayed");
+  await client.screenshot("29-resource-forecast-desktop.png");
+
 
 
 
@@ -929,6 +974,16 @@ async function run(){
   assert.ok(deliveryOverflow390<=2,
     "390px delivery board horizontal overflow: "+deliveryOverflow390);
   await client.screenshot("27-delivery-mobile-390.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#resource-forecast-panel').hidden===false "+
+    "&& document.querySelector('#forecast-task-list').textContent.includes('Поручение из Chromium') "+
+    "&& document.querySelector('#forecast-scheduled').textContent.includes('1')"),
+    "Wave 22 390px resource planning content loaded");
+  const forecastOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(forecastOverflow390<=2,
+    "390px forecast panel horizontal overflow: "+forecastOverflow390);
+  await client.screenshot("30-resource-forecast-390.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -1010,11 +1065,21 @@ async function run(){
   assert.ok(deliveryOverflow320<=2,
     "320px delivery board horizontal overflow: "+deliveryOverflow320);
   await client.screenshot("28-delivery-mobile-320.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#resource-forecast-panel').hidden===false "+
+    "&& document.querySelector('#forecast-task-list').textContent.includes('Поручение из Chromium') "+
+    "&& document.querySelector('#forecast-scheduled').textContent.includes('1')"),
+    "Wave 22 320px resource planning content loaded");
+  const forecastOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(forecastOverflow320<=2,
+    "320px forecast panel horizontal overflow: "+forecastOverflow320);
+  await client.screenshot("31-resource-forecast-320.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:28,public_server_started:false,production_deployed:false};
+    screenshots:31,public_server_started:false,production_deployed:false};
 }
 
 try{
