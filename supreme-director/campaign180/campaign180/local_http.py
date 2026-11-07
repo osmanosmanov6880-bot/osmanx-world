@@ -195,6 +195,17 @@ class LocalConsole:
         # Wave 21: manager-only project baselines and actual delivery.
         # Wave 22: all resource forecasts are manager-only, local and
         # computed on demand with explicitly persisted capacity/effort.
+        if method=="GET" and path=="/api/v1/scenarios/workload":
+            out=runtime.resource_workload(
+                tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/scenarios/compare":
+            data=self._body(environ)
+            self._fields(data,{"expected_snapshot","moves"},
+                         {"expected_snapshot","moves"})
+            out=runtime.compare_resource_scenario(
+                tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/forecast":
             out=runtime.project_resource_forecast(
                 tenant=tid,project_id=project,actor=actor)
