@@ -19,6 +19,7 @@
     <button type="button" class="nav-link is-active" data-panel="dashboard"><span class="nav-icon">◈</span> Обзор</button>
     <button type="button" class="nav-link" data-panel="pages"><span class="nav-icon">▣</span> Страницы</button>
     <button type="button" class="nav-link" data-panel="tasks" id="tasks-nav" hidden><span class="nav-icon">◴</span> Задачи</button>
+    <button type="button" class="nav-link" data-panel="risks" id="risks-nav" hidden><span class="nav-icon">◇</span> Контроль рисков</button>
     <button type="button" class="nav-link" data-panel="records"><span class="nav-icon">▤</span> Данные</button>
     <button type="button" class="nav-link" data-panel="schema"><span class="nav-icon">⬡</span> Модели и формы</button>
     <button type="button" class="nav-link" data-panel="history"><span class="nav-icon">◷</span> Версии и откат</button>
@@ -56,6 +57,31 @@
         <article class="card"><p class="overline">АРХИТЕКТУРА</p><h2 id="project-name">Проект не загружен</h2><p class="muted" id="project-description">Подключись, чтобы увидеть состояние.</p><div class="divider"></div><p class="mini-label">Гарантии текущего окружения</p><div class="feature-row"><span class="success-dot"></span> SQLite с историей ревизий</div><div class="feature-row"><span class="success-dot"></span> Проверки прав в транзакциях</div><div class="feature-row"><span class="success-dot"></span> Детерминированное статическое превью</div><div class="feature-row"><span class="warning-dot"></span> Публичный деплой отключён</div></article>
         <article class="card diagram"><p class="overline">ПУТЬ ПРИЛОЖЕНИЯ</p><div class="stage">01 · СПЕЦИФИКАЦИЯ<span>JSON / схема</span></div><div class="stage-line"></div><div class="stage">02 · СТРАНИЦЫ И ДАННЫЕ<span>Версии / SQLite</span></div><div class="stage-line"></div><div class="stage">03 · ПРАВИЛА И ДОСТУП<span>RBAC / идемпотентность</span></div><div class="stage-line"></div><div class="stage dim">04 · ПУБЛИКАЦИЯ<span>Не подключена</span></div></article>
       </div>
+    </section>
+    <section id="risks" class="panel">
+      <div class="page-heading">
+        <div><p class="overline">WAVE 29 / КОНТРОЛЬ ИСПОЛНЕНИЯ</p>
+          <h1>Центр корректирующих действий</h1>
+          <p class="muted">Все действующие сценарии одного проекта. Фактические записи SQLite, сроки и проверяемая история.</p>
+        </div><span class="pill">LOCAL ONLY</span>
+      </div>
+      <section class="card risk-queue-shell">
+        <div class="record-operations-header">
+          <div><h2>Очередь решений</h2>
+          <p id="risk-queue-counter" class="hint" aria-live="polite"></p></div>
+          <div class="risk-queue-actions">
+            <button type="button" class="ghost" id="risk-queue-refresh">Обновить</button>
+            <button type="button" class="ghost" id="risk-queue-export">Скачать CSV</button>
+          </div>
+        </div>
+        <p class="hint">Просрочки и приоритеты рассчитаны по локальной базе на дату UTC. Проверка статуса не является внешним аудитом результата.</p>
+        <div id="risk-queue-list" class="risk-queue-list" aria-live="polite"></div>
+        <div class="risk-queue-pager">
+          <button type="button" id="risk-queue-prev" class="ghost" disabled>Назад</button>
+          <p id="risk-queue-page" class="hint">Страница не загружена</p>
+          <button type="button" id="risk-queue-next" class="ghost" disabled>Далее</button>
+        </div>
+      </section>
     </section>
     <section id="tasks" class="panel">
       <div class="page-heading">

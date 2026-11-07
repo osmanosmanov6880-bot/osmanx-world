@@ -721,3 +721,38 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
 @media(max-width:390px){.risk-actions-section{padding:10px}
   .risk-action-list{grid-template-columns:1fr}
   .risk-actions-section button{width:100%;white-space:normal}}
+
+/* Wave29: risk execution and project queue, mobile-first with zero forced width. */
+.risk-workbook{min-width:0;margin-top:10px;padding:12px;
+  border:1px solid #59718f;border-radius:9px;background:#10243b;display:grid;gap:12px}
+.risk-workbook h5{margin:0;font-size:13px}
+.risk-workbook-status{margin:0;padding:9px;border-radius:6px;
+  background:#253b55;font-size:12px;overflow-wrap:anywhere}
+.risk-workbook-status[data-verified=true]{border-left:3px solid #87b59d}
+.risk-workbook-step,.risk-workbook-evidence p,.risk-workbook-reviews p{
+  min-width:0;border:1px solid #3a536e;border-radius:7px;background:#1a324e;
+  padding:9px;margin:0;overflow-wrap:anywhere}
+.risk-workbook-steps,.risk-workbook-evidence,.risk-workbook-reviews{display:grid;gap:7px;min-width:0}
+.risk-workbook-step{display:grid;gap:6px}
+.risk-workbook-controls,.risk-workbook-form{min-width:0;display:grid;gap:8px}
+.risk-workbook-form{padding:11px;border-radius:8px;border:1px solid #344c66;background:#18304a}
+.risk-workbook-form input,.risk-workbook-form select,.risk-workbook-controls input,
+.risk-workbook-controls select{box-sizing:border-box;min-width:0;max-width:100%;width:100%}
+.risk-queue-shell{min-width:0}
+.risk-queue-actions,.risk-queue-pager{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.risk-queue-pager{justify-content:space-between;margin-top:15px}
+.risk-queue-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));
+  gap:11px;min-width:0;margin-top:18px}
+.risk-queue-card{display:grid;align-content:start;gap:11px;min-width:0;
+  padding:15px;border-radius:10px;border:1px solid #385672;background:#182c44;
+  overflow-wrap:anywhere}
+.risk-queue-card p{margin:0}
+.risk-queue-card small{color:#bad2e9}
+.risk-queue-card[data-severity=high]{border-left:3px solid #daa17e}
+.risk-queue-card button{justify-self:start}
+@media(max-width:390px){
+  .risk-workbook,.risk-workbook-form{padding:9px}
+  .risk-queue-actions,.risk-queue-pager{display:grid;grid-template-columns:1fr;width:100%}
+  .risk-queue-actions button,.risk-queue-pager button,.risk-queue-card button{width:100%}
+  .risk-queue-list{grid-template-columns:1fr}
+}

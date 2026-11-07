@@ -12,6 +12,7 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {randomBytes} from "node:crypto";
 import {fileURLToPath} from "node:url";
+import {request as httpRequest} from "node:http";
 
 const thisFile=fileURLToPath(import.meta.url);
 const repoRoot=path.resolve(path.dirname(thisFile),"../../..");
@@ -137,8 +138,44 @@ async function createSession(url){
   return new Devtools(ws);
 }
 
+// Node 22.x built-in undici can crash on a closed HTTP/1.0 WSGI response
+// (AssertionError Parser.finish assert(!this.paused)); do NOT use pooled fetch
+// for this local test harness. The browser itself still tests real fetch().
+function requestLocal(url,options={}){
+  return new Promise((resolve,reject)=>{
+    const target=new URL(url);
+    const headers={Connection:"close",...(options.headers||{})};
+    if(options.body!==undefined)headers["Content-Length"]=String(Buffer.byteLength(options.body));
+    const req=httpRequest(target,{
+      method:options.method||"GET",headers,
+      agent:false,
+    },res=>{
+      const chunks=[];let length=0;
+      res.on("data",chunk=>{
+        length+=chunk.length;
+        if(length>8*1024*1024){
+          req.destroy(new Error("Local test HTTP response exceeded bound"));
+        }else chunks.push(chunk);
+      });
+      res.on("error",reject);
+      res.on("end",()=>{
+        const raw=Buffer.concat(chunks).toString("utf8");
+        const status=res.statusCode||0;
+        resolve({
+          status,ok:status>=200&&status<300,
+          json:async()=>JSON.parse(raw),
+          text:async()=>raw,
+        });
+      });
+    });
+    req.setTimeout(15000,()=>req.destroy(new Error("Local HTTP request timed out")));
+    req.on("error",reject);
+    if(options.body!==undefined)req.write(options.body);
+    req.end();
+  });
+}
 async function localApi(url,options={}){
-  const response=await fetch(baseUrl+url,{
+  const response=await requestLocal(baseUrl+url,{
     headers:{"Authorization":"Bearer "+token},...options});
   assert.equal(response.ok,true,url+" returned "+response.status);
   return response.json();
@@ -153,7 +190,7 @@ async function run(){
     env:{...pyEnv,OSGARD_LOCAL_API_TOKEN:token},stdio:"ignore"});
   await poll(async()=>{
     try{
-      const response=await fetch(baseUrl+"/console");
+      const response=await requestLocal(baseUrl+"/console");
       return response.ok;
     }catch{return false;}
   },"loopback WSGI startup",30000);
@@ -170,7 +207,7 @@ async function run(){
   const debugPort=Number(readFileSync(activePort,"utf8").split("\n")[0]);
   assert.ok(debugPort>1024);
   const target=await poll(async()=>{
-    const response=await fetch("http://127.0.0.1:"+debugPort+"/json/list");
+    const response=await requestLocal("http://127.0.0.1:"+debugPort+"/json/list");
     const targets=await response.json();
     return targets.find(t=>t.type==="page" && t.webSocketDebuggerUrl);
   },"Chromium page target");
@@ -1139,7 +1176,8 @@ async function run(){
       "document.querySelector('#risk-action-list').textContent.includes('Проверено')===false && "+
       "document.querySelector('#risk-action-counter').textContent.includes('Всего: 1')"),
       "Wave 28 action card, revision and evidence visible in real browser");
-    await client.screenshot("44-risk-actions-desktop.png");
+    // Wave28 optional risk branch has no mandatory screenshot; Wave29 uses a
+    // deliberately created real risk in a separate scenario below.
   }
 
 
@@ -1479,11 +1517,201 @@ async function run(){
   assert.ok(monitorOverflow320<=2,
     "320px Wave 26 monitor horizontal overflow: "+monitorOverflow320);
   await client.screenshot("43-monitor-mobile-320.png");
+  // Wave29: independent, deliberate applied scenario AFTER all existing
+  // rollback/mobile regression checks. Every risk must originate from actual
+  // task status in SQLite, never a browser-side invented monitoring payload.
+  const postLegacy=await localApi("/api/v1/forecast");
+  const wave29Target=postLegacy.tasks.find(x=>
+    x.title==="Задача перераспределения Wave 23");
+  assert.equal(wave29Target.assignee,"owner-abc",
+    "Existing rollback must restore task before Wave29's separate acceptance");
+  const apiWrite=(url,data,method="POST")=>localApi(url,{
+    method,
+    headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+    body:JSON.stringify(data),
+  });
+  const wave29Save=await apiWrite("/api/v1/scenarios/saved",{
+    title:"Отдельный контроль Wave 29",
+    expected_snapshot:postLegacy.input_snapshot,
+    moves:[{task_id:wave29Target.task_id,assignee:"operator-abc"}],
+    idempotency_key:"wave29-browser-new-variant",
+  });
+  const wave29Draft=wave29Save.variant;
+  assert.equal(wave29Draft.status,"draft");
+  const wave29Selected=(await apiWrite(
+    "/api/v1/scenarios/saved/"+wave29Draft.scenario_id+"/select",{
+      expected_version:wave29Draft.version,
+      expected_snapshot:wave29Draft.input_snapshot,
+      idempotency_key:"wave29-browser-select",
+    })).variant;
+  const wave29Apply=await apiWrite(
+    "/api/v1/scenarios/saved/"+wave29Draft.scenario_id+"/apply",{
+      expected_version:wave29Selected.version,
+      expected_snapshot:wave29Selected.input_snapshot,
+      confirmation:"ПРИМЕНИТЬ",
+      idempotency_key:"wave29-browser-apply",
+    });
+  assert.equal(wave29Apply.applied_count,1);
+  const wave29Blocked=await apiWrite(
+    "/api/v1/tasks/"+wave29Target.task_id,{
+      expected_version:wave29Apply.tasks[0].version,
+      changes:{status:"blocked"},
+      idempotency_key:"wave29-browser-block",
+    },"PATCH");
+  assert.equal(wave29Blocked.task.status,"blocked");
+  const wave29Monitor="/api/v1/scenarios/saved/"+
+    wave29Draft.scenario_id+"/monitor";
+  const wave29Report=await localApi(wave29Monitor);
+  const wave29Risk=wave29Report.risks.find(x=>
+    x.code==="TASK_BLOCKED"&&x.task_id===wave29Target.task_id);
+  assert.ok(wave29Risk,"The new applied scenario must observe a genuine blocked task");
+  const wave29Actions=wave29Monitor.replace(/\/monitor$/,"/actions");
+  const wave29Action=(await apiWrite(wave29Actions,{
+    risk_code:"TASK_BLOCKED",task_id:wave29Target.task_id,
+    expected_snapshot:wave29Report.source_snapshot,
+    plan:"Устранить блокировку и проверить работу сотрудника",
+    assignee:"operator-abc",due_date:"2027-11-12",
+    idempotency_key:"wave29-browser-create-action",
+  })).action;
+  const wave29Base=wave29Actions+"/"+wave29Action.action_id;
+  const wave29Step=(await apiWrite(wave29Base+"/steps",{
+    title:"Проверить причину блокировки и снять её",
+    assignee:"operator-abc",due_date:"2027-11-12",
+    idempotency_key:"wave29-browser-create-step",
+  })).step;
+  const wave29Done=(await apiWrite(
+    wave29Base+"/steps/"+wave29Step.step_id,{
+      expected_version:wave29Step.version,
+      changes:{status:"done",note:"Ответственный проверил условия"},
+      idempotency_key:"wave29-browser-complete-step",
+    },"PATCH")).step;
+  assert.equal(wave29Done.status,"done");
+  const wave29FactOne=(await apiWrite(wave29Base+"/evidence",{
+    kind:"task",expected_snapshot:wave29Report.source_snapshot,
+    note:"Зафиксирован реальный заблокированный статус",
+    checkpoint_sha256:null,idempotency_key:"wave29-browser-evidence-before",
+  })).evidence;
+  assert.equal(wave29FactOne.source.status,"blocked");
+  const wave29Return=(await apiWrite(wave29Base+"/reviews",{
+    expected_action_version:wave29Action.version,
+    expected_snapshot:wave29Report.source_snapshot,
+    expected_evidence_sha256:wave29FactOne.sha256,
+    expected_review_sha256:null,
+    decision:"needs_work",note:"Не закрывать до исчезновения блокировки",
+    idempotency_key:"wave29-browser-review-needs-work",
+  })).review;
+  assert.equal(wave29Return.decision,"needs_work");
+  const wave29Unblocked=await apiWrite(
+    "/api/v1/tasks/"+wave29Target.task_id,{
+      expected_version:wave29Blocked.task.version,
+      changes:{status:"in_progress"},
+      idempotency_key:"wave29-browser-unblock",
+    },"PATCH");
+  assert.equal(wave29Unblocked.task.status,"in_progress");
+  const wave29Resolved=(await apiWrite(wave29Base,{
+    expected_version:wave29Action.version,
+    changes:{status:"resolved",note:"Владелец зафиксировал исправление"},
+    idempotency_key:"wave29-browser-resolve",
+  },"PATCH")).action;
+  const current29=await localApi(wave29Monitor);
+  assert.ok(!current29.risks.some(x=>x.code==="TASK_BLOCKED"),
+    "Only actual task change may clear the blocked-risk rule");
+  const wave29FactTwo=(await apiWrite(wave29Base+"/evidence",{
+    kind:"task",expected_snapshot:current29.source_snapshot,
+    note:"После исправления статус задачи проверен в SQLite",
+    checkpoint_sha256:null,idempotency_key:"wave29-browser-evidence-after",
+  })).evidence;
+  assert.equal(wave29FactTwo.source.status,"in_progress");
+  const wave29Verified=(await apiWrite(wave29Base+"/reviews",{
+    expected_action_version:wave29Resolved.version,
+    expected_snapshot:current29.source_snapshot,
+    expected_evidence_sha256:wave29FactTwo.sha256,
+    expected_review_sha256:wave29Return.sha256,
+    decision:"verified",note:"Сверено с обновлённой записью SQLite",
+    idempotency_key:"wave29-browser-review-verified",
+  })).review;
+  assert.equal(wave29Verified.decision,"verified");
+  const wave29Book=await localApi(wave29Base+"/workbook");
+  assert.equal(wave29Book.verification.review_verified_on_current_data,true);
+  assert.equal(wave29Book.steps[0].status,"done");
+  assert.equal(wave29Book.evidence.length,2);
+  assert.equal(wave29Book.reviews.length,2);
+  const wave29Queue=await apiWrite("/api/v1/risk/queue",{
+    limit:50,offset:0,
+  });
+  assert.equal(wave29Queue.total,1,
+    "Rolled-back historical scenarios must be absent from current risk queue");
+  assert.equal(wave29Queue.counts.reviewed_current,1);
+  assert.equal(wave29Queue.counts.resolved,1);
+  const wave29Csv=await localApi("/api/v1/risk/queue/export");
+  assert.equal(wave29Csv.rows,1);
+  assert.equal(wave29Csv.all_integrity_chains_checked,true);
+  // Render actual persisted risk queue at 320px.
+  await client.eval("document.querySelector('[data-panel=risks]').click()");
+  await poll(()=>client.eval(
+    "document.querySelector('#risks').classList.contains('active') && "+
+    "document.querySelector('#risk-queue-counter').textContent.includes('Всего: 1') "+
+    "&& document.querySelector('#risk-queue-list').textContent.includes('блокировку')"),
+    "Wave 29 320px live, cross-plan risk queue");
+  const riskQueueOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(riskQueueOverflow320<=2,
+    "Wave 29 320px risk queue horizontal overflow: "+riskQueueOverflow320);
+  await client.screenshot("44-risk-queue-mobile-320.png");
+  // 390px uses fresh Chromium navigation and in-memory bearer login.
+  await client.send("Emulation.setDeviceMetricsOverride",{
+    width:390,height:844,screenWidth:390,screenHeight:844,
+    deviceScaleFactor:1,mobile:true});
+  await client.send("Page.reload",{ignoreCache:true});
+  await poll(()=>client.eval("document.readyState==='complete' && !!document.querySelector('#token')"),
+    "Wave 29 390px login");
+  await client.eval("document.querySelector('#token').value="+JSON.stringify(token)+
+    ";document.querySelector('#auth-form').requestSubmit()");
+  await poll(()=>client.eval("document.querySelector('#connect').hidden"),
+    "Wave 29 390px local authentication");
+  await client.eval("document.querySelector('[data-panel=risks]').click()");
+  await poll(()=>client.eval(
+    "document.querySelector('#risk-queue-counter').textContent.includes('Всего: 1')"),
+    "Wave 29 390px risk queue from persisted data");
+  const riskQueueOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(riskQueueOverflow390<=2,
+    "Wave 29 390px queue horizontal overflow: "+riskQueueOverflow390);
+  await client.screenshot("45-risk-queue-mobile-390.png");
+  await client.eval("document.querySelector('[data-panel=tasks]').click()");
+  await poll(()=>client.eval(
+    "[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".some(x=>x.textContent.includes('Отдельный контроль Wave 29'))"),
+    "Wave 29 verified scenario visible in mobile library");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Отдельный контроль Wave 29'));"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Контроль исполнения');"+
+    "if(!open)throw Error('Wave29 monitor button absent');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#risk-action-list').textContent.includes('Устранить блокировку') "+
+    "&& document.querySelector('#scenario-monitor-panel').hidden===false"),
+    "Wave29 action retrieved from latest SQLite source");
+  await client.eval("(()=>{const card=document.querySelector('.risk-action-card');"+
+    "if(!card)throw Error('Wave29 action card missing');"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Этапы и доказательства');"+
+    "if(!open)throw Error('Risk workbook button absent');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('.risk-workbook')?.textContent.includes('Сверено с текущими локальными данными') "+
+    "&& document.querySelector('.risk-workbook')?.textContent.includes('Проверить причину блокировки')"),
+    "Wave29 detailed evidence and owner verdict visible in Russian UI");
+  const workbookOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(workbookOverflow390<=2,
+    "Wave29 390px execution workbook horizontal overflow: "+workbookOverflow390);
+  await client.screenshot("46-risk-workbook-mobile-390.png");
+
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320","factual-apply-receipt","guarded-rollback","rollback-audit","rollback-mobile-390","rollback-mobile-320","monitor-dashboard","monitor-checkpoint-one","monitor-checkpoint-chain","monitor-variance","monitor-risk-rules","monitor-csv","monitor-rollback-history","monitor-mobile-390","monitor-mobile-320","risk-action-ui"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320","factual-apply-receipt","guarded-rollback","rollback-audit","rollback-mobile-390","rollback-mobile-320","monitor-dashboard","monitor-checkpoint-one","monitor-checkpoint-chain","monitor-variance","monitor-risk-rules","monitor-csv","monitor-rollback-history","monitor-mobile-390","monitor-mobile-320","risk-action-ui","risk-steps","risk-local-evidence","risk-owner-review","risk-queue-mobile-320","risk-queue-mobile-390","risk-workbook-mobile-390"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:43,public_server_started:false,production_deployed:false};
+    screenshots:46,public_server_started:false,production_deployed:false};
 }
 
 try{
