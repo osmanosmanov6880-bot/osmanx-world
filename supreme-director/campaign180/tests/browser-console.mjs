@@ -1020,7 +1020,9 @@ async function run(){
   const applied=decisionList.variants.find(x=>x.title==="Вариант Бета");
   const decisions=await localApi("/api/v1/scenarios/saved/"+
     encodeURIComponent(applied.scenario_id)+"/history",{
-      method:"POST",body:{limit:30}});
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({limit:30})});
   assert.deepEqual(new Set(decisions.events.map(x=>x.action)),
                    new Set(["SAVE","APPROVE","APPLY"]),
                    "Decision audit must cover each signed stage");
