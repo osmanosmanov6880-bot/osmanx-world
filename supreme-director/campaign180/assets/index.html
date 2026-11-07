@@ -70,6 +70,54 @@
         <article class="kpi"><span>ПРОСРОЧЕНЫ</span><strong id="tasks-overdue">—</strong><small>По дате UTC</small></article>
         <article class="kpi"><span>ВЫПОЛНЕНЫ</span><strong id="tasks-done">—</strong><small>Закрытые задачи</small></article>
       </div>
+      <section id="resource-forecast-panel" class="card resource-forecast-panel" hidden>
+        <div class="record-operations-header">
+          <div><p class="overline">ПРОГНОЗ ЗАВЕРШЕНИЯ / ЗАВИСИМОСТИ / МОЩНОСТЬ КОМАНДЫ</p>
+            <h2>Ресурсный прогноз проекта</h2></div>
+          <button id="forecast-refresh" type="button" class="ghost">Пересчитать</button>
+        </div>
+        <p class="hint">Прогноз строится только из заданных руководителем оценок трудозатрат и доступных часов сотрудников. Модель учитывает зависимости и последовательную работу исполнителей по будням UTC. Отпуска, праздники и непредвиденные задержки не учитываются.</p>
+        <div class="forecast-kpis">
+          <article><span>ЗАПЛАНИРОВАНЫ</span><strong id="forecast-scheduled">—</strong></article>
+          <article><span>БЕЗ ПРОГНОЗА</span><strong id="forecast-unknown">—</strong></article>
+          <article><span>РИСК ПО СРОКУ</span><strong id="forecast-risk">—</strong></article>
+          <article><span>РАСЧЁТНАЯ ДАТА</span><strong id="forecast-finish">—</strong></article>
+        </div>
+        <p id="forecast-coverage" class="forecast-coverage" role="status" aria-live="polite"></p>
+        <div class="forecast-forms">
+          <form id="forecast-capacity-form" class="forecast-editor">
+            <h3>Доступная мощность сотрудника</h3>
+            <label for="forecast-worker">Сотрудник</label>
+            <select id="forecast-worker" required><option value="">Выберите сотрудника</option></select>
+            <label for="forecast-hours-per-day">Продуктивных часов в рабочий день</label>
+            <input id="forecast-hours-per-day" type="number" min="1" max="12" step="1" required placeholder="Например, 6">
+            <p class="hint">Вводится реальное рабочее время, не длительность смены.</p>
+            <button id="forecast-capacity-save" type="submit" class="primary">Сохранить мощность</button>
+          </form>
+          <form id="forecast-effort-form" class="forecast-editor">
+            <h3>Оценка трудозатрат задачи</h3>
+            <label for="forecast-task">Задача</label>
+            <select id="forecast-task" required><option value="">Выберите задачу</option></select>
+            <label for="forecast-effort-hours">Остаток работы в часах</label>
+            <input id="forecast-effort-hours" type="number" min="1" max="2000" step="1" required placeholder="Например, 16">
+            <p class="hint">Оцените оставшуюся работу, а не уже потраченные часы. Изменения сохраняются с проверкой версии.</p>
+            <button id="forecast-effort-save" type="submit" class="primary">Сохранить оценку</button>
+          </form>
+        </div>
+        <div class="record-operations-header">
+          <div><p class="overline">ПРОГНОЗ ПО ОТКРЫТЫМ ЗАДАЧАМ</p><h3>Порядок выполнения и риски</h3></div>
+          <button id="forecast-audit-open" type="button" class="ghost">История исходных оценок</button>
+        </div>
+        <div id="forecast-task-list" class="forecast-task-list" aria-live="polite"></div>
+        <div id="forecast-milestone-list" class="forecast-milestone-list" aria-live="polite"></div>
+        <div id="forecast-history-panel" class="forecast-history" hidden>
+          <div class="record-operations-header">
+            <h3>Неизменяемый журнал оценок</h3>
+            <button id="forecast-audit-close" type="button" class="ghost">Закрыть</button>
+          </div>
+          <div id="forecast-history-list"></div>
+        </div>
+      </section>
       <section id="delivery-panel" class="card delivery-panel" hidden>
         <div class="record-operations-header">
           <div><p class="overline">ПЛАН ПРОЕКТА / НЕИЗМЕНЯЕМЫЕ БАЗОВЫЕ СРОКИ</p>
