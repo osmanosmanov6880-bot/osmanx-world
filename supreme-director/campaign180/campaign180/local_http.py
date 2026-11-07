@@ -195,6 +195,50 @@ class LocalConsole:
         # Wave 21: manager-only project baselines and actual delivery.
         # Wave 22: all resource forecasts are manager-only, local and
         # computed on demand with explicitly persisted capacity/effort.
+        # Wave 24: save candidate plans; owner explicitly selects and applies.
+        if method=="GET" and path=="/api/v1/scenarios/saved":
+            out=runtime.list_resource_variants(
+                tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/scenarios/saved":
+            data=self._body(environ)
+            self._fields(data,{"title","expected_snapshot","moves",
+                               "idempotency_key"},
+                         {"title","expected_snapshot","moves","idempotency_key"})
+            out=runtime.save_resource_variant(
+                tenant=tid,project_id=project,actor=actor,**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/(select|apply)",path)
+        if match and method=="POST":
+            scenario_id,op=match.groups()
+            data=self._body(environ)
+            if op=="select":
+                self._fields(data,{"expected_version","expected_snapshot",
+                                   "idempotency_key"},
+                             {"expected_version","expected_snapshot",
+                              "idempotency_key"})
+                out=runtime.select_resource_variant(
+                    tenant=tid,project_id=project,actor=actor,
+                    scenario_id=scenario_id,**data)
+            else:
+                self._fields(data,{"expected_version","expected_snapshot",
+                                   "confirmation","idempotency_key"},
+                             {"expected_version","expected_snapshot",
+                              "confirmation","idempotency_key"})
+                out=runtime.apply_resource_variant(
+                    tenant=tid,project_id=project,actor=actor,
+                    scenario_id=scenario_id,**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
+                           r")/history",path)
+        if match and method=="POST":
+            data=self._body(environ)
+            self._fields(data,{"limit"},set())
+            out=runtime.resource_variant_history(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),**data)
+            return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/scenarios/workload":
             out=runtime.resource_workload(
                 tenant=tid,project_id=project,actor=actor)

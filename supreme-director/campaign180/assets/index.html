@@ -103,6 +103,30 @@
             <button id="scenario-clear" type="button" class="ghost">Сбросить сценарий</button>
           </div>
         </div>
+        <div class="scenario-library">
+          <div class="record-operations-header">
+            <div><p class="overline">WAVE 24 / РЕШЕНИЯ И ИСТОРИЯ</p>
+              <h3>Сохранённые варианты проекта</h3></div>
+            <button id="scenario-library-refresh" type="button" class="ghost">Обновить варианты</button>
+          </div>
+          <p class="hint">Можно сохранить до 50 альтернативных планов. Создание варианта и выбор владельцем не изменяют поручений. Реальное переназначение выполняется только после отдельного подтверждения.</p>
+          <form id="scenario-save-form" class="scenario-save-form">
+            <div>
+              <label for="scenario-save-title">Название варианта</label>
+              <input id="scenario-save-title" type="text" maxlength="100" required placeholder="Перенос контрольных задач на смену Б">
+            </div>
+            <button id="scenario-save" type="submit" class="ghost">Сохранить этот вариант</button>
+          </form>
+          <p id="scenario-library-summary" class="hint" aria-live="polite"></p>
+          <div id="scenario-library-list" class="scenario-library-list" aria-live="polite"></div>
+          <section id="scenario-decision-history" class="scenario-decision-history" hidden>
+            <div class="record-operations-header">
+              <h3>Журнал принятого решения</h3>
+              <button id="scenario-decision-close" type="button" class="ghost">Закрыть</button>
+            </div>
+            <div id="scenario-decision-list"></div>
+          </section>
+        </div>
         <div id="scenario-results" class="scenario-results" hidden>
           <div class="record-operations-header">
             <div><p class="overline">СРАВНЕНИЕ ИЗ ОДНОГО СНИМКА SQLITE</p>

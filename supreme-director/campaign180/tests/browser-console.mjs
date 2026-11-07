@@ -931,6 +931,15 @@ async function run(){
     "&& [...document.querySelector('#scenario-task').options]"+
     ".some(x=>x.textContent.includes('Задача перераспределения Wave 23'))"),
     "Wave 23 scenario builder populated from current SQLite data");
+  // The added saved-plan fetch makes initial GETs more concurrent; wait until
+  // the mounted scenario view has the SAME authoritative input digest.
+  await client.eval("document.querySelector('#scenario-refresh').click();");
+  await poll(async()=>{
+    const real=await localApi("/api/v1/scenarios/workload");
+    const visible=await client.eval(
+      "document.querySelector('#scenario-panel').dataset.sourceSnapshot");
+    return visible===real.input_snapshot;
+  },"Wave 23 scenario source fully refreshed before staging an alternative");
   const sourceBeforeScenario=await localApi("/api/v1/forecast");
   const unchangedTask=sourceBeforeScenario.tasks.find(x=>
     x.title==="Задача перераспределения Wave 23");
@@ -955,6 +964,79 @@ async function run(){
   assert.equal(afterScenario.input_snapshot,sourceBeforeScenario.input_snapshot,
                "Wave 23 preview must NOT change any stored input");
   await client.screenshot("32-reassignment-simulation-desktop.png");
+  // Wave 24 — two saved variants persist; selecting never mutates tasks;
+  // explicit owner confirmation applies only the approved variant atomically.
+  await client.eval("document.querySelector('#scenario-save-title').value='Вариант Альфа';"+
+    "document.querySelector('#scenario-save-form').requestSubmit();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/scenarios/saved");
+    return data.variants.length===1&&data.variants[0].status==="draft";
+  },"Wave 24 first named scenario saved in real SQLite");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-library-list').textContent.includes('Вариант Альфа')"),
+    "Wave 24 saved variant visible in library");
+  await client.eval("document.querySelector('#scenario-save-title').value='Вариант Бета';"+
+    "document.querySelector('#scenario-save-title').dispatchEvent(new Event('input'));"+
+    "document.querySelector('#scenario-save-form').requestSubmit();");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/scenarios/saved");
+    return data.variants.length===2&&data.variants.every(x=>x.status==="draft");
+  },"Wave 24 two independent draft variants saved");
+  assert.equal((await localApi("/api/v1/forecast")).tasks.find(x=>
+    x.task_id===unchangedTask.task_id).assignee,"owner-abc",
+    "Saving plans must never reassign tasks");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Альфа'));"+
+    "card.querySelector('.scenario-saved-actions button:last-child').click();})()");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/scenarios/saved");
+    return data.variants.find(x=>x.title==="Вариант Альфа")?.status==="approved";
+  },"Wave 24 owner selects first plan without applying");
+  assert.equal((await localApi("/api/v1/forecast")).tasks.find(x=>
+    x.task_id===unchangedTask.task_id).assignee,"owner-abc",
+    "First approval must not change real task");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "card.querySelector('.scenario-saved-actions button:last-child').click();})()");
+  await poll(async()=>{
+    const data=await localApi("/api/v1/scenarios/saved");
+    return data.variants.find(x=>x.title==="Вариант Альфа")?.status==="superseded"&&
+      data.variants.find(x=>x.title==="Вариант Бета")?.status==="approved";
+  },"Wave 24 new choice supersedes first, only one approved");
+  await poll(()=>client.eval(
+    "[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".some(x=>x.textContent.includes('Вариант Бета')&&x.dataset.status==='approved')"),
+    "Wave 24 approved card rendered with guarded control");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "const guard=card.querySelector('.scenario-apply-guard');"+
+    "if(!guard)throw Error('Missing explicit apply guard');"+
+    "guard.querySelector('input[type=checkbox]').click();"+
+    "const phrase=guard.querySelector('input[type=text]');"+
+    "phrase.value='ПРИМЕНИТЬ';phrase.dispatchEvent(new Event('input'));"+
+    "guard.querySelector('button').click();})()");
+  await poll(async()=>{
+    const forecast=await localApi("/api/v1/forecast");
+    const saved=await localApi("/api/v1/scenarios/saved");
+    return forecast.tasks.find(x=>x.task_id===unchangedTask.task_id)?.assignee===
+      "operator-abc"&&
+      saved.variants.find(x=>x.title==="Вариант Бета")?.status==="applied";
+  },"Wave 24 confirmed owner decision atomically assigns real task");
+  const postApply=await localApi("/api/v1/forecast");
+  assert.notEqual(postApply.input_snapshot,sourceBeforeScenario.input_snapshot,
+    "Real owner-approved application must update authoritative snapshot");
+  const decisionList=await localApi("/api/v1/scenarios/saved");
+  const applied=decisionList.variants.find(x=>x.title==="Вариант Бета");
+  const decisions=await localApi("/api/v1/scenarios/saved/"+
+    encodeURIComponent(applied.scenario_id)+"/history",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({limit:30})});
+  assert.deepEqual(new Set(decisions.events.map(x=>x.action)),
+                   new Set(["SAVE","APPROVE","APPLY"]),
+                   "Decision audit must cover each signed stage");
+  await client.screenshot("35-saved-plan-applied-desktop.png");
+
 
 
 
@@ -1062,6 +1144,16 @@ async function run(){
   assert.ok(scenarioOverflow390<=2,
     "390px scenario planner horizontal overflow: "+scenarioOverflow390);
   await client.screenshot("33-scenario-mobile-390.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-library-list').textContent.includes('Вариант Бета') "+
+    "&& [...document.querySelectorAll('.scenario-saved-card')]"+
+    ".some(x=>x.dataset.status==='applied')"),
+    "Wave 24 390px saved decisions survive reload");
+  const scenarioLibraryOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(scenarioLibraryOverflow390<=2,
+    "390px saved variants horizontal overflow: "+scenarioLibraryOverflow390);
+  await client.screenshot("36-saved-plans-390.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -1163,11 +1255,21 @@ async function run(){
   assert.ok(scenarioOverflow320<=2,
     "320px scenario planner horizontal overflow: "+scenarioOverflow320);
   await client.screenshot("34-scenario-mobile-320.png");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-library-list').textContent.includes('Вариант Бета') "+
+    "&& [...document.querySelectorAll('.scenario-saved-card')]"+
+    ".some(x=>x.dataset.status==='applied')"),
+    "Wave 24 320px saved decisions survive reload");
+  const scenarioLibraryOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(scenarioLibraryOverflow320<=2,
+    "320px saved variants horizontal overflow: "+scenarioLibraryOverflow320);
+  await client.screenshot("37-saved-plans-320.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:34,public_server_started:false,production_deployed:false};
+    screenshots:37,public_server_started:false,production_deployed:false};
 }
 
 try{
