@@ -45,6 +45,19 @@ jobs:
           openssl pkey -in /tmp/campaign180-ci-test.key -pubout -out /tmp/campaign180-ci-test.pub
           python -m campaign180.repro sign --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.key --signature /tmp/campaign180-ci-test.sig
           python -m campaign180.repro verify-signature --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.pub --signature /tmp/campaign180-ci-test.sig
+      - name: Build deterministic runnable preview and smoke the extracted real SQLite API
+        run: |
+          python -m campaign180.local_preview_bundle build --output /tmp/osgard-wave27-local-preview.zip --revision "$GITHUB_SHA"
+          python -m campaign180.local_preview_bundle verify --archive /tmp/osgard-wave27-local-preview.zip
+          python -m campaign180.local_preview_bundle smoke --archive /tmp/osgard-wave27-local-preview.zip
+      - name: Upload downloadable OSGARD interactive local preview
+        if: ${{ matrix.python-version == '3.11' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: osgard-wave27-runnable-local-preview
+          path: /tmp/osgard-wave27-local-preview.zip
+          retention-days: 30
+          if-no-files-found: error
       - name: Static scan only changed source paths (no secret output)
         run: python -m campaign180.supplychain --root . --base HEAD^
       - name: Bounded synthetic crash recovery and restore (no production effects)
