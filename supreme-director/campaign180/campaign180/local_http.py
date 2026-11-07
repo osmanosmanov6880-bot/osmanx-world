@@ -25,6 +25,7 @@ from .model_editor import LocalModelEditor
 from .revision_restore import LocalRevisionRestorer
 from .mapped_relations import LocalMappedReferenceMigration
 from .project_recovery import LocalProjectRecovery
+from .scenario_actions import RiskActionDenied
 from .recovery_drill import LocalRecoveryDrill
 from .builder import validate_site_spec
 from .contracts import ACTOR_RE,TENANT_RE
@@ -164,7 +165,7 @@ class LocalConsole:
                               {"error":"METHOD_NOT_ALLOWED"})
         try:
             return self._api(environ,start_response,method,path)
-        except (ConsoleDenied,AppAccessDenied,DraftDenied,AppOperationDenied,FormSubmissionDenied,ValueError) as exc:
+        except (ConsoleDenied,AppAccessDenied,DraftDenied,AppOperationDenied,FormSubmissionDenied,RiskActionDenied,ValueError) as exc:
             # Deliberately do not disclose tenant, actor, secrets or raw content.
             error="PERMISSION_DENIED" if isinstance(exc,AppAccessDenied) else "INVALID_OPERATION"
             status="403 Forbidden" if error=="PERMISSION_DENIED" else "400 Bad Request"
@@ -199,6 +200,43 @@ class LocalConsole:
         # Wave 25: verified application outcome and owner-confirmed rollback.
         # Wave 26: real observed checkpoints, verified history, monitoring
         # metrics/rules and formula-safe CSV. All remain loopback+manager only.
+        # Wave 28: manually created actions grounded in active Wave26 risks.
+        action_base=r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+r")/actions"
+        match=re.fullmatch(action_base,path)
+        if match and method in ("GET","POST"):
+            scope={"tenant":tid,"project_id":project,"actor":actor,
+                   "scenario_id":match.group(1)}
+            if method=="GET":
+                out=runtime.list_risk_actions(**scope)
+                return self._json(start_response,"200 OK",out)
+            data=self._body(environ)
+            self._fields(data,{"risk_code","task_id","expected_snapshot","plan",
+                               "assignee","due_date","idempotency_key"},
+                         {"risk_code","task_id","expected_snapshot","plan",
+                          "assignee","due_date","idempotency_key"})
+            out=runtime.create_risk_action(**scope,**data)
+            return self._json(start_response,"201 Created",out)
+        match=re.fullmatch(action_base+r"/export",path)
+        if match and method=="GET":
+            out=runtime.risk_actions_csv(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1))
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(action_base+r"/("+_UUID.pattern[1:-1]+r")",path)
+        if match and method=="PATCH":
+            data=self._body(environ)
+            self._fields(data,{"expected_version","changes","idempotency_key"},
+                         {"expected_version","changes","idempotency_key"})
+            out=runtime.change_risk_action(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),action_id=match.group(2),**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(action_base+r"/("+_UUID.pattern[1:-1]+r")/history",path)
+        if match and method=="GET":
+            out=runtime.risk_action_history(
+                tenant=tid,project_id=project,actor=actor,
+                scenario_id=match.group(1),action_id=match.group(2))
+            return self._json(start_response,"200 OK",out)
         match=re.fullmatch(r"/api/v1/scenarios/saved/("+_UUID.pattern[1:-1]+
                            r")/monitor",path)
         if match and method=="GET":

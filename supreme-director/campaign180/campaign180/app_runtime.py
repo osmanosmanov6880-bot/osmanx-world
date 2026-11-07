@@ -60,6 +60,10 @@ from .scenario_checkpoints import (
 )
 from .scenario_monitoring import monitoring_report
 from .scenario_monitor_export import export_monitor_csv
+from .scenario_actions import (
+    init_risk_actions, create_action, change_action,
+    list_actions, action_history, action_csv,
+)
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
 TRIGGERS=frozenset(("manual","record.created","record.updated"))
@@ -103,6 +107,7 @@ class LocalAppRuntime:
         init_scenario_library(self)
         init_outcomes(self)
         init_checkpoints(self)
+        init_risk_actions(self)
 
     def _guard(self,db,tenant,project,actor,cap):
         return self.policy.require(db,tenant=tenant,project_id=project,
@@ -504,6 +509,40 @@ class LocalAppRuntime:
         return export_monitor_csv(
             self,tenant=tenant,project_id=project_id,actor=actor,
             scenario_id=scenario_id)
+
+    # Wave 28: source-bound and manually managed risk remediations.
+    def create_risk_action(self, *, tenant:str, project_id:str, actor:str,
+                           scenario_id:str, risk_code:str, task_id:str|None,
+                           expected_snapshot:str, plan:str, assignee:str|None,
+                           due_date:str|None, idempotency_key:str)->dict:
+        return create_action(self,tenant=tenant,project_id=project_id,actor=actor,
+                             scenario_id=scenario_id,risk_code=risk_code,
+                             task_id=task_id,expected_snapshot=expected_snapshot,
+                             plan=plan,assignee=assignee,due_date=due_date,
+                             idempotency_key=idempotency_key)
+
+    def change_risk_action(self, *, tenant:str, project_id:str, actor:str,
+                           scenario_id:str, action_id:str, expected_version:int,
+                           changes:dict, idempotency_key:str)->dict:
+        return change_action(self,tenant=tenant,project_id=project_id,actor=actor,
+                             scenario_id=scenario_id,action_id=action_id,
+                             expected_version=expected_version,changes=changes,
+                             idempotency_key=idempotency_key)
+
+    def list_risk_actions(self, *, tenant:str, project_id:str, actor:str,
+                          scenario_id:str)->dict:
+        return list_actions(self,tenant=tenant,project_id=project_id,actor=actor,
+                            scenario_id=scenario_id)
+
+    def risk_action_history(self, *, tenant:str, project_id:str, actor:str,
+                            scenario_id:str, action_id:str)->dict:
+        return action_history(self,tenant=tenant,project_id=project_id,actor=actor,
+                              scenario_id=scenario_id,action_id=action_id)
+
+    def risk_actions_csv(self, *, tenant:str, project_id:str, actor:str,
+                         scenario_id:str)->dict:
+        return action_csv(self,tenant=tenant,project_id=project_id,actor=actor,
+                          scenario_id=scenario_id)
 
     def list_rows(self,*,tenant:str,project_id:str,actor:str,model:str,
                   limit:int=50,offset:int=0)->list[dict]:
