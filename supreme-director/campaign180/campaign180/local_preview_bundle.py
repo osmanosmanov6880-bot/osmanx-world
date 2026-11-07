@@ -53,8 +53,11 @@ def _files(source:Path)->dict[str,bytes]:
             raise PreviewBundleDenied("Application source directory unavailable")
     result={}
     for item in sorted(pkg.iterdir()):
+        if item.name=="__pycache__" and item.is_dir() and not item.is_symlink():
+            continue  # compileall and unittest create this folder before packaging.
         if (item.is_symlink() or not item.is_file()
-                or not MODULE.fullmatch(item.name)):
+                or (item.name not in ("__init__.py","__main__.py")
+                    and not MODULE.fullmatch(item.name))):
             raise PreviewBundleDenied("Unexpected Python package entry")
         result["campaign180/"+item.name]=item.read_bytes()
     for item in sorted(ui.iterdir()):
