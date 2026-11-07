@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{},scenarioRollbackKeys:{}};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{},scenarioRollbackKeys:{},monitorScenarioId:null,monitorData:null,monitorGeneration:0,monitorCaptureKey:null};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -245,6 +245,13 @@ function renderSavedScenarios(){
       }catch(e){show(e.message,true);}
     });
     actions.append(history);
+    if(item.status==="applied"&&item.application_recorded){
+      const monitor=node("button","Контроль исполнения","ghost");
+      monitor.type="button";
+      monitor.addEventListener("click",()=>
+        openScenarioMonitor(item.scenario_id).catch(e=>show(e.message,true)));
+      actions.append(monitor);
+    }
     if(item.status==="applied"){
       const outcome=node("button","Фактический результат","ghost");
       outcome.type="button";
@@ -326,6 +333,149 @@ $("scenario-library-refresh").addEventListener("click",()=>
 $("scenario-decision-close").addEventListener("click",()=>{
   $("scenario-decision-history").hidden=true;
 });
+const MONITOR_RISK_LABELS={
+  ASSIGNEE_CHANGED:"Изменился исполнитель",
+  TASK_BLOCKED:"Задача заблокирована",
+  TASK_OVERDUE:"Открытая задача просрочена",
+  FORECAST_MISSING:"Невозможно рассчитать срок",
+  FORECAST_LATE:"Прогноз позже плановой даты",
+  CHECKPOINT_STALE:"Контрольные замеры давно не проводились",
+};
+const MONITOR_STATUS_LABELS={
+  todo:"К выполнению",
+  in_progress:"В работе",
+  blocked:"Заблокирована",
+  done:"Отмечена завершённой",
+};
+async function openScenarioMonitor(scenarioId){
+  if(!can("task.manage"))return;
+  const seq=++state.monitorGeneration;
+  const base="/api/v1/scenarios/saved/"+encodeURIComponent(scenarioId)+"/monitor";
+  const [report,history]=await Promise.all([
+    api(base),api(base+"/history",{method:"POST",body:{limit:20,offset:0}}),
+  ]);
+  if(seq!==state.monitorGeneration)return;
+  state.monitorScenarioId=scenarioId;
+  state.monitorData=report;
+  $("monitor-context").textContent=report.scenario_title+" · дата UTC: "+
+    report.as_of_utc+" · "+(report.effective_status==="rolled_back"?
+    "План уже отменён. Сохранённая история доступна для проверки.":
+    "Мониторинг активного плана. Источник — фактические записи SQLite.");
+  const count=report.affected_progress;
+  $("monitor-done").textContent=count.done+" / "+count.total;
+  $("monitor-overdue").textContent=count.overdue_open;
+  $("monitor-high").textContent=report.risk_counts.high;
+  $("monitor-checkpoints").textContent=report.checkpoint_count;
+  const variance=$("monitor-variance");variance.replaceChildren();
+  const shift=report.projected_finish_shift_calendar_days;
+  variance.append(node("strong",shift===null?
+    "Сравнение дат завершения недоступно: неполный прогноз":
+    shift===0?"Расчётная дата завершения не изменилась":
+    shift>0?"Прогноз сдвинулся позже на "+shift+" календарных дней":
+    "Прогноз стал раньше на "+Math.abs(shift)+" календарных дней"));
+  variance.append(node("p",
+    "Выполнение определяется по сохранённым статусам задач, а не по фактической "+
+    "проверке результата у клиента. Изменение расчётной даты — прогноз, не доказанный экономический эффект."));
+  const list=$("monitor-task-list");list.replaceChildren();
+  if(!report.affected_tasks.length){
+    list.append(node("p","Затронутых задач не найдено.","hint"));
+  }
+  for(const task of report.affected_tasks){
+    const card=node("article",null,"monitor-task");
+    card.dataset.status=task.status;
+    card.append(node("strong",task.title),
+      node("span","Статус: "+(MONITOR_STATUS_LABELS[task.status]||task.status)),
+      node("small","Исполнитель: "+(task.assignee||"не назначен")),
+      node("small","Срок: "+(task.due_date||"не указан")+
+        " · прогноз: "+(task.forecast_finish||"нет расчёта")),
+      node("small","Версия записи: "+task.version));
+    list.append(card);
+  }
+  const risks=$("monitor-risk-list");risks.replaceChildren();
+  if(!report.risks.length)risks.append(node("p",
+    "По текущим данным правила риска не сработали.","hint"));
+  for(const risk of report.risks){
+    const item=node("article",null,"monitor-risk");
+    item.dataset.severity=risk.severity;
+    item.append(node("strong",MONITOR_RISK_LABELS[risk.code]||risk.code),
+      node("span",risk.message),
+      node("small",risk.task_id?"Задача: "+risk.task_id.slice(0,8):
+        "Проверка регулярности контроля"));
+    risks.append(item);
+  }
+  const h=$("monitor-history-list");h.replaceChildren();
+  $("monitor-history-status").textContent=history.chain_verified?
+    "Целостность всех "+history.total+" сохранённых замеров проверена по SHA-256. "+
+    "Показаны последние "+history.checkpoints.length+".":
+    "Проверка целостности не пройдена";
+  if(!history.checkpoints.length)h.append(node("p",
+    "Замеров пока нет. Сохраните первый факт из текущей базы.","hint"));
+  for(const sample of history.checkpoints){
+    const item=node("article",null,"monitor-history-item");
+    const done=sample.task_observations.filter(x=>x.status==="done").length;
+    item.append(node("strong","Замер №"+sample.sequence+" · "+sample.observed_on_utc),
+      node("span","Отмечено завершёнными: "+done+" / "+
+        sample.task_observations.length),
+      node("span",sample.note||"Без примечания"),
+      node("small","SHA-256: "+sample.sha256));
+    h.append(item);
+  }
+  const enabled=report.effective_status==="applied"&&report.checkpoint_count<60;
+  $("monitor-note").disabled=!enabled;
+  $("monitor-capture").disabled=!enabled;
+  $("scenario-monitor-panel").hidden=false;
+}
+$("monitor-close").addEventListener("click",()=>{
+  ++state.monitorGeneration;
+  $("scenario-monitor-panel").hidden=true;
+  state.monitorScenarioId=null;
+  state.monitorData=null;
+  state.monitorCaptureKey=null;
+});
+$("monitor-refresh").addEventListener("click",()=>{
+  if(!state.monitorScenarioId)return;
+  openScenarioMonitor(state.monitorScenarioId).catch(e=>show(e.message,true));
+});
+$("monitor-note").addEventListener("input",()=>{state.monitorCaptureKey=null;});
+$("monitor-checkpoint-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!state.monitorScenarioId||!state.monitorData)return;
+  const button=$("monitor-capture");button.disabled=true;
+  try{
+    const key=state.monitorCaptureKey||safeId();
+    state.monitorCaptureKey=key;
+    await api("/api/v1/scenarios/saved/"+
+      encodeURIComponent(state.monitorScenarioId)+"/monitor/checkpoints",{
+        method:"POST",body:{
+          expected_snapshot:state.monitorData.source_snapshot,
+          note:$("monitor-note").value,idempotency_key:key,
+        }});
+    state.monitorCaptureKey=null;
+    $("monitor-note").value="";
+    await openScenarioMonitor(state.monitorScenarioId);
+    show("Контрольный замер сохранён из фактических данных. "+
+      "Контрольная цепочка SHA-256 обновлена.");
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=!(state.monitorData?.effective_status==="applied"&&
+    state.monitorData?.checkpoint_count<60);}
+});
+$("monitor-export").addEventListener("click",async()=>{
+  if(!state.monitorScenarioId)return;
+  const button=$("monitor-export");button.disabled=true;
+  try{
+    const file=await api("/api/v1/scenarios/saved/"+
+      encodeURIComponent(state.monitorScenarioId)+"/monitor/export");
+    const url=URL.createObjectURL(new Blob([file.csv],{type:file.mime}));
+    const anchor=document.createElement("a");
+    anchor.href=url;anchor.download=file.filename;
+    document.body.appendChild(anchor);anchor.click();anchor.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+    show("CSV отчёт подготовлен: "+file.rows+" записей, "+
+      "проверка истории: "+(file.verified_history?"успешна":"неизвестна"));
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+
 const OUTCOME_METRICS={
   open_tasks:"Открытые задачи",
   scheduled_tasks:"Задачи с прогнозом",
