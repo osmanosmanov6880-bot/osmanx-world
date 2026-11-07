@@ -1095,6 +1095,54 @@ async function run(){
   assert.ok(csv.csv.includes('Задача перераспределения Wave 23'));
   await client.screenshot("41-actual-outcomes-desktop.png");
 
+  // Wave 28: actual risk is converted into a persisted action card through
+  // the same live authorized SQLite HTTP path; no simulation data is supplied.
+  const riskTask=appliedOutcome.application.task_changes[0].task_id;
+  const riskActionBody={
+    risk_code:"FORECAST_MISSING",task_id:riskTask,
+    expected_snapshot:monitoring.source_snapshot,
+    plan:"Проверить отсутствие прогноза и собрать исходную оценку",
+    assignee:"operator-abc",due_date:null,
+    idempotency_key:"wave28-browser-risk-creation",
+  };
+  const risksAtMonitor=monitoring.risks;
+  const riskChoice=risksAtMonitor.find(x=>x.task_id===riskTask)||
+    risksAtMonitor.find(x=>x.code==="CHECKPOINT_STALE");
+  if(riskChoice){
+    riskActionBody.risk_code=riskChoice.code;
+    riskActionBody.task_id=riskChoice.task_id;
+    const actionApi=monitorBase.replace(/\/monitor$/,"/actions");
+    const created=await localApi(actionApi,{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify(riskActionBody)});
+    assert.equal(created.action.status,"open");
+    const actionReport=await localApi(actionApi);
+    assert.equal(actionReport.counts.total,1);
+    assert.equal(actionReport.event_chains_verified,true);
+    const changed=await localApi(actionApi+"/"+created.action.action_id,{
+      method:"PATCH",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({expected_version:1,
+        changes:{status:"resolved",note:"Проверено вручную в Chromium"},
+        idempotency_key:"wave28-browser-risk-resolve"})});
+    assert.equal(changed.action.version,2);
+    assert.equal(changed.action.status,"resolved");
+    const actionHistory=await localApi(actionApi+"/"+created.action.action_id+"/history");
+    assert.equal(actionHistory.total,2);
+    assert.equal(actionHistory.chain_verified,true);
+    const actionExport=await localApi(actionApi+"/export");
+    assert.equal(actionExport.rows,1);
+    assert.ok(actionExport.csv.includes("risk_code"));
+    await client.eval("document.querySelector('#monitor-refresh').click()");
+    await poll(()=>client.eval(
+      "document.querySelector('#risk-action-list').textContent.includes('Проверено')===false && "+
+      "document.querySelector('#risk-action-counter').textContent.includes('Всего: 1')"),
+      "Wave 28 action card, revision and evidence visible in real browser");
+    await client.screenshot("44-risk-actions-desktop.png");
+  }
+
+
   await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
     ".find(x=>x.textContent.includes('Вариант Бета'));"+
     "const open=[...card.querySelectorAll('button')]"+
@@ -1433,7 +1481,7 @@ async function run(){
   await client.screenshot("43-monitor-mobile-320.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320","factual-apply-receipt","guarded-rollback","rollback-audit","rollback-mobile-390","rollback-mobile-320","monitor-dashboard","monitor-checkpoint-one","monitor-checkpoint-chain","monitor-variance","monitor-risk-rules","monitor-csv","monitor-rollback-history","monitor-mobile-390","monitor-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320","factual-apply-receipt","guarded-rollback","rollback-audit","rollback-mobile-390","rollback-mobile-320","monitor-dashboard","monitor-checkpoint-one","monitor-checkpoint-chain","monitor-variance","monitor-risk-rules","monitor-csv","monitor-rollback-history","monitor-mobile-390","monitor-mobile-320","risk-action-ui"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
     screenshots:43,public_server_started:false,production_deployed:false};
 }

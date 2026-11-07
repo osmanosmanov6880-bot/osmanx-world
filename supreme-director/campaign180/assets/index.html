@@ -143,6 +143,16 @@
               <button id="monitor-export" type="button" class="ghost">Экспорт CSV</button>
             </div>
             <div id="monitor-risk-list" class="monitor-risk-list" aria-live="polite"></div>
+            <section class="risk-actions-section" aria-label="Корректирующие действия по рискам">
+              <div class="record-operations-header">
+                <div><p class="overline">WAVE 28 / ВЫПОЛНЕНИЕ РЕШЕНИЙ</p>
+                  <h4>Корректирующие действия</h4></div>
+                <button id="risk-action-export" type="button" class="ghost">Скачать CSV</button>
+              </div>
+              <p class="hint">Карточки создаются только вручную по фактическому сигналу. Статус «Решено» означает решение руководителя, а не независимую проверку результата.</p>
+              <p id="risk-action-counter" class="hint" aria-live="polite"></p>
+              <div id="risk-action-list" class="risk-action-list" aria-live="polite"></div>
+            </section>
             <form id="monitor-checkpoint-form" class="monitor-checkpoint-form">
               <h4>Зафиксировать текущий результат</h4>
               <p class="hint">Замер сохраняет реальный статус и назначение каждой затронутой задачи. Введите необязательное примечание. Замеры выполняются вручную, без фонового наблюдения.</p>
