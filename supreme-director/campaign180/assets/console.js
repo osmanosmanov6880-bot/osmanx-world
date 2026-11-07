@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -57,6 +57,7 @@ function switchPanel(name){
   if(name==="tasks" && state.spec)refreshTaskCalendar().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))refreshDelivery().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))refreshResourceForecast().catch(e=>show(e.message,true));
+  if(name==="tasks" && can("task.manage"))refreshScenarioWorkload().catch(e=>show(e.message,true));
   if(name==="tasks" && can("task.manage"))
     refreshTeamWorkload().catch(e=>show(e.message,true));
   if(name==="dashboard" && state.spec)refreshTaskSummary().catch(e=>show(e.message,true));
@@ -81,6 +82,7 @@ async function sync(){
   $("team-workload-panel").hidden=!can("task.manage");
   $("delivery-panel").hidden=!can("task.manage");
   $("resource-forecast-panel").hidden=!can("task.manage");
+  $("scenario-panel").hidden=!can("task.manage");
   $("task-assignee-filter-wrap").hidden=!can("task.manage");
   $("task-checklist-form").hidden=!can("task.manage");
   $("task-refresh").disabled=!can("task.read");
@@ -179,7 +181,153 @@ async function refreshTasks({resetOffset=false}={}){
   if(can("task.manage"))await refreshTeamWorkload();
   await refreshTaskCalendar();
   if(can("task.manage"))await refreshResourceForecast();
+  if(can("task.manage"))await refreshScenarioWorkload();
 }
+const SCENARIO_WINDOW=10;
+function renderScenarioMoves(){
+  const root=$("scenario-moves");root.replaceChildren();
+  if(!state.scenarioMoves.length){
+    root.append(node("p","Сценарий пуст. Выберите задачу и другого сотрудника.","hint"));
+  }
+  for(const move of state.scenarioMoves){
+    const task=state.scenarioData?.forecast.tasks.find(x=>x.task_id===move.task_id);
+    const row=node("div",null,"scenario-move");
+    row.append(node("span",(task?.title||move.task_id.slice(0,8))+
+      " · "+(task?.assignee||"Без исполнителя")+" → "+move.assignee));
+    const remove=node("button","Убрать","ghost");
+    remove.type="button";
+    remove.addEventListener("click",()=>{
+      state.scenarioMoves=state.scenarioMoves.filter(x=>x.task_id!==move.task_id);
+      $("scenario-results").hidden=true;renderScenarioMoves();
+    });
+    row.append(remove);root.append(row);
+  }
+  $("scenario-compare").disabled=!state.scenarioMoves.length;
+}
+async function refreshScenarioWorkload(){
+  if(!can("task.manage"))return;
+  const seq=++state.scenarioGeneration;
+  const [view,members,forecast]=await Promise.all([
+    api("/api/v1/scenarios/workload"),
+    api("/api/v1/tasks/members"),
+    api("/api/v1/forecast"),
+  ]);
+  if(seq!==state.scenarioGeneration)return;
+  if(state.scenarioSnapshot!==view.input_snapshot){
+    state.scenarioMoves=[];
+    $("scenario-results").hidden=true;
+  }
+  state.scenarioSnapshot=view.input_snapshot;
+  state.scenarioData={workload:view,members:members.members,forecast};
+  const m=view.metrics;
+  $("scenario-overloaded").textContent=m.overloaded_workers;
+  $("scenario-unknown").textContent=m.unknown_load_workers;
+  $("scenario-late").textContent=m.at_risk_tasks;
+  $("scenario-coverage").textContent=m.coverage_complete?"Полная":"Недостаточно данных";
+  const root=$("scenario-worker-list");root.replaceChildren();
+  if(!view.workers.length)root.append(node("p","Пока нет назначенных задач.","hint"));
+  for(const worker of view.workers){
+    const card=node("article",null,"scenario-worker");
+    card.dataset.overload=String(worker.overloaded_10d);
+    card.append(node("strong",worker.worker));
+    const value=node("div",null,"scenario-worker-stats");
+    value.append(node("small","Открытых задач: "+worker.open_tasks));
+    value.append(node("small","Оценено часов: "+worker.estimated_hours+
+      (worker.unknown_estimates?" · без оценки: "+worker.unknown_estimates:"")));
+    value.append(node("small",worker.hours_per_day?
+      "Мощность: "+worker.hours_per_day+" ч/день":"Мощность не указана"));
+    value.append(node("small",worker.backlog_pressure_10d_percent!==null?
+      "Нагрузка запаса на 10 дней: "+worker.backlog_pressure_10d_percent+"%":
+      "Невозможно оценить загрузку"));
+    if(worker.overloaded_10d===true){
+      value.append(node("small","Запас работы больше 10-дневной мощности"));
+    }
+    if(worker.late_tasks)value.append(node("small",
+      "Ожидаются задержки: "+worker.late_tasks));
+    card.append(value);root.append(card);
+  }
+  const taskSelect=$("scenario-task");
+  const selectedTask=taskSelect.value;
+  const open=forecast.tasks.filter(x=>x.status!=="done");
+  pick(taskSelect,[["","Выберите открытую задачу"],
+    ...open.slice(0,100).map(x=>[x.task_id,x.title])]);
+  if(open.some(x=>x.task_id===selectedTask))taskSelect.value=selectedTask;
+  const workerSelect=$("scenario-worker");
+  const selectedWorker=workerSelect.value;
+  pick(workerSelect,[["","Выберите сотрудника"],
+    ...members.members.map(x=>[x.actor,x.actor+" · "+x.role])]);
+  if(members.members.some(x=>x.actor===selectedWorker))workerSelect.value=selectedWorker;
+  renderScenarioMoves();
+}
+$("scenario-refresh").addEventListener("click",()=>
+  refreshScenarioWorkload().catch(e=>show(e.message,true)));
+$("scenario-add").addEventListener("click",()=>{
+  if(!state.scenarioData)return;
+  const task_id=$("scenario-task").value;
+  const assignee=$("scenario-worker").value;
+  const task=state.scenarioData.forecast.tasks.find(x=>x.task_id===task_id);
+  if(!task||!assignee){show("Выберите задачу и сотрудника",true);return;}
+  if(task.assignee===assignee){show("Выберите другого исполнителя",true);return;}
+  const without=state.scenarioMoves.filter(x=>x.task_id!==task_id);
+  if(without.length>=20){show("Не более 20 изменений за раз",true);return;}
+  state.scenarioMoves=[...without,{task_id,assignee}];
+  $("scenario-results").hidden=true;
+  renderScenarioMoves();show("Перестановка добавлена только в сценарий");
+});
+$("scenario-clear").addEventListener("click",()=>{
+  state.scenarioMoves=[];$("scenario-results").hidden=true;
+  renderScenarioMoves();show("Сценарий очищен. Настоящие задачи не менялись");
+});
+function scenarioMetricCard(label,value){
+  const card=node("div",null,"scenario-metric");
+  card.append(node("span",label),node("strong",String(value)));
+  return card;
+}
+function renderScenarioComparison(result){
+  const baseline=result.baseline.metrics,scenario=result.scenario.metrics;
+  const wrapper=$("scenario-comparison");wrapper.replaceChildren();
+  const formatFinish=m=>m.coverage_complete&&m.potential_finish?
+    m.potential_finish:"Неполный прогноз";
+  for(const [title,metrics] of [["Текущий план",baseline],["Альтернатива",scenario]]){
+    const card=node("article",null,"scenario-variant");
+    card.append(node("h4",title));
+    card.append(scenarioMetricCard("Расчётная дата",formatFinish(metrics)));
+    card.append(scenarioMetricCard("Задач с риском",metrics.at_risk_tasks));
+    card.append(scenarioMetricCard("Перегружены (10 дней)",metrics.overloaded_workers));
+    card.append(scenarioMetricCard("Открытых без прогноза",metrics.unforecastable_tasks));
+    wrapper.append(card);
+  }
+  const delta=result.comparison.finish_delta_calendar_days;
+  const assessment=node("p",delta===null?
+    "Сравнение общей даты невозможно: один или оба варианта имеют неполные исходные данные.":
+    (delta===0?"Расчётная дата завершения не меняется.":
+     delta<0?"Альтернатива раньше на "+Math.abs(delta)+" календарных дней.":
+     "Альтернатива позже на "+delta+" календарных дней."),"scenario-assessment");
+  wrapper.append(assessment);
+  const changes=$("scenario-changes");changes.replaceChildren();
+  for(const item of result.moves){
+    changes.append(node("div",item.title+": "+(item.old_assignee||"Без исполнителя")+
+      " → "+item.new_assignee+" · "+(item.before_finish||"дата неизвестна")+
+      " / "+(item.after_finish||"дата неизвестна"),"scenario-diff-row"));
+  }
+  $("scenario-results").hidden=false;
+}
+$("scenario-compare").addEventListener("click",async()=>{
+  if(!state.scenarioMoves.length||!state.scenarioSnapshot)return;
+  const button=$("scenario-compare");button.disabled=true;
+  try{
+    const payload={expected_snapshot:state.scenarioSnapshot,
+      moves:state.scenarioMoves};
+    const result=await api("/api/v1/scenarios/compare",{method:"POST",body:payload});
+    if(result.input_snapshot!==state.scenarioSnapshot)return;
+    renderScenarioComparison(result);
+    show("Сценарии сравнены. Реальные назначения в SQLite не менялись");
+  }catch(e){
+    show(e.message,true);
+    await refreshScenarioWorkload().catch(()=>{});
+  }finally{button.disabled=false;}
+});
+
 const FORECAST_STATES={
   scheduled:"Расчёт выполнен",
   completed:"Завершена",
