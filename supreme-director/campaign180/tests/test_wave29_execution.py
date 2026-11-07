@@ -136,9 +136,11 @@ class Wave29Tests(ScenarioFixture):
         with self.rt.drafts._tx() as db:
             with self.assertRaises(sqlite3.IntegrityError):
                 db.execute("DELETE FROM director_action_evidence")
-            db.execute("UPDATE director_action_evidence SET payload_sha256='bad'")
-        with self.assertRaises(ExecutionDenied):
-            self.book(action)
+            with self.assertRaises(sqlite3.IntegrityError):
+                db.execute("UPDATE director_action_evidence SET payload_sha256='bad'")
+        # The immutable SQL triggers reject the tamper before a bad digest
+        # can persist, so the original chain must remain valid.
+        self.assertTrue(self.book(action)["chains_verified"])
 
     def test_owner_verification_enforces_no_active_risk_and_fresh_proof(self):
         action=self.risk()
