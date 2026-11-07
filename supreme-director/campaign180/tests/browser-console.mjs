@@ -1036,6 +1036,61 @@ async function run(){
                    new Set(["SAVE","APPROVE","APPLY"]),
                    "Decision audit must cover each signed stage");
   await client.screenshot("35-saved-plan-applied-desktop.png");
+  // Wave 25 — verify actual immutable application record, then guarded
+  // owner-only atomic rollback restores the previous real assignment.
+  const detailUrl="/api/v1/scenarios/saved/"+
+    encodeURIComponent(applied.scenario_id)+"/outcome";
+  const appliedOutcome=await localApi(detailUrl);
+  assert.equal(appliedOutcome.application.task_changes.length,1,
+    "The approved one-task scenario must have one factual application change");
+  assert.equal(appliedOutcome.application.task_changes[0].before_assignee,"owner-abc");
+  assert.equal(appliedOutcome.application.task_changes[0].after_assignee,"operator-abc");
+  assert.equal(appliedOutcome.application.snapshot_after,postApply.input_snapshot);
+  assert.equal(appliedOutcome.rollback_ready,true);
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Фактический результат');"+
+    "if(!open)throw Error('Application outcome button absent');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-outcome-report').hidden===false "+
+    "&& document.querySelector('#scenario-outcome-body').textContent.includes('Фактические назначения')"),
+    "Wave 25 factual pre/post application and task receipt rendered");
+  await client.eval("(()=>{const guard=document.querySelector('.scenario-rollback-guard');"+
+    "if(!guard)throw Error('Rollback consent panel missing');"+
+    "const button=guard.querySelector('button');"+
+    "if(!button.disabled)throw Error('Rollback must start disabled');"+
+    "guard.querySelector('input[type=checkbox]').click();"+
+    "const phrase=guard.querySelector('input[type=text]');"+
+    "phrase.value='ОТКАТИТЬ';phrase.dispatchEvent(new Event('input'));"+
+    "if(button.disabled)throw Error('Complete owner confirmation not accepted');"+
+    "button.click();})()");
+  await poll(async()=>{
+    const state=await localApi(detailUrl);
+    const forecast=await localApi("/api/v1/forecast");
+    return state.effective_status==="rolled_back"&&
+      state.rollback?.task_changes.length===1&&
+      forecast.tasks.find(x=>x.task_id===unchangedTask.task_id)?.assignee==="owner-abc";
+  },"Wave 25 real SQLite assignment restored atomically after guarded confirmation");
+  const afterRollback=await localApi(detailUrl);
+  assert.equal(afterRollback.application.sha256,
+    appliedOutcome.application.sha256,
+    "Rollback must preserve immutable original application history");
+  assert.equal(afterRollback.rollback.application_sha256,
+    appliedOutcome.application.sha256);
+  assert.equal(afterRollback.rollback.metrics_after.potential_finish,
+    appliedOutcome.application.metrics_before.potential_finish,
+    "Rollback metrics must restore the baseline deterministic schedule");
+  const rollbackDecisions=await localApi(
+    "/api/v1/scenarios/saved/"+encodeURIComponent(applied.scenario_id)+
+    "/history",{method:"POST",headers:{
+      Authorization:"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({limit:30})});
+  assert.deepEqual(new Set(rollbackDecisions.events.map(x=>x.action)),
+    new Set(["SAVE","APPROVE","APPLY","ROLLBACK"]),
+    "Unified scenario decision journal must include verified rollback");
+  await client.screenshot("38-scenario-rollback-desktop.png");
+
 
 
 
@@ -1147,13 +1202,27 @@ async function run(){
   await poll(()=>client.eval(
     "document.querySelector('#scenario-library-list').textContent.includes('Вариант Бета') "+
     "&& [...document.querySelectorAll('.scenario-saved-card')]"+
-    ".some(x=>x.dataset.status==='applied')"),
+    ".some(x=>x.dataset.status==='rolled_back')"),
     "Wave 24 390px saved decisions survive reload");
   const scenarioLibraryOverflow390=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(scenarioLibraryOverflow390<=2,
     "390px saved variants horizontal overflow: "+scenarioLibraryOverflow390);
   await client.screenshot("36-saved-plans-390.png");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Фактический результат');"+
+    "if(!open)throw Error('Outcome action missing on 390px');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-outcome-report').hidden===false "+
+    "&& document.querySelector('#scenario-outcome-body').textContent.includes('Назначения возвращены')"),
+    "Wave 25 390px immutable rollback details shown");
+  const outcomeOverflow390=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(outcomeOverflow390<=2,
+    "390px factual rollback report horizontal overflow: "+outcomeOverflow390);
+  await client.screenshot("39-rollback-outcome-mobile-390.png");
   // Narrow 320px devices must also display the recovery action without
   // clipping; this is a separate responsive breakpoint from 390px.
   await client.send("Emulation.setDeviceMetricsOverride",{
@@ -1258,18 +1327,32 @@ async function run(){
   await poll(()=>client.eval(
     "document.querySelector('#scenario-library-list').textContent.includes('Вариант Бета') "+
     "&& [...document.querySelectorAll('.scenario-saved-card')]"+
-    ".some(x=>x.dataset.status==='applied')"),
+    ".some(x=>x.dataset.status==='rolled_back')"),
     "Wave 24 320px saved decisions survive reload");
   const scenarioLibraryOverflow320=await client.eval(
     "document.documentElement.scrollWidth-document.documentElement.clientWidth");
   assert.ok(scenarioLibraryOverflow320<=2,
     "320px saved variants horizontal overflow: "+scenarioLibraryOverflow320);
   await client.screenshot("37-saved-plans-320.png");
+  await client.eval("(()=>{const card=[...document.querySelectorAll('.scenario-saved-card')]"+
+    ".find(x=>x.textContent.includes('Вариант Бета'));"+
+    "const open=[...card.querySelectorAll('button')]"+
+    ".find(x=>x.textContent==='Фактический результат');"+
+    "if(!open)throw Error('Outcome action missing on 320px');open.click();})()");
+  await poll(()=>client.eval(
+    "document.querySelector('#scenario-outcome-report').hidden===false "+
+    "&& document.querySelector('#scenario-outcome-body').textContent.includes('Назначения возвращены')"),
+    "Wave 25 320px immutable rollback details shown");
+  const outcomeOverflow320=await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth");
+  assert.ok(outcomeOverflow320<=2,
+    "320px factual rollback report horizontal overflow: "+outcomeOverflow320);
+  await client.screenshot("40-rollback-outcome-mobile-320.png");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","real-form-submit","record-search","csv-inspect","csv-batch-apply","csv-export","batch-inspect","batch-apply","batch-journal","batch-undo","task-create","task-manager-kpi","task-status","task-audit","mobile-390","mobile-320","task-mobile-390","task-mobile-320","task-comment","task-checklist","task-workload","task-due-filter","task-collab-mobile-390","task-collab-mobile-320","calendar-deadlines","dependency-add","dependency-guard","dependency-release","calendar-mobile-390","calendar-mobile-320","phase-baseline","milestone-create","stage-reforecast","milestone-reforecast","milestone-guard","milestone-complete","delivery-audit","delivery-mobile-390","delivery-mobile-320","resource-capacity","resource-effort","resource-recalculate","resource-audit","resource-mobile-390","resource-mobile-320","scenario-prepare","scenario-stage","scenario-compare","scenario-no-write","scenario-mobile-390","scenario-mobile-320","scenario-save-multiple","scenario-select","scenario-supersede","scenario-owner-confirm","scenario-apply-atomic","scenario-decision-audit","saved-plans-mobile-390","saved-plans-mobile-320","factual-apply-receipt","guarded-rollback","rollback-audit","rollback-mobile-390","rollback-mobile-320"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
-    screenshots:37,public_server_started:false,production_deployed:false};
+    screenshots:40,public_server_started:false,production_deployed:false};
 }
 
 try{
