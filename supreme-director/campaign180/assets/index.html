@@ -119,6 +119,41 @@
           </form>
           <p id="scenario-library-summary" class="hint" aria-live="polite"></p>
           <div id="scenario-library-list" class="scenario-library-list" aria-live="polite"></div>
+          <section id="scenario-monitor-panel" class="scenario-monitor-panel" hidden>
+            <div class="record-operations-header">
+              <div><p class="overline">WAVE 26 / ПЯТЬ РАБОЧИХ МОДУЛЕЙ</p>
+                <h3>Контроль выполнения принятого решения</h3></div>
+              <button id="monitor-close" type="button" class="ghost">Закрыть</button>
+            </div>
+            <p id="monitor-context" class="hint" aria-live="polite"></p>
+            <div class="monitor-kpis">
+              <article><span>ОТМЕЧЕНО ЗАВЕРШЁННЫМИ</span><strong id="monitor-done">—</strong></article>
+              <article><span>ПРОСРОЧЕНЫ ОТКРЫТЫЕ</span><strong id="monitor-overdue">—</strong></article>
+              <article><span>РИСКИ ВЫСОКОЙ ВАЖНОСТИ</span><strong id="monitor-high">—</strong></article>
+              <article><span>РУЧНЫЕ ЗАМЕРЫ</span><strong id="monitor-checkpoints">—</strong></article>
+            </div>
+            <div id="monitor-variance" class="monitor-variance" aria-live="polite"></div>
+            <div class="record-operations-header">
+              <div><p class="overline">ФАКТ ИЗ SQLITE</p><h4>Затронутые задачи</h4></div>
+              <button id="monitor-refresh" type="button" class="ghost">Получить свежие данные</button>
+            </div>
+            <div id="monitor-task-list" class="monitor-task-list" aria-live="polite"></div>
+            <div class="record-operations-header">
+              <h4>Проверяемые риски</h4>
+              <button id="monitor-export" type="button" class="ghost">Экспорт CSV</button>
+            </div>
+            <div id="monitor-risk-list" class="monitor-risk-list" aria-live="polite"></div>
+            <form id="monitor-checkpoint-form" class="monitor-checkpoint-form">
+              <h4>Зафиксировать текущий результат</h4>
+              <p class="hint">Замер сохраняет реальный статус и назначение каждой затронутой задачи. Введите необязательное примечание. Замеры выполняются вручную, без фонового наблюдения.</p>
+              <label for="monitor-note">Примечание руководителя</label>
+              <textarea id="monitor-note" maxlength="400" rows="3" placeholder="Что проверено; причины изменений; следующие действия"></textarea>
+              <button id="monitor-capture" type="submit" class="primary">Сохранить контрольный замер</button>
+            </form>
+            <div class="record-operations-header"><h4>Хронология и целостность</h4></div>
+            <p id="monitor-history-status" class="hint"></p>
+            <div id="monitor-history-list" class="monitor-history-list" aria-live="polite"></div>
+          </section>
           <section id="scenario-outcome-report" class="scenario-outcome-report" hidden>
             <div class="record-operations-header">
               <div><p class="overline">WAVE 25 / ФАКТИЧЕСКИЕ ИЗМЕНЕНИЯ</p>
