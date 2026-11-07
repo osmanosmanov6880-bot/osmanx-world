@@ -145,6 +145,7 @@ function requestLocal(url,options={}){
   return new Promise((resolve,reject)=>{
     const target=new URL(url);
     const headers={Connection:"close",...(options.headers||{})};
+    if(options.body!==undefined)headers["Content-Length"]=String(Buffer.byteLength(options.body));
     const req=httpRequest(target,{
       method:options.method||"GET",headers,
       agent:false,
