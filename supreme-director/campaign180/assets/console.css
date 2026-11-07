@@ -699,3 +699,25 @@ td{color:#dbe5f4}.stack{display:grid;gap:10px}.workflow-item{padding:16px;border
  .monitor-kpis strong{font-size:17px}
  .monitor-task-list,.monitor-risk-list,.monitor-history-list{grid-template-columns:1fr}
 }
+
+/* Wave 28: responsive evidence-bound risk action workbench. */
+.risk-actions-section{min-width:0;margin:15px 0 20px;padding:14px;
+  border:1px solid #365877;border-radius:10px;background:#10243d}
+.risk-action-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));
+  gap:10px;min-width:0}
+.risk-action-form,.risk-action-card{display:grid;gap:10px;min-width:0;
+  padding:13px;border:1px solid #3d5977;border-radius:9px;background:#19314d;
+  overflow-wrap:anywhere}
+.risk-action-card[data-status=resolved]{border-left:3px solid #91ad9e}
+.risk-action-card[data-status=doing]{border-left:3px solid #8baed5}
+.risk-action-card[data-status=open]{border-left:3px solid #d4a27a}
+.risk-action-form textarea,.risk-action-form input,.risk-action-form select,
+.risk-action-controls select,.risk-action-controls input{min-width:0;max-width:100%;
+  width:100%;box-sizing:border-box}
+.risk-action-controls{display:grid;gap:7px;min-width:0}
+.risk-action-audit{white-space:pre-wrap;overflow-wrap:anywhere;
+  font-size:10px;color:#bed4ed;max-width:100%;min-width:0}
+.risk-action-form small,.risk-action-card small{color:#bbd2eb}
+@media(max-width:390px){.risk-actions-section{padding:10px}
+  .risk-action-list{grid-template-columns:1fr}
+  .risk-actions-section button{width:100%;white-space:normal}}

@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{},scenarioRollbackKeys:{},monitorScenarioId:null,monitorData:null,monitorGeneration:0,monitorCaptureKey:null};
+const state = {token:"",me:null,spec:null,revision:0,workflows:[],rows:[],model:null,selectedRow:null,restorePlan:null,mappedPlan:null,mappedPayload:null,rowOffset:0,rowLimit:25,rowGeneration:0,csvPending:null,csvRetryKey:null,batchSelection:new Set(),batchPlan:null,batchRetryKey:null,batchRestorePlan:null,batchRestoreRetryKey:null,batchFieldGeneration:0,tasks:[],taskMembers:[],taskEditing:null,taskOffset:0,taskGeneration:0,taskPendingKey:null,collabTask:null,collabGeneration:0,commentPendingKey:null,checklistPendingKey:null,calendarGeneration:0,dependencyRetryKey:null,deliveryGeneration:0,deliveryData:null,deliveryPhaseKey:null,deliveryMilestoneKey:null,forecastGeneration:0,forecastData:null,forecastEffortKey:null,forecastCapacityKey:null,scenarioGeneration:0,scenarioSnapshot:null,scenarioMoves:[],scenarioData:null,scenarioLibrary:null,scenarioSaveKey:null,scenarioSelectKeys:{},scenarioApplyKeys:{},scenarioRollbackKeys:{},monitorScenarioId:null,monitorData:null,monitorGeneration:0,monitorCaptureKey:null,riskActionRetry:{},riskActionGeneration:0};
 const panels = ["dashboard","tasks","pages","records","schema","history","workflows","preview"];
 const names = {dashboard:"Обзор",tasks:"Задачи",pages:"Страницы",records:"Данные",schema:"Модели и формы",history:"Версии и откат",workflows:"Автоматизация",preview:"Предпросмотр"};
 const show = (message, error=false) => {
@@ -351,8 +351,9 @@ async function openScenarioMonitor(scenarioId){
   if(!can("task.manage"))return;
   const seq=++state.monitorGeneration;
   const base="/api/v1/scenarios/saved/"+encodeURIComponent(scenarioId)+"/monitor";
-  const [report,history]=await Promise.all([
+  const [report,history,actions]=await Promise.all([
     api(base),api(base+"/history",{method:"POST",body:{limit:20,offset:0}}),
+    api("/api/v1/scenarios/saved/"+encodeURIComponent(scenarioId)+"/actions"),
   ]);
   if(seq!==state.monitorGeneration)return;
   state.monitorScenarioId=scenarioId;
@@ -403,6 +404,7 @@ async function openScenarioMonitor(scenarioId){
         "Проверка регулярности контроля"));
     risks.append(item);
   }
+  renderRiskActions(report,actions);
   const h=$("monitor-history-list");h.replaceChildren();
   $("monitor-history-status").textContent=history.chain_verified?
     "Целостность всех "+history.total+" сохранённых замеров проверена по SHA-256. "+
@@ -472,6 +474,143 @@ $("monitor-export").addEventListener("click",async()=>{
     setTimeout(()=>URL.revokeObjectURL(url),30000);
     show("CSV отчёт подготовлен: "+file.rows+" записей, "+
       "проверка истории: "+(file.verified_history?"успешна":"неизвестна"));
+  }catch(e){show(e.message,true);}
+  finally{button.disabled=false;}
+});
+
+
+const ACTION_STATUS={open:"Открыто",doing:"В работе",resolved:"Решено"};
+function actionBase(){
+  if(!state.monitorScenarioId)throw Error("Сначала выберите план");
+  return "/api/v1/scenarios/saved/"+encodeURIComponent(state.monitorScenarioId)+"/actions";
+}
+function actionDownload(file){
+  const url=URL.createObjectURL(new Blob([file.csv],{type:file.mime}));
+  const anchor=document.createElement("a");
+  anchor.href=url;anchor.download=file.filename;
+  document.body.appendChild(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+function actionRiskKey(risk){return risk.code+"|"+(risk.task_id||"global");}
+function renderRiskActions(report,actions){
+  const holder=$("risk-action-list");
+  holder.replaceChildren();
+  $("risk-action-counter").textContent="Всего: "+actions.counts.total+
+    " · открыто: "+actions.counts.open+" · в работе: "+actions.counts.doing+
+    " · решено: "+actions.counts.resolved+" · просрочено: "+actions.counts.overdue;
+  const canWrite=report.effective_status==="applied";
+  const known=new Set(actions.actions.map(a=>actionRiskKey({
+    code:a.risk_code,task_id:a.task_id})));
+  for(const risk of report.risks){
+    if(known.has(actionRiskKey(risk)))continue;
+    const form=node("form",null,"risk-action-form");
+    const title=node("strong",MONITOR_RISK_LABELS[risk.code]||risk.code);
+    const scope=node("small",risk.task_id?"Задача: "+risk.task_id.slice(0,8):
+      "Периодичность ручных проверок");
+    const plan=node("textarea");
+    plan.required=true;plan.maxLength=500;plan.rows=2;
+    plan.placeholder="Как именно проверить и устранить причину риска";
+    plan.setAttribute("aria-label","План корректирующих действий");
+    const assignee=node("select");
+    assignee.setAttribute("aria-label","Ответственный");
+    pick(assignee,[["","Без ответственного"],...state.taskMembers.
+      filter(x=>x.active!==false).map(x=>[x.actor,x.actor+" · "+x.role])]);
+    const due=node("input");
+    due.type="date";due.setAttribute("aria-label","Срок проверки");
+    const save=node("button","Создать действие","primary");
+    save.type="submit";save.disabled=!canWrite;
+    form.append(title,scope,plan,assignee,due,save);
+    form.addEventListener("submit",async e=>{
+      e.preventDefault();if(!canWrite||!state.monitorData)return;
+      const scenario=state.monitorScenarioId;
+      const key=actionRiskKey(risk);
+      const idem=state.riskActionRetry[key]||safeId();
+      state.riskActionRetry[key]=idem;save.disabled=true;
+      try{
+        await api(actionBase(),{method:"POST",body:{
+          risk_code:risk.code,task_id:risk.task_id,
+          expected_snapshot:state.monitorData.source_snapshot,
+          plan:plan.value,assignee:assignee.value||null,
+          due_date:due.value||null,idempotency_key:idem}});
+        delete state.riskActionRetry[key];
+        await openScenarioMonitor(scenario);
+        show("Карточка действия сохранена из текущего сигнала риска.");
+      }catch(err){show(err.message,true);save.disabled=false;}
+    });
+    holder.append(form);
+  }
+  for(const action of actions.actions){
+    const card=node("article",null,"risk-action-card");
+    card.dataset.status=action.status;
+    const title=node("strong",(MONITOR_RISK_LABELS[action.risk_code]||
+      action.risk_code)+" · "+ACTION_STATUS[action.status]);
+    const line=node("p",action.plan);
+    const evidence=node("small","Источник: "+action.source_risk_sha256.slice(0,16)+
+      "… · версия "+action.version+" · риск сейчас: "+
+      (action.risk_still_observed?"наблюдается":"не наблюдается"));
+    const facts=node("small","Ответственный: "+(action.assignee||"нет")+
+      " · срок: "+(action.due_date||"не задан"));
+    const tools=node("div",null,"risk-action-controls");
+    const status=node("select");
+    status.setAttribute("aria-label","Состояние действия");
+    pick(status,Object.entries(ACTION_STATUS));
+    status.value=action.status;
+    status.disabled=!canWrite||action.version>=40;
+    const note=node("input");
+    note.type="text";note.maxLength=400;
+    note.placeholder="Основание решения; обязательно при закрытии";
+    note.setAttribute("aria-label","Примечание к действию");
+    note.disabled=status.disabled;
+    const apply=node("button","Сохранить статус","ghost");
+    apply.type="button";apply.disabled=status.disabled;
+    apply.addEventListener("click",async()=>{
+      if(status.value===action.status&&!note.value.trim()){
+        show("Измените статус или добавьте примечание.",true);return;
+      }
+      const scenario=state.monitorScenarioId;
+      const key="rev:"+action.action_id+":"+action.version+":"+
+        status.value+":"+note.value;
+      const idem=state.riskActionRetry[key]||safeId();
+      state.riskActionRetry[key]=idem;apply.disabled=true;
+      try{
+        const changes={status:status.value};
+        if(note.value.trim())changes.note=note.value;
+        await api(actionBase()+"/"+encodeURIComponent(action.action_id),{
+          method:"PATCH",body:{expected_version:action.version,changes,
+                               idempotency_key:idem}});
+        delete state.riskActionRetry[key];
+        await openScenarioMonitor(scenario);
+        show("Решение сохранено с проверкой версии и журналом SHA-256.");
+      }catch(err){show(err.message,true);apply.disabled=status.disabled;}
+    });
+    const audit=node("button","История","ghost");
+    audit.type="button";
+    audit.addEventListener("click",async()=>{
+      try{
+        const result=await api(actionBase()+"/"+
+          encodeURIComponent(action.action_id)+"/history");
+        const text=result.events.map(v=>"Версия "+v.sequence+" · "+
+          v.actor+" · "+ACTION_STATUS[v.state.status]+" · SHA-256: "+v.sha256).
+          join("\n");
+        const proof=node("pre",text,"risk-action-audit");
+        const old=card.querySelector(".risk-action-audit");
+        if(old)old.remove();card.append(proof);
+      }catch(err){show(err.message,true);}
+    });
+    tools.append(status,note,apply,audit);
+    card.append(title,line,facts,evidence,tools);
+    holder.append(card);
+  }
+  if(!holder.children.length)holder.append(node("p",
+    "Пока нет активных рисков и карточек действий.","hint"));
+}
+$("risk-action-export").addEventListener("click",async()=>{
+  if(!state.monitorScenarioId)return;
+  const button=$("risk-action-export");button.disabled=true;
+  try{
+    const file=await api(actionBase()+"/export");
+    actionDownload(file);
+    show("Экспортировано действий: "+file.rows+" · SHA-256: "+file.sha256.slice(0,16)+"…");
   }catch(e){show(e.message,true);}
   finally{button.disabled=false;}
 });

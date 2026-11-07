@@ -58,6 +58,8 @@ jobs:
           path: /tmp/osgard-wave27-local-preview.zip
           retention-days: 30
           if-no-files-found: error
+      - name: Wave28 risk action integration and WSGI authorization tests
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave28_actions.py' -v
       - name: Static scan only changed source paths (no secret output)
         run: python -m campaign180.supplychain --root . --base HEAD^
       - name: Bounded synthetic crash recovery and restore (no production effects)
