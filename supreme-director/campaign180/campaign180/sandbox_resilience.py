@@ -70,9 +70,12 @@ def exercise()->dict:
         checks["expired_lease_cannot_commit"]=expect_denied(lambda:q.commit(
             lease,now=NOW+2,result_sha256="a"*64))
 
+        # Every synthetic key must satisfy the SAME >=16 character
+        # TaskEnvelope idempotency policy as actual jobs. Short keys test
+        # admission rejection, not concurrency: do not confuse the two.
         def compete(i):
             try:
-                return q.reserve(tenant=TENANT,job_key=f"race-tenant-{i:03d}",
+                return q.reserve(tenant=TENANT,job_key=f"race-tenant-worker-{i:03d}",
                     units=1,now=NOW+2)
             except QuotaDenied:return None
         with ThreadPoolExecutor(max_workers=8) as executor:
