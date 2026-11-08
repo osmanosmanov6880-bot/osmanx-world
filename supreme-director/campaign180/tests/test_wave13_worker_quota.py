@@ -12,7 +12,7 @@ import threading
 import unittest
 import uuid
 
-from campaign180.contracts import SCHEMA_TASK,validate_task
+from campaign180.contracts import SCHEMA_TASK,validate_task,ContractError
 from campaign180.sandbox_runtime import SandboxDenied,run_allowlisted_task
 from campaign180.resource_limits import ResourceLimits,ResourceDenied
 from campaign180.quota_ledger import TenantQuotaLedger,QuotaDenied,QuotaReservation
@@ -67,9 +67,13 @@ class SandboxTests(unittest.TestCase):
             run_allowlisted_task(auth(value="x"*8193,operation="sha256_text"),
                 expected_tenant=TENANT,expected_actor=ACTOR,scopes={SCOPE},now=NOW)
 
-    def test_overflow_fail_closed(self):
+    def test_unsafe_integer_rejected_by_contract_before_worker(self):
+        # TaskEnvelope has a stricter 53-bit JSON precision bound than
+        # the fixed evaluator. Rejection by the first trusted layer is safe.
+        with self.assertRaises(ContractError):
+            auth(value=[2**63-1,1])
         with self.assertRaises(SandboxDenied):
-            run_allowlisted_task(auth(value=[2**63-1,1]),
+            run_allowlisted_task(auth(value=[2**53-1,1]),
                 expected_tenant=TENANT,expected_actor=ACTOR,scopes={SCOPE},now=NOW)
 
     def test_rejects_identity_scope_capability_and_modified_envelope(self):
