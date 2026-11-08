@@ -88,11 +88,17 @@
     ],
     "TITAN-X15": [
       "supreme-director/campaign180/campaign180/scheduler.py",
-      "supreme-director/campaign180/tests/test_scheduler_backup.py"
+      "supreme-director/campaign180/tests/test_scheduler_backup.py",
+      "supreme-director/campaign180/campaign180/quota_ledger.py",
+      "supreme-director/campaign180/campaign180/budgeted_runtime.py",
+      "supreme-director/campaign180/tests/test_wave13_worker_quota.py"
     ],
     "TITAN-X26": [
       "supreme-director/campaign180/campaign180/supplychain.py",
-      "supreme-director/campaign180/tests/test_review_supplychain.py"
+      "supreme-director/campaign180/tests/test_review_supplychain.py",
+      "supreme-director/campaign180/campaign180/sandbox_resilience.py",
+      "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
+      ".github/workflows/supreme-director-wave13-local-security.yml"
     ],
     "TITAN-X17": [
       "supreme-director/campaign180/campaign180/builder.py",
@@ -185,6 +191,22 @@
     "TITAN-X19": [
       "supreme-director/campaign180/campaign180/repair.py",
       "supreme-director/campaign180/tests/test_wave6_repair.py"
+    ],
+    "TITAN-X09": [
+      "supreme-director/campaign180/campaign180/sandbox_runtime.py",
+      "supreme-director/campaign180/campaign180/bounded_worker.py",
+      "supreme-director/campaign180/tests/test_wave13_worker_quota.py"
+    ],
+    "TITAN-X10": [
+      "supreme-director/campaign180/campaign180/resource_limits.py",
+      "supreme-director/campaign180/campaign180/sandbox_runtime.py",
+      "supreme-director/campaign180/campaign180/quota_ledger.py",
+      "supreme-director/campaign180/tests/test_wave13_worker_quota.py"
+    ],
+    "TITAN-X29": [
+      "supreme-director/campaign180/campaign180/sandbox_resilience.py",
+      "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
+      ".github/workflows/supreme-director-wave13-local-security.yml"
     ]
   }
 }

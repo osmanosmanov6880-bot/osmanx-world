@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "661eb9883c01d308c2e0adb82104bede861a03f1",
+  "based_on_code_commit": "d407bd21c5a8ed57c25b3c7a5c3e6d20b0e19005",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -8,8 +8,8 @@
   "independently_accepted": 0,
   "production_accepted": 0,
   "counts": {
-    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 33,
-    "NO_DIRECT_PROOF": 139,
+    "RELATED_LOCAL_CODE_NOT_ACCEPTED": 36,
+    "NO_DIRECT_PROOF": 136,
     "HOLD_SCOPE_EXCLUDED": 4,
     "HOLD_SOURCE_MISSING": 4
   },
@@ -150,8 +150,12 @@
       "title": "Защищённый sandbox исполнения задач",
       "original_status": "PLANNED",
       "original_source_line": 136,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/sandbox_runtime.py",
+        "supreme-director/campaign180/campaign180/bounded_worker.py",
+        "supreme-director/campaign180/tests/test_wave13_worker_quota.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -163,8 +167,13 @@
       "title": "Лимиты CPU, RAM, диска и сети",
       "original_status": "PLANNED",
       "original_source_line": 149,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/resource_limits.py",
+        "supreme-director/campaign180/campaign180/sandbox_runtime.py",
+        "supreme-director/campaign180/campaign180/quota_ledger.py",
+        "supreme-director/campaign180/tests/test_wave13_worker_quota.py"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -243,7 +252,10 @@
       "original_source_line": 214,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/scheduler.py",
-        "supreme-director/campaign180/tests/test_scheduler_backup.py"
+        "supreme-director/campaign180/tests/test_scheduler_backup.py",
+        "supreme-director/campaign180/campaign180/quota_ledger.py",
+        "supreme-director/campaign180/campaign180/budgeted_runtime.py",
+        "supreme-director/campaign180/tests/test_wave13_worker_quota.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -478,7 +490,10 @@
       "original_source_line": 357,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/supplychain.py",
-        "supreme-director/campaign180/tests/test_review_supplychain.py"
+        "supreme-director/campaign180/tests/test_review_supplychain.py",
+        "supreme-director/campaign180/campaign180/sandbox_resilience.py",
+        "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
+        ".github/workflows/supreme-director-wave13-local-security.yml"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -524,8 +539,12 @@
       "title": "Нагрузочные, хаос- и security-испытания",
       "original_status": "PLANNED",
       "original_source_line": 396,
-      "related_local_paths": [],
-      "implementation_evidence_status": "NO_DIRECT_PROOF",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/sandbox_resilience.py",
+        "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
+        ".github/workflows/supreme-director-wave13-local-security.yml"
+      ],
+      "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
       "production_accepted": false,
       "independently_accepted": false
@@ -2508,6 +2527,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave13 real GitHub CI diagnostics, safe corrupt-archive error contract, valid workflow fixture, real mobile layouts 390px and 320px",
-  "notes": "Verified 360/360 tests on Python 3.11 and 3.13, and successful Chromium 21 flows and 13 screenshots; Python overall workflow blocked as designed by protected-source/cross-team gate on Draft PR #7. 0/180 independently accepted."
+  "last_local_campaign": "Wave13 fixed-function subprocess, POSIX resource ceilings, tenant quotas, chaos checks and separate local security CI",
+  "notes": "36 original IDs have related LOCAL code, not accepted. 136 lack proof, 8 on hold. Original PR-wide protected-source policy gate is intentionally failing; independent acceptance is 0/180. No production/third-party execution."
 }

@@ -111,3 +111,9 @@ All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and e
 - [Chromium acceptance SUCCESS](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42174047330): 21 flows, 13 screenshots, zero JS exceptions, 390/320px mobile checks.
 - Corrupt recovery exports fail closed with stable API domain errors; workflow test now defines a valid dependency instead of an invalid relation-write.
 - [Original 180 audit](docs/CURRENT_AUDIT_180_RU.md): **33 locally related, 139 with no direct proof, 8 holds, 0 independently accepted**. No merge or production deployment.
+
+## Wave 13 — fixed-operation worker, POSIX budgets, local quota leases, chaos and dedicated CI (2026-11-08)
+
+- [Wave 13 technical report and limits](docs/WAVE13_LOCAL_EXECUTOR_RESOURCE_CHAOS_RU.md).
+- [Current 180 original task ledger](docs/CURRENT_AUDIT_180_RU.md) / [machine registry](data/CURRENT_AUDIT_180.json): **36 local-code links, 136 unproven, 8 holds, 0 accepted**.
+- No arbitrary-code execution, container isolation, network namespace or production deployment. Linux local test verification is distinct from the still-blocked original protected-source release gate.
