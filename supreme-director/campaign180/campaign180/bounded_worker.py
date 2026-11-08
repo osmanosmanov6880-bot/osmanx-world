@@ -11,7 +11,9 @@ import time
 
 MAX_INPUT=16384
 MAX_OUTPUT=8192
-MAX_I64=2**63-1
+# The envelope transports JSON numbers; keep input AND RESULT inside
+# the exact IEEE-754 integer range, even when Python can represent i64.
+MAX_I64=2**53-1
 
 def fail(code):
     raw=json.dumps({"status":"denied","code":code},separators=(",",":")).encode()
