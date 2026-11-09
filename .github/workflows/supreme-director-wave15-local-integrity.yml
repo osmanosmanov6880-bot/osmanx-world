@@ -1,0 +1,76 @@
+name: OSGARD Original 180 Wave15 Compute Integrity and Offline Isolation
+# Independent *LOCAL* QA only. Never removes original protected-source review.
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/workflows/supreme-director-wave15-local-integrity.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: original180-wave15-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  linux-replay-and-integrity:
+    name: sealed-worker-and-fenced-ledger (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile all local code
+        run: python -m compileall -q supreme-director/campaign180
+      - name: Wave15 kernel memfd, multiprocess SQLite, event-chain and OCI mock regressions
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave15_*.py' -v
+      - name: Wave13 and Wave14 compatibility regressions
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave13_*.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave14_*.py' -v
+      - name: Evidence-producing synthetic local-only acceptance
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m campaign180.wave15_acceptance > "$RUNNER_TEMP/wave15-local-report.json"
+          python - <<'PY'
+          import json,os,pathlib
+          x=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"wave15-local-report.json").read_text())
+          assert x["checks_passed"]>=11 and all(x["checks"].values())
+          assert x["real_worker_memfd_sealed"] and not x["physical_rootless_oci_probe_executed"]
+          assert x["outbound_network_calls"]==0
+          assert not x["production_authorized"] and not x["independently_accepted"]
+          print("WAVE15_LOCAL_INTEGRITY_PASS",x["checks_passed"])
+          PY
+      - name: Preserve synthetic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave15-local-only-${{ matrix.python-version }}
+          path: ${{ runner.temp }}/wave15-local-report.json
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Original 180 protected-source gate remains NO-GO
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.audit import audit_original
+          x=audit_original(Path("."))
+          assert x["counts"]["independently_accepted"]==0
+          assert x["counts"]["production_accepted"]==0
+          assert x["counts"]["upstream_approved"]==0
+          print("WAVE15_LOCAL_PASS_NOT_A_PRODUCTION_RELEASE")
+          PY
