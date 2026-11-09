@@ -92,6 +92,79 @@ class CapacityScheduler:
                 END;
             """)
 
+    def admit_with_capacity(self,envelope:dict,*,authenticated_tenant:str,
+                            authenticated_actor:str,now:int)->str:
+        """X15: policy-authorized task + resource feasibility in ONE DB tx.
+
+        Reject unknown capability, unconfigured budgets, oversized task
+        resource costs and queue pressure BEFORE writing the job. Trusted
+        server identity is checked against live RBAC/scopes in same txn.
+        This reserves *queue admission*, not physical CPU/memory/disk.
+        """
+        self._now(now)
+        with self.jobs._tx() as db:
+            checked=self.gateway._allow(db,envelope,
+                tenant=authenticated_tenant,actor=authenticated_actor,now=now)
+            task=checked["task"]
+            cost=self.costs.get(task["capability"])
+            if cost is None:
+                raise AdmissionDenied("No trusted cost policy for capability")
+            budget=db.execute("""SELECT * FROM scheduler_budgets
+                WHERE tenant=?""",(authenticated_tenant,)).fetchone()
+            if budget is None:
+                raise AdmissionDenied("Tenant capacity policy not configured")
+            if (cost.cpu_units>budget["max_cpu"]
+                or cost.memory_mb>budget["max_memory"]
+                or cost.disk_mb>budget["max_disk"]):
+                raise AdmissionDenied("Task cost exceeds tenant capacity forever")
+            pressure=db.execute("""SELECT max_pending FROM scheduler_backpressure
+                WHERE tenant=?""",(authenticated_tenant,)).fetchone()
+            if pressure is None:
+                raise AdmissionDenied("Explicit tenant backpressure policy missing")
+            existing=db.execute("""SELECT task_digest FROM local_jobs
+                WHERE tenant=? AND idem=?""",
+                (authenticated_tenant,task["idempotency_key"])).fetchone()
+            if existing is None:
+                pending=db.execute("""SELECT COUNT(*) FROM local_jobs
+                    WHERE tenant=? AND state='ready'""",
+                    (authenticated_tenant,)).fetchone()[0]
+                if pending>=pressure["max_pending"]:
+                    raise AdmissionDenied("Tenant ready-queue admission limit reached")
+            # Reuse the gateway's exact authenticated/idempotent insert.
+            return self.gateway._admit_tx(db,envelope,
+                authenticated_tenant=authenticated_tenant,
+                authenticated_actor=authenticated_actor,now=now)
+
+    def verify_capacity_integrity(self,*,tenant:str,now:int)->dict:
+        """Detect orphan/stale resource rows and overcommitted budgets."""
+        self._now(now)
+        if type(tenant) is not str or not TENANT_RE.fullmatch(tenant):
+            raise AdmissionDenied("Explicit tenant required")
+        with self.jobs._tx() as db:
+            errors=db.execute("""SELECT COUNT(*) FROM scheduler_allocations a
+                LEFT JOIN local_jobs j ON j.tenant=a.tenant
+                AND j.task_id=a.task_id WHERE a.tenant=?
+                AND (j.task_id IS NULL OR j.state!='leased'
+                OR j.fence!=a.fence OR j.lease_owner!=a.worker
+                OR j.lease_until!=a.deadline OR a.deadline<=?)""",
+                (tenant,now)).fetchone()[0]
+            if errors:
+                raise AdmissionDenied("Corrupt, expired or unbound resource allocation")
+            budget=db.execute("SELECT * FROM scheduler_budgets WHERE tenant=?",
+                              (tenant,)).fetchone()
+            if not budget:raise AdmissionDenied("No tenant capacity policy")
+            n,cpu,mem,disk=self._usage(db,tenant)
+            if (n>budget["max_inflight"] or cpu>budget["max_cpu"] or
+                mem>budget["max_memory"] or disk>budget["max_disk"]):
+                raise AdmissionDenied("Capacity exceeds configured tenant limits")
+            return {"schema":"osgard.titan-x15.admission-audit/1",
+                "tenant_id":tenant,"inflight":n,"cpu_reserved":cpu,
+                "memory_mb_reserved":mem,"disk_mb_reserved":disk,
+                "integrity_verified":True,
+                "physical_capacity_enforced":False,
+                "multi_server_consensus":False,
+                "independently_accepted":False}
+
     def register_node(self, *, node_id: str, now: int,
                       ttl_seconds: int=90) -> dict:
         """X14: exclusive generation-fenced node lease on one shared SQLite DB."""
