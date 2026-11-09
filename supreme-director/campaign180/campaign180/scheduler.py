@@ -370,7 +370,8 @@ class CapacityScheduler:
         return job
 
     def renew(self, lease: LocalLease, *, now: int,
-              lease_seconds: int=30) -> LocalLease:
+              lease_seconds: int=30, node_token: str|None=None,
+              node_generation: int|None=None) -> LocalLease:
         """Atomic job heartbeat + resource allocation lifetime extension.
 
         A stale lease, changed membership, or withdrawn grant cannot extend
@@ -379,6 +380,20 @@ class CapacityScheduler:
         self._now(now)
         with self.jobs._tx() as db:
             row=self._check_allocation(db,lease,now)
+            # Node sessions are short-lived and fenced. A worker can extend a
+            # job lease only while its node credential is still current.
+            if ":" in lease.worker_id:
+                prefix=lease.worker_id.split(":",1)[0]
+                node=db.execute("SELECT * FROM scheduler_nodes WHERE node_id=?",
+                                (prefix,)).fetchone()
+                if node is not None:
+                    if (type(node_token) is not str or
+                        type(node_generation) is not int or
+                        not hmac.compare_digest(node["node_token"],node_token)
+                        or node["generation"]!=node_generation
+                        or node["expires_at"]<=now):
+                        raise AdmissionDenied("Node heartbeat permission revoked or stale")
+                    lease_seconds=min(lease_seconds,node["expires_at"]-now)
             checked=self.gateway._check_row(db,row,now=now)
             if checked['task']!=lease.task:
                 raise AdmissionDenied('Lease role or task changed')
