@@ -208,7 +208,6 @@ class PermitAndExecutionTests(unittest.TestCase):
         forged["payload"]["spent"]=999
         with self.assertRaises(EvidenceDenied):
             self.audit.verify(forged,tenant=TENANT)
-        self.execute(envelope(),self.permit(envelope())) if False else None
         with sqlite3.connect(self.path) as db:
             db.execute("""UPDATE local_compute_quotas SET spent=spent+1
                 WHERE tenant=?""",(TENANT,))

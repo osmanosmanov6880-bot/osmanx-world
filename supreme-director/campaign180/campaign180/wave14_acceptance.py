@@ -86,8 +86,10 @@ def exercise()->dict:
             checks["tamper_detected"]=False
         except EvidenceDenied:
             checks["tamper_detected"]=True
+        # The public key identifier intentionally contains "local-";
+        # check the actual synthetic input and idempotency strings instead.
         checks["no_secrets_in_checkpoint"]=(b"synthetic-only" not in
-                 stored.read_bytes() and b"local-" not in stored.read_bytes())
+                 stored.read_bytes() and b"wave14-real-" not in stored.read_bytes())
         checks["external_side_effects_disabled"]=(
                  result["external_side_effects_authorized"] is False and
                  result["arbitrary_code_execution"] is False)

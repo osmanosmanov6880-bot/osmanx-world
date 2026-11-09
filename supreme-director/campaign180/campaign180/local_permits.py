@@ -48,8 +48,13 @@ class LocalPermitAuthority:
             auth["authorization"]!="LOCAL_VALIDATION_ONLY" or
             auth["external_execution_permitted"] is not False):
             raise PermitDenied("Forged validation context")
-        return validate_task(task,tenant_id=tenant,actor_id=actor,
-             allow_capabilities={"sandbox.evaluate"},allowed_scopes=scopes,now=now)
+        try:
+            return validate_task(task,tenant_id=tenant,actor_id=actor,
+                 allow_capabilities={"sandbox.evaluate"},allowed_scopes=scopes,now=now)
+        except ContractError as exc:
+            # Identity/scopes are intentionally fail-closed but must not leak
+            # internal validation details through the permit API.
+            raise PermitDenied("Untrusted task binding") from exc
 
     def issue(self,authorization:dict,*,tenant:str,actor:str,scopes:set[str],
               now:int,units:int=1,ttl_seconds:int=30)->dict:
