@@ -228,6 +228,27 @@ class FirstFiveNextTests(unittest.TestCase):
         self.assertEqual(lease.deadline,NOW+30)
         self.assertTrue(self.scheduler.verify_capacity_integrity(tenant=TENANT,now=NOW)["integrity_verified"])
 
+    def test_x14_node_lease_renew_requires_generation_and_is_ttl_bounded(self):
+        self.cap()
+        self.admit()
+        node=self.scheduler.register_node(node_id="node-alpha",now=NOW,ttl_seconds=30)
+        lease=self.scheduler.reserve(worker_id="node-alpha:worker-one",
+            node_id="node-alpha",node_token=node["token"],
+            node_generation=node["generation"],
+            lease_seconds=5,now=NOW)
+        self.assertEqual(lease.deadline,NOW+5)
+        with self.assertRaises(AdmissionDenied):
+            self.scheduler.renew(lease,now=NOW+1,lease_seconds=50)
+        with self.assertRaises(AdmissionDenied):
+            self.scheduler.renew(lease,now=NOW+1,lease_seconds=50,
+                node_token="0"*64,node_generation=node["generation"])
+        renewed=self.scheduler.renew(lease,now=NOW+1,lease_seconds=50,
+            node_token=node["token"],node_generation=node["generation"])
+        self.assertEqual(renewed.deadline,NOW+30)
+        with self.assertRaises(AdmissionDenied):
+            self.scheduler.renew(renewed,now=NOW+2,lease_seconds=30,
+                node_token=node["token"],node_generation=node["generation"])
+
     def test_x14_multiprocess_one_allocation_from_sqlite(self):
         self.cap(inflight=1,cpu=2,mem=128,disk=3)
         self.admit()
