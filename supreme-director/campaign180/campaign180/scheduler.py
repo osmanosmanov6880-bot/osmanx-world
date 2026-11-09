@@ -39,7 +39,8 @@ class CapacityScheduler:
     """
 
     def __init__(self, gateway: TransactionalLocalGateway,
-                 capability_costs: Mapping[str, ResourceCost]):
+                 capability_costs: Mapping[str, ResourceCost], *,
+                 worker_max_inflight: int=16):
         if type(gateway) is not TransactionalLocalGateway:
             raise AdmissionDenied("A transactional gateway is required")
         if not isinstance(capability_costs, Mapping) or not capability_costs:
@@ -47,6 +48,9 @@ class CapacityScheduler:
         if any(type(k) is not str or not k or type(v) is not ResourceCost
                for k,v in capability_costs.items()):
             raise AdmissionDenied("Invalid resource cost policy")
+        if type(worker_max_inflight) is not int or not 1<=worker_max_inflight<=10000:
+            raise AdmissionDenied("Trusted per-worker concurrency budget required")
+        self.worker_max_inflight=worker_max_inflight
         self.gateway = gateway
         self.jobs = gateway.jobs
         self.costs = dict(capability_costs)
@@ -64,6 +68,20 @@ class CapacityScheduler:
             CREATE TABLE IF NOT EXISTS scheduler_cursor (
                 id INTEGER PRIMARY KEY CHECK(id=1), last_tenant TEXT NOT NULL);
             INSERT OR IGNORE INTO scheduler_cursor(id,last_tenant) VALUES(1,'');
+            CREATE TABLE IF NOT EXISTS scheduler_backpressure(
+                tenant TEXT PRIMARY KEY,max_pending INTEGER NOT NULL
+                CHECK(max_pending BETWEEN 1 AND 1000000));
+            CREATE TRIGGER IF NOT EXISTS scheduler_backpressure_on_admit
+                BEFORE INSERT ON local_jobs
+                WHEN (SELECT max_pending FROM scheduler_backpressure
+                      WHERE tenant=NEW.tenant) IS NOT NULL
+                AND (SELECT COUNT(*) FROM local_jobs WHERE tenant=NEW.tenant
+                     AND state='ready') >=
+                    (SELECT max_pending FROM scheduler_backpressure
+                     WHERE tenant=NEW.tenant)
+                BEGIN
+                    SELECT RAISE(ABORT,'tenant queue backpressure limit exceeded');
+                END;
             """)
 
     @staticmethod
@@ -72,13 +90,24 @@ class CapacityScheduler:
             raise AdmissionDenied("Invalid epoch seconds")
 
     def set_budget(self, tenant: str, *, max_inflight: int, max_cpu: int,
-                   max_memory: int, max_disk: int) -> None:
+                   max_memory: int, max_disk: int,
+                   max_pending: int=1000) -> None:
         if type(tenant) is not str or not TENANT_RE.fullmatch(tenant):
             raise AdmissionDenied("Invalid tenant")
-        for n in (max_inflight,max_cpu,max_memory,max_disk):
+        for n in (max_inflight,max_cpu,max_memory,max_disk,max_pending):
             if type(n) is not int or not 1 <= n <= 1000000:
                 raise AdmissionDenied("Invalid positive resource budget")
         with self.jobs._tx() as db:
+            used=self._usage(db,tenant)
+            pending=db.execute("""SELECT COUNT(*) FROM local_jobs
+                WHERE tenant=? AND state='ready'""",(tenant,)).fetchone()[0]
+            if (used[0]>max_inflight or used[1]>max_cpu
+                or used[2]>max_memory or used[3]>max_disk
+                or pending>max_pending):
+                raise AdmissionDenied("Cannot shrink policy below active allocations or ready queue")
+            db.execute("""INSERT INTO scheduler_backpressure(tenant,max_pending)
+                VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET
+                max_pending=excluded.max_pending""",(tenant,max_pending))
             db.execute("""INSERT INTO scheduler_budgets
                 (tenant,max_inflight,max_cpu,max_memory,max_disk) VALUES(?,?,?,?,?)
                 ON CONFLICT(tenant) DO UPDATE SET
@@ -114,6 +143,10 @@ class CapacityScheduler:
         with self.jobs._tx() as db:
             self.jobs._recover(db,now)
             self._prune(db,now)
+            concurrent=db.execute("""SELECT COUNT(*) FROM scheduler_allocations
+                WHERE worker=?""",(worker_id,)).fetchone()[0]
+            if concurrent>=self.worker_max_inflight:
+                return None
             tenants=[x[0] for x in db.execute("""SELECT DISTINCT tenant FROM local_jobs
                 WHERE state='ready' AND ready_at<=? AND expires_at>?
                 ORDER BY tenant""",(now,now)).fetchall()]
@@ -273,3 +306,29 @@ class CapacityScheduler:
                     "memory_mb_reserved":mem,"disk_mb_reserved":disk,
                     "limits_are_admission_only":True,
                     "physical_resource_enforcement":False}
+
+
+    def admission_snapshot(self, tenant: str, *, now: int) -> dict:
+        """Tenant-scoped current queue and actual reserved capacity."""
+        if type(tenant) is not str or not TENANT_RE.fullmatch(tenant):
+            raise AdmissionDenied("Explicit valid tenant required")
+        self._now(now)
+        with self.jobs._tx() as db:
+            self.jobs._recover(db,now)
+            self._prune(db,now)
+            budget=db.execute("""SELECT * FROM scheduler_budgets
+                WHERE tenant=?""",(tenant,)).fetchone()
+            cap=db.execute("""SELECT max_pending FROM scheduler_backpressure
+                WHERE tenant=?""",(tenant,)).fetchone()
+            ready=db.execute("""SELECT COUNT(*) FROM local_jobs
+                WHERE tenant=? AND state='ready'""",(tenant,)).fetchone()[0]
+            inflight,cpu,mem,disk=self._usage(db,tenant)
+            return {"tenant_id":tenant,"ready":ready,"inflight":inflight,
+                    "cpu_reserved":cpu,"memory_mb_reserved":mem,"disk_mb_reserved":disk,
+                    "max_pending":None if cap is None else cap["max_pending"],
+                    "max_inflight":None if budget is None else budget["max_inflight"],
+                    "max_cpu":None if budget is None else budget["max_cpu"],
+                    "max_memory":None if budget is None else budget["max_memory"],
+                    "max_disk":None if budget is None else budget["max_disk"],
+                    "backpressure_enforced":cap is not None,
+                    "admission_only_not_os_resource_enforcement":True}
