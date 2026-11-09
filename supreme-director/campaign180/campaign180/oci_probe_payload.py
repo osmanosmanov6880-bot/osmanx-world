@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Fixed no-network Linux OCI probe; install as /usr/local/bin/osgard-oci-probe.
 
 This script is intentionally read-only and accepts NO user arguments. It
