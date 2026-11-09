@@ -76,7 +76,7 @@ CREATE TRIGGER titan_pg_effect_no_update BEFORE UPDATE OR DELETE ON titan_pg_eff
 class PostgresDevSwarmScheduler:
     def __init__(self,dsn:str,capability_costs:Mapping[str,ResourceCost],*,
                  max_attempts:int=3,worker_max_inflight:int=16,
-                 initialize_schema:bool=True):
+                 initialize_schema:bool=False):
         if (type(dsn) is not str or not dsn or
             not isinstance(capability_costs,Mapping) or not capability_costs or
             any(type(k) is not str or type(v) is not ResourceCost
@@ -96,7 +96,9 @@ class PostgresDevSwarmScheduler:
         self.costs=dict(capability_costs)
         self.max_attempts=max_attempts
         self.worker_max_inflight=worker_max_inflight
-        # Schema setup is an explicit administrative phase. Worker clients
+        # Schema setup is an explicit ADMINISTRATIVE phase. Disabled by
+        # default; worker connections must never rewrite shared DDL.
+        # Worker clients
         # must use initialize_schema=False: concurrent CREATE OR REPLACE
         # FUNCTION can cause PostgreSQL tuple concurrently updated errors.
         if initialize_schema:

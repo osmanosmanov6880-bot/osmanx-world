@@ -3,7 +3,8 @@
 Requires DEVSWARM_TEST_PG_DSN on a dedicated disposable test database.
 Never contacts any production database and never claims canonical upstream.
 """
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor,ProcessPoolExecutor
+import multiprocessing
 import os
 import unittest
 import uuid
@@ -33,13 +34,21 @@ def result(lease,now=NOW+1):
         "error_code":None}
     return validate_result(payload,task={"task":t,"digest":digest(t)},now=now)
 
+
+def reserve_from_process(args):
+    """Independent OS process with its own PostgreSQL connection."""
+    dsn,worker,epoch=args
+    scheduler=PostgresDevSwarmScheduler(dsn,COSTS,initialize_schema=False)
+    lease=scheduler.reserve(worker_id=worker,now=epoch)
+    return None if lease is None else (lease.tenant_id,lease.task_id,lease.fence)
+
 @unittest.skipUnless(DSN,"Dedicated disposable PostgreSQL 16 DSN required")
 class SharedPostgresIntegration(unittest.TestCase):
     def setUp(self):
         self.tenant="tenant_"+uuid.uuid4().hex[:14]
         self.actor="worker-owner-abc"
         self.db=PostgresDevSwarmScheduler(DSN,COSTS,worker_max_inflight=2,
-                                          max_attempts=2)
+                                          max_attempts=2,initialize_schema=True)
         # Dedicated disposable CI database; test cases must not leak ready
         # jobs or budgets into the next case's global round-robin cursor.
         with self.db._tx() as sql:
@@ -70,6 +79,17 @@ class SharedPostgresIntegration(unittest.TestCase):
         self.assertEqual(len(accepted),1)
         self.assertEqual(accepted[0].task_id,task["task_id"])
         self.assertEqual(accepted[0].fence,1)
+
+    def test_x14_multiple_os_processes_share_postgres_fence(self):
+        job=self.admit()
+        ctx=multiprocessing.get_context("spawn")
+        args=[(DSN,"process-worker-%02d"%i,NOW) for i in range(9)]
+        with ProcessPoolExecutor(max_workers=4,mp_context=ctx) as pool:
+            leases=[v for v in pool.map(reserve_from_process,args) if v]
+        self.assertEqual(len(leases),1)
+        self.assertEqual(leases[0][1],job["task_id"])
+        self.assertEqual(leases[0][2],1)
+        self.assertEqual(self.db.inspect(tenant=self.tenant,now=NOW)["inflight"],1)
 
     def test_effect_once_and_fence_replay_rejected(self):
         task=self.admit()
