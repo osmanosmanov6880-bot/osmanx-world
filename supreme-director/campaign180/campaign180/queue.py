@@ -96,6 +96,35 @@ class DurableLocalQueue:
                     VALUES(NEW.tenant,NEW.task_id,NEW.state,NEW.fence,
                            NEW.lease_owner,NEW.lease_until,NEW.result_digest);
                 END;
+                CREATE TABLE IF NOT EXISTS local_job_effects (
+                    tenant TEXT NOT NULL,task_id TEXT NOT NULL,idem TEXT NOT NULL,
+                    task_digest TEXT NOT NULL,result_digest TEXT NOT NULL,
+                    fence INTEGER NOT NULL,finalized_epoch INTEGER NOT NULL
+                        DEFAULT (unixepoch()),
+                    PRIMARY KEY(tenant,task_id),UNIQUE(tenant,idem));
+                CREATE TRIGGER IF NOT EXISTS local_effect_commit_once
+                    AFTER UPDATE OF state,result_digest ON local_jobs
+                    WHEN OLD.state!='done' AND NEW.state='done'
+                    BEGIN
+                    SELECT CASE WHEN NEW.result_digest IS NULL
+                        THEN RAISE(ABORT,'finalization without validated result') END;
+                    INSERT INTO local_job_effects
+                        (tenant,task_id,idem,task_digest,result_digest,fence)
+                    VALUES(NEW.tenant,NEW.task_id,NEW.idem,
+                           NEW.task_digest,NEW.result_digest,NEW.fence);
+                END;
+                CREATE TRIGGER IF NOT EXISTS local_effect_immutable_update
+                    BEFORE UPDATE ON local_job_effects BEGIN
+                    SELECT RAISE(ABORT,'committed effect immutable');END;
+                CREATE TRIGGER IF NOT EXISTS local_effect_immutable_delete
+                    BEFORE DELETE ON local_job_effects BEGIN
+                    SELECT RAISE(ABORT,'committed effect immutable');END;
+                -- Pre-existing completed receipts are imported only from
+                -- jobs whose validated result digest was already persisted.
+                INSERT OR IGNORE INTO local_job_effects
+                    (tenant,task_id,idem,task_digest,result_digest,fence)
+                SELECT tenant,task_id,idem,task_digest,result_digest,fence
+                FROM local_jobs WHERE state='done' AND result_digest IS NOT NULL;
                 CREATE TRIGGER IF NOT EXISTS local_job_transition_immutable_update
                     BEFORE UPDATE ON local_job_transitions BEGIN
                     SELECT RAISE(ABORT,'local job history is append-only');END;
@@ -355,3 +384,50 @@ class DurableLocalQueue:
             return [dict(x) for x in rows]
         finally:
             db.close()
+
+
+    def effect_receipt(self, *, tenant_id: str, task_id: str) -> dict | None:
+        """One immutable LOCAL recorded effect, not external exactly-once work."""
+        if type(tenant_id) is not str or not TENANT_RE.fullmatch(tenant_id):
+            raise QueueDenied('Tenant required for effect receipt')
+        if type(task_id) is not str or not task_id:
+            raise QueueDenied('Task required for effect receipt')
+        db=self._connection()
+        try:
+            row=db.execute("""SELECT e.task_digest,e.result_digest,e.fence,
+                e.finalized_epoch FROM local_job_effects e
+                JOIN local_jobs j ON j.tenant=e.tenant AND j.task_id=e.task_id
+                WHERE e.tenant=? AND e.task_id=? AND j.state='done'
+                AND j.result_digest=e.result_digest AND j.task_digest=e.task_digest""",
+                (tenant_id,task_id)).fetchone()
+            return None if row is None else {
+                **dict(row),"task_id":task_id,
+                "recorded_once_in_sqlite":True,
+                "external_effect_executed":False}
+        finally:
+            db.close()
+
+    def verify_effect_ledger(self, *, tenant_id: str) -> dict:
+        """Detect missing, extra or inconsistent receipts with one DB snapshot."""
+        if type(tenant_id) is not str or not TENANT_RE.fullmatch(tenant_id):
+            raise QueueDenied('Tenant required for effect verification')
+        with self._tx() as db:
+            unmatched=db.execute("""SELECT COUNT(*) FROM local_jobs j
+                LEFT JOIN local_job_effects e ON e.tenant=j.tenant
+                    AND e.task_id=j.task_id WHERE j.tenant=? AND j.state='done'
+                AND (e.task_id IS NULL OR e.idem!=j.idem OR
+                     e.task_digest!=j.task_digest OR
+                     e.result_digest!=j.result_digest OR e.fence!=j.fence)""",
+                (tenant_id,)).fetchone()[0]
+            phantom=db.execute("""SELECT COUNT(*) FROM local_job_effects e
+                LEFT JOIN local_jobs j ON j.tenant=e.tenant AND j.task_id=e.task_id
+                WHERE e.tenant=? AND (j.task_id IS NULL OR j.state!='done')""",
+                (tenant_id,)).fetchone()[0]
+            if unmatched or phantom:
+                raise QueueDenied('Exactly-once local receipt ledger corrupted')
+            total=db.execute("""SELECT COUNT(*) FROM local_job_effects
+                WHERE tenant=?""",(tenant_id,)).fetchone()[0]
+            return {"tenant_id":tenant_id,"recorded_local_effects":total,
+                    "no_missing_or_phantom_receipts":True,
+                    "external_exactly_once_proven":False,
+                    "independent_acceptance":False}
