@@ -123,3 +123,9 @@ All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and e
 - [Wave 14 technical report](docs/WAVE14_SIGNED_EXECUTION_OCI_RU.md) and [original 180-task ledger](docs/CURRENT_AUDIT_180_RU.md).
 - Local CI [passed for Python 3.11 and 3.13](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42554635337).
 - 36 related local IDs, 136 without direct proof, 8 holds; 0 independently accepted. Rootless OCI policy is not physically attested on a production Linux host. Protected-source release gate remains NO-GO.
+
+## Wave 15 — chained compute journal, HMAC v2, sealed Linux memfd and offline OCI host probe (2026-11-09)
+
+- [Wave15 technical report](docs/WAVE15_JOURNAL_SEALED_WORKER_OCI_RU.md), [original 180 task audit](docs/CURRENT_AUDIT_180_RU.md) and [default-off OCI instructions](oci-probe/README_RU.md).
+- 17 new Python tests plus multiprocess SQLite contention, synthetic end-to-end acceptance and separate dual-Python CI. Physical OCI host validation is NOT yet confirmed.
+- 36 locally related IDs, 136 unproven, 8 holds; 0/180 independent acceptance, source release NO-GO.

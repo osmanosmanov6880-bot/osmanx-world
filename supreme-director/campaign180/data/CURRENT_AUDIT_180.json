@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "d742c6cf1325ede344f68e54c41e00eaa78fd558",
+  "based_on_code_commit": "e18a1531a9601139dd24be0cecf0ac3b0134b935",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -156,7 +156,10 @@
         "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
         "supreme-director/campaign180/campaign180/sandbox.py",
         "supreme-director/campaign180/campaign180/oci_gate.py",
-        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py"
+        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
+        "supreme-director/campaign180/campaign180/sealed_worker.py",
+        "supreme-director/campaign180/campaign180/oci_host_attestation.py",
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -177,7 +180,10 @@
         "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
         "supreme-director/campaign180/campaign180/sandbox.py",
         "supreme-director/campaign180/campaign180/oci_gate.py",
-        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py"
+        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
+        "supreme-director/campaign180/campaign180/sealed_worker.py",
+        "supreme-director/campaign180/campaign180/oci_host_attestation.py",
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -213,7 +219,9 @@
         "supreme-director/campaign180/campaign180/gateway.py",
         "supreme-director/campaign180/campaign180/local_permits.py",
         "supreme-director/campaign180/campaign180/fenced_compute.py",
-        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py"
+        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
+        "supreme-director/campaign180/campaign180/compute_events.py",
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -266,7 +274,8 @@
         "supreme-director/campaign180/campaign180/budgeted_runtime.py",
         "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
         "supreme-director/campaign180/campaign180/fenced_compute.py",
-        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py"
+        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -506,7 +515,9 @@
         "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
         ".github/workflows/supreme-director-wave13-local-security.yml",
         "supreme-director/campaign180/campaign180/wave14_acceptance.py",
-        ".github/workflows/supreme-director-wave14-local-execution.yml"
+        ".github/workflows/supreme-director-wave14-local-execution.yml",
+        "supreme-director/campaign180/campaign180/wave15_acceptance.py",
+        ".github/workflows/supreme-director-wave15-local-integrity.yml"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -523,7 +534,9 @@
       "related_local_paths": [
         "supreme-director/m206/osgard_m206/runtime.py",
         "supreme-director/campaign180/campaign180/compute_evidence.py",
-        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py"
+        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
+        "supreme-director/campaign180/campaign180/compute_events.py",
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -559,7 +572,9 @@
         "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
         ".github/workflows/supreme-director-wave13-local-security.yml",
         "supreme-director/campaign180/campaign180/wave14_acceptance.py",
-        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py"
+        "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
+        "supreme-director/campaign180/campaign180/wave15_acceptance.py",
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2544,6 +2559,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave14 signed permits, crash-safe fixed-operation accounting, HMAC checkpoints, hardened rootless OCI and dual-Python CI",
-  "notes": "Wave14 local CI 42554635337 succeeded on Python 3.11/3.13. Protected-source original PR gate deliberately remains NO-GO; 36 local-code IDs, 136 without direct evidence, 8 holds, 0 independently accepted."
+  "last_local_campaign": "Wave15 atomic hash-chained compute events, HMAC v2 checkpoint, SHA256-pinned sealed Linux worker, optional rootless host probe and cross-process CI",
+  "notes": "36 local ID links, 136 without proof, 8 holds, 0/180 independently accepted. CI must be checked against exact successful run. No physical rootless OCI test performed; original release NO-GO."
 }
