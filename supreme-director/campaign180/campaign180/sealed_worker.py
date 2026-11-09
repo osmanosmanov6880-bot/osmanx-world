@@ -21,8 +21,10 @@ class WorkerImageDenied(ValueError):
     pass
 
 def source_bytes(path:Path)->bytes:
-    if type(path) is not Path:
-        raise WorkerImageDenied("Trusted exact Path required")
+    # pathlib.Path() returns PosixPath on Linux; reject non-path inputs,
+    # not the concrete platform-specific subclass of Path.
+    if not isinstance(path,Path):
+        raise WorkerImageDenied("Trusted pathlib Path required")
     flags=os.O_RDONLY|os.O_CLOEXEC
     if hasattr(os,"O_NOFOLLOW"):flags|=os.O_NOFOLLOW
     try:fd=os.open(path,flags)
