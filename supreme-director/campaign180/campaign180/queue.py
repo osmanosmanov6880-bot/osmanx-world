@@ -248,6 +248,53 @@ class DurableLocalQueue:
         with self._tx() as db:
             return self._recover(db,now)
 
+    def recover_worker(self, *, worker_id: str, now: int,
+                       base_backoff_seconds: int=2, max_backoff_seconds: int=300) -> dict:
+        """X13: recover ONLY this worker's expired jobs, never healthy leases.
+
+        A failed worker's lease is recoverable only after its deadline.
+        Retry delay grows exponentially with attempts, capped and bounded
+        by task expiry. Journal transitions are generated in the same DB tx.
+        """
+        self._time(now)
+        if type(worker_id) is not str or not _WORKER.fullmatch(worker_id):
+            raise QueueDenied("Exact failed worker identifier required")
+        if (type(base_backoff_seconds) is not int or
+            not 1<=base_backoff_seconds<=300 or
+            type(max_backoff_seconds) is not int or
+            not base_backoff_seconds<=max_backoff_seconds<=3600):
+            raise QueueDenied("Bounded exponential recovery backoff required")
+        with self._tx() as db:
+            jobs=db.execute("""SELECT * FROM local_jobs
+                WHERE state='leased' AND lease_owner=?
+                AND lease_until<=? ORDER BY id LIMIT 20001""",
+                (worker_id,now)).fetchall()
+            if len(jobs)>20000:
+                raise QueueDenied("Worker recovery exceeds bounded transaction budget")
+            recovered=dead=0
+            for row in jobs:
+                # Fence is NOT reused. A retry increments fence at the next
+                # reservation, preventing an old worker from acknowledging.
+                delay=min(max_backoff_seconds,
+                    base_backoff_seconds*(2**min(row["attempts"]-1,19)))
+                exhausted=(row["attempts"]>=self.max_attempts or
+                    row["expires_at"]<=now+delay)
+                state="dead" if exhausted else "ready"
+                changed=db.execute("""UPDATE local_jobs
+                    SET state=?,ready_at=?,lease_owner=NULL,lease_until=NULL
+                    WHERE id=? AND state='leased' AND lease_owner=?
+                    AND lease_until<=? AND fence=?""",
+                    (state,now if exhausted else now+delay,row["id"],
+                     worker_id,now,row["fence"])).rowcount
+                if changed!=1:
+                    raise QueueDenied("Lost crashed-worker recovery race")
+                if exhausted:dead+=1
+                else:recovered+=1
+            return {"schema":"osgard.titan-x13.worker-recovery/1",
+                "worker_id":worker_id,"requeued":recovered,
+                "dead_lettered":dead,"healthy_leases_changed":0,
+                "external_execution_performed":False}
+
     def reserve(self, *, worker_id: str, now: int, lease_seconds: int = 30) -> LocalLease | None:
         self._time(now)
         if type(worker_id) is not str or not _WORKER.fullmatch(worker_id):
