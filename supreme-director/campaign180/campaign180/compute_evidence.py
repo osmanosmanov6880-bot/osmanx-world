@@ -16,8 +16,9 @@ from typing import Any
 
 from .contracts import canonical,digest,TENANT_RE
 from .quota_ledger import TenantQuotaLedger
+from .compute_events import LocalComputeEventLog
 
-SCHEMA="osgard.local-compute-checkpoint/1"
+SCHEMA="osgard.local-compute-checkpoint/2"
 HEX64=re.compile(r"^[a-f0-9]{64}$")
 
 class EvidenceDenied(ValueError):
@@ -35,6 +36,10 @@ class LocalComputeEvidence:
         self.ledger=ledger
         self._secret=secret
         self.key_id=key_id
+        # The signed checkpoint commits to an append-only transition chain
+        # as well as to current quota/receipt state. Old v1 checkpoints
+        # must be verified with the old schema, never silently rewritten.
+        self.events=LocalComputeEventLog(ledger)
 
     def snapshot(self,*,tenant:str)->dict:
         """Read-only single-transaction tenant-local consistency scan."""
@@ -67,11 +72,14 @@ class LocalComputeEvidence:
                             type(row["result_sha256"]) is not str or
                             not HEX64.fullmatch(row["result_sha256"])))):
                         raise EvidenceDenied("Fenced receipt and quota lease conflict")
+                history=self.events._verify_tx(db,tenant)
                 # Never include per-job keys, customer data or secret tokens in
                 # the outward-facing checkpoint. These values are compacted
                 # into a SHA-256 commitment only.
                 state={
                     "tenant":tenant,
+                    "compute_event_head":history["head_hash"],
+                    "compute_event_count":history["events"],
                     "quota":{"capacity":quota["capacity"],
                              "spent":quota["spent"],"held":quota["held"]},
                     "leases":[{
@@ -87,6 +95,8 @@ class LocalComputeEvidence:
                         for r in receipts]}
                 return {"tenant":tenant,
                     "state_sha256":digest(state),
+                    "compute_event_head":history["head_hash"],
+                    "compute_event_count":history["events"],
                     "lease_count":len(leases),
                     "receipt_count":len(receipts),
                     "capacity":quota["capacity"],"spent":spent,"held":held,
@@ -112,7 +122,8 @@ class LocalComputeEvidence:
             raise EvidenceDenied("Untrusted checkpoint shape")
         signed=checkpoint["payload"]
         if (set(signed)!={"schema","key_id","at_epoch","tenant",
-            "state_sha256","lease_count","receipt_count","capacity","spent",
+            "state_sha256","compute_event_head","compute_event_count",
+            "lease_count","receipt_count","capacity","spent",
             "held","local_consistency_verified","external_witnessed",
             "independent_acceptance"} or
             signed["schema"]!=SCHEMA or signed["key_id"]!=self.key_id or
@@ -122,6 +133,10 @@ class LocalComputeEvidence:
             signed["independent_acceptance"] is not False or
             type(signed["state_sha256"]) is not str or
             not HEX64.fullmatch(signed["state_sha256"]) or
+            type(signed["compute_event_head"]) is not str or
+            not HEX64.fullmatch(signed["compute_event_head"]) or
+            type(signed["compute_event_count"]) is not int or
+            signed["compute_event_count"]<0 or
             type(signed["at_epoch"]) is not int or signed["at_epoch"]<0):
             raise EvidenceDenied("Unexpected or mutated checkpoint metadata")
         signature=checkpoint["hmac_sha256"]
