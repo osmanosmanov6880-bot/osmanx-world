@@ -218,6 +218,8 @@ class FirstFiveNextTests(unittest.TestCase):
         self.admit()
         node=self.scheduler.register_node(node_id="node-alpha",now=NOW,ttl_seconds=30)
         with self.assertRaises(AdmissionDenied):
+            self.scheduler.reserve(worker_id="node-alpha:work-one",now=NOW)
+        with self.assertRaises(AdmissionDenied):
             self.scheduler.reserve(worker_id="node-alpha:work-one",now=NOW,
                 node_id="node-alpha",node_token="0"*64,
                 node_generation=node["generation"])
