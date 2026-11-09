@@ -284,6 +284,12 @@ class CapacityScheduler:
             raise AdmissionDenied("Worker identity not bound to scheduler node")
         with self.jobs._tx() as db:
             node_deadline=None
+            if node_id is None and ":" in worker_id:
+                prefix=worker_id.split(":",1)[0]
+                managed=db.execute("SELECT 1 FROM scheduler_nodes WHERE node_id=?",
+                                   (prefix,)).fetchone()
+                if managed:
+                    raise AdmissionDenied("Registered node worker needs its node token")
             if node_id is not None:
                 node=db.execute("""SELECT * FROM scheduler_nodes
                     WHERE node_id=?""",(node_id,)).fetchone()
