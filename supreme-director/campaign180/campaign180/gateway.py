@@ -71,38 +71,45 @@ class TransactionalLocalGateway:
 
     def admit(self, envelope: dict, *, authenticated_tenant: str,
               authenticated_actor: str, now: int) -> str:
-        """Secure local admission checks and job insertion share BEGIN IMMEDIATE."""
+        """X11/X15: one shared admission transaction, re-usable by scheduler."""
         with self.jobs._tx() as db:
-            checked = self._allow(db,envelope,tenant=authenticated_tenant,
-                                  actor=authenticated_actor,now=now)
-            task=checked["task"]
-            if now >= task["expires_at"]:
-                raise AdmissionDenied("Expired task cannot be admitted")
-            tenant, key, task_id=task["tenant_id"],task["idempotency_key"],task["task_id"]
-            old=db.execute("SELECT task_digest,task_id FROM local_jobs WHERE tenant=? AND idem=?",
-                           (tenant,key)).fetchone()
-            if old:
-                snapshot=db.execute(
-                    "SELECT member_revision FROM local_job_admissions WHERE tenant=? AND task_id=?",
-                    (tenant,old["task_id"])).fetchone()
-                if (old["task_digest"]!=checked["digest"] or not snapshot or
-                        snapshot["member_revision"]!=checked["member_revision"]):
-                    raise AdmissionDenied("Idempotency collision or stale authorization")
-                return "DUPLICATE_GUARDED_LOCAL_ONLY"
-            try:
-                db.execute("""INSERT INTO local_jobs
-                    (tenant,idem,task_id,actor,task_digest,task_json,
-                     expires_at,created_at,ready_at,state)
-                    VALUES(?,?,?,?,?,?,?,?,?,'ready')""",
-                    (tenant,key,task_id,task["actor_id"],checked["digest"],
-                     canonical(task).decode("utf-8"),task["expires_at"],
-                     now,max(now,task["issued_at"])))
-            except sqlite3.IntegrityError as exc:
-                raise AdmissionDenied("Duplicate task UUID under another idempotency key") from exc
-            db.execute("""INSERT INTO local_job_admissions
-                (tenant,task_id,member_revision,task_digest) VALUES(?,?,?,?)""",
-                (tenant,task_id,checked["member_revision"],checked["digest"]))
-            return "ADMITTED_GUARDED_LOCAL_ONLY"
+            return self._admit_tx(db,envelope,
+                authenticated_tenant=authenticated_tenant,
+                authenticated_actor=authenticated_actor,now=now)
+
+    def _admit_tx(self,db,envelope:dict,*,authenticated_tenant:str,
+                  authenticated_actor:str,now:int)->str:
+        """Internal only: caller must already hold BEGIN IMMEDIATE."""
+        checked = self._allow(db,envelope,tenant=authenticated_tenant,
+                              actor=authenticated_actor,now=now)
+        task=checked["task"]
+        if now >= task["expires_at"]:
+            raise AdmissionDenied("Expired task cannot be admitted")
+        tenant, key, task_id=task["tenant_id"],task["idempotency_key"],task["task_id"]
+        old=db.execute("SELECT task_digest,task_id FROM local_jobs WHERE tenant=? AND idem=?",
+                       (tenant,key)).fetchone()
+        if old:
+            snapshot=db.execute(
+                "SELECT member_revision FROM local_job_admissions WHERE tenant=? AND task_id=?",
+                (tenant,old["task_id"])).fetchone()
+            if (old["task_digest"]!=checked["digest"] or not snapshot or
+                    snapshot["member_revision"]!=checked["member_revision"]):
+                raise AdmissionDenied("Idempotency collision or stale authorization")
+            return "DUPLICATE_GUARDED_LOCAL_ONLY"
+        try:
+            db.execute("""INSERT INTO local_jobs
+                (tenant,idem,task_id,actor,task_digest,task_json,
+                 expires_at,created_at,ready_at,state)
+                VALUES(?,?,?,?,?,?,?,?,?,'ready')""",
+                (tenant,key,task_id,task["actor_id"],checked["digest"],
+                 canonical(task).decode("utf-8"),task["expires_at"],
+                 now,max(now,task["issued_at"])))
+        except sqlite3.IntegrityError as exc:
+            raise AdmissionDenied("Duplicate task UUID under another idempotency key") from exc
+        db.execute("""INSERT INTO local_job_admissions
+            (tenant,task_id,member_revision,task_digest) VALUES(?,?,?,?)""",
+            (tenant,task_id,checked["member_revision"],checked["digest"]))
+        return "ADMITTED_GUARDED_LOCAL_ONLY"
 
     def _check_row(self, db: sqlite3.Connection, row: sqlite3.Row, *, now: int) -> dict:
         snapshot=db.execute(
