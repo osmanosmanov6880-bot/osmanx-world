@@ -117,3 +117,9 @@ All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and e
 - [Wave 13 technical report and limits](docs/WAVE13_LOCAL_EXECUTOR_RESOURCE_CHAOS_RU.md).
 - [Current 180 original task ledger](docs/CURRENT_AUDIT_180_RU.md) / [machine registry](data/CURRENT_AUDIT_180.json): **36 local-code links, 136 unproven, 8 holds, 0 accepted**.
 - No arbitrary-code execution, container isolation, network namespace or production deployment. Linux local test verification is distinct from the still-blocked original protected-source release gate.
+
+## Wave 14 — signed local execution, durable ledger, HMAC checkpoint, rootless OCI verification (2026-11-09)
+
+- [Wave 14 technical report](docs/WAVE14_SIGNED_EXECUTION_OCI_RU.md) and [original 180-task ledger](docs/CURRENT_AUDIT_180_RU.md).
+- Local CI [passed for Python 3.11 and 3.13](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42554635337).
+- 36 related local IDs, 136 without direct proof, 8 holds; 0 independently accepted. Rootless OCI policy is not physically attested on a production Linux host. Protected-source release gate remains NO-GO.
