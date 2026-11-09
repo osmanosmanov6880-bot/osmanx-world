@@ -98,9 +98,14 @@ class RootlessSandbox:
                         checked["task"]["expires_at"]-now)
             if seconds<=0:
                 raise SandboxDenied("Expired container lease")
+            # The name is deterministic per fenced lease and cannot contain
+            # shell syntax; the timeout path can safely remove this container.
+            container_name="osgard-"+lease.task_id.replace("-","")[:24]+"-"+str(lease.fence)
             argv=(binary,"run","--rm","--pull=never","--network=none",
                   "--read-only","--cap-drop=all","--security-opt=no-new-privileges",
                   "--pid=private","--ipc=private","--uts=private",
+                  "--userns=private","--cgroupns=private","--no-hosts",
+                  "--log-driver=none","--name="+container_name,
                   "--user=65534:65534","--pids-limit="+str(policy.pids),
                   "--memory="+str(policy.memory_mb)+"m",
                   "--memory-swap="+str(policy.memory_mb)+"m",
@@ -168,6 +173,16 @@ class RootlessSandbox:
             code=run.returncode
             status="ok" if code==0 else "failed"
         except subprocess.TimeoutExpired:
+            # Killing only the Podman client may leave the OCI process alive.
+            # Address the specific deterministic fenced container, not all
+            # pods/containers, and bound cleanup time separately.
+            fenced="osgard-"+plan.task_id.replace("-","")[:24]+"-"+str(plan.fence)
+            try:
+                subprocess.run([binary,"rm","--force",fenced],
+                    stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                    timeout=8,check=False,shell=False,env=self._environment())
+            except (OSError,subprocess.TimeoutExpired):
+                pass
             code=None
             status="timeout"
         except OSError as exc:
