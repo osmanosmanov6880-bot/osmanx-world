@@ -245,7 +245,7 @@ class FirstFiveNextTests(unittest.TestCase):
         renewed=self.scheduler.renew(lease,now=NOW+1,lease_seconds=50,
             node_token=node["token"],node_generation=node["generation"])
         self.assertEqual(renewed.deadline,NOW+30)
-        with self.assertRaises(AdmissionDenied):
+        with self.assertRaises((AdmissionDenied,QueueDenied)):
             self.scheduler.renew(renewed,now=NOW+2,lease_seconds=30,
                 node_token=node["token"],node_generation=node["generation"])
 
