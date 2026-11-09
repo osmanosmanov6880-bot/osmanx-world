@@ -92,14 +92,23 @@ class TenantQuotaLedger:
                 raise QuotaDenied("Changing a live capacity requires an explicit new policy")
 
     def _expire(self,db,now):
+        has_fixed=db.execute("""SELECT 1 FROM sqlite_master
+            WHERE type='table' AND name='local_fixed_execution_receipts'""").fetchone()
+        guard="""
+            AND NOT EXISTS(SELECT 1 FROM local_fixed_execution_receipts f
+              WHERE f.tenant=local_compute_leases.tenant
+              AND f.job_key=local_compute_leases.job_key)
+        """ if has_fixed else ""
+        # Fixed/permit reservations require their own atomic receipt+event
+        # settlement. A generic quota reclaim must NEVER bypass the log.
         expired=db.execute("""SELECT tenant,units FROM local_compute_leases
-            WHERE state='reserved' AND expires<=?""",(now,)).fetchall()
+            WHERE state='reserved' AND expires<=?"""+guard,(now,)).fetchall()
         for row in expired:
             db.execute("""UPDATE local_compute_quotas SET held=held-?
                 WHERE tenant=? AND held>=?""",
                 (row["units"],row["tenant"],row["units"]))
         db.execute("""UPDATE local_compute_leases SET state='expired'
-            WHERE state='reserved' AND expires<=?""",(now,))
+            WHERE state='reserved' AND expires<=?"""+guard,(now,))
         return len(expired)
 
     def reclaim_expired(self,*,now:int)->int:

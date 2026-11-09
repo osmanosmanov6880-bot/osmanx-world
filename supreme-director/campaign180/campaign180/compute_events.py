@@ -55,7 +55,7 @@ class LocalComputeEventLog:
             raise ComputeEventDenied("Invalid bounded compute event metadata")
         # The caller holds BEGIN IMMEDIATE in the SHARED quota/receipt DB.
         # Verification before insertion also catches a tampered chain.
-        previous=self._verify_tx(db,tenant)
+        previous=self._verify_tx(db,tenant,check_receipts=False)
         seq=previous["events"]+1
         record={"tenant":tenant,"seq":seq,"at_epoch":at_epoch,
                 "job_sha256":self._job(tenant,job_key),
@@ -71,7 +71,7 @@ class LocalComputeEventLog:
              units,result_sha256,record["previous_hash"],h))
         return {"sequence":seq,"head_hash":h}
 
-    def _verify_tx(self,db,tenant):
+    def _verify_tx(self,db,tenant,*,check_receipts=True):
         rows=db.execute("""SELECT * FROM local_fixed_compute_events
             WHERE tenant=? ORDER BY seq""",(tenant,)).fetchall()
         if len(rows)>20000:
@@ -101,6 +101,10 @@ class LocalComputeEventLog:
                 old[3]=row["result_sha256"]
                 old[4]=1
             prev=row["event_hash"]
+        if not check_receipts:
+            return {"tenant":tenant,"events":len(rows),"head_hash":prev,
+                    "chain_verified":True,"receipt_reconciled":False,
+                    "external_witnessed":False}
         receipts=db.execute("""SELECT job_key,task_sha256,units,state,
             result_sha256 FROM local_fixed_execution_receipts WHERE tenant=?""",
             (tenant,)).fetchall()

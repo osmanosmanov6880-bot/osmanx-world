@@ -20,6 +20,7 @@ from .quota_ledger import TenantQuotaLedger,QuotaDenied
 from .resource_limits import ResourceLimits
 from .sandbox_runtime import run_allowlisted_task, _job
 from .contracts import canonical
+from .compute_events import LocalComputeEventLog,ComputeEventDenied
 
 class ExecutionDenied(ValueError):
     pass
@@ -45,12 +46,39 @@ class LocalFencedExecutor:
             CREATE TRIGGER IF NOT EXISTS local_fixed_receipts_no_delete
                 BEFORE DELETE ON local_fixed_execution_receipts BEGIN
                 SELECT RAISE(ABORT,'execution receipts cannot be deleted');END;""")
+        self.events=LocalComputeEventLog(ledger)
 
     def _expired(self,db,now:int)->int:
+        # Legacy fixed-less leases can be reclaimed by the quota subsystem.
+        # Permit-backed leases require BOTH a receipt transition and a
+        # chained event in one atomic transaction.
         recovered=self.ledger._expire(db,now)
-        db.execute("""UPDATE local_fixed_execution_receipts SET state='expired',
-            error_code='LEASE_EXPIRED' WHERE state='reserved' AND expires<=?""",
-            (now,))
+        pending=db.execute("""SELECT tenant,job_key,task_sha256,units
+            FROM local_fixed_execution_receipts WHERE state='reserved'
+            AND expires<=? ORDER BY tenant,job_key""",(now,)).fetchall()
+        for tenant in sorted(set(row["tenant"] for row in pending)):
+            self.events._verify_tx(db,tenant)
+        for row in pending:
+            tenant,job_key=row["tenant"],row["job_key"]
+            receipt=db.execute("""UPDATE local_fixed_execution_receipts
+                SET state='expired',error_code='LEASE_EXPIRED'
+                WHERE tenant=? AND job_key=? AND state='reserved'""",
+                (tenant,job_key)).rowcount
+            lease=db.execute("""UPDATE local_compute_leases
+                SET state='expired' WHERE tenant=? AND job_key=?
+                AND state='reserved' AND expires<=?""",
+                (tenant,job_key,now)).rowcount
+            units=db.execute("""UPDATE local_compute_quotas SET held=held-?
+                WHERE tenant=? AND held>=?""",
+                (row["units"],tenant,row["units"])).rowcount
+            if (receipt,lease,units)!=(1,1,1):
+                raise ExecutionDenied("Cannot atomically expire fenced lease")
+            self.events.append_tx(db,tenant=tenant,job_key=job_key,
+                task_sha256=row["task_sha256"],state="expired",
+                units=row["units"],at_epoch=now)
+            recovered+=1
+        for tenant in sorted(set(row["tenant"] for row in pending)):
+            self.events._verify_tx(db,tenant)
         return recovered
 
     def reclaim(self,*,now:int)->dict:
@@ -75,6 +103,7 @@ class LocalFencedExecutor:
             raise ExecutionDenied("Permit cannot reserve a non-positive time window")
         with self.ledger._tx() as db:
             self._expired(db,now)
+            self.events._verify_tx(db,tenant)
             seen=db.execute("""SELECT 1 FROM local_fixed_execution_receipts
                 WHERE tenant=? AND (job_key=? OR task_id=? OR permit_nonce=?)""",
                 (tenant,job_key,task["task_id"],signed["nonce"])).fetchone()
@@ -101,6 +130,10 @@ class LocalFencedExecutor:
                 VALUES(?,?,?,?,?,?,?,?,'reserved',NULL,NULL)""",
                 (tenant,job_key,task["task_id"],signed["nonce"],
                  permit_hash,signed["task_sha256"],units,signed["expires_at"]))
+            self.events.append_tx(db,tenant=tenant,job_key=job_key,
+                task_sha256=signed["task_sha256"],state="reserved",
+                units=units,at_epoch=now)
+            self.events._verify_tx(db,tenant)
         return task,signed
 
     def _settle(self,*,task:dict,signed:dict,tenant:str,now:int,
@@ -108,6 +141,7 @@ class LocalFencedExecutor:
         self.ledger._time(now)
         with self.ledger._tx() as db:
             self._expired(db,now)
+            self.events._verify_tx(db,tenant)
             row=db.execute("""SELECT * FROM local_fixed_execution_receipts
                 WHERE tenant=? AND job_key=? AND task_id=?""",
                 (tenant,task["idempotency_key"],task["task_id"])).fetchone()
@@ -142,6 +176,11 @@ class LocalFencedExecutor:
                 (row["units"],charge,tenant,row["units"])).rowcount
             if changed!=1:
                 raise ExecutionDenied("Broken reserved budget invariant")
+            self.events.append_tx(db,tenant=tenant,
+                job_key=task["idempotency_key"],
+                task_sha256=signed["task_sha256"],state=state,
+                units=row["units"],at_epoch=now,result_sha256=result_sha256)
+            self.events._verify_tx(db,tenant)
             return state
 
     def run(self,authorization:dict,permit:dict,*,expected_tenant:str,
