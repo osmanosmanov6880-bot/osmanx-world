@@ -125,6 +125,32 @@ class DurableLocalQueue:
                     (tenant,task_id,idem,task_digest,result_digest,fence)
                 SELECT tenant,task_id,idem,task_digest,result_digest,fence
                 FROM local_jobs WHERE state='done' AND result_digest IS NOT NULL;
+                CREATE TABLE IF NOT EXISTS local_effect_outbox (
+                    tenant TEXT NOT NULL,task_id TEXT NOT NULL,
+                    delivery_key TEXT NOT NULL,created_seq INTEGER NOT NULL,
+                    state TEXT NOT NULL CHECK(state IN ('ready','leased','delivered')),
+                    fence INTEGER NOT NULL DEFAULT 0,lease_owner TEXT,
+                    lease_until INTEGER,token TEXT,ack_sha256 TEXT,
+                    PRIMARY KEY(tenant,task_id),UNIQUE(tenant,delivery_key));
+                CREATE TRIGGER IF NOT EXISTS local_effect_to_outbox
+                    AFTER INSERT ON local_job_effects BEGIN
+                    INSERT INTO local_effect_outbox
+                        (tenant,task_id,delivery_key,created_seq,state)
+                    VALUES(NEW.tenant,NEW.task_id,
+                           NEW.task_digest||':'||NEW.result_digest,
+                           NEW.rowid,'ready');
+                END;
+                INSERT OR IGNORE INTO local_effect_outbox
+                    (tenant,task_id,delivery_key,created_seq,state)
+                SELECT tenant,task_id,task_digest||':'||result_digest,
+                    rowid,'ready' FROM local_job_effects;
+                CREATE TRIGGER IF NOT EXISTS local_effect_outbox_no_delete
+                    BEFORE DELETE ON local_effect_outbox BEGIN
+                    SELECT RAISE(ABORT,'outbox receipts are immutable');END;
+                CREATE TRIGGER IF NOT EXISTS local_effect_outbox_no_undeliver
+                    BEFORE UPDATE ON local_effect_outbox
+                    WHEN OLD.state='delivered' AND NEW.state!='delivered' BEGIN
+                    SELECT RAISE(ABORT,'delivered effects are final');END;
                 CREATE TRIGGER IF NOT EXISTS local_job_transition_immutable_update
                     BEFORE UPDATE ON local_job_transitions BEGIN
                     SELECT RAISE(ABORT,'local job history is append-only');END;
