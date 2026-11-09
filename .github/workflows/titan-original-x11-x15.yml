@@ -1,0 +1,78 @@
+name: TITAN Original X11-X15 Durable DevSwarm Acceptance
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/campaign180/queue.py"
+      - "supreme-director/campaign180/campaign180/gateway.py"
+      - "supreme-director/campaign180/campaign180/scheduler.py"
+      - "supreme-director/campaign180/campaign180/pg_devswarm.py"
+      - "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py"
+      - "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+      - ".github/workflows/titan-original-x11-x15.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: titan-x11-x15-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  original-durable-queue:
+    name: TITAN-X11-X15 real SQLite and PostgreSQL (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: devswarm_ci
+          POSTGRES_PASSWORD: local-test-only
+          POSTGRES_DB: devswarm_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devswarm_ci -d devswarm_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install strictly scoped PostgreSQL test client
+        run: python -m pip install --disable-pip-version-check --no-cache-dir 'psycopg[binary]==3.2.3'
+      - name: Compile exact changed modules
+        run: |
+          python -m py_compile supreme-director/campaign180/campaign180/queue.py
+          python -m py_compile supreme-director/campaign180/campaign180/gateway.py
+          python -m py_compile supreme-director/campaign180/campaign180/scheduler.py
+          python -m py_compile supreme-director/campaign180/campaign180/pg_devswarm.py
+      - name: Original X11-X13 and X15 SQLite real-life tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x11_x15_sqlite.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_scheduler_backup.py' -v
+      - name: Original X14 shared PostgreSQL 16 concurrent-client integration
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+          DEVSWARM_TEST_PG_DSN: postgresql://devswarm_ci:local-test-only@127.0.0.1:5432/devswarm_ci
+        run: |
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x14_postgres.py' -v
+      - name: Do not conflate shared DB test with canonical upstream approval
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.registry import load_upstreams
+          titan=load_upstreams(Path("."))["teams"]["TITAN"]
+          assert titan["owner_approved"] is False, "Source approval changed: review manually"
+          print("TITAN-X11-X15_LOCAL_CODE_ONLY; ORIGINAL_UPSTREAM_BLOCKED")
+          PY
