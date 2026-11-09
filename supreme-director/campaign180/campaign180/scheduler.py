@@ -182,6 +182,30 @@ class CapacityScheduler:
             raise AdmissionDenied("No matching active capacity reservation")
         return job
 
+    def renew(self, lease: LocalLease, *, now: int,
+              lease_seconds: int=30) -> LocalLease:
+        """Atomic job heartbeat + resource allocation lifetime extension.
+
+        A stale lease, changed membership, or withdrawn grant cannot extend
+        its allocation. This operation never reserves extra CPU/RAM/disk.
+        """
+        self._now(now)
+        with self.jobs._tx() as db:
+            row=self._check_allocation(db,lease,now)
+            checked=self.gateway._check_row(db,row,now=now)
+            if checked['task']!=lease.task:
+                raise AdmissionDenied('Lease role or task changed')
+            next_lease=self.jobs._renew_tx(db,lease,now=now,
+                                            lease_seconds=lease_seconds)
+            updated=db.execute("""UPDATE scheduler_allocations SET deadline=?
+                WHERE tenant=? AND task_id=? AND worker=? AND fence=?
+                AND deadline=?""",
+                (next_lease.deadline,lease.tenant_id,lease.task_id,
+                 lease.worker_id,lease.fence,lease.deadline)).rowcount
+            if updated!=1:
+                raise AdmissionDenied('Lost resource lease while heartbeat renewed')
+            return next_lease
+
     def finish(self, lease: LocalLease, result: Mapping[str,Any], *, now: int) -> str:
         self._now(now)
         if not isinstance(result,Mapping) or type(result.get("result")) is not dict:

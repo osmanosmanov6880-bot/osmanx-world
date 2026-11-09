@@ -269,6 +269,34 @@ class DurableLocalQueue:
                 or row['expires_at']<=now):
             raise QueueDenied('Expired, stolen or inactive lease')
 
+    def _renew_tx(self, db: sqlite3.Connection, lease: LocalLease, *,
+                  now: int, lease_seconds: int) -> LocalLease:
+        """CAS rotation of deadline: superseded lease receipts become invalid."""
+        self._time(now)
+        if type(lease_seconds) is not int or not 1<=lease_seconds<=300:
+            raise QueueDenied('Bounded heartbeat extension required')
+        row=self._lease_row(db,lease)
+        self._active(row,lease,now)
+        proposed=min(row['expires_at'],now+lease_seconds)
+        if proposed<=row['lease_until']:
+            raise QueueDenied('Lease heartbeat must advance deadline')
+        updated=db.execute("""UPDATE local_jobs SET lease_until=?
+            WHERE tenant=? AND task_id=? AND state='leased'
+            AND fence=? AND lease_owner=? AND lease_until=?""",
+            (proposed,lease.tenant_id,lease.task_id,lease.fence,
+             lease.worker_id,lease.deadline)).rowcount
+        if updated!=1:
+            raise QueueDenied('Heartbeat lost a competing lease transition')
+        return LocalLease(lease.tenant_id,lease.task_id,lease.task_digest,
+                          lease.worker_id,lease.fence,proposed,
+                          lease.attempt,lease.task)
+
+    def renew(self, lease: LocalLease, *, now: int,
+              lease_seconds: int=30) -> LocalLease:
+        """Crash-safe heartbeat for existing LOCAL leases only."""
+        with self._tx() as db:
+            return self._renew_tx(db,lease,now=now,lease_seconds=lease_seconds)
+
     def record_result(self, lease: LocalLease, validated_result: Mapping[str,Any],
                       *, now: int) -> str:
         """CAS finalization; no worker code or external side effect is invoked."""

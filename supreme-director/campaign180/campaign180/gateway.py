@@ -156,6 +156,19 @@ class TransactionalLocalGateway:
                                   checked["task"])
         return None
 
+    def renew(self, lease: LocalLease, *, now: int,
+              lease_seconds: int=30) -> LocalLease:
+        """Revalidate live member role/scopes before worker heartbeat."""
+        self.jobs._time(now)
+        with self.jobs._tx() as db:
+            row=self.jobs._lease_row(db,lease)
+            self.jobs._active(row,lease,now)
+            authorized=self._check_row(db,row,now=now)
+            if authorized['task']!=lease.task:
+                raise AdmissionDenied('Lease payload not bound to current access')
+            return self.jobs._renew_tx(db,lease,now=now,
+                                       lease_seconds=lease_seconds)
+
     def finish(self, lease: LocalLease, validated_result: Mapping[str,Any], *,
                now: int) -> str:
         self.jobs._time(now)
