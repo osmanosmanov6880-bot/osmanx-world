@@ -65,6 +65,50 @@ class DurableLocalQueue:
                     UNIQUE(tenant,task_id));
                 CREATE INDEX IF NOT EXISTS local_jobs_ready
                     ON local_jobs(state,ready_at,created_at,id);
+                CREATE INDEX IF NOT EXISTS local_jobs_tenant_state
+                    ON local_jobs(tenant,state,ready_at);
+                CREATE TABLE IF NOT EXISTS local_job_transitions(
+                    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant TEXT NOT NULL,task_id TEXT NOT NULL,
+                    state TEXT NOT NULL,fence INTEGER NOT NULL,
+                    lease_owner TEXT,lease_until INTEGER,result_digest TEXT,
+                    source TEXT NOT NULL DEFAULT 'sqlite-trigger',
+                    observed_epoch INTEGER NOT NULL DEFAULT (unixepoch()));
+                CREATE INDEX IF NOT EXISTS local_job_transitions_task
+                    ON local_job_transitions(tenant,task_id,seq);
+                CREATE TRIGGER IF NOT EXISTS local_job_transition_create
+                    AFTER INSERT ON local_jobs BEGIN
+                    INSERT INTO local_job_transitions
+                        (tenant,task_id,state,fence,lease_owner,lease_until,result_digest)
+                    VALUES(NEW.tenant,NEW.task_id,NEW.state,NEW.fence,
+                           NEW.lease_owner,NEW.lease_until,NEW.result_digest);
+                END;
+                CREATE TRIGGER IF NOT EXISTS local_job_transition_change
+                    AFTER UPDATE OF state,fence,lease_owner,lease_until,result_digest
+                    ON local_jobs
+                    WHEN OLD.state!=NEW.state OR OLD.fence!=NEW.fence OR
+                         OLD.lease_owner IS NOT NEW.lease_owner OR
+                         OLD.lease_until IS NOT NEW.lease_until OR
+                         OLD.result_digest IS NOT NEW.result_digest
+                    BEGIN
+                    INSERT INTO local_job_transitions
+                        (tenant,task_id,state,fence,lease_owner,lease_until,result_digest)
+                    VALUES(NEW.tenant,NEW.task_id,NEW.state,NEW.fence,
+                           NEW.lease_owner,NEW.lease_until,NEW.result_digest);
+                END;
+                CREATE TRIGGER IF NOT EXISTS local_job_transition_immutable_update
+                    BEFORE UPDATE ON local_job_transitions BEGIN
+                    SELECT RAISE(ABORT,'local job history is append-only');END;
+                CREATE TRIGGER IF NOT EXISTS local_job_transition_immutable_delete
+                    BEFORE DELETE ON local_job_transitions BEGIN
+                    SELECT RAISE(ABORT,'local job history is append-only');END;
+                INSERT INTO local_job_transitions
+                    (tenant,task_id,state,fence,lease_owner,lease_until,result_digest,source)
+                SELECT j.tenant,j.task_id,j.state,j.fence,j.lease_owner,j.lease_until,
+                       j.result_digest,'migration-snapshot'
+                FROM local_jobs j
+                WHERE NOT EXISTS(SELECT 1 FROM local_job_transitions e
+                                 WHERE e.tenant=j.tenant AND e.task_id=j.task_id);
             """)
 
     def _connection(self) -> sqlite3.Connection:
@@ -251,5 +295,63 @@ class DurableLocalQueue:
             result={'ready':0,'leased':0,'done':0,'dead':0}
             result.update({r['state']:r['n'] for r in rows})
             return result
+        finally:
+            db.close()
+
+
+    def cancel(self, *, tenant_id: str, task_id: str, actor_id: str,
+               now: int) -> str:
+        """Tenant+originator scoped durable cancellation, never deletion."""
+        self._time(now)
+        if (type(tenant_id) is not str or not TENANT_RE.fullmatch(tenant_id)
+            or type(task_id) is not str or type(actor_id) is not str):
+            raise QueueDenied('Explicit authenticated cancel identifiers required')
+        with self._tx() as db:
+            row=db.execute("""SELECT actor,state FROM local_jobs
+                WHERE tenant=? AND task_id=?""",(tenant_id,task_id)).fetchone()
+            if row is None or row['actor']!=actor_id:
+                raise QueueDenied('Cancellation not authorized')
+            if row['state']=='done':
+                raise QueueDenied('Finalized task cannot be cancelled')
+            if row['state']=='dead':
+                return 'ALREADY_CANCELLED_OR_DEAD_LOCAL_ONLY'
+            n=db.execute("""UPDATE local_jobs SET state='dead',
+                lease_owner=NULL,lease_until=NULL WHERE tenant=?
+                AND task_id=? AND state IN ('ready','leased')""",
+                (tenant_id,task_id)).rowcount
+            if n!=1:raise QueueDenied('Concurrent cancellation refused')
+            return 'CANCELLED_LOCAL_ONLY'
+
+    def dead_letters(self, *, tenant_id: str, limit: int=100) -> list[dict]:
+        """No raw task body: only metadata scoped to the given tenant."""
+        if type(tenant_id) is not str or not TENANT_RE.fullmatch(tenant_id):
+            raise QueueDenied('Explicit valid tenant required')
+        if type(limit) is not int or not 1<=limit<=200:
+            raise QueueDenied('Bounded dead-letter result required')
+        db=self._connection()
+        try:
+            rows=db.execute("""SELECT task_id,attempts,fence,created_at,expires_at
+                FROM local_jobs WHERE tenant=? AND state='dead'
+                ORDER BY id DESC LIMIT ?""",(tenant_id,limit)).fetchall()
+            return [dict(x) for x in rows]
+        finally:
+            db.close()
+
+    def transitions(self, *, tenant_id: str, task_id: str,
+                    limit: int=100) -> list[dict]:
+        """Append-only ledger works across Queue/Gateway/Scheduler paths."""
+        if type(tenant_id) is not str or not TENANT_RE.fullmatch(tenant_id):
+            raise QueueDenied('Tenant required for history')
+        if type(task_id) is not str or not task_id:
+            raise QueueDenied('Task required for history')
+        if type(limit) is not int or not 1<=limit<=200:
+            raise QueueDenied('Bounded history requested')
+        db=self._connection()
+        try:
+            rows=db.execute("""SELECT seq,state,fence,lease_owner,lease_until,
+                result_digest,source,observed_epoch FROM local_job_transitions
+                WHERE tenant=? AND task_id=? ORDER BY seq LIMIT ?""",
+                (tenant_id,task_id,limit)).fetchall()
+            return [dict(x) for x in rows]
         finally:
             db.close()
