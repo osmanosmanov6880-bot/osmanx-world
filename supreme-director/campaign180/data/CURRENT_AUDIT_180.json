@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "b72a803c482c4592ed00b4783bee2f48d1c18236",
+  "based_on_code_commit": "eb243ad520c2711b3b734d46b4980d0767ea27b6",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -212,7 +212,8 @@
         "supreme-director/campaign180/campaign180/gateway.py",
         "supreme-director/campaign180/campaign180/pg_devswarm.py",
         "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
-        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -237,7 +238,9 @@
         "supreme-director/campaign180/tests/test_wave15_compute_integrity.py",
         "supreme-director/campaign180/campaign180/pg_devswarm.py",
         "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
-        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py",
+        "supreme-director/campaign180/campaign180/effect_outbox.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -257,7 +260,8 @@
         "supreme-director/campaign180/campaign180/scheduler.py",
         "supreme-director/campaign180/campaign180/pg_devswarm.py",
         "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
-        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -275,7 +279,8 @@
         "supreme-director/campaign180/campaign180/scheduler.py",
         "supreme-director/campaign180/tests/test_scheduler_backup.py",
         "supreme-director/campaign180/campaign180/pg_devswarm.py",
-        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -300,7 +305,9 @@
         "supreme-director/campaign180/tests/test_wave15_compute_integrity.py",
         "supreme-director/campaign180/campaign180/pg_devswarm.py",
         "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
-        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py",
+        "supreme-director/campaign180/campaign180/gateway.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2584,6 +2591,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Exact original TITAN-X11..X15: SQLite queue audit/effect/heartbeat, shared PostgreSQL scheduler and atomic admission limits",
-  "notes": "Only original TITAN-X11 through X15 changed. Tested local SQLite and PostgreSQL on Python 3.11/3.13; independent upstream acceptance 0/180. Physical DevSwarm host integration BLOCKED_UPSTREAM."
+  "last_local_campaign": "Original TITAN-X11–X15 only: durable queue audit, exactly-once-local outbox, worker recovery, node fencing, bounded admission",
+  "notes": "Original TITAN X11..X15 have only local code evidence. Multi-server canonical backend and externally idempotent effects absent. 36 local links, 136 no proof, 8 holds. Independent acceptance 0/180."
 }

@@ -1,58 +1,38 @@
-# TITAN-X11–X15 — исполнение следующих пяти исходных задач
+# TITAN-X11–X15 — исполнение пяти задач исходного плана
 
-Источник: `supreme-director/originals/DIRECTOR_MASTER_180.md`.
-Ветка: `recovery/supreme-director-m187-20261104`. Снимок: `b72a803c482c4592ed00b4783bee2f48d1c18236`.
-Никаких работ по TITAN-X16+ не проводилось.
+Источник требований: `supreme-director/originals/DIRECTOR_MASTER_180.md`.
+Снимок кода: `eb243ad520c2711b3b734d46b4980d0767ea27b6`, Draft PR #7.
 
-## TITAN-X11 — DevSwarm durable queue и транзакционные leases
+**Реализованы только X11, X12, X13, X14, X15.** X16 и далее не затрагивались. Оригинальные компоненты KRAKEN/DevSwarm/Command не подключены и канонический SHA upstream отсутствует, поэтому **статус оригинальных задач BLOCKED_UPSTREAM, не DONE**.
 
-**Реализация:** `campaign180/queue.py` теперь записывает все переходы готовности, выдачи, завершения, отмены и восстановления в append-only SQLite `local_job_transitions`. SQLite-триггеры фиксируют события **в одной транзакции** независимо от того, действует Queue, Gateway или Scheduler; задним числом подмена/удаление обычными SQL UPDATE/DELETE запрещены. Добавлены CAS-отмена с требованием tenant и исходного actor и ограниченный список dead letters без тела задания. Оригинальная очередь, дедупликация и счётчик попыток сохранены.
+## X11 — долговечная очередь и транзакционные leases
 
-**Подтверждение:** `test_titan_x11_x15_sqlite.py` проверяет запись каждого перехода, отмену, tenant isolation, immutability и получение dead letters. В `pg_devswarm.py` реализована отдельная центральная PostgreSQL-очередь для совместной работы нескольких host-клиентов.
+В существующем `campaign180/queue.py` добавлен `verify_durability`: в единой SQLite-транзакции проверяет SHA256 тела задачи, имя tenant/idempotency, последнюю запись журнала переходов, lease owner/fence/TTL, соответствие записанных результатов локальному effect receipt и отсутствие orphan receipt. `PRAGMA quick_check` выполняется до сверки. Ошибка целостности отклоняет отчёт; данные других tenants не раскрываются.
 
-## TITAN-X12 — Fencing и exactly-once-effect через идемпотентность
+## X12 — fencing и exactly-once-effect через идемпотентность
 
-**Реализация:** `local_job_effects` с уникальными tenant/task_id и tenant/idempotency_key. Финализация результата Queue, Gateway и Scheduler попадает в этот журнал **атомарно через SQLite-триггер** и только при переходе `leased → done`. Состояние `done` и digest результата нельзя изменить через обычный путь. `effect_receipt` и `verify_effect_ledger` обнаруживают missing/phantom receipts. Для PostgreSQL `pg_devswarm.py` завершает работу и создаёт receipt в одной транзакции с fencing и уникальными ограничениями.
+В queue transaction создан `local_effect_outbox` и trigger при фиксации одного `local_job_effects`. Каждое завершённое задание создаёт одну неизменяемую подготовленную запись, повторный `finish` не создаёт её вторично. `campaign180/effect_outbox.py` управляет lease/token/fence, deadline, повторной выдачей после тайм-аута и атомарным подтверждением `ack_sha256`. Поддельный/старый token или fence не принимается. **Exactly-once относится только к записи локального результата/outbox**; выполнение стороннего действия не происходит, для внешней exactly-once доставки требуется идемпотентный downstream.
 
-**Граница гарантии:** одноразово подтверждена *локальная запись результата*, **не** exactly-once внешнего выполнения/платежа/вызова стороннего API. Для внешнего эффекта нужен отдельный downstream idempotency contract, которого нет в текущих исходниках.
+## X13 — восстановление после сбоя worker
 
-## TITAN-X13 — Восстановление после сбоя worker
+`DurableLocalQueue.recover_worker` обрабатывает только просроченные lease конкретного worker. Реализованы ограничения TTL, возрастающий экспоненциальный backoff, `max_attempts`, dead-letter после исчерпания попыток и атомарные переходы. Здоровые leases не затрагиваются. Старое разрешение не может завершить новое поколение fence.
 
-**Реализация:** `DurableLocalQueue._renew_tx/renew`, `TransactionalLocalGateway.renew` и `CapacityScheduler.renew`. Heartbeat продлевает lease только под действующим fence, worker_id, доступом tenant и сроком TTL. Обновление lease и resource allocation атомарно; старое значение deadline становится недействительным. При смене прав, истечении lease или уничтожении worker восстановление `recover` освобождает ресурс и запрещает финализацию устаревшего lease. PostgreSQL содержит `recover`, `retry`, `renew` и `cancel`.
+## X14 — многопроцессный и многосерверный scheduler
 
-## TITAN-X14 — многопроцессный и многосерверный scheduler
+Существующий SQLite scheduler дополнен `scheduler_nodes`: `register_node` выдаёт секретный token, поколение и TTL; `heartbeat_node` требует актуальные generation/token и продолжает только активную сессию. `reserve` связывает worker ID с node ID **в той же SQLite транзакции**, не допускает legacy-bypass без токена и ограничивает deadline TTL узла. `renew` требует действующий token/generation и не продлевает lease после node expiry. Есть многопроцессные тесты на общем SQLite файле. **Настоящая координация по нескольким независимым серверам отсутствует**: SQLite на независимых хостах не заменяет PostgreSQL или консенсусный backend.
 
-**Реализация:** `campaign180/pg_devswarm.py` — общий PostgreSQL 16 backend: глобальная транзакционная fairness-позиция, tenant budgets, `SELECT ... FOR UPDATE SKIP LOCKED`, уникальные task/idem receipts, fencing, CAS heartbeat, истечение/перевыдача lease, retry/cancel/recover, ограничение количества inflight в одном worker. Несколько клиентов подключаются к **общей Postgres БД**, а не к SQLite на общем NFS-диске.
+## X15 — планирование ресурсов и admission control
 
-Создание таблиц требует административного вызова `initialize_schema=True`; обычный worker запускается с `initialize_schema=False` и не выполняет DDL. Тест `test_titan_x14_postgres.py` использует disposable PostgreSQL 16 CI. Последнее изменение добавляет конкуренцию отдельных OS-процессов через `ProcessPoolExecutor`.
+`CapacityScheduler.admit_with_capacity` проверяет tenant RBAC/scopes, реальную стоимость capability из доверенного server policy, наличие лимитов CPU/RAM/disk и backpressure **до** сохранения задания, затем использует `gateway._admit_tx` в той же `BEGIN IMMEDIATE` транзакции. `verify_capacity_integrity` проверяет, что активные allocations соответствуют lease/worker/fence/deadline и не превышают бюджет. Отсутствующий бюджет и попытка подделать tenant отказываются. CPU/RAM/disk в scheduler — **reservations/admission**, не физические лимиты на уровне ОС.
 
-**Ограничения:** не интегрированы реальные серверы KRAKEN/DevSwarm/Command, production IdP и сетевые worker-адаптеры. Демо с двумя независимыми SQL-сессиями/процессами в CI — достоверный тест центрального состояния, но **не** аттестация production кластера или нескольких физических хостов.
+## Тесты и управление риском
 
-## TITAN-X15 — планирование ресурсов и admission control
+`tests/test_titan_x11_x15.py` — 18 отдельных проверок X11–X15: живые SQLite перезапуски, tamper, повтор и ACK outbox, старый fence, восстановление с backoff, node generation/TTL/token, межпроцессная гонка, cost-admission и orphan allocations.
 
-**Реализация:** `CapacityScheduler.set_budget` добавляет max_pending и отклоняет уменьшение лимита ниже фактического количества running/queued. SQLite `BEFORE INSERT` trigger защищает длину очереди в каждом маршруте admission. Добавлен `worker_max_inflight` и tenant-scoped `admission_snapshot`. CPU/RAM/disk остаются доверенным `ResourceCost` по capability; значения из тела задания не используются как ресурсная оценка. PostgreSQL реализует эквивалентные tenant/worker budgets и отказы.
+CI `.github/workflows/titan-original-x11-x15.yml` выполняет эти 18 тестов и существующие queue/gateway/scheduler регрессии на Python 3.11/3.13. Последний green baseline до проверки registered-node bypass: [GitHub Actions #42714569992](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42714569992). Для последнего коммита необходимо проверить отдельный CI run.
 
-**Ограничение:** эти лимиты — контролируемое распределение **запланированных** ресурсов, не физические kernel cgroups для каждого remote worker; соответствующая OS-изоляция проверяется отдельно.
+Rollback: revert коммитов с X11–X15 до слияния. Для совместимости с историческими SQLite данными создание новых таблиц выполнено `IF NOT EXISTS` и backfill outbox через `INSERT OR IGNORE`. Публичных API или production deployment нет.
 
-## Тестирование и воспроизведение
+Критерии оригинальной независимой приёмки **ещё не выполнены**: канонический Git SHA целевых трёх продуктов, security review, работающая распределённая координация, доказательство идемпотентной внешней операции и реальные performance measurements на target topology.
 
-```bash
-export PYTHONPATH="$PWD/supreme-director/campaign180"
-python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x11_x15_sqlite.py' -v
-python -m unittest discover -s supreme-director/campaign180/tests -p 'test_scheduler_backup.py' -v
-# Только на тестовом Postgres 16 с переменной DEVSWARM_TEST_PG_DSN:
-python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x14_postgres.py' -v
-```
-
-[Подтверждённый проход Python 3.11 и 3.13 с PostgreSQL 16](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42678126792).
-[Повтор после добавления теста отдельных процессов](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42678373843) — результат уточнять по GitHub Actions; предыдущий зелёный запуск не подменяет этот.
-
-## Миграции и откат
-
-SQLite: добавлены `local_job_transitions`, `local_job_effects`, `scheduler_backpressure`, индексы и триггеры. Миграция существующих локальных `done` jobs формирует только подтверждённые SQLite receipts с известным result_digest; данные без такого digest не объявляются успешно принятыми. Откат требует заранее созданного согласованного SQLite backup и проверки на копии (нельзя просто удалить журналы, сохранив состояния задач).
-
-PostgreSQL: создаются изолированные таблицы `titan_pg_*` в **отдельной тестовой БД**. Удаление этих таблиц допустимо только после сохранения backup/receipt и отмены работающих leases. Ни одна production схема не мигрировалась. Подписанная внешняя задача не запускалась.
-
-## Фактический статус приёмки
-
-Применён код для пяти оригинальных ID. Канонические upstream KRAKEN/DevSwarm/Command по-прежнему не подтверждены владельцем; нет независимого source-owner и security review, release gate сохраняет **NO-GO**. Поэтому исходные X11–X15 имеют связанный локальный код, но **не могут быть названы DONE** и **не считаются независимо принятыми**. X16 и последующие задачи не затрагивались.
+**Итог:** локальный код по пяти конкретным исходным задачам и тесты опубликованы, но исходные пять задач нельзя честно пометить `DONE`. Production и main не изменены.
