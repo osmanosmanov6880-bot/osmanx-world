@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "32f735e273798ae6a9c5ec9c4e9c7d353ce5d6a4",
+  "based_on_code_commit": "b72a803c482c4592ed00b4783bee2f48d1c18236",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -209,7 +209,10 @@
       "original_source_line": 162,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/queue.py",
-        "supreme-director/campaign180/campaign180/gateway.py"
+        "supreme-director/campaign180/campaign180/gateway.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -231,7 +234,10 @@
         "supreme-director/campaign180/campaign180/fenced_compute.py",
         "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
         "supreme-director/campaign180/campaign180/compute_events.py",
-        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -247,7 +253,11 @@
       "original_source_line": 188,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/queue.py",
-        "supreme-director/campaign180/campaign180/gateway.py"
+        "supreme-director/campaign180/campaign180/gateway.py",
+        "supreme-director/campaign180/campaign180/scheduler.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -263,7 +273,9 @@
       "original_source_line": 201,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/scheduler.py",
-        "supreme-director/campaign180/tests/test_scheduler_backup.py"
+        "supreme-director/campaign180/tests/test_scheduler_backup.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -285,7 +297,10 @@
         "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
         "supreme-director/campaign180/campaign180/fenced_compute.py",
         "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
-        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
+        "supreme-director/campaign180/tests/test_wave15_compute_integrity.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2569,6 +2584,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Exact original TITAN-X01 to TITAN-X05 only — code, real local tests, explicit missing canonical TITAN upstream",
-  "notes": "This pass implements ONLY original TITAN-X01..X05. Product integration BLOCKED_UPSTREAM for all five; local CI pending; remaining 175 original tasks unchanged; no independent acceptance."
+  "last_local_campaign": "Exact original TITAN-X11..X15: SQLite queue audit/effect/heartbeat, shared PostgreSQL scheduler and atomic admission limits",
+  "notes": "Only original TITAN-X11 through X15 changed. Tested local SQLite and PostgreSQL on Python 3.11/3.13; independent upstream acceptance 0/180. Physical DevSwarm host integration BLOCKED_UPSTREAM."
 }

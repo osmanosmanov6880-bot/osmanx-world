@@ -51,7 +51,10 @@
       "supreme-director/campaign180/campaign180/fenced_compute.py",
       "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
       "supreme-director/campaign180/campaign180/compute_events.py",
-      "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
+      "supreme-director/campaign180/tests/test_wave15_compute_integrity.py",
+      "supreme-director/campaign180/campaign180/pg_devswarm.py",
+      "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+      "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
     ],
     "TITAN-X18": [
       "supreme-director/m190/verify_source.py",
@@ -92,18 +95,27 @@
     ],
     "TITAN-X11": [
       "supreme-director/campaign180/campaign180/queue.py",
-      "supreme-director/campaign180/campaign180/gateway.py"
+      "supreme-director/campaign180/campaign180/gateway.py",
+      "supreme-director/campaign180/campaign180/pg_devswarm.py",
+      "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+      "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
     ],
     "TITAN-X13": [
       "supreme-director/campaign180/campaign180/queue.py",
-      "supreme-director/campaign180/campaign180/gateway.py"
+      "supreme-director/campaign180/campaign180/gateway.py",
+      "supreme-director/campaign180/campaign180/scheduler.py",
+      "supreme-director/campaign180/campaign180/pg_devswarm.py",
+      "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+      "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
     ],
     "TITAN-X16": [
       "supreme-director/campaign180/campaign180/workflow.py"
     ],
     "TITAN-X14": [
       "supreme-director/campaign180/campaign180/scheduler.py",
-      "supreme-director/campaign180/tests/test_scheduler_backup.py"
+      "supreme-director/campaign180/tests/test_scheduler_backup.py",
+      "supreme-director/campaign180/campaign180/pg_devswarm.py",
+      "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
     ],
     "TITAN-X15": [
       "supreme-director/campaign180/campaign180/scheduler.py",
@@ -113,7 +125,10 @@
       "supreme-director/campaign180/tests/test_wave13_worker_quota.py",
       "supreme-director/campaign180/campaign180/fenced_compute.py",
       "supreme-director/campaign180/tests/test_wave14_signed_compute_oci.py",
-      "supreme-director/campaign180/tests/test_wave15_compute_integrity.py"
+      "supreme-director/campaign180/tests/test_wave15_compute_integrity.py",
+      "supreme-director/campaign180/campaign180/pg_devswarm.py",
+      "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+      "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
     ],
     "TITAN-X26": [
       "supreme-director/campaign180/campaign180/supplychain.py",

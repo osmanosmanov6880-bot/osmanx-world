@@ -1,0 +1,109 @@
+{
+  "schema": "osgard.original180.titan-x11-x15-execution/1",
+  "source_master": "supreme-director/originals/DIRECTOR_MASTER_180.md",
+  "source_branch": "recovery/supreme-director-m187-20261104",
+  "source_sha": "b72a803c482c4592ed00b4783bee2f48d1c18236",
+  "original_task_ids": [
+    "TITAN-X11",
+    "TITAN-X12",
+    "TITAN-X13",
+    "TITAN-X14",
+    "TITAN-X15"
+  ],
+  "tasks": [
+    {
+      "id": "TITAN-X11",
+      "title": "DevSwarm durable queue и транзакционные leases",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/queue.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+      ],
+      "local_code_implemented": true,
+      "local_regression_evidence": true,
+      "canonical_upstream_integration_confirmed": false,
+      "independently_accepted": false,
+      "status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
+      "original_release_status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X12",
+      "title": "Fencing и exactly-once-effect через идемпотентность",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/queue.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+      ],
+      "local_code_implemented": true,
+      "local_regression_evidence": true,
+      "canonical_upstream_integration_confirmed": false,
+      "independently_accepted": false,
+      "status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
+      "original_release_status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X13",
+      "title": "Восстановление после сбоя worker",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/queue.py",
+        "supreme-director/campaign180/campaign180/gateway.py",
+        "supreme-director/campaign180/campaign180/scheduler.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+      ],
+      "local_code_implemented": true,
+      "local_regression_evidence": true,
+      "canonical_upstream_integration_confirmed": false,
+      "independently_accepted": false,
+      "status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
+      "original_release_status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X14",
+      "title": "Многопроцессный и многосерверный scheduler",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+      ],
+      "local_code_implemented": true,
+      "local_regression_evidence": true,
+      "canonical_upstream_integration_confirmed": false,
+      "independently_accepted": false,
+      "status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
+      "original_release_status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X15",
+      "title": "Планирование ресурсов и admission control",
+      "related_local_paths": [
+        "supreme-director/campaign180/campaign180/scheduler.py",
+        "supreme-director/campaign180/campaign180/pg_devswarm.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15_sqlite.py",
+        "supreme-director/campaign180/tests/test_titan_x14_postgres.py"
+      ],
+      "local_code_implemented": true,
+      "local_regression_evidence": true,
+      "canonical_upstream_integration_confirmed": false,
+      "independently_accepted": false,
+      "status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
+      "original_release_status": "BLOCKED_UPSTREAM"
+    }
+  ],
+  "ci": {
+    "confirmed_run": "https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42678126792",
+    "confirmed_python_311": "PASS",
+    "confirmed_python_313": "PASS",
+    "multiprocess_revision_run": "https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42678373843",
+    "multiprocess_revision_status": "PENDING_AS_OF_REPORT"
+  },
+  "blockers": [
+    "CANONICAL_TITAN_KRAKEN_DEVSWARM_COMMAND_SOURCE_MISSING",
+    "INDEPENDENT_SECURITY_AND_SOURCE_OWNER_REVIEW_MISSING",
+    "PRODUCTION_SECRETS_AUTH_AND_WORKER_INTEGRATION_UNVERIFIED"
+  ],
+  "production_authorized": false,
+  "independently_accepted_count": 0
+}
