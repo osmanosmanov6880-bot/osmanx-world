@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 import sqlite3
+import secrets
+import hmac
 from typing import Mapping, Any
 
 from .contracts import TENANT_RE, ContractError, digest, validate_result
@@ -68,6 +70,12 @@ class CapacityScheduler:
             CREATE TABLE IF NOT EXISTS scheduler_cursor (
                 id INTEGER PRIMARY KEY CHECK(id=1), last_tenant TEXT NOT NULL);
             INSERT OR IGNORE INTO scheduler_cursor(id,last_tenant) VALUES(1,'');
+            CREATE TABLE IF NOT EXISTS scheduler_nodes(
+                node_id TEXT PRIMARY KEY,node_token TEXT NOT NULL,
+                generation INTEGER NOT NULL,heartbeat_at INTEGER NOT NULL,
+                expires_at INTEGER NOT NULL);
+            CREATE INDEX IF NOT EXISTS scheduler_nodes_expiry
+                ON scheduler_nodes(expires_at);
             CREATE TABLE IF NOT EXISTS scheduler_backpressure(
                 tenant TEXT PRIMARY KEY,max_pending INTEGER NOT NULL
                 CHECK(max_pending BETWEEN 1 AND 1000000));
@@ -83,6 +91,57 @@ class CapacityScheduler:
                     SELECT RAISE(ABORT,'tenant queue backpressure limit exceeded');
                 END;
             """)
+
+    def register_node(self, *, node_id: str, now: int,
+                      ttl_seconds: int=90) -> dict:
+        """X14: exclusive generation-fenced node lease on one shared SQLite DB."""
+        self._now(now)
+        if (type(node_id) is not str or not _WORKER.fullmatch(node_id)
+            or type(ttl_seconds) is not int or not 10<=ttl_seconds<=300):
+            raise AdmissionDenied("Valid node ID and bounded TTL required")
+        with self.jobs._tx() as db:
+            old=db.execute("SELECT * FROM scheduler_nodes WHERE node_id=?",
+                           (node_id,)).fetchone()
+            if old is not None and old["expires_at"]>now:
+                raise AdmissionDenied("Active node registration cannot be stolen")
+            generation=1 if old is None else old["generation"]+1
+            token=secrets.token_hex(32)
+            db.execute("""INSERT INTO scheduler_nodes
+                (node_id,node_token,generation,heartbeat_at,expires_at)
+                VALUES(?,?,?,?,?) ON CONFLICT(node_id) DO UPDATE SET
+                node_token=excluded.node_token,
+                generation=excluded.generation,
+                heartbeat_at=excluded.heartbeat_at,
+                expires_at=excluded.expires_at""",
+                (node_id,token,generation,now,now+ttl_seconds))
+            return {"node_id":node_id,"generation":generation,
+                    "token":token,"expires_at":now+ttl_seconds,
+                    "multi_server_consensus_verified":False}
+
+    def heartbeat_node(self, *, node_id: str, token: str,
+                       generation: int, now: int, ttl_seconds: int=90)->int:
+        self._now(now)
+        if (type(node_id) is not str or not _WORKER.fullmatch(node_id)
+            or type(token) is not str or len(token)!=64
+            or type(generation) is not int or generation<1
+            or type(ttl_seconds) is not int or not 10<=ttl_seconds<=300):
+            raise AdmissionDenied("Invalid node heartbeat credentials")
+        with self.jobs._tx() as db:
+            row=db.execute("SELECT * FROM scheduler_nodes WHERE node_id=?",
+                           (node_id,)).fetchone()
+            if (row is None or not hmac.compare_digest(row["node_token"],token)
+                or row["generation"]!=generation or
+                row["expires_at"]<=now or row["heartbeat_at"]>now):
+                raise AdmissionDenied("Expired or fenced node")
+            deadline=now+ttl_seconds
+            if deadline<=row["expires_at"]:
+                raise AdmissionDenied("Node heartbeat must advance deadline")
+            changed=db.execute("""UPDATE scheduler_nodes
+                SET heartbeat_at=?,expires_at=? WHERE node_id=?
+                AND node_token=? AND generation=? AND expires_at>?""",
+                (now,deadline,node_id,token,generation,now)).rowcount
+            if changed!=1:raise AdmissionDenied("Concurrent node heartbeat rejected")
+            return deadline
 
     @staticmethod
     def _now(now: int):
@@ -134,13 +193,33 @@ class CapacityScheduler:
             FROM scheduler_allocations WHERE tenant=?""",(tenant,)).fetchone()
         return row["n"],row["cpu"],row["mem"],row["disk"]
 
-    def reserve(self, *, worker_id: str, now: int, lease_seconds: int=30) -> LocalLease | None:
+    def reserve(self, *, worker_id: str, now: int, lease_seconds: int=30,
+                node_id: str|None=None, node_token: str|None=None,
+                node_generation: int|None=None) -> LocalLease | None:
         self._now(now)
         if type(worker_id) is not str or not _WORKER.fullmatch(worker_id):
             raise AdmissionDenied("Invalid worker ID")
         if type(lease_seconds) is not int or not 1<=lease_seconds<=300:
             raise AdmissionDenied("Invalid lease duration")
+        if node_id is None and (node_token is not None or node_generation is not None):
+            raise AdmissionDenied("Node lease credentials must be supplied together")
+        if node_id is not None and (
+            type(node_id) is not str or not _WORKER.fullmatch(node_id)
+            or not worker_id.startswith(node_id+":")
+            or type(node_token) is not str or len(node_token)!=64
+            or type(node_generation) is not int or node_generation<1):
+            raise AdmissionDenied("Worker identity not bound to scheduler node")
         with self.jobs._tx() as db:
+            node_deadline=None
+            if node_id is not None:
+                node=db.execute("""SELECT * FROM scheduler_nodes
+                    WHERE node_id=?""",(node_id,)).fetchone()
+                if (node is None or node["expires_at"]<=now
+                    or node["heartbeat_at"]>now
+                    or node["generation"]!=node_generation
+                    or not hmac.compare_digest(node["node_token"],node_token)):
+                    raise AdmissionDenied("Node lease expired or fenced")
+                node_deadline=node["expires_at"]
             self.jobs._recover(db,now)
             self._prune(db,now)
             concurrent=db.execute("""SELECT COUNT(*) FROM scheduler_allocations
@@ -184,6 +263,8 @@ class CapacityScheduler:
                         used[3]+cost.disk_mb>budget["max_disk"]):
                         continue
                     deadline=min(row["expires_at"],now+lease_seconds)
+                    if node_deadline is not None:
+                        deadline=min(deadline,node_deadline)
                     if deadline<=now:
                         continue
                     fence=row["fence"]+1
