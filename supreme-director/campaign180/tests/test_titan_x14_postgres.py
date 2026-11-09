@@ -40,6 +40,13 @@ class SharedPostgresIntegration(unittest.TestCase):
         self.actor="worker-owner-abc"
         self.db=PostgresDevSwarmScheduler(DSN,COSTS,worker_max_inflight=2,
                                           max_attempts=2)
+        # Dedicated disposable CI database; test cases must not leak ready
+        # jobs or budgets into the next case's global round-robin cursor.
+        with self.db._tx() as sql:
+            sql.execute("""TRUNCATE TABLE titan_pg_effects,titan_pg_allocations,
+                titan_pg_jobs,titan_pg_budgets,titan_pg_cursor""")
+            sql.execute("""INSERT INTO titan_pg_cursor(id,last_tenant)
+                VALUES(1,'')""")
         self.db.set_budget(self.tenant,max_inflight=2,max_cpu=2,
                            max_memory=256,max_disk=4,max_pending=10)
 
@@ -55,7 +62,7 @@ class SharedPostgresIntegration(unittest.TestCase):
         # Separate instances and independent SQL sessions, simulating two
         # scheduler processes/hosts on one central database.
         def compete(i):
-            conn=PostgresDevSwarmScheduler(DSN,COSTS)
+            conn=PostgresDevSwarmScheduler(DSN,COSTS,initialize_schema=False)
             return conn.reserve(worker_id="node-%02d"%i,now=NOW)
         with ThreadPoolExecutor(max_workers=8) as pool:
             leases=list(pool.map(compete,range(12)))
@@ -86,7 +93,7 @@ class SharedPostgresIntegration(unittest.TestCase):
         self.admit()
         self.admit()
         def take(i):
-            conn=PostgresDevSwarmScheduler(DSN,COSTS)
+            conn=PostgresDevSwarmScheduler(DSN,COSTS,initialize_schema=False)
             return conn.reserve(worker_id="node-%02d"%i,now=NOW)
         with ThreadPoolExecutor(max_workers=6) as pool:
             leases=[x for x in pool.map(take,range(6)) if x]
@@ -165,8 +172,8 @@ class SharedPostgresIntegration(unittest.TestCase):
                            max_memory=256,max_disk=4)
         self.admit(self.tenant)
         self.admit(other)
-        c1=PostgresDevSwarmScheduler(DSN,COSTS)
-        c2=PostgresDevSwarmScheduler(DSN,COSTS)
+        c1=PostgresDevSwarmScheduler(DSN,COSTS,initialize_schema=False)
+        c2=PostgresDevSwarmScheduler(DSN,COSTS,initialize_schema=False)
         out=[c1.reserve(worker_id="node-one",now=NOW),
              c2.reserve(worker_id="node-two",now=NOW)]
         self.assertEqual({x.tenant_id for x in out},{self.tenant,other})

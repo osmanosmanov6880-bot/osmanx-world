@@ -75,13 +75,15 @@ CREATE TRIGGER titan_pg_effect_no_update BEFORE UPDATE OR DELETE ON titan_pg_eff
 
 class PostgresDevSwarmScheduler:
     def __init__(self,dsn:str,capability_costs:Mapping[str,ResourceCost],*,
-                 max_attempts:int=3,worker_max_inflight:int=16):
+                 max_attempts:int=3,worker_max_inflight:int=16,
+                 initialize_schema:bool=True):
         if (type(dsn) is not str or not dsn or
             not isinstance(capability_costs,Mapping) or not capability_costs or
             any(type(k) is not str or type(v) is not ResourceCost
                 for k,v in capability_costs.items()) or
             type(max_attempts) is not int or not 1<=max_attempts<=20 or
-            type(worker_max_inflight) is not int or not 1<=worker_max_inflight<=1000):
+            type(worker_max_inflight) is not int or not 1<=worker_max_inflight<=1000 or
+            type(initialize_schema) is not bool):
             raise SharedSchedulerDenied("Trusted PostgreSQL configuration required")
         try:
             import psycopg
@@ -94,10 +96,12 @@ class PostgresDevSwarmScheduler:
         self.costs=dict(capability_costs)
         self.max_attempts=max_attempts
         self.worker_max_inflight=worker_max_inflight
-        with self._tx() as db:
-            # Dedicated test schema/DB should be used. Never give this role
-            # privileges over production KRAKEN/DevSwarm by default.
-            db.execute(DDL,prepare=False)
+        # Schema setup is an explicit administrative phase. Worker clients
+        # must use initialize_schema=False: concurrent CREATE OR REPLACE
+        # FUNCTION can cause PostgreSQL tuple concurrently updated errors.
+        if initialize_schema:
+            with self._tx() as db:
+                db.execute(DDL,prepare=False)
 
     @contextmanager
     def _tx(self):
