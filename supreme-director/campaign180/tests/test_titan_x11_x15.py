@@ -85,6 +85,13 @@ class FirstFiveNextTests(unittest.TestCase):
     def test_x11_transition_corruption_detected(self):
         self.admit()
         with sqlite3.connect(self.db) as db:
+            # First prove the immutable transition trigger works.
+            with self.assertRaises(sqlite3.IntegrityError):
+                db.execute("""UPDATE local_job_transitions SET state='done'
+                    WHERE tenant=?""",(TENANT,))
+            # Simulate a privileged DB administrator disabling the trigger;
+            # the independent consistency verification must still reject it.
+            db.execute("DROP TRIGGER local_job_transition_immutable_update")
             db.execute("""UPDATE local_job_transitions SET state='done'
                 WHERE tenant=?""",(TENANT,))
         with self.assertRaises(QueueDenied):
