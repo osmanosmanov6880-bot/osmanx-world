@@ -17,6 +17,7 @@ from typing import Any
 
 from .contracts import canonical, digest, validate_task,ContractError
 from .resource_limits import ResourceLimits,ResourceDenied
+from .sealed_worker import sealed_worker_fd,WorkerImageDenied
 
 class SandboxDenied(ValueError):
     pass
@@ -63,26 +64,30 @@ def run_allowlisted_task(authorization:dict,*,expected_tenant:str,
     payload=_job(task["body"],limits)
     # Resource limits are enforced BEFORE the fixed script starts. The only
     # code path is an absolute, trusted script filename in this package.
-    if not _SCRIPT.is_file():
-        raise SandboxDenied("Pinned worker missing")
     started=time.monotonic()
-    with tempfile.TemporaryDirectory(prefix="osgard-allowlisted-worker-") as directory:
-        try:
-            proc=subprocess.Popen(
-                [sys.executable,"-I","-S","-B",str(_SCRIPT)],
-                stdin=subprocess.PIPE,stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,cwd=directory,
-                env={"PYTHONDONTWRITEBYTECODE":"1","PYTHONNOUSERSITE":"1",
-                     "LC_ALL":"C.UTF-8"},
-                start_new_session=True,preexec_fn=limits.worker_rlimits)
-        except (OSError,ValueError,subprocess.SubprocessError) as exc:
-            raise SandboxDenied("OS worker isolation setup denied") from exc
-        try:
-            stdout,_=proc.communicate(payload,timeout=limits.wall_ms/1000)
-        except subprocess.TimeoutExpired as exc:
-            os.killpg(proc.pid,signal.SIGKILL)
-            proc.communicate()
-            raise SandboxDenied("Worker exceeded wall-time deadline") from exc
+    try:
+        with sealed_worker_fd(_SCRIPT) as fd:
+            with tempfile.TemporaryDirectory(prefix="osgard-allowlisted-worker-") as directory:
+                try:
+                    proc=subprocess.Popen(
+                        [sys.executable,"-I","-S","-B",f"/proc/self/fd/{fd}"],
+                        stdin=subprocess.PIPE,stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,cwd=directory,
+                        env={"PYTHONDONTWRITEBYTECODE":"1","PYTHONNOUSERSITE":"1",
+                             "LC_ALL":"C.UTF-8"},
+                        pass_fds=(fd,),start_new_session=True,
+                        preexec_fn=limits.worker_rlimits)
+                except (OSError,ValueError,subprocess.SubprocessError) as exc:
+                    raise SandboxDenied("OS worker setup failed") from exc
+                try:
+                    stdout,_=proc.communicate(payload,timeout=limits.wall_ms/1000)
+                except subprocess.TimeoutExpired as exc:
+                    try:os.killpg(proc.pid,signal.SIGKILL)
+                    except ProcessLookupError:pass
+                    proc.communicate()
+                    raise SandboxDenied("Worker exceeded wall deadline") from exc
+    except WorkerImageDenied as exc:
+        raise SandboxDenied("Worker source review or kernel seal failed") from exc
     elapsed=round((time.monotonic()-started)*1000)
     if len(stdout)>limits.output_bytes:
         raise SandboxDenied("Worker output exceeded resource limit")
