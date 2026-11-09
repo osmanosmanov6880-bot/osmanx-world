@@ -6,7 +6,9 @@ Installation into an isolated disposable environment is a separate decision.
 from __future__ import annotations
 
 from hashlib import sha256
+import importlib.metadata
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -92,13 +94,35 @@ def restore_into_empty_target(requirements: Path, wheelhouse: Path, target: Path
              "--no-cache-dir","--disable-pip-version-check","--no-compile",
              "--find-links",str(Path(wheelhouse).resolve()),"--target",str(target.resolve()),
              "-r",str(Path(requirements).resolve())]
+    # Refuse inherited global/index/pip configuration. An explicit wheel
+    # directory with pinned hashes is the ONLY allowed package source.
+    safe_env={k:v for k,v in os.environ.items()
+              if not k.startswith(("PIP_","PYTHONPATH","PYTHONHOME"))}
+    safe_env.update({"PIP_NO_INDEX":"1","PIP_REQUIRE_HASHES":"1",
+                     "PIP_CONFIG_FILE":os.devnull,"PIP_DISABLE_PIP_VERSION_CHECK":"1",
+                     "PIP_NO_CACHE_DIR":"1","PYTHONNOUSERSITE":"1"})
     try:
-        done=subprocess.run(command,capture_output=True,text=True,timeout=120,check=False)
+        done=subprocess.run(command,capture_output=True,text=True,timeout=120,
+                            check=False,env=safe_env)
     except (OSError,subprocess.TimeoutExpired) as exc:
         raise DependencyError("Offline installer could not complete") from exc
     if done.returncode:
         raise DependencyError("Offline pip installation failed; target must be discarded")
+    # Reconcile exact installed name/version metadata without importing any
+    # package code. Successful pip exit alone is NOT dependency recovery.
+    present={}
+    for dist in importlib.metadata.distributions(path=[str(target.resolve())]):
+        name=dist.metadata.get("Name","")
+        if name:
+            normalized=_name(name)
+            if normalized in present:
+                raise DependencyError("Duplicate installed distribution metadata")
+            present[normalized]=dist.version
+    expected={p["distribution"]:p["version"] for p in report["offline_packages"]}
+    if present!=expected:
+        raise DependencyError("Installed package versions differ from approved wheel lock")
     report["installed"]=True
+    report["installed_packages_verified"]=len(present)
     report["isolated_target"]=str(target.resolve())
     return report
 
