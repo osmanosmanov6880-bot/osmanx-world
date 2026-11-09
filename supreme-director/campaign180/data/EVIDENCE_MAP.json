@@ -4,21 +4,31 @@
   "related_local_paths": {
     "TITAN-X01": [
       "supreme-director/recovery/ORIGINAL_180_TASKS.json",
-      "supreme-director/campaign180/campaign180/registry.py"
+      "supreme-director/campaign180/campaign180/registry.py",
+      "supreme-director/campaign180/campaign180/titan_baseline.py",
+      "supreme-director/campaign180/tests/test_titan_first_five.py"
     ],
     "TITAN-X02": [
       "supreme-director/scripts/verify_source_transfer.py",
-      "supreme-director/campaign180/campaign180/registry.py"
+      "supreme-director/campaign180/campaign180/registry.py",
+      "supreme-director/campaign180/campaign180/titan_dependencies.py",
+      "supreme-director/campaign180/tests/test_titan_first_five.py"
     ],
     "TITAN-X03": [
       ".github/CODEOWNERS",
-      "supreme-director/campaign180/campaign180/gates.py"
+      "supreme-director/campaign180/campaign180/gates.py",
+      "supreme-director/campaign180/campaign180/titan_codeowners.py",
+      "supreme-director/campaign180/tests/test_titan_first_five.py"
     ],
     "TITAN-X04": [
-      "supreme-director/m198/verify_source.py"
+      "supreme-director/m198/verify_source.py",
+      "supreme-director/campaign180/campaign180/titan_artifacts.py",
+      "supreme-director/campaign180/tests/test_titan_first_five.py"
     ],
     "TITAN-X05": [
-      ".github/workflows/supreme-director-m206.yml"
+      ".github/workflows/supreme-director-m206.yml",
+      "supreme-director/campaign180/campaign180/offline_deps.py",
+      "supreme-director/campaign180/tests/test_titan_first_five.py"
     ],
     "TITAN-X06": [
       "supreme-director/campaign180/campaign180/contracts.py"

@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "e18a1531a9601139dd24be0cecf0ac3b0134b935",
+  "based_on_code_commit": "32f735e273798ae6a9c5ec9c4e9c7d353ce5d6a4",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -25,7 +25,9 @@
       "original_source_line": 32,
       "related_local_paths": [
         "supreme-director/recovery/ORIGINAL_180_TASKS.json",
-        "supreme-director/campaign180/campaign180/registry.py"
+        "supreme-director/campaign180/campaign180/registry.py",
+        "supreme-director/campaign180/campaign180/titan_baseline.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -41,7 +43,9 @@
       "original_source_line": 45,
       "related_local_paths": [
         "supreme-director/scripts/verify_source_transfer.py",
-        "supreme-director/campaign180/campaign180/registry.py"
+        "supreme-director/campaign180/campaign180/registry.py",
+        "supreme-director/campaign180/campaign180/titan_dependencies.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -57,7 +61,9 @@
       "original_source_line": 58,
       "related_local_paths": [
         ".github/CODEOWNERS",
-        "supreme-director/campaign180/campaign180/gates.py"
+        "supreme-director/campaign180/campaign180/gates.py",
+        "supreme-director/campaign180/campaign180/titan_codeowners.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -72,7 +78,9 @@
       "original_status": "PLANNED",
       "original_source_line": 71,
       "related_local_paths": [
-        "supreme-director/m198/verify_source.py"
+        "supreme-director/m198/verify_source.py",
+        "supreme-director/campaign180/campaign180/titan_artifacts.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -87,7 +95,9 @@
       "original_status": "PLANNED",
       "original_source_line": 84,
       "related_local_paths": [
-        ".github/workflows/supreme-director-m206.yml"
+        ".github/workflows/supreme-director-m206.yml",
+        "supreme-director/campaign180/campaign180/offline_deps.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2559,6 +2569,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Wave15 atomic hash-chained compute events, HMAC v2 checkpoint, SHA256-pinned sealed Linux worker, optional rootless host probe and cross-process CI",
-  "notes": "36 local ID links, 136 without proof, 8 holds, 0/180 independently accepted. CI must be checked against exact successful run. No physical rootless OCI test performed; original release NO-GO."
+  "last_local_campaign": "Exact original TITAN-X01 to TITAN-X05 only — code, real local tests, explicit missing canonical TITAN upstream",
+  "notes": "This pass implements ONLY original TITAN-X01..X05. Product integration BLOCKED_UPSTREAM for all five; local CI pending; remaining 175 original tasks unchanged; no independent acceptance."
 }
