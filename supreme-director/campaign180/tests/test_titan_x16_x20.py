@@ -301,18 +301,14 @@ class RepairAndEditorTests(unittest.TestCase):
 
     def test_x20_rename_updates_cta_links_atomically(self):
         spec=self.app.drafts.load(tenant=TENANT,project_id=self.pid)
-        links=[section for page in spec["pages"] for section in page["sections"]
-               if section.get("cta_page") and section["cta_page"]!="home"]
-        if not links:
-            # Create a guaranteed linked page within existing schema.
-            spec["pages"][0]["sections"][0]["cta_label"]="Связаться"
-            spec["pages"][0]["sections"][0]["cta_page"]="contact"
-            self.app.drafts.save(tenant=TENANT,project_id=self.pid,
-                expected_revision=1,spec=spec)
-            version=2
-        else:version=1
-        renamed=self.page("rename","contact",version,target_slug="reach-us")
-        self.assertEqual(renamed["revision"],version+1)
+        # The demo might already link to another page. Establish a clear
+        # contact CTA first, so the test verifies actual link rewriting.
+        spec["pages"][0]["sections"][0]["cta_label"]="Связаться"
+        spec["pages"][0]["sections"][0]["cta_page"]="contact"
+        self.app.drafts.save(tenant=TENANT,project_id=self.pid,
+            expected_revision=1,spec=spec)
+        renamed=self.page("rename","contact",2,target_slug="reach-us")
+        self.assertEqual(renamed["revision"],3)
         result=self.app.drafts.load(tenant=TENANT,project_id=self.pid)
         self.assertTrue(any(section.get("cta_page")=="reach-us"
              for page in result["pages"] for section in page["sections"]))
