@@ -609,9 +609,64 @@ async function run(){
     console.error("OSGARD_320_LAYOUT_OFFENDERS "+offenders);
   }
   assert.ok(overflow320<=2,"320px mobile horizontal overflow: "+overflow320);
+
+  // TITAN-X20: real no-AI page lifecycle through the actual mobile UI,
+  // SQLite HTTP backend, immutable revision history and rendered page list.
+  const pagesBefore=await localApi("/api/v1/spec");
+  assert.equal(pagesBefore.spec.pages.length,3);
+  await client.eval("document.querySelector('[data-panel=pages]').click();"+
+    "document.querySelector('#page-new-slug').value='services';"+
+    "document.querySelector('#page-new-title').value='Услуги';"+
+    "document.querySelector('#page-create').click();");
+  await poll(async()=>{
+    const x=await localApi("/api/v1/spec");
+    return x.spec.pages.length===4 &&
+      x.spec.pages.some(p=>p.slug==="services");
+  },"no-AI UI created real static page");
+  await client.eval("document.querySelector('#page-select').value='services';"+
+    "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#page-new-slug').value='services-copy';"+
+    "document.querySelector('#page-new-title').value='Копия услуг';"+
+    "document.querySelector('#page-duplicate').click();");
+  await poll(async()=>{
+    const x=await localApi("/api/v1/spec");
+    return x.spec.pages.length===5 &&
+      x.spec.pages.some(p=>p.slug==="services-copy");
+  },"no-AI UI duplicated page and sections");
+  await client.eval("document.querySelector('#page-select').value='services-copy';"+
+    "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#page-new-slug').value='services-premium';"+
+    "document.querySelector('#page-new-title').value='Премиум';"+
+    "document.querySelector('#page-rename').click();");
+  await poll(async()=>{
+    const x=await localApi("/api/v1/spec");
+    return x.spec.pages.some(p=>p.slug==="services-premium") &&
+      !x.spec.pages.some(p=>p.slug==="services-copy");
+  },"no-AI UI renamed slug and kept site navigation valid");
+  await client.eval("window.confirm=()=>true;"+
+    "document.querySelector('#page-select').value='services-premium';"+
+    "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#page-remove').click();");
+  await poll(async()=>{
+    const x=await localApi("/api/v1/spec");
+    return x.spec.pages.length===4 &&
+      !x.spec.pages.some(p=>p.slug==="services-premium");
+  },"no-AI UI removed cloned page with history retained");
+  await client.eval("document.querySelector('#page-select').value='services';"+
+    "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
+    "document.querySelector('#page-remove').click();");
+  await poll(async()=>{
+    const x=await localApi("/api/v1/spec");
+    return x.spec.pages.length===3 &&
+      !x.spec.pages.some(p=>p.slug==="services") &&
+      x.revision===pagesBefore.revision+5;
+  },"no-AI page lifecycle finished with five immutable revisions");
+  assert.ok((await client.eval(
+    "document.documentElement.scrollWidth-document.documentElement.clientWidth"))<=2,
+    "mobile no-AI editor management panel caused horizontal overflow");
   assert.deepEqual(client.errors,[],"browser runtime exceptions");
   return {browser:"Chromium",flows:["auth","structure","page-edit","preview",
-    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","mobile-390","mobile-320"],
+    "record-create","manual-workflow","automatic-workflow","schema-model","field-migration","form-section","form-edit","reference-select","field-rename","relation-rename","reference-retarget","page-restore","mapped-live-relations","recovery-integrity","restore-drill","mobile-390","mobile-320","page-lifecycle-no-ai"],
     console_exceptions:client.errors.length,horizontal_overflow:overflow,
     screenshots:13,public_server_started:false,production_deployed:false};
 }
