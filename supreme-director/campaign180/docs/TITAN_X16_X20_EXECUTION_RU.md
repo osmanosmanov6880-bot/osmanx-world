@@ -80,9 +80,12 @@ Ed25519 подпись с forged/signed body, карантин и повторн
 Подтверждённый успешный Python прогон:
 https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42836551304
 
-Браузерная приёмка X20:
-https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42837105529
-Статус нужно сверить по завершению самого workflow, пока не выдавать за PASS.
+Браузерная приёмка X20 **PASS** на фактическом Chromium 320px:
+https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126405
+Проверены все пять UI-операций с ожиданием завершённой ревизии и отсутствие горизонтального переполнения.
+
+Повторный Python CI на исправленном коде **PASS на 3.11 и 3.13**:
+https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126765.
 
 ## Откат и ограничения
 

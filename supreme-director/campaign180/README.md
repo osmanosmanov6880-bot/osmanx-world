@@ -136,3 +136,5 @@ All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and e
 - Implemented review-gated stage manifests, SHA256-pinned deterministic static code ZIP, signed local patch inspection, bounded repair/replacement, and mobile no-AI page management in existing runtime.
 - Python 3.11/3.13 first-five tests passed in [dedicated CI](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42836551304). Browser acceptance has a separate [Chromium run](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42837105529).
 - Canonical upstream KRAKEN/DevSwarm/Command approval and independent acceptance are missing. Source release remains NO-GO; nothing deployed.
+
+**X16–X20 final local QA (2026-11-10):** [Python 3.11/3.13 PASS](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126765) and [real Chromium/mobile page-lifecycle PASS](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126405). Canonical product acceptance still BLOCKED_UPSTREAM.
