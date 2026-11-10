@@ -1,6 +1,6 @@
 {
   "schema": "osgard.original180.current-audit-snapshot/1",
-  "based_on_code_commit": "eb243ad520c2711b3b734d46b4980d0767ea27b6",
+  "based_on_code_commit": "cadb56e6d91fb9176e1a4efd72d548766be91dfd",
   "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
   "source": "supreme-director/recovery/ORIGINAL_180_TASKS.json",
   "coverage": 180,
@@ -322,7 +322,8 @@
       "original_status": "PLANNED",
       "original_source_line": 227,
       "related_local_paths": [
-        "supreme-director/campaign180/campaign180/workflow.py"
+        "supreme-director/campaign180/campaign180/workflow.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -338,7 +339,8 @@
       "original_source_line": 240,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/builder.py",
-        "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+        "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -354,7 +356,8 @@
       "original_source_line": 253,
       "related_local_paths": [
         "supreme-director/m190/verify_source.py",
-        "supreme-director/campaign180/campaign180/review.py"
+        "supreme-director/campaign180/campaign180/review.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -370,7 +373,8 @@
       "original_source_line": 266,
       "related_local_paths": [
         "supreme-director/campaign180/campaign180/repair.py",
-        "supreme-director/campaign180/tests/test_wave6_repair.py"
+        "supreme-director/campaign180/tests/test_wave6_repair.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -394,7 +398,10 @@
         "supreme-director/campaign180/tests/browser-console.mjs",
         "supreme-director/campaign180/campaign180/forms.py",
         "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
-        "supreme-director/campaign180/assets/console.css"
+        "supreme-director/campaign180/assets/console.css",
+        "supreme-director/campaign180/campaign180/app_runtime.py",
+        "supreme-director/campaign180/campaign180/local_http.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
       ],
       "implementation_evidence_status": "RELATED_LOCAL_CODE_NOT_ACCEPTED",
       "independent_acceptance": false,
@@ -2591,6 +2598,6 @@
       "independently_accepted": false
     }
   ],
-  "last_local_campaign": "Original TITAN-X11–X15 only: durable queue audit, exactly-once-local outbox, worker recovery, node fencing, bounded admission",
-  "notes": "Original TITAN X11..X15 have only local code evidence. Multi-server canonical backend and externally idempotent effects absent. 36 local links, 136 no proof, 8 holds. Independent acceptance 0/180."
+  "last_local_campaign": "Exact original TITAN-X16..X20: stage workflow candidate, verified HTML generator, Ed25519 patch review, bounded corrections, real page editor",
+  "notes": "Five exact TITAN tasks X16-X20 locally implemented and tested. Original KRAKEN/DevSwarm/Command source registry has NO approved repository SHA/owner. No independent acceptance or production release. Last Chromium run needs confirmed PASS."
 }

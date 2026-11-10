@@ -129,3 +129,10 @@ All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and e
 - [Wave15 technical report](docs/WAVE15_JOURNAL_SEALED_WORKER_OCI_RU.md), [original 180 task audit](docs/CURRENT_AUDIT_180_RU.md) and [default-off OCI instructions](oci-probe/README_RU.md).
 - 17 new Python tests plus multiprocess SQLite contention, synthetic end-to-end acceptance and separate dual-Python CI. Physical OCI host validation is NOT yet confirmed.
 - 36 locally related IDs, 136 unproven, 8 holds; 0/180 independent acceptance, source release NO-GO.
+
+## TITAN-X16–X20 — original five-task implementation (2026-11-10)
+
+- [Exact five-task evidence](docs/TITAN_X16_X20_EXECUTION_RU.md) and [machine-readable blocked upstream status](data/TITAN_X16_X20_PROGRESS.json).
+- Implemented review-gated stage manifests, SHA256-pinned deterministic static code ZIP, signed local patch inspection, bounded repair/replacement, and mobile no-AI page management in existing runtime.
+- Python 3.11/3.13 first-five tests passed in [dedicated CI](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42836551304). Browser acceptance has a separate [Chromium run](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42837105529).
+- Canonical upstream KRAKEN/DevSwarm/Command approval and independent acceptance are missing. Source release remains NO-GO; nothing deployed.

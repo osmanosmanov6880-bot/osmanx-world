@@ -60,7 +60,8 @@
     ],
     "TITAN-X18": [
       "supreme-director/m190/verify_source.py",
-      "supreme-director/campaign180/campaign180/review.py"
+      "supreme-director/campaign180/campaign180/review.py",
+      "supreme-director/campaign180/tests/test_titan_x16_x20.py"
     ],
     "TITAN-X27": [
       "supreme-director/m206/osgard_m206/runtime.py",
@@ -113,7 +114,8 @@
       "supreme-director/campaign180/tests/test_titan_x11_x15.py"
     ],
     "TITAN-X16": [
-      "supreme-director/campaign180/campaign180/workflow.py"
+      "supreme-director/campaign180/campaign180/workflow.py",
+      "supreme-director/campaign180/tests/test_titan_x16_x20.py"
     ],
     "TITAN-X14": [
       "supreme-director/campaign180/campaign180/scheduler.py",
@@ -150,7 +152,8 @@
     ],
     "TITAN-X17": [
       "supreme-director/campaign180/campaign180/builder.py",
-      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py"
+      "supreme-director/campaign180/tests/test_builder_drafts_records_preview.py",
+      "supreme-director/campaign180/tests/test_titan_x16_x20.py"
     ],
     "TITAN-X20": [
       "supreme-director/campaign180/campaign180/builder.py",
@@ -162,7 +165,10 @@
       "supreme-director/campaign180/tests/browser-console.mjs",
       "supreme-director/campaign180/campaign180/forms.py",
       "supreme-director/campaign180/tests/test_wave8_forms_relations_rename.py",
-      "supreme-director/campaign180/assets/console.css"
+      "supreme-director/campaign180/assets/console.css",
+      "supreme-director/campaign180/campaign180/app_runtime.py",
+      "supreme-director/campaign180/campaign180/local_http.py",
+      "supreme-director/campaign180/tests/test_titan_x16_x20.py"
     ],
     "TITAN-X21": [
       "supreme-director/campaign180/campaign180/builder.py",
@@ -238,7 +244,8 @@
     ],
     "TITAN-X19": [
       "supreme-director/campaign180/campaign180/repair.py",
-      "supreme-director/campaign180/tests/test_wave6_repair.py"
+      "supreme-director/campaign180/tests/test_wave6_repair.py",
+      "supreme-director/campaign180/tests/test_titan_x16_x20.py"
     ],
     "TITAN-X09": [
       "supreme-director/campaign180/campaign180/sandbox_runtime.py",
