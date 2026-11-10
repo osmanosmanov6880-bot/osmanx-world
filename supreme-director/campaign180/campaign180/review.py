@@ -10,7 +10,10 @@ import ast
 import base64
 from hashlib import sha256
 from pathlib import Path, PurePosixPath
+import os
 import re
+import subprocess
+import tempfile
 from typing import Any
 
 from .contracts import ACTOR_RE, canonical
@@ -143,3 +146,70 @@ def inspect_patch(root: Path, proposal: Any) -> dict:
              "github_approval":False,"product_merge_authorized":False,
              "production_deploy_authorized":False}
     return receipt
+
+
+# TITAN-X18: verified review signature over immutable, audited patch proposal.
+# This DOES NOT by itself authenticate a real GitHub principal or grant merge.
+# The caller must obtain an independently managed reviewer key fingerprint.
+def review_signing_message(root:Path,proposal:dict)->bytes:
+    """Canonical bytes for an owner-independent reviewer to sign offline."""
+    receipt=inspect_patch(root,proposal)
+    if not receipt["local_static_checks_pass"] or receipt["issues"]:
+        raise PatchDenied("Patch has blocking static policy findings")
+    content={"schema":"osgard.original180.patch-review-signature/1",
+             "proposal_sha256":receipt["proposal_sha256"],
+             "inspection_sha256":sha256(canonical(receipt)).hexdigest(),
+             "reviewer":proposal["reviewer"],
+             "verdict":"APPROVE_LOCAL_PATCH_ONLY",
+             "product_merge_authorized":False,
+             "production_deploy_authorized":False}
+    return canonical(content)
+
+def verify_signed_patch_review(root:Path,proposal:dict,*,signature:bytes,
+                               reviewer_public_key:Path,
+                               trusted_key_sha256:str)->dict:
+    """X18: fail-closed distinct-author review and pinned Ed25519 signature.
+
+    The public-key fingerprint must come from the independent review policy;
+    generating a new key in CI validates crypto but not identity or approval.
+    No proposal bytes are applied or executed.
+    """
+    from .titan_artifacts import public_key_fingerprint
+    if type(signature) is not bytes or len(signature)!=64:
+        raise PatchDenied("Ed25519 reviewer signature must be exactly 64 bytes")
+    if (type(trusted_key_sha256) is not str or
+        not HEX64.fullmatch(trusted_key_sha256)):
+        raise PatchDenied("Independent trusted reviewer-key SHA256 required")
+    key_fingerprint=public_key_fingerprint(reviewer_public_key)
+    import hmac
+    if not hmac.compare_digest(key_fingerprint,trusted_key_sha256):
+        raise PatchDenied("Reviewer key differs from trusted policy fingerprint")
+    signed=review_signing_message(root,proposal)
+    with tempfile.TemporaryDirectory(prefix="titan-patch-review-") as directory:
+        input_path=Path(directory)/"approval.json"
+        signature_path=Path(directory)/"signature.bin"
+        input_path.write_bytes(signed)
+        signature_path.write_bytes(signature)
+        args=["openssl","pkeyutl","-verify","-pubin","-inkey",
+              str(reviewer_public_key),"-rawin","-in",str(input_path),
+              "-sigfile",str(signature_path)]
+        try:
+            verified=subprocess.run(args,capture_output=True,check=False,
+                                    timeout=12,shell=False,
+                                    env={"PATH":"/usr/bin:/bin","LC_ALL":"C"})
+        except (OSError,subprocess.TimeoutExpired) as exc:
+            raise PatchDenied("Offline reviewer signature verification unavailable") from exc
+        if verified.returncode!=0:
+            raise PatchDenied("Reviewer did not sign this exact inspected patch")
+    return {"schema":"osgard.original180.verified-patch-review/1",
+            "proposal_sha256":sha256(canonical(proposal)).hexdigest(),
+            "reviewer":proposal["reviewer"],"author":proposal["author"],
+            "reviewer_key_der_sha256":key_fingerprint,
+            "signed_message_sha256":sha256(signed).hexdigest(),
+            "ed25519_signature_valid":True,
+            "static_policy_passed":True,
+            "independent_identity_verified":False,
+            "github_review_verified":False,
+            "source_owner_approved":False,
+            "product_merge_authorized":False,
+            "production_deploy_authorized":False}
