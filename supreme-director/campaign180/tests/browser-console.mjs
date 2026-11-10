@@ -614,6 +614,17 @@ async function run(){
   // SQLite HTTP backend, immutable revision history and rendered page list.
   const pagesBefore=await localApi("/api/v1/spec");
   assert.equal(pagesBefore.spec.pages.length,3);
+  // Backend admission can complete before the browser's sync() finishes.
+  // Wait for the actual UI revision and enabled controls before each click.
+  async function editorSettled(revision,slug){
+    await poll(()=>client.eval(
+      "document.querySelector('#editor-revision').textContent.trim()==="+
+      JSON.stringify("Версия "+revision)+" && "+
+      "[...document.querySelector('#page-select').options].some(x=>x.value==="+
+      JSON.stringify(slug)+") && "+
+      "!document.querySelector('#page-create').disabled"),
+      "no-AI UI settled revision "+revision+" and page "+slug);
+  }
   await client.eval("document.querySelector('[data-panel=pages]').click();"+
     "document.querySelector('#page-new-slug').value='services';"+
     "document.querySelector('#page-new-title').value='Услуги';"+
@@ -623,6 +634,7 @@ async function run(){
     return x.spec.pages.length===4 &&
       x.spec.pages.some(p=>p.slug==="services");
   },"no-AI UI created real static page");
+  await editorSettled(pagesBefore.revision+1,"services");
   await client.eval("document.querySelector('#page-select').value='services';"+
     "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
     "document.querySelector('#page-new-slug').value='services-copy';"+
@@ -633,6 +645,7 @@ async function run(){
     return x.spec.pages.length===5 &&
       x.spec.pages.some(p=>p.slug==="services-copy");
   },"no-AI UI duplicated page and sections");
+  await editorSettled(pagesBefore.revision+2,"services-copy");
   await client.eval("document.querySelector('#page-select').value='services-copy';"+
     "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
     "document.querySelector('#page-new-slug').value='services-premium';"+
@@ -643,6 +656,7 @@ async function run(){
     return x.spec.pages.some(p=>p.slug==="services-premium") &&
       !x.spec.pages.some(p=>p.slug==="services-copy");
   },"no-AI UI renamed slug and kept site navigation valid");
+  await editorSettled(pagesBefore.revision+3,"services-premium");
   await client.eval("window.confirm=()=>true;"+
     "document.querySelector('#page-select').value='services-premium';"+
     "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
@@ -652,6 +666,7 @@ async function run(){
     return x.spec.pages.length===4 &&
       !x.spec.pages.some(p=>p.slug==="services-premium");
   },"no-AI UI removed cloned page with history retained");
+  await editorSettled(pagesBefore.revision+4,"home");
   await client.eval("document.querySelector('#page-select').value='services';"+
     "document.querySelector('#page-select').dispatchEvent(new Event('change'));"+
     "document.querySelector('#page-remove').click();");

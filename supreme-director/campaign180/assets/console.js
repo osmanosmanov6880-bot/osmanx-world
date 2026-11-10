@@ -245,7 +245,9 @@ $("remove-section").addEventListener("click",()=>{
     modifyStructure("remove").catch(e=>show(e.message,true));
   }
 });
+let pageManagementBusy=false;
 async function managePage(operation,direction=0){
+  if(pageManagementBusy)throw Error("Предыдущее изменение ещё сохраняется");
   if(!can("spec.write"))throw Error("Недостаточно прав для изменения страниц");
   const selected=$("page-select").value;
   const current=state.spec.pages.find(p=>p.slug===selected);
@@ -269,15 +271,23 @@ async function managePage(operation,direction=0){
     if(selected==="home")throw Error("Главную страницу удалить нельзя");
     if(!confirm("Удалить страницу «"+current.title+"»? История останется доступной."))return;
   }
-  const out=await api("/api/v1/pages/manage",{method:"POST",body:params});
-  await sync();
-  const next=operation==="remove"?"home":operation==="rename"||
-    operation==="duplicate"||operation==="add"?newSlug:selected;
-  $("page-select").value=next;
-  pageChanged();
-  $("page-new-slug").value="";
-  $("page-new-title").value="";
-  show("Страницы обновлены · ревизия "+out.revision+" · "+out.page_count+" страниц");
+  pageManagementBusy=true;
+  const controls=[...document.querySelectorAll(".page-management-actions button")];
+  controls.forEach(button=>button.disabled=true);
+  try{
+    const out=await api("/api/v1/pages/manage",{method:"POST",body:params});
+    await sync();
+    const next=operation==="remove"?"home":operation==="rename"||
+      operation==="duplicate"||operation==="add"?newSlug:selected;
+    $("page-select").value=next;
+    pageChanged();
+    $("page-new-slug").value="";
+    $("page-new-title").value="";
+    show("Страницы обновлены · ревизия "+out.revision+" · "+out.page_count+" страниц");
+  }finally{
+    pageManagementBusy=false;
+    controls.forEach(button=>button.disabled=!can("spec.write"));
+  }
 }
 for(const [id,op,dir] of [
   ["page-create","add",0],["page-duplicate","duplicate",0],
