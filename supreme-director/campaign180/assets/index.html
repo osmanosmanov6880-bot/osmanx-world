@@ -72,6 +72,22 @@
         </div></div>
         <form id="page-form" class="card"><h2>Свойства</h2><label for="page-title">Название страницы</label><input id="page-title" required maxlength="100"><label for="section-heading">Заголовок секции</label><input id="section-heading" required maxlength="140"><label for="section-text">Основной текст</label><textarea id="section-text" rows="5" maxlength="1600"></textarea><div class="editor-actions"><button class="primary" id="save-page" type="submit">Сохранить версию</button><span class="hint">Сохраняется в локальную SQLite</span></div></form>
       </div>
+      <div class="card page-management">
+        <div class="form-properties-heading"><div><p class="overline">СТРАНИЦЫ / NO-AI</p><h2>Управление страницами</h2>
+          <p class="hint">Добавление, копирование, изменение адреса, порядка и удаление. Все операции создают проверяемую ревизию. Главная страница защищена.</p></div><span class="pill">Только локально</span></div>
+        <div class="page-management-fields">
+          <div><label for="page-new-slug">Адрес новой страницы (латиница)</label><input id="page-new-slug" placeholder="services" maxlength="40" pattern="[a-z][a-z0-9-]*" autocomplete="off"></div>
+          <div><label for="page-new-title">Название новой страницы</label><input id="page-new-title" placeholder="Услуги" maxlength="100" autocomplete="off"></div>
+        </div>
+        <div class="page-management-actions">
+          <button id="page-create" class="ghost" type="button">+ Создать страницу</button>
+          <button id="page-duplicate" class="ghost" type="button">Копировать выбранную</button>
+          <button id="page-rename" class="ghost" type="button">Изменить адрес</button>
+          <button id="page-up" class="ghost" type="button">↑ Страница выше</button>
+          <button id="page-down" class="ghost" type="button">↓ Страница ниже</button>
+          <button id="page-remove" class="danger" type="button">Удалить страницу</button>
+        </div>
+      </div>
       <form id="form-editor" class="card form-properties" hidden>
         <div class="form-properties-heading"><div><p class="overline">МОДЕЛЬ / ФОРМА</p><h2>Настройка формы</h2>
           <p class="hint">Выбери поля и их порядок. Отправка из статического предпросмотра отключена.</p></div>

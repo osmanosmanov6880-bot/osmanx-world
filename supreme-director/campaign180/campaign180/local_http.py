@@ -214,6 +214,14 @@ class LocalConsole:
                 out=runtime.disable_workflow(tenant=tid,project_id=project,
                     actor=actor,workflow_id=workflow_id,**data)
             return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/pages/manage":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","operation","slug",
+                               "target_slug","title","target_index"},
+                         {"expected_revision","operation","slug"})
+            result=runtime.edit_pages(tenant=tid,project_id=project,actor=actor,
+                                      **data)
+            return self._json(start_response,"200 OK",result)
         match=re.fullmatch(r"/api/v1/pages/("+_SLUG.pattern[1:-1]+r")/form",path)
         if method=="PATCH" and match:
             data=self._body(environ)

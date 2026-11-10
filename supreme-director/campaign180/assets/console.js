@@ -245,6 +245,47 @@ $("remove-section").addEventListener("click",()=>{
     modifyStructure("remove").catch(e=>show(e.message,true));
   }
 });
+async function managePage(operation,direction=0){
+  if(!can("spec.write"))throw Error("Недостаточно прав для изменения страниц");
+  const selected=$("page-select").value;
+  const current=state.spec.pages.find(p=>p.slug===selected);
+  if(!current)throw Error("Сначала выбери страницу");
+  const newSlug=$("page-new-slug").value.trim();
+  const newTitle=$("page-new-title").value.trim();
+  const params={expected_revision:state.revision,operation,slug:selected};
+  if(operation==="add"||operation==="duplicate"||operation==="rename"){
+    if(!/^[a-z][a-z0-9-]{0,39}$/.test(newSlug))
+      throw Error("Адрес: латинские строчные буквы, цифры и дефисы");
+    if(operation==="add"){params.slug=newSlug;params.title=newTitle;}
+    else{params.target_slug=newSlug;if(newTitle)params.title=newTitle;}
+  }
+  if(operation==="move"){
+    const index=state.spec.pages.findIndex(p=>p.slug===selected);
+    const target=index+direction;
+    if(target<0||target>=state.spec.pages.length)return;
+    params.target_index=target;
+  }
+  if(operation==="remove"){
+    if(selected==="home")throw Error("Главную страницу удалить нельзя");
+    if(!confirm("Удалить страницу «"+current.title+"»? История останется доступной."))return;
+  }
+  const out=await api("/api/v1/pages/manage",{method:"POST",body:params});
+  await sync();
+  const next=operation==="remove"?"home":operation==="rename"||
+    operation==="duplicate"||operation==="add"?newSlug:selected;
+  $("page-select").value=next;
+  pageChanged();
+  $("page-new-slug").value="";
+  $("page-new-title").value="";
+  show("Страницы обновлены · ревизия "+out.revision+" · "+out.page_count+" страниц");
+}
+for(const [id,op,dir] of [
+  ["page-create","add",0],["page-duplicate","duplicate",0],
+  ["page-rename","rename",0],["page-up","move",-1],
+  ["page-down","move",1],["page-remove","remove",0]
+]){
+  $(id).addEventListener("click",()=>managePage(op,dir).catch(e=>show(e.message,true)));
+}
 $("page-select").addEventListener("change",pageChanged);
 $("section-select").addEventListener("change",sectionChanged);
 $("page-form").addEventListener("submit",async ev=>{

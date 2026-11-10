@@ -19,7 +19,7 @@ from .contracts import canonical,digest
 from .drafts import LocalDraftStore,_identity,DraftDenied
 from .records import LocalRecordStore,RecordDenied
 from .automatic import apply_record_event
-from .structure import mutate_structure
+from .structure import mutate_structure,mutate_pages
 from .forms import edit_form
 
 RULE_SCHEMA="osgard.original180.app-workflow/1"
@@ -119,6 +119,16 @@ class LocalAppRuntime:
                                 slug=slug,expected_revision=expected_revision,
                                 operation=operation,index=index,section=section,
                                 target_index=target_index)
+
+    def edit_pages(self,*,tenant:str,project_id:str,actor:str,
+                   expected_revision:int,operation:str,slug:str,
+                   target_slug:str|None=None,title:str|None=None,
+                   target_index:int|None=None)->dict:
+        return mutate_pages(self,tenant=tenant,project_id=project_id,
+                            actor=actor,expected_revision=expected_revision,
+                            operation=operation,slug=slug,
+                            target_slug=target_slug,title=title,
+                            target_index=target_index)
 
     def edit_form(self,*,tenant:str,project_id:str,actor:str,slug:str,
                   expected_revision:int,section_index:int,model:str,
