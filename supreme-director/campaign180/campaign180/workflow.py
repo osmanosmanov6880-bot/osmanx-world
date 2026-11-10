@@ -20,7 +20,7 @@ class WorkflowDenied(ValueError):
     pass
 
 
-STAGES = ("brief","spec","code","reviewed","rejected","release_candidate")
+STAGES = ("brief","spec","code","reviewed","rejected","release_candidate","cancelled")
 
 
 class LocalProjectFlow:
@@ -133,7 +133,7 @@ class LocalProjectFlow:
         self._project(project_id)
         if type(expected_version) is not int or expected_version<1:
             raise WorkflowDenied("Expected monotonic version")
-        if operation not in ("spec","code","approve","reject","revise","candidate"):
+        if operation not in ("spec","code","approve","reject","revise","candidate","cancel","resume"):
             raise WorkflowDenied("Unknown workflow operation")
         content=self._content(evidence)
         with self._tx() as db:
@@ -148,7 +148,11 @@ class LocalProjectFlow:
                     "approve":("code","reviewed"),
                     "reject":("code","rejected"),
                     "revise":("rejected","code"),
-                    "candidate":("reviewed","release_candidate")}[operation]
+                    "candidate":("reviewed","release_candidate"),
+                    "cancel":(row["stage"],"cancelled"),
+                    "resume":("cancelled","spec")}[operation]
+            if operation=="cancel" and row["stage"]=="cancelled":
+                raise WorkflowDenied("Project already cancelled")
             if row["stage"]!=target[0]:
                 raise WorkflowDenied("Illegal workflow transition")
             review=operation in ("approve","reject")
@@ -165,6 +169,9 @@ class LocalProjectFlow:
             if review:
                 db.execute("""UPDATE local_projects SET reviewer=?
                     WHERE tenant=? AND project_id=?""",(actor,tenant,project_id))
+            if operation in ("cancel","resume"):
+                db.execute("""UPDATE local_projects SET reviewer=NULL
+                    WHERE tenant=? AND project_id=?""",(tenant,project_id))
             if operation=="candidate" and not row["reviewer"]:
                 raise WorkflowDenied("No recorded nonowner reviewer")
             return result
@@ -175,6 +182,61 @@ class LocalProjectFlow:
             WHERE tenant=? AND project_id=? AND stage='code'
             ORDER BY version DESC LIMIT 1""",(tenant,project_id)).fetchone()
         return row["content_digest"] if row else ""
+
+    def candidate_manifest(self, *, tenant: str, project_id: str) -> dict:
+        """X16: inspect a verified, frozen LOCAL release candidate.
+
+        The manifest names exact brief/spec/code/review hashes and owner/reviewer;
+        it does not sign, merge, execute or publish source. Cancellation and
+        resume require a new spec/code/review chain before a new candidate.
+        """
+        summary=self.inspect(tenant=tenant,project_id=project_id)
+        if summary["stage"]!="release_candidate":
+            raise WorkflowDenied("Project has no reviewed local release candidate")
+        with self._connection() as db:
+            project=db.execute("""SELECT * FROM local_projects WHERE tenant=?
+                AND project_id=?""",(tenant,project_id)).fetchone()
+            events=db.execute("""SELECT stage,actor,content_digest,event_hash
+                FROM local_project_events WHERE tenant=? AND project_id=?
+                ORDER BY version""",(tenant,project_id)).fetchall()
+            # Recheck the verified head while still holding a snapshot read
+            # transaction (inspect() above validates full hash continuity).
+            if project is None or project["head_hash"]!=summary["head_hash"]:
+                raise WorkflowDenied("Candidate changed during inspection")
+            if not events or events[-1]["event_hash"]!=project["head_hash"]:
+                raise WorkflowDenied("Candidate event head changed")
+            previous=events[-2] if len(events)>=2 else None
+            if previous is None or previous["stage"]!="reviewed":
+                raise WorkflowDenied("Candidate lacks immediately preceding approval")
+            owner=project["owner"]
+            reviewer=project["reviewer"]
+            if not reviewer or reviewer==owner or previous["actor"]!=reviewer:
+                raise WorkflowDenied("Candidate has no independent local reviewer")
+            code=next((e for e in reversed(events[:-1])
+                       if e["stage"]=="code"),None)
+            spec=next((e for e in reversed(events[:-1])
+                       if e["stage"]=="spec"),None)
+            if not code or not spec or code["actor"]!=owner:
+                raise WorkflowDenied("Candidate has no owned code/spec lineage")
+            latest_code_index=next(i for i in range(len(events)-1,-1,-1)
+                                   if events[i]["stage"]=="code")
+            approved_index=next(i for i in range(len(events)-1,-1,-1)
+                                if events[i]["stage"]=="reviewed")
+            if latest_code_index>=approved_index:
+                raise WorkflowDenied("Candidate code was not approved")
+            report={"schema":"osgard.original180.release-candidate-manifest/1",
+                "tenant":tenant,"project_id":project_id,
+                "version":summary["version"],"head_hash":summary["head_hash"],
+                "brief_sha256":events[0]["content_digest"],
+                "spec_sha256":spec["content_digest"],
+                "code_sha256":code["content_digest"],
+                "review_sha256":previous["content_digest"],
+                "owner":owner,"reviewer":reviewer,
+                "release_candidate_only":True,
+                "independent_identity_verified":False,
+                "production_release":False}
+            report["manifest_sha256"]=digest(report)
+            return report
 
     def inspect(self, *, tenant: str, project_id: str) -> dict:
         if type(tenant) is not str or not TENANT_RE.fullmatch(tenant):
