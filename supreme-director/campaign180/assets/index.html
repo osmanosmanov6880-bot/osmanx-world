@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>OSGARD Director — локальная мастерская</title>
+<link rel="stylesheet" href="/assets/console.css">
+<script src="/assets/console.js" defer></script>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar" aria-label="Навигация проекта">
+  <a class="brand" href="/console" aria-label="Director">
+    <span class="sigil">O</span><span>OSGARD<small>SUPREME DIRECTOR</small></span>
+  </a>
+  <div class="workspace-label">ЛОКАЛЬНАЯ МАСТЕРСКАЯ <span class="local-dot"></span></div>
+  <nav class="nav" aria-label="Разделы">
+    <button type="button" class="nav-link is-active" data-panel="dashboard"><span class="nav-icon">◈</span> Обзор</button>
+    <button type="button" class="nav-link" data-panel="pages"><span class="nav-icon">▣</span> Страницы</button>
+    <button type="button" class="nav-link" data-panel="records"><span class="nav-icon">▤</span> Данные</button>
+    <button type="button" class="nav-link" data-panel="schema"><span class="nav-icon">⬡</span> Модели и формы</button>
+    <button type="button" class="nav-link" data-panel="history"><span class="nav-icon">◷</span> Версии и откат</button>
+    <button type="button" class="nav-link" data-panel="workflows"><span class="nav-icon">◇</span> Автоматизация</button>
+    <button type="button" class="nav-link" data-panel="preview"><span class="nav-icon">▧</span> Предпросмотр</button>
+  </nav>
+  <div class="sidebar-bottom"><span class="shield-icon">✦</span><span>Без облака и публикации<small>Доступ только по 127.0.0.1</small></span></div>
+</aside>
+<div class="main-area">
+  <header class="topbar">
+    <div><span class="breadcrumb">РАБОЧАЯ ОБЛАСТЬ</span><span class="crumb-sep">/</span><span id="crumb">Обзор</span></div>
+    <div class="topbar-meta"><span id="role-pill" class="role-pill">Не подключено</span><span class="mark-local">● LOCAL ONLY</span></div>
+  </header>
+  <main>
+    <section id="connect" class="connect card" aria-label="Доступ к локальной консоли">
+      <div><p class="overline">ЗАЩИЩЁННЫЙ ВХОД</p><h1>Твоя мастерская. Твои правила.</h1><p class="muted">Введи локальный токен, заданный при запуске. Он хранится только в памяти этой вкладки.</p></div>
+      <form id="auth-form" class="auth-form"><label for="token">Локальный токен доступа</label><div class="input-line"><input id="token" type="password" autocomplete="off" spellcheck="false" required placeholder="Токен из переменной окружения"><button class="primary" type="submit">Подключиться</button></div></form>
+    </section>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+    <section id="dashboard" class="panel active">
+      <div class="page-heading"><div><p class="overline">OSGARD / ПЛАТФОРМА</p><h1>Панель управления</h1><p class="muted">Проверяемая архитектура. Никаких фиктивных показателей.</p></div><span class="status-ring">DEV / LOCAL</span></div>
+      <div class="kpi-grid">
+        <article class="kpi"><span>СТРАНИЦЫ</span><strong id="metric-pages">—</strong><small>Из спецификации</small></article>
+        <article class="kpi"><span>МОДЕЛИ ДАННЫХ</span><strong id="metric-models">—</strong><small>Типизированные связи</small></article>
+        <article class="kpi"><span>WORKFLOWS</span><strong id="metric-workflows">—</strong><small>Локальные правила</small></article>
+        <article class="kpi"><span>РЕВИЗИЯ</span><strong id="metric-version">—</strong><small>Контроль изменений</small></article>
+      </div>
+      <div class="dashboard-layout">
+        <article class="card"><p class="overline">АРХИТЕКТУРА</p><h2 id="project-name">Проект не загружен</h2><p class="muted" id="project-description">Подключись, чтобы увидеть состояние.</p><div class="divider"></div><p class="mini-label">Гарантии текущего окружения</p><div class="feature-row"><span class="success-dot"></span> SQLite с историей ревизий</div><div class="feature-row"><span class="success-dot"></span> Проверки прав в транзакциях</div><div class="feature-row"><span class="success-dot"></span> Детерминированное статическое превью</div><div class="feature-row"><span class="warning-dot"></span> Публичный деплой отключён</div></article>
+        <article class="card diagram"><p class="overline">ПУТЬ ПРИЛОЖЕНИЯ</p><div class="stage">01 · СПЕЦИФИКАЦИЯ<span>JSON / схема</span></div><div class="stage-line"></div><div class="stage">02 · СТРАНИЦЫ И ДАННЫЕ<span>Версии / SQLite</span></div><div class="stage-line"></div><div class="stage">03 · ПРАВИЛА И ДОСТУП<span>RBAC / идемпотентность</span></div><div class="stage-line"></div><div class="stage dim">04 · ПУБЛИКАЦИЯ<span>Не подключена</span></div></article>
+      </div>
+    </section>
+    <section id="pages" class="panel">
+      <div class="page-heading"><div><p class="overline">РЕДАКТОР / NO-AI</p><h1>Страницы и содержимое</h1><p class="muted">Меняй заголовки и текст. Каждая правка создаёт новую ревизию.</p></div><span id="editor-revision" class="pill">Версия —</span></div>
+      <div class="editor-grid">
+        <div class="card"><h2>Структура</h2><label for="page-select">Страница</label><select id="page-select"></select><label for="section-select">Секция</label><select id="section-select"></select><p class="hint">Выбирай раздел, чтобы редактировать его содержимое.</p><div id="section-count" class="small-stat">—</div>
+        <div class="structure-tools">
+          <label for="new-section-type">Добавить раздел</label>
+          <select id="new-section-type">
+            <option value="text">Текст</option><option value="hero">Обложка</option>
+            <option value="features">Преимущества</option><option value="stats">Показатели</option>
+            <option value="form">Форма данных</option>
+          </select>
+          <label for="form-model-select" id="form-model-label" hidden>Модель формы</label>
+          <select id="form-model-select" hidden></select>
+          <button type="button" class="ghost full" id="add-section">+ Добавить после выбранного</button>
+          <div class="structure-toolbar">
+            <button type="button" class="ghost" id="move-section-up" aria-label="Переместить раздел вверх">↑ Выше</button>
+            <button type="button" class="ghost" id="move-section-down" aria-label="Переместить раздел вниз">↓ Ниже</button>
+          </div>
+          <button type="button" class="danger full" id="remove-section">Удалить раздел</button>
+        </div></div>
+        <form id="page-form" class="card"><h2>Свойства</h2><label for="page-title">Название страницы</label><input id="page-title" required maxlength="100"><label for="section-heading">Заголовок секции</label><input id="section-heading" required maxlength="140"><label for="section-text">Основной текст</label><textarea id="section-text" rows="5" maxlength="1600"></textarea><div class="editor-actions"><button class="primary" id="save-page" type="submit">Сохранить версию</button><span class="hint">Сохраняется в локальную SQLite</span></div></form>
+      </div>
+      <div class="card page-management">
+        <div class="form-properties-heading"><div><p class="overline">СТРАНИЦЫ / NO-AI</p><h2>Управление страницами</h2>
+          <p class="hint">Добавление, копирование, изменение адреса, порядка и удаление. Все операции создают проверяемую ревизию. Главная страница защищена.</p></div><span class="pill">Только локально</span></div>
+        <div class="page-management-fields">
+          <div><label for="page-new-slug">Адрес новой страницы (латиница)</label><input id="page-new-slug" placeholder="services" maxlength="40" pattern="[a-z][a-z0-9-]*" autocomplete="off"></div>
+          <div><label for="page-new-title">Название новой страницы</label><input id="page-new-title" placeholder="Услуги" maxlength="100" autocomplete="off"></div>
+        </div>
+        <div class="page-management-actions">
+          <button id="page-create" class="ghost" type="button">+ Создать страницу</button>
+          <button id="page-duplicate" class="ghost" type="button">Копировать выбранную</button>
+          <button id="page-rename" class="ghost" type="button">Изменить адрес</button>
+          <button id="page-up" class="ghost" type="button">↑ Страница выше</button>
+          <button id="page-down" class="ghost" type="button">↓ Страница ниже</button>
+          <button id="page-remove" class="danger" type="button">Удалить страницу</button>
+        </div>
+      </div>
+      <form id="form-editor" class="card form-properties" hidden>
+        <div class="form-properties-heading"><div><p class="overline">МОДЕЛЬ / ФОРМА</p><h2>Настройка формы</h2>
+          <p class="hint">Выбери поля и их порядок. Отправка из статического предпросмотра отключена.</p></div>
+          <span class="pill">Без публикации</span></div>
+        <div class="form-config-row">
+          <div><label for="edit-form-heading">Заголовок формы</label><input id="edit-form-heading" required maxlength="140"></div>
+          <div><label for="edit-form-button">Текст кнопки</label><input id="edit-form-button" required maxlength="80"></div>
+          <div><label for="edit-form-model">Модель данных</label><select id="edit-form-model"></select></div>
+        </div>
+        <label>Отображаемые поля (стрелки меняют порядок)</label>
+        <div id="edit-form-fields" class="form-field-editor"></div>
+        <button type="submit" class="primary top-gap" id="save-form">Сохранить настройки формы</button>
+      </form>
+    </section>
+    <section id="records" class="panel">
+      <div class="page-heading"><div><p class="overline">МОДЕЛИ / СВЯЗИ</p><h1>Данные приложения</h1><p class="muted">Собственные записи, связи и версии. Доступ ограничен ролью.</p></div></div>
+      <div class="record-grid"><div class="card"><h2>Модель</h2><label for="model-select">Выбери таблицу</label><select id="model-select"></select><div id="model-description" class="small-stat">—</div><label for="row-select">Запись для изменения</label><select id="row-select"></select><button id="new-row" type="button" class="ghost full">+ Новая запись</button></div>
+      <form id="row-form" class="card"><h2 id="row-form-title">Новая запись</h2><div id="row-fields" class="fields"></div><div class="editor-actions"><button id="save-row" type="submit" class="primary">Сохранить запись</button><button id="delete-row" type="button" class="danger">Удалить</button></div></form></div>
+      <article class="card table-card"><h2>Текущие записи</h2><div id="rows-table" class="scroll-table"></div></article>
+    </section>
+    <section id="schema" class="panel">
+      <div class="page-heading"><div><p class="overline">КОНСТРУКТОР / МОДЕЛИ</p>
+        <h1>Модели данных и формы</h1>
+        <p class="muted">Добавляй таблицы и типизированные поля. Изменения существующих записей выполняются транзакционно с новой ревизией.</p>
+      </div><span class="pill">SQLite · LOCAL</span></div>
+      <div class="schema-grid">
+        <form id="schema-model-form" class="card">
+          <h2>Новая модель</h2>
+          <label for="schema-model-name">Системное имя</label>
+          <input id="schema-model-name" required pattern="[a-z][a-z0-9_]*" maxlength="32" placeholder="orders">
+          <label for="schema-model-label">Название в интерфейсе</label>
+          <input id="schema-model-label" required maxlength="80" placeholder="Заказы">
+          <p class="hint">Модель создаётся с обязательным текстовым полем «Название».</p>
+          <button type="submit" id="schema-create-model" class="primary top-gap">Создать модель</button>
+        </form>
+        <form id="schema-field-form" class="card">
+          <h2>Новое поле</h2>
+          <label for="schema-select-model">Модель</label><select id="schema-select-model"></select>
+          <div class="schema-fields-two">
+            <div><label for="schema-field-name">Системное имя</label><input id="schema-field-name" required pattern="[a-z][a-z0-9_]*" maxlength="32" placeholder="amount"></div>
+            <div><label for="schema-field-label">Название поля</label><input id="schema-field-label" required maxlength="80" placeholder="Сумма"></div>
+            <div><label for="schema-field-type">Тип данных</label>
+              <select id="schema-field-type">
+                <option value="text">Текст</option><option value="integer">Целое число</option>
+                <option value="boolean">Да / Нет</option><option value="email">Почта</option>
+                <option value="date">Дата</option><option value="reference">Связь с моделью</option>
+              </select></div>
+            <div><label for="schema-reference-model">Модель связи</label><select id="schema-reference-model" disabled></select></div>
+          </div>
+          <label class="checkbox-row" for="schema-field-required">
+            <input type="checkbox" id="schema-field-required"> Обязательное поле
+          </label>
+          <label for="schema-default">Начальное значение для существующих записей (необязательно)</label>
+          <input id="schema-default" placeholder="Оставь пустым, если не требуется">
+          <p class="hint">Если в модели есть записи, новое обязательное поле требует допустимое начальное значение. Лимит локальной миграции — 500 записей.</p>
+          <button type="submit" id="schema-add-field" class="primary top-gap">Добавить поле</button>
+        </form>
+      </div>
+      <div class="schema-grid lower">
+      <form id="schema-rename-form" class="card">
+        <h2>Переименовать поле без потери данных</h2>
+        <p class="hint">Возможна миграция до 500 сохранённых записей. Поля-связи и поля, используемые в workflows, не переименовываются без отдельной проверки.</p>
+        <label for="schema-rename-model">Модель</label><select id="schema-rename-model"></select>
+        <label for="schema-rename-source">Поле</label><select id="schema-rename-source"></select>
+        <label for="schema-rename-target">Новое системное имя</label>
+        <input id="schema-rename-target" pattern="[a-z][a-z0-9_]*" maxlength="32" required placeholder="customer_level">
+        <label class="checkbox-row" for="schema-rename-approve"><input type="checkbox" id="schema-rename-approve" required> Проверил изменения и понимаю, что изменятся существующие записи.</label>
+        <button type="submit" id="schema-rename-submit" class="primary top-gap">Мигрировать название поля</button>
+      </form>
+        <form id="schema-label-form" class="card">
+          <h2>Названия модели и полей</h2>
+          <label for="schema-label-target">Что переименовать</label>
+          <select id="schema-label-target"></select>
+          <label for="schema-label-value">Новое название</label>
+          <input id="schema-label-value" required maxlength="80">
+          <button type="submit" id="schema-save-label" class="ghost top-gap">Сохранить название</button>
+        </form>
+        <article class="card">
+          <h2>История миграций</h2>
+          <p class="hint">Доступны ревизии, операции и число изменённых записей. Данные клиентов в журнал не записываются.</p>
+          <div id="schema-migrations" class="stack" aria-live="polite"><p class="muted">История не загружена</p></div>
+        </article>
+      </div>
+      <div class="schema-grid lower">
+        <form id="link-rename-form" class="card">
+          <p class="overline">СВЯЗИ / МИГРАЦИИ</p><h2>Переименовать поле-связь</h2>
+          <p class="hint">Значения записей и индекс связей меняются вместе. Целевая модель не меняется. Если найдена несовместимость, вся операция отменяется.</p>
+          <label for="link-rename-model">Модель с полем</label><select id="link-rename-model"></select>
+          <label for="link-rename-field">Поле-связь</label><select id="link-rename-field"></select>
+          <label for="link-new-name">Новое имя поля</label>
+          <input id="link-new-name" required maxlength="32" pattern="[a-z][a-z0-9_]*" placeholder="customer_ref">
+          <label class="checkbox-row" for="link-rename-confirm">
+            <input id="link-rename-confirm" type="checkbox" required> Проверил зависимые формы и целостность связей
+          </label>
+          <button id="link-rename-submit" type="submit" class="primary top-gap">Мигрировать поле-связь</button>
+        </form>
+        <form id="link-retarget-form" class="card">
+          <p class="overline">СВЯЗИ / БЕЗ ПЕРЕНОСА ДАННЫХ</p><h2>Изменить целевую модель</h2>
+          <p class="hint">Разрешено только для поля без существующих связей, включая удалённые записи. Действующие связи не перенаправляются автоматически.</p>
+          <label for="link-retarget-model">Модель с полем</label><select id="link-retarget-model"></select>
+          <label for="link-retarget-field">Поле-связь</label><select id="link-retarget-field"></select>
+          <label for="link-target-model">Новая целевая модель</label><select id="link-target-model"></select>
+          <label class="checkbox-row" for="link-retarget-confirm">
+            <input id="link-retarget-confirm" type="checkbox" required> Подтверждаю отсутствие значений и ссылок
+          </label>
+          <button id="link-retarget-submit" type="submit" class="primary top-gap">Изменить целевую модель</button>
+        </form>
+      </div>
+      <article class="card mapped-editor">
+        <p class="overline">СВЯЗИ / ПЕРЕНОС С ДАННЫМИ</p>
+        <h2>Перенос действующих связей</h2>
+        <p class="hint">Для каждого старого ID явно выбирается новая запись. Угадывание по имени, автоматическое объединение и перенос чужих записей исключены.</p>
+        <form id="map-options-form" class="form-config-row">
+          <div><label for="map-model">Модель с полем</label><select id="map-model"></select></div>
+          <div><label for="map-field">Поле-связь</label><select id="map-field"></select></div>
+          <div><label for="map-target-model">Новая модель для связи</label><select id="map-target-model"></select></div>
+          <button id="map-load-options" class="ghost" type="submit">Загрузить существующие связи</button>
+        </form>
+        <form id="map-review-form" hidden>
+          <div id="map-rows" class="mapped-rows" aria-label="Таблица соответствия идентификаторов"></div>
+          <p class="hint">Каждый новый ID можно выбрать один раз. Для таблиц более 100 вариантов нужен отдельный проверяемый скрипт миграции.</p>
+          <button id="map-review" type="submit" class="ghost">Проверить целостность и план миграции</button>
+        </form>
+        <div id="map-approval" hidden class="mapped-approval">
+          <p id="map-plan-summary" class="history-summary"></p>
+          <p id="map-plan-digest" class="hint"></p>
+          <label class="checkbox-row" for="map-approve">
+            <input type="checkbox" id="map-approve"> Подтверждаю каждую пару ID и проверенный SHA-256 плана
+          </label>
+          <button id="map-apply" type="button" class="primary top-gap" disabled>Выполнить проверенную миграцию</button>
+        </div>
+      </article>
+    </section>
+    <section id="history" class="panel">
+      <div class="page-heading"><div><p class="overline">РЕВИЗИИ / БЕЗ ПОТЕРИ ДАННЫХ</p>
+        <h1>История и восстановление</h1>
+        <p class="muted">Проверь различия, затем создай новую версию на основе старой. Клиентские записи остаются нетронутыми; несовместимые схемы моделей блокируются.</p>
+      </div><span class="pill">Ручное подтверждение</span></div>
+      <div class="schema-grid">
+        <form id="history-inspect-form" class="card">
+          <h2>Выбрать версию</h2>
+          <label for="history-revision">Исторический снимок</label>
+          <select id="history-revision"></select>
+          <button id="history-inspect" type="submit" class="ghost full">Проверить возможность восстановления</button>
+          <p class="hint">Проверяется исходная SHA-256-сумма, принадлежность проекту и идентичность схем данных. Восстановление не выполняется на этом шаге.</p>
+        </form>
+        <div class="card">
+          <h2>Результат проверки</h2>
+          <p id="history-empty" class="muted">Выбери версию и нажми «Проверить».</p>
+          <div id="history-plan" hidden>
+            <p id="history-plan-summary" class="history-summary"></p>
+            <p id="history-page-changes" class="hint"></p>
+            <p class="hint">Восстановление создаст новую ревизию. Все существующие записи, история и связи останутся без изменения.</p>
+            <label class="checkbox-row" for="history-approve">
+              <input id="history-approve" type="checkbox"> Подтверждаю выбранную версию и создание новой ревизии
+            </label>
+            <button id="history-apply" type="button" class="primary top-gap" disabled>Восстановить проверенную версию</button>
+          </div>
+        </div>
+      </div>
+      <article class="card recovery-inspect">
+        <h2>Проверка восстановления проекта с записями</h2>
+        <p class="hint">Проверяет текущую схему, записи, ссылки и SQLite. Здесь показывается только техническая сводка — экспорт записей доступен исключительно через доверенную локальную библиотеку, а восстановление выполняется в новый проект.</p>
+        <button id="recovery-inspect" type="button" class="ghost">Проверить целостность проекта</button>
+        <button id="recovery-drill" type="button" class="ghost">Испытать восстановление на изолированной копии</button>
+        <p id="recovery-summary" class="history-summary" aria-live="polite"></p>
+        <p id="recovery-drill-summary" class="history-summary" aria-live="polite"></p>
+        <p class="hint">Права пользователей, workflows и подключения не копируются. Архив содержит данные клиентов и требует защищённого офлайн-хранения.</p>
+      </article>
+    </section>
+    <section id="workflows" class="panel">
+      <div class="page-heading"><div><p class="overline">ПРАВИЛА / БЕЗ КОДА</p><h1>Автоматизация процессов</h1><p class="muted">Задавай безопасные действия над полями записей. Без скриптов и сетевых запросов.</p></div></div>
+      <div class="editor-grid">
+        <form id="workflow-form" class="card"><h2>Новое правило</h2><label for="wf-name">Название</label><input id="wf-name" required maxlength="64" placeholder="Например: Назначить статус"><label for="wf-model">Модель</label><select id="wf-model"></select><label for="wf-trigger">Событие</label><select id="wf-trigger"><option value="manual">Ручной запуск</option><option value="record.created">Создание записи</option><option value="record.updated">Изменение записи</option></select><label for="wf-condition-field">Условие (необязательно)</label><select id="wf-condition-field"></select><label for="wf-condition-value">Значение условия</label><input id="wf-condition-value" placeholder="Сравнить с полем"><label for="wf-action-field">Изменить поле</label><select id="wf-action-field"></select><label for="wf-action-value">Присвоить значение</label><input id="wf-action-value" required><button type="submit" class="primary top-gap" id="wf-create">Создать правило</button></form>
+        <div class="card"><h2>Активные правила</h2><div id="workflow-list" class="stack"></div><div class="divider"></div><label for="wf-run-row">UUID записи для запуска</label><input id="wf-run-row" placeholder="UUID существующей записи"><p class="hint">Запуск выполняется только вручную, с контролем роли и защитой от повторов.</p></div>
+      </div>
+    </section>
+    <section id="preview" class="panel">
+      <div class="page-heading"><div><p class="overline">ПРЕДПРОСМОТР / БЕЗ ПУБЛИКАЦИИ</p><h1>Как выглядит результат</h1><p class="muted">Отображается в изолированном iframe. Сценарии и формы не выполняются.</p></div><div class="preview-tools"><select id="preview-select" aria-label="Страница для предпросмотра"></select><button id="refresh-preview" class="ghost" type="button">Обновить</button></div></div>
+      <div class="preview-frame"><div class="preview-chrome"><span></span><span></span><span></span><em>127.0.0.1 · статический результат</em></div><iframe title="Изолированный предпросмотр" id="preview-frame" sandbox="" referrerpolicy="no-referrer"></iframe></div>
+    </section>
+  </main>
+</div>
+</div>
+</body>
+</html>

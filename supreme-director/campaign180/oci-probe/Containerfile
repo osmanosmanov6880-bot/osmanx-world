@@ -1,0 +1,8 @@
+# OFFLINE OWNER-REVIEWED OCI probe image — no production deployment.
+# BASE_IMAGE must be a cached, manifest digest-pinned Python runtime.
+# Building does not verify target Linux kernel isolation.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY --chmod=0555 campaign180/oci_probe_payload.py /usr/local/bin/osgard-oci-probe
+USER 65534:65534
+ENTRYPOINT ["/usr/local/bin/osgard-oci-probe"]

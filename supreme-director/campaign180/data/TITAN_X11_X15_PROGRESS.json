@@ -1,0 +1,70 @@
+{
+  "schema": "osgard.original180.titan-x11-x15-evidence/1",
+  "original_source": "supreme-director/originals/DIRECTOR_MASTER_180.md",
+  "source_commit": "eb243ad520c2711b3b734d46b4980d0767ea27b6",
+  "branch": "recovery/supreme-director-m187-20261104",
+  "scope_only": [
+    "TITAN-X11",
+    "TITAN-X12",
+    "TITAN-X13",
+    "TITAN-X14",
+    "TITAN-X15"
+  ],
+  "local_test_file": "supreme-director/campaign180/tests/test_titan_x11_x15.py",
+  "local_ci": ".github/workflows/titan-original-x11-x15.yml",
+  "local_code_implemented": true,
+  "external_effects_executed": false,
+  "actual_multi_server_consensus_verified": false,
+  "canonical_upstream_approval": false,
+  "independently_accepted": 0,
+  "original_tasks": [
+    {
+      "id": "TITAN-X11",
+      "related_local_code": [
+        "supreme-director/campaign180/campaign180/queue.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
+      ],
+      "status": "BLOCKED_UPSTREAM",
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X12",
+      "related_local_code": [
+        "supreme-director/campaign180/campaign180/queue.py",
+        "supreme-director/campaign180/campaign180/effect_outbox.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
+      ],
+      "status": "BLOCKED_UPSTREAM",
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X13",
+      "related_local_code": [
+        "supreme-director/campaign180/campaign180/queue.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
+      ],
+      "status": "BLOCKED_UPSTREAM",
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X14",
+      "related_local_code": [
+        "supreme-director/campaign180/campaign180/scheduler.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
+      ],
+      "status": "BLOCKED_UPSTREAM",
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X15",
+      "related_local_code": [
+        "supreme-director/campaign180/campaign180/scheduler.py",
+        "supreme-director/campaign180/campaign180/gateway.py",
+        "supreme-director/campaign180/tests/test_titan_x11_x15.py"
+      ],
+      "status": "BLOCKED_UPSTREAM",
+      "independently_accepted": false
+    }
+  ],
+  "release_authorized": false
+}

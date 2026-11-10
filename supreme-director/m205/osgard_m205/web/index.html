@@ -1,0 +1,96 @@
+<!doctype html><html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a1020">
+<title>OSGARD M205 — Контроль стоимости</title>
+<link rel="stylesheet" href="/cost-control/styles.css">
+<script defer src="/cost-control/app.js"></script>
+</head><body>
+<section class="login" id="login">
+<form id="loginForm" class="login-card">
+<div class="brand"><span class="sigil">◈</span><span><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></span></div>
+<p class="eyebrow">M205 / ECONOMIC INTEGRITY</p>
+<h1>Стоимость без<br><em>самообмана.</em></h1>
+<p class="muted">Сопоставление расходов, регулярные затраты и расчёт окупаемости. Только локальные данные вашей организации.</p>
+<label>Локальный токен владельца<input id="token" type="password" minlength="20" autocomplete="off" spellcheck="false" placeholder="Введите Bearer-токен" required></label>
+<button class="primary full" type="submit">Открыть контроль стоимости</button>
+<p class="error" id="loginError" role="alert"></p>
+<p class="muted tiny">Токен остаётся только в памяти вкладки. Production NO-GO.</p>
+</form></section>
+<div class="shell" id="shell" hidden><aside class="sidebar">
+<div class="brand"><span class="sigil">◈</span><span><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></span></div>
+<p class="nav-cap">УПРАВЛЕНИЕ</p>
+<a href="/studio/">CRM и задачи</a>
+<a href="/projects/">Проекты и этапы</a>
+<a href="/finance/">Расходы проектов M198</a>
+<a href="/portfolio/">Финансовый портфель</a>
+<a href="/cashflow/">Денежные потоки</a>
+<a href="/risks/">Финансовые риски</a>
+<a href="/watch/">Контроль M202</a>
+<a href="/actions/">Решения M203</a>
+<a href="/economics/">Экономика M204</a>
+<span class="selected">Контроль стоимости M205</span>
+<div class="side-bottom">Только локальный интерфейс<br>Деньги не переводятся<br>Банк не подключён</div>
+</aside>
+<div class="workspace">
+<header class="topbar"><div><p class="eyebrow">OSGARD / COST INTEGRITY CENTER</p><strong>Контроль экономической модели</strong></div>
+<div class="toolbar"><span id="actor" class="muted"></span><button type="button" id="refresh">Обновить</button><button type="button" id="logout">Выйти</button></div></header>
+<main>
+<section class="hero"><p class="eyebrow">M205 · 4 ENGINEERING MODULES</p>
+<h1>Один расход.<br><em>Один учёт.</em></h1>
+<p class="muted">Установите соответствие между расходами проектов M198 и финансовыми записями M204, затем учтите регулярную стоимость решения. Связь двух локальных записей не является подтверждением банка.</p></section>
+<div class="metrics">
+<div><span>Планов</span><strong id="metricPlans">—</strong></div>
+<div><span>Связи без расхождений</span><strong id="metricLinked">—</strong></div>
+<div><span>Устаревшие связи</span><strong id="metricStale">—</strong></div>
+<div><span>Непривязанные записи</span><strong id="metricMissing">—</strong></div>
+</div>
+<section class="panel"><div class="section-head"><div><p class="eyebrow">01 · ФИНАНСОВАЯ СВЯЗЬ</p><h2>Выберите план решения</h2><p class="muted">Сверка выполняется только внутри одной организации; источники расходов остаются в M198.</p></div><a href="/economics/">Все записи M204</a></div>
+<div class="select-grid"><label>План M203<select id="planSelect"></select></label><p id="planInfo" class="muted small"></p></div></section>
+<div id="planArea">
+<section class="panel"><div class="section-head"><div><p class="eyebrow">02 · RECONCILIATION</p><h2>Сверка расходов M198 ↔ M204</h2><p class="muted">Сумма, тип и версия должны совпадать. Совпадения предлагаются для проверки владельцем; автоматического связывания нет.</p></div><button id="checkSources" type="button">Проверить источники</button></div>
+<div class="recon-stats">
+<div><span>Плановые затраты</span><strong id="plannedMatching">—</strong></div>
+<div><span>Заявленные понесённые</span><strong id="incurredMatching">—</strong></div>
+</div>
+<h3>Зафиксированные связи</h3><div id="links" class="records"><p class="muted">Выберите план.</p></div>
+<h3>Возможные совпадения — подтвердите вручную</h3><div id="candidates" class="records"><p class="muted">После проверки будут показаны кандидаты.</p></div>
+<p class="muted small">M198 используется только как источник сопоставления. Его суммы никогда не прибавляются к M204 вторично. Если расход M198 позднее отменён или изменён, связь станет устаревшей.</p>
+</section>
+<section class="panel"><div class="section-head"><div><p class="eyebrow">03 · RECURRING COSTS</p><h2>Регулярные расходы решения</h2><p class="muted">Добавьте помесячные затраты: поддержку, хостинг, персонал и другие операционные расходы. Плановые и заявленные понесённые расходы не смешиваются.</p></div></div>
+<form id="recurringForm" class="input-grid">
+<label>Тип суммы<select id="recurringBasis"><option value="planned">Плановая регулярная стоимость</option><option value="reported">Заявленные владельцем регулярные расходы</option></select></label>
+<label>Сумма за месяц, ₽<input id="recurringAmount" type="text" inputmode="decimal" placeholder="5000" required></label>
+<label>Начало, месяц<select id="startMonth"></select></label>
+<label>Конец, месяц<select id="endMonth"></select></label>
+<label class="wide">Название статьи<input id="recurringTitle" maxlength="160" required placeholder="Например, техподдержка сайта"></label>
+<label>Источник / договор<input id="recurringRef" maxlength="120" required placeholder="Например, договор № 31"></label>
+<label class="wide">Почему эта сумма ожидается?<textarea id="recurringEvidence" rows="2" maxlength="600" required placeholder="Основание: тариф, зарплатные расчёты, договор"></textarea></label>
+<div class="form-action"><button class="primary" type="submit">Добавить расход</button></div>
+</form>
+<div id="recurringList" class="records"><p class="muted">Список расходов появится после загрузки.</p></div>
+</section>
+<section class="panel"><div class="section-head"><div><p class="eyebrow">04 · NET ROI</p><h2>Окупаемость с регулярными расходами</h2><p class="muted">В каждом месяце рассчитывается ожидаемая выгода минус затраты, затем учитываются первоначальные вложения. Три сценария полностью управляются вами.</p></div></div>
+<form id="scenarioForm" class="input-grid">
+<label>Разовые инвестиции<select id="investmentBasis"><option value="planned">Плановые M204</option><option value="incurred">Заявленные понесённые M204</option></select></label>
+<label>Регулярная стоимость<select id="operatingBasis"><option value="planned">Плановая M205</option><option value="reported">Заявленная M205</option></select></label>
+<label>Горизонт, месяцев<input id="horizon" type="number" min="1" max="36" step="1" value="12" required></label>
+<label>Пессимистичный сценарий, %<input id="rateLow" type="number" min="0" max="100" step="1" value="30" required></label>
+<label>Базовый сценарий, %<input id="rateMid" type="number" min="0" max="100" step="1" value="65" required></label>
+<label>Оптимистичный сценарий, %<input id="rateHigh" type="number" min="0" max="100" step="1" value="100" required></label>
+<label class="checkbox"><input id="requireMatch" type="checkbox" checked> Требовать связь всех разовых затрат с M198</label>
+<label class="checkbox"><input id="assumeZero" type="checkbox"> Я явно допускаю отсутствие регулярных затрат по выбранной категории</label>
+<div class="form-action"><button class="primary" type="submit">Рассчитать модель</button></div>
+</form>
+<div id="scenarioCards" class="scenario-grid"><p class="muted">Сценарии ещё не рассчитаны.</p></div>
+<div id="scenarioDetails" class="records"></div>
+<p class="muted small">Модель не включает налоги, стоимость капитала, амортизацию и автоматически не прогнозирует сезонность. Сопоставление с M198 — проверка локальных записей, не банковская сверка.</p>
+</section>
+</div>
+<section class="panel"><div class="section-head"><div><p class="eyebrow">05 · ORGANIZATION</p><h2>Сводка организации</h2><p class="muted">Связи по всем планам, устаревшие источники и регулярная стоимость за первые 12 модельных месяцев.</p></div><div class="buttons"><button id="reloadPortfolio" type="button">Обновить сводку</button><button id="exportCsv" class="primary" type="button">Экспорт CSV</button></div></div>
+<div id="portfolio" class="records"><p class="muted">Сводка ещё не загружена.</p></div>
+</section>
+<div class="disclaimer"><strong>Обязательное ограничение</strong>
+<p>Ручные суммы и совпадение двух локальных записей не подтверждают наличие платежей и экономический эффект. Без источников или допущения о нулевых расходах ROI не выводится. Решения M203 и финансовые операции M198 остаются самостоятельными.</p></div>
+</main><footer>OSGARD M205 · Local source checks only · No bank verification · Production NO-GO · Upstream 180 задач: 0 независимо принятых</footer>
+</div></div><div id="toast" class="toast" hidden role="status"></div>
+</body></html>

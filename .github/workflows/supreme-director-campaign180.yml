@@ -1,0 +1,113 @@
+name: OSGARD Original 180 Wave-0 Provenance and Contracts
+# PR-only trigger avoids duplicating every push with a PR run.
+# workflow_dispatch remains available for an explicit manual verification.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/CODEOWNERS"
+      - ".github/workflows/supreme-director-campaign180.yml"
+# Cancel superseded queued/active verification for this PR only.
+concurrency:
+  group: original180-python-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  wave-zero:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Add verified local package only
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/supreme-director/campaign180" >> "$GITHUB_ENV"
+      - name: Syntax and offline security checks
+        run: |
+          python -m compileall -q supreme-director/campaign180
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_*.py' -v
+      - name: Deterministic source package and verified local artifacts
+        run: |
+          python -m campaign180.repro build --root . --archive /tmp/campaign180-first.tgz
+          python -m campaign180.repro build --root . --archive /tmp/campaign180-second.tgz
+          cmp /tmp/campaign180-first.tgz /tmp/campaign180-second.tgz
+          python -m campaign180.repro verify --archive /tmp/campaign180-first.tgz
+          openssl genpkey -algorithm ed25519 -out /tmp/campaign180-ci-test.key
+          openssl pkey -in /tmp/campaign180-ci-test.key -pubout -out /tmp/campaign180-ci-test.pub
+          python -m campaign180.repro sign --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.key --signature /tmp/campaign180-ci-test.sig
+          python -m campaign180.repro verify-signature --archive /tmp/campaign180-first.tgz --key /tmp/campaign180-ci-test.pub --signature /tmp/campaign180-ci-test.sig
+      - name: Static scan only changed source paths (no secret output)
+        run: python -m campaign180.supplychain --root . --base HEAD^
+      - name: Bounded synthetic crash recovery and restore (no production effects)
+        run: python -m campaign180.resilience --tasks-per-tenant 12 > /tmp/osgard-180-audit-resilience.json
+      - name: Active + archived synthetic data restore drills — isolated source
+        run: |
+          python -m campaign180.recovery_drill demo
+          python -m campaign180.recovery_drill archived
+      - name: Offline no-AI site generator integration and deterministic preview
+        run: |
+          mkdir -p /tmp/osgard-offline-preview
+          python -m campaign180.preview build supreme-director/campaign180/examples/demo-site.json /tmp/osgard-offline-preview demo-a
+          python -m campaign180.preview build supreme-director/campaign180/examples/demo-site.json /tmp/osgard-offline-preview demo-b
+          python -m campaign180.preview verify /tmp/osgard-offline-preview/demo-a
+          cmp /tmp/osgard-offline-preview/demo-a/index.html /tmp/osgard-offline-preview/demo-b/index.html
+          cmp /tmp/osgard-offline-preview/demo-a/PREVIEW_MANIFEST.json /tmp/osgard-offline-preview/demo-b/PREVIEW_MANIFEST.json
+      - name: Local UI JavaScript parsing and one-shot demo provisioning
+        run: |
+          node --check supreme-director/campaign180/assets/console.js
+          python -m campaign180.local_http init --database /tmp/osgard-console-ci.sqlite3 --spec supreme-director/campaign180/examples/demo-site.json --actor owner-abc
+          python - <<'PY'
+          from campaign180.app_policy import LocalAppPolicy
+          from campaign180.drafts import LocalDraftStore
+          from pathlib import Path
+          store=LocalDraftStore('/tmp/osgard-console-ci.sqlite3')
+          role=LocalAppPolicy(store).get_role(tenant='tenant_demo',project_id='0b83c3f2-b4ab-4a6f-a83e-a48cb39b9c6f',actor='owner-abc')
+          assert role['role']=='owner'
+          assert 'workflow.manage' in role['capabilities']
+          print('LOCAL_CONSOLE_INIT_PASS: no network service started')
+          PY
+      - name: Generate exact original 180 coverage and read-only inventory
+        run: |
+          python -m campaign180 audit --root . --output /tmp/osgard-180-audit
+          python -m campaign180 inventory --root . --output /tmp/osgard-180-audit/repository_inventory.json
+      - name: Fail closed on protected or cross-product source changes
+        run: |
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          from campaign180.gates import check_change_set
+          base = subprocess.run(['git','rev-parse','HEAD^'],capture_output=True,text=True)
+          if base.returncode:
+              raise SystemExit('No parent Git commit for change review')
+          changed = subprocess.check_output(['git','diff','--name-only',base.stdout.strip(),'HEAD'],text=True).splitlines()
+          result = check_change_set(Path('.'),changed)
+          print(result)
+          if not result['admitted_for_local_nonproduction_development']:
+              raise SystemExit('GO/NO-GO: PROTECTED PATHS OR CROSS-TEAM SOURCES')
+          PY
+      - name: Retain audit and precise Git inventory (not an acceptance certificate)
+        uses: actions/upload-artifact@v4
+        with:
+          name: original180-wave0-${{ matrix.python-version }}
+          path: /tmp/osgard-180-audit
+          retention-days: 30
+      - name: Release gate remains NO-GO
+        run: |
+          python - <<'PY'
+          from campaign180.audit import audit_original
+          from pathlib import Path
+          x=audit_original(Path('.'))
+          assert x['counts']['independently_accepted']==0
+          assert x['counts']['production_accepted']==0
+          assert x['counts']['upstream_approved']==0
+          print('ORIGINAL_180_AUDIT_PASS: all 180 covered; production NO-GO; upstream 0/6')
+          PY

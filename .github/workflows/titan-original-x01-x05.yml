@@ -1,0 +1,116 @@
+name: TITAN Original X01-X05 Exact Tasks
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/campaign180/titan_*.py"
+      - "supreme-director/campaign180/campaign180/offline_deps.py"
+      - "supreme-director/campaign180/tests/test_titan_first_five.py"
+      - ".github/CODEOWNERS"
+      - ".github/workflows/titan-original-x01-x05.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: titan-original-x01-x05-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  original-first-five-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Test X01-X05 + existing CODEOWNERS, artifact and dependency regressions
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m compileall -q supreme-director/campaign180/campaign180
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_first_five.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_gates.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_build_deps.py' -v
+      - name: X01 actual immutable SHA and owner-approval evidence
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m campaign180.titan_baseline --root . > "$RUNNER_TEMP/titan-x01.json"
+          python - <<'PY'
+          import json,os,pathlib
+          x=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"titan-x01.json").read_text())
+          assert x["task_id"]=="TITAN-X01" and len(x["checkout_commit"])==40
+          assert x["status"]=="BLOCKED_UPSTREAM"
+          assert not x["independently_accepted"]
+          print("TITAN-X01_BASELINE_CAPTURED_UPSTREAM_BLOCKED")
+          PY
+      - name: X02 real tracked package and lock inventory
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m campaign180.titan_dependencies --root . > "$RUNNER_TEMP/titan-x02.json"
+          python - <<'PY'
+          import json,os,pathlib
+          x=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"titan-x02.json").read_text())
+          assert x["task_id"]=="TITAN-X02" and x["manifest_count"]>0
+          assert x["status"]=="BLOCKED_UPSTREAM"
+          assert not x["canonical_upstream_dependencies_verified"]
+          print("TITAN-X02_MANIFESTS_SCANNED",x["manifest_count"])
+          PY
+      - name: X03 CODEOWNERS exact path and protected-source negative check
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m campaign180.titan_codeowners --root . --path supreme-director/campaign180/campaign180/titan_baseline.py > "$RUNNER_TEMP/titan-x03.json"
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.titan_codeowners import inspect_changes
+          good=inspect_changes(Path("."),["supreme-director/campaign180/campaign180/titan_baseline.py"])
+          bad=inspect_changes(Path("."),["supreme-director/originals/DIRECTOR_MASTER_180.md"])
+          assert good["local_changes_admissible"] and not bad["local_changes_admissible"]
+          assert not good["independent_reviewer_approval"]
+          print("TITAN-X03_CODEOWNERS_POLICY_REPRODUCED_NO_RELEASE")
+          PY
+      - name: X04 reproducible source builds plus ephemeral TEST-ONLY Ed25519 key
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m campaign180.repro build --root . --archive "$RUNNER_TEMP/a.tgz"
+          python -m campaign180.repro build --root . --archive "$RUNNER_TEMP/b.tgz"
+          cmp "$RUNNER_TEMP/a.tgz" "$RUNNER_TEMP/b.tgz"
+          openssl genpkey -algorithm ed25519 -out "$RUNNER_TEMP/test-only.key"
+          openssl pkey -in "$RUNNER_TEMP/test-only.key" -pubout -out "$RUNNER_TEMP/test-only.pub"
+          python -m campaign180.repro sign --archive "$RUNNER_TEMP/a.tgz" --key "$RUNNER_TEMP/test-only.key" --signature "$RUNNER_TEMP/a.sig"
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.titan_artifacts import public_key_fingerprint,verify_reproducible_signed
+          import os
+          d=Path(os.environ["RUNNER_TEMP"])
+          result=verify_reproducible_signed(Path("."),(d/"a.tgz").read_bytes(),
+                  (d/"a.sig").read_bytes(),public_key=d/"test-only.pub",
+                  expected_key_sha256=public_key_fingerprint(d/"test-only.pub"))
+          assert result["signature_valid"] and result["byte_reproduced_twice"]
+          assert result["status"]=="BLOCKED_UPSTREAM"
+          assert not result["production_release_authorized"]
+          print("TITAN-X04_EPHEMERAL_SIGNATURE_TEST_ONLY_NO_RELEASE")
+          PY
+          rm -f "$RUNNER_TEMP/test-only.key"
+      - name: X05 verified local wheel installation is covered by direct tests
+        run: echo "TITAN-X05 real hash-locked wheel install + import tested, upstream remains BLOCKED"
+      - name: Preserve first-five proofs, not private signing keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: titan-x01-x05-local-proof-${{ matrix.python }}
+          path: |
+            ${{ runner.temp }}/titan-x01.json
+            ${{ runner.temp }}/titan-x02.json
+            ${{ runner.temp }}/titan-x03.json
+          retention-days: 14
+          if-no-files-found: ignore

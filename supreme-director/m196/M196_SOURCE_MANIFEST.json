@@ -1,0 +1,66 @@
+{
+  "schema": "osgard.m196.source-manifest/1",
+  "file_count": 15,
+  "files": {
+    "README.md": {
+      "bytes": 5889,
+      "sha256": "82a5e610e945660aa0c4b5a41d4bd1dab4c9cf2631340fd9d76d0610e388d41e"
+    },
+    "demo.py": {
+      "bytes": 2624,
+      "sha256": "5b9ae5b70bb619bfb31f149c43d91779d1876048f27432a28d00f6fb5ab2462f"
+    },
+    "docs/M196_IMPLEMENTATION_RU.md": {
+      "bytes": 4472,
+      "sha256": "272209ba502778b95337a9466affec41e516bb4b52dd888f9e080bb647805e32"
+    },
+    "osgard_m196/__init__.py": {
+      "bytes": 96,
+      "sha256": "83170ffca51cfd6e543babca920e1ef83a994cb7453f05d2deaf0b19b30920c0"
+    },
+    "osgard_m196/__main__.py": {
+      "bytes": 1774,
+      "sha256": "c697ce830becddadaf19aec895107b52a71e4d6497429d7a140e8938075e72d3"
+    },
+    "osgard_m196/runtime.py": {
+      "bytes": 24168,
+      "sha256": "2010600260f8b259fe2a8360b9b48eee8297f0a47259e1bf3b3c84f40c671c85"
+    },
+    "osgard_m196/server.py": {
+      "bytes": 2017,
+      "sha256": "7930eefada88eda1fa3d29000b1f9003a867905f16ebcae3edef85e494c761e7"
+    },
+    "osgard_m196/web/app.js": {
+      "bytes": 46717,
+      "sha256": "5a9adcb1c3de182e02703035665ffba08ac26a97f52e8db255461fc6c47f65f0"
+    },
+    "osgard_m196/web/index.html": {
+      "bytes": 5560,
+      "sha256": "ef17636100046104250a6fb81295e9d9baac73d7b382d86e4620f8ec1117bfbb"
+    },
+    "osgard_m196/web/ru.json": {
+      "bytes": 10841,
+      "sha256": "16e32ec274d6834e2f46a800d6dc2cb87f0545a650e20522d14a4e3c422245a7"
+    },
+    "osgard_m196/web/styles.css": {
+      "bytes": 15119,
+      "sha256": "de82557322df82d39f94fecc8ae8ab088e071fd685e0ae0aae5aff4d52f527b4"
+    },
+    "pyproject.toml": {
+      "bytes": 260,
+      "sha256": "fcf708429a20fa1774363eb916daadc496932e054afee093a89ee1b5587da195"
+    },
+    "tests/browser_smoke.py": {
+      "bytes": 5359,
+      "sha256": "d15f4eb79d3088717f292f75ab30f35950f614364850ade1fe5a040a70d89e84"
+    },
+    "tests/test_m196.py": {
+      "bytes": 21319,
+      "sha256": "08b43e4aae3cdd594efd6980b8c905ad823bb11d31c9a8b2239e9d8e8cc496b5"
+    },
+    "verify_source.py": {
+      "bytes": 1097,
+      "sha256": "6241e8dd58f50b761f798c50756aff560a8b7501a384e9ab55dc8a21e7bed8f3"
+    }
+  }
+}

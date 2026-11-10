@@ -1,0 +1,13 @@
+{
+  "files": {
+    "README_RU.md": "ca9b3b4122b5cf1b73d43fe3a326242d1c9c6a0820dd6cc608eccb95d51f7e46",
+    "__init__.py": "d0102e34a1bd2b09d3603307c9eae017bb61e06cf43098f5e3eba60aca51d883",
+    "__main__.py": "22249362a96f4531c66e3fd03e0efeb0325f827e6b47750e3b4162edd192bf5c",
+    "cli.py": "1dc8502c2d89242591c18740b591048b194f3c3611e69995e8987e43107533fb",
+    "recovery.py": "731a7b82c27856ed8e7af40e904403b3d3ec63c506d3b45df342a9dcb1b9773b",
+    "smoke.py": "3fecdddb55799f28259d61be098d2cc910e4c9fe6ac68f5d0d7a3f93fea95564",
+    "tests/test_recovery.py": "91074ef5bb2627dd312c1960eac35e264db5eb35133c20c12586532039ac7aab",
+    "verify_source.py": "0bc7788c9e97c587f284578d97da6b0391026fb60aeaa5f7783f404c77e6747e"
+  },
+  "schema": "osgard.m191.source-inventory/1"
+}

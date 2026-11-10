@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071428">
+  <meta name="description" content="OSGARD M183 — офлайн-панель инженерного аудита, без производственных полномочий.">
+  <title>OSGARD // Engineering Control — M183</title>
+  <style>
+    :root { color-scheme: dark; --bg:#06111e; --panel:#0b1c2e; --panel-2:#0e2135; --stroke:#233d54; --text:#edf6ff; --muted:#a7bfd0; --soft:#7699b1; --blue:#83c6ff; --mint:#a6e5d5; --warn:#f0ca8c; --red:#f7a4a4; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { background:radial-gradient(circle at 13% 5%, #153257 0, transparent 34%), radial-gradient(circle at 89% 16%, #152b51 0, transparent 35%), var(--bg); color:var(--text); font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; margin:0; min-height:100vh; }
+    body:before { content:""; position:fixed; z-index:-1; pointer-events:none; inset:0; opacity:.35; background-image:radial-gradient(2px 2px at 14% 23%, #c4eaff, transparent),radial-gradient(1.2px 1.2px at 78% 16%, #c4eaff, transparent),radial-gradient(2px 2px at 41% 68%, #c4eaff, transparent),radial-gradient(1.5px 1.5px at 91% 83%, #c4eaff, transparent); background-size:390px 290px; }
+    a { color:#b2dcff; text-underline-offset:4px; }
+    a:hover { color:white; }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible,input:focus-visible,a:focus-visible { outline:3px solid #a2d7ff; outline-offset:3px; }
+    .shell { max-width:1350px; padding:32px 30px 75px; margin:0 auto; }
+    .top { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:21px; border-bottom:1px solid var(--stroke); }
+    .brand { font-size:17px; font-weight:850; letter-spacing:.25em; }
+    .brand .mark { color:var(--blue); }
+    .stamp { font-size:12px; color:var(--muted); letter-spacing:.06em; }
+    .hero { padding:74px 0 54px; max-width:950px; }
+    .kicker { font-size:12px; text-transform:uppercase; letter-spacing:.26em; color:var(--mint); font-weight:750; }
+    h1 { font-size:clamp(36px,6vw,77px); letter-spacing:-.055em; line-height:1.04; margin:14px 0 24px; font-weight:750; }
+    h1 span { color:var(--blue); }
+    .lead { font-size:clamp(16px,2vw,21px); max-width:760px; color:#c3d5e3; }
+    .status { display:flex; flex-wrap:wrap; gap:10px; margin-top:27px; }
+    .status span { background:#132b3e; border:1px solid #2d5369; color:#deefff; font-size:12px; padding:8px 12px; border-radius:100px; }
+    .status .no { background:#311f2a; border-color:#754451; color:#ffd2d2; }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; }
+    .stat,.panel,.domain { background:linear-gradient(150deg,rgba(22,48,70,.82),rgba(9,26,42,.92)); border:1px solid var(--stroke); border-radius:17px; }
+    .stat { padding:22px 22px 26px; min-height:154px; }
+    .tiny { font-size:12px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); }
+    .number { font-size:clamp(24px,3.6vw,45px); margin:9px 0 1px; line-height:1.1; font-weight:780; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+    .sub { font-size:12px; color:var(--soft); }
+    .section { margin-top:48px; }
+    .section-head { display:flex; justify-content:space-between; align-items:end; gap:15px; margin-bottom:17px; }
+    h2 { font-size:24px; margin:0; line-height:1.25; letter-spacing:-.02em; }
+    .helper { font-size:13px; color:var(--muted); max-width:620px; }
+    .domain-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; }
+    .domain { padding:20px; min-height:155px; min-width:0; }
+    .domain-top { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+    .domain h3 { font-size:14px; margin:0; letter-spacing:.03em; overflow-wrap:anywhere; }
+    .domain .count { color:var(--muted); font-variant-numeric:tabular-nums; font-size:13px; }
+    .bar { width:100%; height:5px; background:#284259; border-radius:4px; margin:18px 0 9px; overflow:hidden; }
+    .bar span { display:block; height:100%; background:var(--mint); width:0%; }
+    .domain .detail { font-size:12px; color:var(--soft); }
+    .columns { display:grid; grid-template-columns:1.1fr .9fr; gap:14px; }
+    .panel { padding:24px; min-width:0; }
+    .panel h3 { margin:0 0 14px; font-size:18px; }
+    .team-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+    .team { background:#112d44; border:1px solid #2a4963; padding:13px; border-radius:11px; }
+    .team b { display:block; font-size:12px; letter-spacing:.07em; }
+    .team small { color:var(--soft); font-size:11px; }
+    .warning { padding:15px 16px; background:rgba(96,54,49,.26); border-left:3px solid #e2a28f; font-size:13px; color:#ecd0c8; margin-top:18px; border-radius:5px; }
+    .phase { border-bottom:1px solid var(--stroke); padding:12px 0; display:flex; justify-content:space-between; gap:8px; font-size:13px; }
+    .phase:last-child { border:0; }
+    .phase strong { color:#f4faff; }
+    .phase small { color:var(--muted); text-align:right; }
+    .controls { display:flex; flex-wrap:wrap; gap:9px; margin:15px 0; }
+    .controls button { border:1px solid #33516b; border-radius:9px; background:#112940; color:#c5def1; padding:9px 13px; font-size:13px; }
+    .controls button[aria-pressed="true"] { background:#245473; border-color:#87bde7; color:white; }
+    .search { flex:1; min-width:230px; padding:9px 13px; border-radius:9px; border:1px solid #33516b; background:#071b2c; color:white; }
+    .record { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px; align-items:center; padding:15px 0; border-bottom:1px solid var(--stroke); }
+    .record:last-child { border:0; }
+    .record-name { font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+    .record small { color:var(--soft); display:block; margin-top:4px; overflow-wrap:anywhere; }
+    .label { color:var(--warn); border:1px solid #675738; background:#272b2c; border-radius:7px; padding:5px 8px; font-size:11px; font-weight:750; white-space:nowrap; }
+    .label.changed { border-color:#71536c; color:#f8b5e4; }
+    .records { max-height:400px; overflow:auto; }
+    .footer { margin-top:55px; padding-top:21px; border-top:1px solid var(--stroke); color:var(--soft); font-size:12px; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @media(max-width:1020px) { .stats,.domain-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .columns { grid-template-columns:1fr; } }
+    @media(max-width:620px) { .shell { padding:21px 15px 50px; } .hero { padding:46px 0 30px; } .stats,.domain-grid { grid-template-columns:1fr 1fr; gap:8px; } .stat,.domain { padding:15px; min-height:137px; } .top { align-items:flex-start; flex-direction:column; gap:6px; } .team-grid { grid-template-columns:1fr 1fr; } .record { grid-template-columns:1fr; gap:7px; } .section { margin-top:32px; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="top" role="banner">
+    <div class="brand"><span class="mark">OS</span>GARD <span class="mark">//</span> CONTROL</div>
+    <div class="stamp">M183 · AUDIT MODE · <time id="time">UTC</time></div>
+  </header>
+  <main>
+    <div class="hero">
+      <div class="kicker">The road to world class</div>
+      <h1>От исходников<br>к <span>мировому уровню.</span></h1>
+      <p class="lead">Один центр контроля для шести команд: происхождение кода, безопасность, интеграция, UX, надёжность и реальное доказательство ценности. Никаких выдуманных зелёных статусов.</p>
+      <div class="status" aria-label="Текущие статусы"><span class="no" id="production">PRODUCTION NO-GO</span><span>Состояние: инженерный аудит</span><span>Мировое лидерство не доказано</span></div>
+    </div>
+    <section aria-label="Показатели"><div class="stats">
+      <div class="stat"><div class="tiny">Независимо принятые задачи</div><div class="number" id="tasks">0 / 180</div><div class="sub">Оригинальных задач</div></div>
+      <div class="stat"><div class="tiny">Мировые критерии</div><div class="number" id="world">0 / 32</div><div class="sub">Независимо подтверждены</div></div>
+      <div class="stat"><div class="tiny">Конфликты исходников</div><div class="number" id="conflicts">28</div><div class="sub">17 P0 · 11 P1 · без принятого ревью</div></div>
+      <div class="stat"><div class="tiny">Контракты между системами</div><div class="number">9</div><div class="sub">Требуют реальных E2E</div></div>
+    </div></section>
+    <section class="section" aria-labelledby="domains-title">
+      <div class="section-head"><div><h2 id="domains-title">8 опор мировой платформы</h2><p class="helper">Нулевая отметка означает отсутствие *доступного независимого доказательства*, а не доказанный провал реализации.</p></div></div>
+      <div class="domain-grid" id="domains"></div>
+    </section>
+    <section class="section" aria-labelledby="teams-title">
+      <div class="section-head"><h2 id="teams-title">Система из шести команд</h2></div>
+      <div class="columns">
+        <article class="panel"><h3>Интеграционная матрица</h3><div class="team-grid" id="teams"></div><div class="warning"><strong>Стоп-фактор:</strong> оригинальный M181 ZIP и канонические Git-версии этих команд не подтверждены. Поэтому продуктовые merge и production остаются закрыты.</div></article>
+        <article class="panel"><h3>Большие блоки исполнения</h3><div id="phases"></div></article>
+      </div>
+    </section>
+    <section class="section" aria-labelledby="repo-title">
+      <div class="section-head"><div><h2 id="repo-title">GitHub: изменение исходников</h2><p class="helper">Сравнение двух наблюдений веток. Это не подтверждение принадлежности репозиториев командам.</p></div></div>
+      <div class="panel"><div class="controls" role="group" aria-label="Фильтр репозиториев">
+        <button type="button" data-filter="all" aria-pressed="true">Все</button>
+        <button type="button" data-filter="changed" aria-pressed="false">Изменились</button>
+        <label class="sr-only" for="search">Поиск репозитория</label>
+        <input class="search" type="search" id="search" placeholder="Найти репозиторий…" autocomplete="off">
+      </div><div id="repos" class="records" role="list" aria-live="polite"></div></div>
+    </section>
+  </main>
+  <footer class="footer">OSGARD M183 · автономная панель, работает без сети. Не содержит секретов, не управляет GitHub и не означает завершённую платформу. Проверяйте исходные доказательства перед любыми решениями.</footer>
+</div>
+<script type="application/json" id="report-data">__REPORT_JSON__</script>
+<script>
+(() => {
+  'use strict';
+  const report = JSON.parse(document.getElementById('report-data').textContent);
+  const $ = id => document.getElementById(id);
+  const teams = ['TITAN / KRAKEN','NEXUS / ÆTHERION','COMMERCE','HUMAN EXPERIENCE','GENESIS MEDIA','ORBITAL'];
+  $('time').textContent = report.generated_utc;
+  $('tasks').textContent = report.original_tasks_independently_accepted_with_evidence + ' / 180';
+  $('world').textContent = report.world_readiness.independently_verified + ' / ' + report.world_readiness.total_criteria;
+  $('conflicts').textContent = report.known_reported_conflicts.P0 + report.known_reported_conflicts.P1;
+  const dom = $('domains');
+  for(const [domain, row] of Object.entries(report.world_readiness.domains)) {
+    const item = document.createElement('article'); item.className = 'domain';
+    const header = document.createElement('div'); header.className='domain-top';
+    const name=document.createElement('h3'); name.textContent=domain.replaceAll('_',' ');
+    const count=document.createElement('span'); count.className='count'; count.textContent=row.independently_verified+'/'+row.required;
+    const bar=document.createElement('div'); bar.className='bar'; bar.setAttribute('role','progressbar'); bar.setAttribute('aria-label',domain+' доказано');bar.setAttribute('aria-valuenow', row.independently_verified);bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',row.required);
+    const fill=document.createElement('span'); fill.style.width=String(100*row.independently_verified/row.required)+'%';bar.append(fill);
+    const detail=document.createElement('div');detail.className='detail';detail.textContent='Внешние доказательства отсутствуют';
+    header.append(name,count); item.append(header,bar,detail); dom.append(item);
+  }
+  const teamRoot=$('teams'); for(const team of teams){const el=document.createElement('div');el.className='team';const b=document.createElement('b');b.textContent=team;const s=document.createElement('small');s.textContent='Upstream не закреплён';el.append(b,s);teamRoot.append(el);}
+  const phases=[['A','12','Канонические исходники'],['B','48','Безопасность и контракты'],['C','90','Продуктовая интеграция'],['D','30','Испытания и выпуск']];
+  for(const [key,total,title] of phases){const el=document.createElement('div');el.className='phase';const left=document.createElement('strong');left.textContent=key+' · '+title;const right=document.createElement('small');right.textContent=total+' задач, не приняты';el.append(left,right);$('phases').append(el);}
+  let filter='all'; const input=$('search'); const records=report.engineering.github_observations.observations;
+  function render(){const root=$('repos'); root.replaceChildren();let count=0;for(const r of records){if(filter==='changed' && r.status==='UNCHANGED')continue;if(!r.repo.toLowerCase().includes(input.value.trim().toLowerCase()))continue;count++;const item=document.createElement('div');item.className='record';item.setAttribute('role','listitem');const block=document.createElement('div');const name=document.createElement('div');name.className='record-name';name.textContent=r.repo;const desc=document.createElement('small');desc.textContent=r.branch+' · '+(r.current_sha || 'нет подтверждения');block.append(name,desc);const badge=document.createElement('span');badge.className='label'+(r.status!=='UNCHANGED'?' changed':'');badge.textContent=r.status;item.append(block,badge);root.append(item);}if(count===0){const p=document.createElement('p');p.textContent='По вашему запросу репозиториев нет.';root.append(p);}}
+  document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x===button)));render();}));
+  input.addEventListener('input',render);render();
+})();
+</script>
+</body>
+</html>

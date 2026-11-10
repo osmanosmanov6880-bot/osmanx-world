@@ -1,0 +1,47 @@
+name: OSGARD SUPREME DIRECTOR M203 Actions and Results
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/m203/**"
+      - ".github/workflows/supreme-director-m203.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m203/**"
+      - ".github/workflows/supreme-director-m203.yml"
+# Preserve the check; cancel only superseded runs for this same event/ref.
+concurrency:
+  group: director-m203-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  action-results:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.11', '3.13' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Configure M192-M203 local packages
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/supreme-director/m192:$GITHUB_WORKSPACE/supreme-director/m193:$GITHUB_WORKSPACE/supreme-director/m194:$GITHUB_WORKSPACE/supreme-director/m195:$GITHUB_WORKSPACE/supreme-director/m196:$GITHUB_WORKSPACE/supreme-director/m197:$GITHUB_WORKSPACE/supreme-director/m198:$GITHUB_WORKSPACE/supreme-director/m199:$GITHUB_WORKSPACE/supreme-director/m200:$GITHUB_WORKSPACE/supreme-director/m201:$GITHUB_WORKSPACE/supreme-director/m202:$GITHUB_WORKSPACE/supreme-director/m203" >> "$GITHUB_ENV"
+      - name: Compile Python and validate JS
+        run: |
+          python3 -m compileall -q supreme-director/m203
+          node --check supreme-director/m203/osgard_m203/web/app.js
+      - name: M203 unit, security and HTTP
+        run: python3 -m unittest discover -s supreme-director/m203/tests -p 'test_*.py' -v
+      - name: M192-M202 regression
+        run: |
+          for v in 192 193 194 195 196 197 198 199 200 201 202; do
+            echo "=== Checking M$v ==="
+            python3 -m unittest discover -s "supreme-director/m$v/tests" -p 'test_*.py' -v
+          done
+      - name: End-to-end synthetic finance action smoke
+        run: python3 supreme-director/m203/smoke.py

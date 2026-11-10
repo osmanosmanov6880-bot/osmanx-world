@@ -1,0 +1,116 @@
+name: OSGARD Supreme Director M187 recovery integrity
+on:
+  push:
+    branches: [ "recovery/supreme-director-m187-20261104" ]
+    paths:
+      - "supreme-director/**"
+      - ".github/workflows/supreme-director-m187.yml"
+  pull_request:
+    paths:
+      - "supreme-director/**"
+      - ".github/workflows/supreme-director-m187.yml"
+# Preserve the check; cancel only superseded runs for this same event/ref.
+concurrency:
+  group: director-m187-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check original plan and no fabricated acceptance
+        run: python3 supreme-director/scripts/validate_plan.py
+      - name: Run independent validation unit tests
+        run: python3 -m unittest discover -s supreme-director/tests -p 'test_*.py' -v
+      - name: Syntax-check browser app
+        run: node --check supreme-director/web/app.js
+      - name: Check static web files exist
+        run: |
+          test -s supreme-director/web/index.html
+          test -s supreme-director/web/styles.css
+          test -s supreme-director/web/app.js
+
+  source-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned test dependency
+        run: python3 -m pip install -r supreme-director/local-kit/requirements-m185.txt
+      - name: Verify every source file SHA-256 and inventory
+        run: python3 supreme-director/scripts/verify_source_transfer.py
+      - name: Run source-only M187 tests (historical bundle check excluded explicitly)
+        run: python3 supreme-director/local-kit/scripts/verify_source_only.py
+      - name: Verify executable original-plan extraction and DAG
+        working-directory: supreme-director/local-kit
+        run: |
+          python3 -m osgard_m187 restore-plan
+          python3 -m osgard_m187 plan-waves
+      - name: Run synthetic nine-step M186 flow and fail-closed fault injection
+        run: python3 supreme-director/scripts/smoke_m186.py
+      - name: Verify M189 source SHA-256 manifest
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path('supreme-director/m189')
+          manifest = json.loads((root / 'M189_SOURCE_MANIFEST.json').read_text(encoding='utf-8'))
+          assert manifest['schema'] == 'osgard.m189.source-manifest/1'
+          for rel, expected in manifest['files'].items():
+              path = root / rel
+              assert path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == expected, rel
+          print('M189 source SHA-256 PASS:', len(manifest['files']))
+          PY
+      - name: M189 synthetic signed/negative evidence tests
+        run: python3 -m unittest discover -s supreme-director/m189/tests -p 'test_*.py' -v
+      - name: M189 fail-closed original-task evidence report
+        run: |
+          python3 supreme-director/m189/admission.py \
+            --plan supreme-director/recovery/ORIGINAL_180_TASKS.json \
+            --master supreme-director/originals/DIRECTOR_MASTER_180.md \
+            --upstreams supreme-director/m189/data/M189_UPSTREAMS.json \
+            --submissions supreme-director/m189/data/M189_SUBMISSIONS.json \
+            --trust supreme-director/m189/data/M189_TRUST_KEYS.json \
+            --workspace /tmp/osgard-canonical-checkouts \
+            --evidence-root /tmp/osgard-source-test-logs \
+            --output /tmp/m189-admission.json
+          python3 - <<'PY'
+          import json
+          x = json.load(open('/tmp/m189-admission.json', encoding='utf8'))
+          assert len(x['tasks']) == 180
+          assert x['statuses'] == {'BLOCKED_UPSTREAM': 180}, x['statuses']
+          assert x['original_task_acceptance'] == 0
+          assert x['release_gate'] == 'NO_GO'
+          assert x['production_authorized'] is False
+          print('M189 admission fails closed: 180 BLOCKED_UPSTREAM / NO_GO')
+          PY
+      - name: Check historical Studio JS syntax
+        run: |
+          node --check supreme-director/local-kit/dashboard/m184/studio.js
+          node --check supreme-director/local-kit/dashboard/m185/studio.js
+          node --check supreme-director/local-kit/dashboard/m186/studio.js
+
+  m190-ledger:
+    needs: [integrity, source-transfer]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned M189 verification dependency
+        run: python3 -m pip install -r supreme-director/local-kit/requirements-m185.txt
+      - name: Verify exact M190 source inventory and SHA-256
+        run: python3 supreme-director/m190/verify_source.py
+      - name: Run 33 M190 SQLite, tamper, replay, concurrency and anchor tests
+        run: PYTHONPATH=supreme-director python3 -Werror::ResourceWarning -m unittest discover -s supreme-director/m190/tests -p 'test_*.py' -v
+      - name: M189 to M190 end-to-end synthetic evidence smoke
+        run: PYTHONPATH=supreme-director python3 supreme-director/m190/smoke.py

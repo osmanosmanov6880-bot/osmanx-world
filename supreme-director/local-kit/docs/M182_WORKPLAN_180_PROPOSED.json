@@ -1,0 +1,3072 @@
+{
+  "new_plan_dependency_edges": 174,
+  "not_original_M181_board": true,
+  "phase_counts": {
+    "A": 12,
+    "B": 48,
+    "C": 90,
+    "D": 30
+  },
+  "project": "OSGARD M182",
+  "reported_original_dependency_edges": 294,
+  "schema": "osgard.m182.workplan/1",
+  "status": "PROPOSED_EXECUTION_PLAN_ONLY",
+  "tasks": [
+    {
+      "acceptance_evidence": "Ссылка на репозиторий; read-only Git SHA; владелец подтверждает соответствие продукта",
+      "canonical_upstream_sha": null,
+      "description": "Привязать канонический upstream Git commit, владельца и ветку",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-A01",
+      "independent_reviewer": null,
+      "local_dependencies": [],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Original source ZIP+SHA, task crosswalk, конкретный оригинальный ID",
+      "canonical_upstream_sha": null,
+      "description": "Подтвердить происхождение M181, задачу и исходные зависимости",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-A02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-A01"
+      ],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Назначить CODEOWNERS и read-only ACL карту",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-A02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Проверить SSO/IAM/RBAC для доменного контура",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B01"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать secrets, keys и принцип минимальных прав",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Составить SBOM/лицензии, запретить неподтверждённые зависимости",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B03"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать boundary sandbox/network/tenants",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B04"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Утвердить immutable schema и версионирование API",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B05"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Подготовить безопасные миграции и rollback",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B06"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Определить negative security tests и evidence retention",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-B08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B07"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Ревизия immutable job queue и границ задач",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-B08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Восстановление worker lease/fencing по exact commit",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C01"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "RBAC для постановки, отмены и просмотра задач",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C02"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Негативные tenant isolation тесты на уровне task API",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C03"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Docker sandbox без host mounts и неявных pull",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C04"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Карантин хоста при неподтверждённом cleanup",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C05"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Ограничения CPU/RAM/time и безопасное прерывание",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C06"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Идемпотентная обработка повторно доставленного задания",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C07"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Неподменяемый execution log и provenance artifacts",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C09",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Защита состояния очереди после crash и reboot",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C10",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C09"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Cross-service API с NEXUS/ÆTHERION",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C11",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C10"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Обработка untrusted code без escape и секретов",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C12",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C11"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Наблюдаемость worker health и аварийных переходов",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C13",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C12"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Staging E2E создание→исполнение→отмена→аудит",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C14",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C13"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Независимое ревью runtime и sandbox boundary",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-C15",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C14"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Выполнить source-pinned интеграционный E2E в staging",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-D01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-C15"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Получить независимое security+CODEOWNERS review без саморевью",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-D02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-D01"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Провести backup/restore и rollback rehearsal на реальном окружении",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-D03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-D02"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Измерить latency, error budget, alerts и on-call готовность",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-D04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-D03"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать отдельное owner GO/NO-GO с полным реестром доказательств",
+      "display_team": "TITAN / KRAKEN",
+      "id": "M182-TITAN-D05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-TITAN-D04"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "TITAN"
+    },
+    {
+      "acceptance_evidence": "Ссылка на репозиторий; read-only Git SHA; владелец подтверждает соответствие продукта",
+      "canonical_upstream_sha": null,
+      "description": "Привязать канонический upstream Git commit, владельца и ветку",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-A01",
+      "independent_reviewer": null,
+      "local_dependencies": [],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Original source ZIP+SHA, task crosswalk, конкретный оригинальный ID",
+      "canonical_upstream_sha": null,
+      "description": "Подтвердить происхождение M181, задачу и исходные зависимости",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-A02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-A01"
+      ],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Назначить CODEOWNERS и read-only ACL карту",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-A02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Проверить SSO/IAM/RBAC для доменного контура",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B01"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать secrets, keys и принцип минимальных прав",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Составить SBOM/лицензии, запретить неподтверждённые зависимости",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B03"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать boundary sandbox/network/tenants",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B04"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Утвердить immutable schema и версионирование API",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B05"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Подготовить безопасные миграции и rollback",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B06"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Определить negative security tests и evidence retention",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-B08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B07"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Инвентаризация model/provider adapters и API версий",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-B08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Отдельные tenant-scoped agent sessions",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C01"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Проверка permission scopes всех инструментов",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C02"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Ограничение бюджета токенов и rate limits",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C03"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Prompt injection boundaries для retrieved content",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C04"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Deny-by-default при отказе provider/auth",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C05"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Версионирование prompt/template с происхождением",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C06"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Трассировка tool invocations без записи секретов",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C07"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Staging с synthetic model failures и timeouts",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C09",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Подпись, TTL и ревокация agent grants",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C10",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C09"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт очереди TITAN job→agent task",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C11",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C10"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт медиа-выхода GENESIS с лицензией",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C12",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C11"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Data retention, erasure и privacy gate",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C13",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C12"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "E2E от запросов до проверяемого конечного результата",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C14",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C13"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Независимое ревью модели угрозы и источников",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-C15",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C14"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Выполнить source-pinned интеграционный E2E в staging",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-D01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-C15"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Получить независимое security+CODEOWNERS review без саморевью",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-D02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-D01"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Провести backup/restore и rollback rehearsal на реальном окружении",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-D03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-D02"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Измерить latency, error budget, alerts и on-call готовность",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-D04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-D03"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать отдельное owner GO/NO-GO с полным реестром доказательств",
+      "display_team": "NEXUS / ÆTHERION",
+      "id": "M182-NEXUS-D05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-NEXUS-D04"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "NEXUS"
+    },
+    {
+      "acceptance_evidence": "Ссылка на репозиторий; read-only Git SHA; владелец подтверждает соответствие продукта",
+      "canonical_upstream_sha": null,
+      "description": "Привязать канонический upstream Git commit, владельца и ветку",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-A01",
+      "independent_reviewer": null,
+      "local_dependencies": [],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Original source ZIP+SHA, task crosswalk, конкретный оригинальный ID",
+      "canonical_upstream_sha": null,
+      "description": "Подтвердить происхождение M181, задачу и исходные зависимости",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-A02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-A01"
+      ],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Назначить CODEOWNERS и read-only ACL карту",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-A02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Проверить SSO/IAM/RBAC для доменного контура",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B01"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать secrets, keys и принцип минимальных прав",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Составить SBOM/лицензии, запретить неподтверждённые зависимости",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B03"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать boundary sandbox/network/tenants",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B04"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Утвердить immutable schema и версионирование API",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B05"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Подготовить безопасные миграции и rollback",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B06"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Определить negative security tests и evidence retention",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-B08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B07"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт заказа с неизменяемыми identifiers",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-B08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Idempotency key для create/charge/refund",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C01"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Верификация подписей и replay window webhook",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C02"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Transactional outbox и retry семантика",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C03"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Согласованность ledger и external provider states",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C04"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Безопасная миграция схемы заказов",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C05"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Разделение финансовых/административных ролей",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C06"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "PCI/privacy scope и запрет логирования PAN/секретов",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C07"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Staging provider sandbox без реальных списаний",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C09",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Reconciliation разногласий event и ledger",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C10",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C09"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт purchase entitlement с EXPERIENCE",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C11",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C10"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт платежного события для ORBITAL analytics",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C12",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C11"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Нагрузочные и отказные сценарии duplicate webhook",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C13",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C12"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "E2E create→pay→refund→receipt в тестовом окружении",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C14",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C13"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Независимое security/finance review",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-C15",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C14"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Выполнить source-pinned интеграционный E2E в staging",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-D01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-C15"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Получить независимое security+CODEOWNERS review без саморевью",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-D02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-D01"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Провести backup/restore и rollback rehearsal на реальном окружении",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-D03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-D02"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Измерить latency, error budget, alerts и on-call готовность",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-D04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-D03"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать отдельное owner GO/NO-GO с полным реестром доказательств",
+      "display_team": "COMMERCE",
+      "id": "M182-COMMERCE-D05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-COMMERCE-D04"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "COMMERCE"
+    },
+    {
+      "acceptance_evidence": "Ссылка на репозиторий; read-only Git SHA; владелец подтверждает соответствие продукта",
+      "canonical_upstream_sha": null,
+      "description": "Привязать канонический upstream Git commit, владельца и ветку",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-A01",
+      "independent_reviewer": null,
+      "local_dependencies": [],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Original source ZIP+SHA, task crosswalk, конкретный оригинальный ID",
+      "canonical_upstream_sha": null,
+      "description": "Подтвердить происхождение M181, задачу и исходные зависимости",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-A02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-A01"
+      ],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Назначить CODEOWNERS и read-only ACL карту",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-A02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Проверить SSO/IAM/RBAC для доменного контура",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B01"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать secrets, keys и принцип минимальных прав",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Составить SBOM/лицензии, запретить неподтверждённые зависимости",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B03"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать boundary sandbox/network/tenants",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B04"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Утвердить immutable schema и версионирование API",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B05"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Подготовить безопасные миграции и rollback",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B06"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Определить negative security tests и evidence retention",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-B08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B07"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Матрица ролей UX и access denial",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-B08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Защищённый session lifecycle и logout",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C01"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Проверка consent/privacy UI",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C02"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "RU/EN и устойчивость длинных строк",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C03"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Keyboard/screen-reader основные сценарии",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C04"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Fallback для offline и медленной сети",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C05"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Error boundary для недоступных интеграций",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C06"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Отказ по оплате без ложной выдачи entitlement",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C07"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "End-to-end прохождение регистрации и входа",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C09",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Изоляция профилей разных пользователей",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C10",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C09"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт разрешений с COMMERCE",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C11",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C10"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт контента с GENESIS MEDIA",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C12",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C11"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Telemetry без PII и с opt-out",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C13",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C12"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Визуальная приёмка на реальных desktop/mobile устройствах",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C14",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C13"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Независимое UX/accessibility/privacy review",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-C15",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C14"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Выполнить source-pinned интеграционный E2E в staging",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-D01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-C15"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Получить независимое security+CODEOWNERS review без саморевью",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-D02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-D01"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Провести backup/restore и rollback rehearsal на реальном окружении",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-D03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-D02"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Измерить latency, error budget, alerts и on-call готовность",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-D04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-D03"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать отдельное owner GO/NO-GO с полным реестром доказательств",
+      "display_team": "HUMAN EXPERIENCE",
+      "id": "M182-EXPERIENCE-D05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-EXPERIENCE-D04"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "EXPERIENCE"
+    },
+    {
+      "acceptance_evidence": "Ссылка на репозиторий; read-only Git SHA; владелец подтверждает соответствие продукта",
+      "canonical_upstream_sha": null,
+      "description": "Привязать канонический upstream Git commit, владельца и ветку",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-A01",
+      "independent_reviewer": null,
+      "local_dependencies": [],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Original source ZIP+SHA, task crosswalk, конкретный оригинальный ID",
+      "canonical_upstream_sha": null,
+      "description": "Подтвердить происхождение M181, задачу и исходные зависимости",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-A02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-A01"
+      ],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Назначить CODEOWNERS и read-only ACL карту",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-A02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Проверить SSO/IAM/RBAC для доменного контура",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B01"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать secrets, keys и принцип минимальных прав",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Составить SBOM/лицензии, запретить неподтверждённые зависимости",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B03"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать boundary sandbox/network/tenants",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B04"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Утвердить immutable schema и версионирование API",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B05"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Подготовить безопасные миграции и rollback",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B06"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Определить negative security tests и evidence retention",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-B08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B07"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Реестр медиа-активов с лицензиями",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-B08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "SHA-проверка входных asset bytes",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C01"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Безопасная загрузка/сканирование форматов",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C02"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Изоляция media worker и лимиты ресурса",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C03"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Очередь transcode/generate с retry и cancel",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C04"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Проверка авторских прав и brand approvals",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C05"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Ротация signed media URLs и access tokens",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C06"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контроль CDN cache invalidation",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C07"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Provenance output и watermark политики",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C09",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Резервирование originals без потери metadata",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C10",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C09"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт media output с NEXUS",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C11",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C10"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт delivery/view с EXPERIENCE",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C12",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C11"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Негативные тесты вредоносных media metadata",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C13",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C12"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Staging E2E upload→process→publish→revoke",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C14",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C13"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Независимый asset/license/security review",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-C15",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C14"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Выполнить source-pinned интеграционный E2E в staging",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-D01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-C15"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Получить независимое security+CODEOWNERS review без саморевью",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-D02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-D01"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Провести backup/restore и rollback rehearsal на реальном окружении",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-D03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-D02"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Измерить latency, error budget, alerts и on-call готовность",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-D04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-D03"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать отдельное owner GO/NO-GO с полным реестром доказательств",
+      "display_team": "GENESIS MEDIA",
+      "id": "M182-GENESIS-D05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-GENESIS-D04"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "GENESIS"
+    },
+    {
+      "acceptance_evidence": "Ссылка на репозиторий; read-only Git SHA; владелец подтверждает соответствие продукта",
+      "canonical_upstream_sha": null,
+      "description": "Привязать канонический upstream Git commit, владельца и ветку",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-A01",
+      "independent_reviewer": null,
+      "local_dependencies": [],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Original source ZIP+SHA, task crosswalk, конкретный оригинальный ID",
+      "canonical_upstream_sha": null,
+      "description": "Подтвердить происхождение M181, задачу и исходные зависимости",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-A02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-A01"
+      ],
+      "owner": null,
+      "phase": "A",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Назначить CODEOWNERS и read-only ACL карту",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-A02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Проверить SSO/IAM/RBAC для доменного контура",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B01"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать secrets, keys и принцип минимальных прав",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B02"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Составить SBOM/лицензии, запретить неподтверждённые зависимости",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B03"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать boundary sandbox/network/tenants",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B04"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Утвердить immutable schema и версионирование API",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B05"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Подготовить безопасные миграции и rollback",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B06"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Проверенная модель угроз, CI negative case и два раздельных reviewer evidence",
+      "canonical_upstream_sha": null,
+      "description": "Определить negative security tests и evidence retention",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-B08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B07"
+      ],
+      "owner": null,
+      "phase": "B",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Реестр исследовательских гипотез и источников",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-B08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Разделение симуляции и production фактов",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C01"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Детерминированное воспроизведение расчётов",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C02"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контроль целостности ledger исследовательских фактов",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C03"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Сведение экономических допущений и uncertainty",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C04"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Негативные тесты stale и manipulated evidence",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C06",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C05"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Identity/authorization голосований и подписей",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C07",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C06"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Защита от replay/double-count в vote evidence",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C08",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C07"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Сравнение результатов экспериментов по версиям",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C09",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C08"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Observability для источников/датасетов",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C10",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C09"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт событий COMMERCE→ORBITAL",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C11",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C10"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Контракт model metrics NEXUS→ORBITAL",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C12",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C11"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Audit trail с signed checkpoints",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C13",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C12"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "E2E research→review→decision без auto-GO",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C14",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C13"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Патч только в своей ветке, точный Git SHA, positive+negative tests, staging proof",
+      "canonical_upstream_sha": null,
+      "description": "Независимое scientific/economic/security review",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-C15",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C14"
+      ],
+      "owner": null,
+      "phase": "C",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Выполнить source-pinned интеграционный E2E в staging",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-D01",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-C15"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Получить независимое security+CODEOWNERS review без саморевью",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-D02",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-D01"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Провести backup/restore и rollback rehearsal на реальном окружении",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-D03",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-D02"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Измерить latency, error budget, alerts и on-call готовность",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-D04",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-D03"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    },
+    {
+      "acceptance_evidence": "Подписанные независимые доказательства; без подмены local PASS на production GO",
+      "canonical_upstream_sha": null,
+      "description": "Зафиксировать отдельное owner GO/NO-GO с полным реестром доказательств",
+      "display_team": "ORBITAL",
+      "id": "M182-ORBITAL-D05",
+      "independent_reviewer": null,
+      "local_dependencies": [
+        "M182-ORBITAL-D04"
+      ],
+      "owner": null,
+      "phase": "D",
+      "planning_only": true,
+      "source_task_id": null,
+      "status": "NOT_ACCEPTED",
+      "team": "ORBITAL"
+    }
+  ],
+  "team_counts": {
+    "COMMERCE": 30,
+    "EXPERIENCE": 30,
+    "GENESIS": 30,
+    "NEXUS": 30,
+    "ORBITAL": 30,
+    "TITAN": 30
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "files": {
+    "README_RU.md": {
+      "bytes": 6886,
+      "sha256": "643fbc5d9b8aed715677e0360b38760599e8b9d4ff3b7e61266cebf67d135f20"
+    },
+    "__init__.py": {
+      "bytes": 68,
+      "sha256": "138ec1da0cee1d0cd467637924f5ff249e2b8400daf6b32d24aea695701d0ff2"
+    },
+    "__main__.py": {
+      "bytes": 79,
+      "sha256": "bd045ddd5242d002f692dac452be9afba38deef5cde541a5fc074bfef5987b91"
+    },
+    "cli.py": {
+      "bytes": 3779,
+      "sha256": "9da7dd7525530ce7f6467e47bde3988ff2fc2dbb10d1f903ebb1018cc390e72f"
+    },
+    "ledger.py": {
+      "bytes": 19047,
+      "sha256": "4d2b66bd1c17922a0b0c02ab78d7b91ccae3d4299d6e8d51049c9a52926df2c1"
+    },
+    "smoke.py": {
+      "bytes": 3165,
+      "sha256": "de7b34c10b7119faf9e351395b4063633ec5c8346424181f8abd88b4509f8893"
+    },
+    "tests/test_ledger.py": {
+      "bytes": 12996,
+      "sha256": "606fef5789afc589039d35c05da831fb9ba4ae0547437f0d5c17e73d46f23f48"
+    },
+    "verify_source.py": {
+      "bytes": 1334,
+      "sha256": "f27269ddc9527a656bc9bed860d69e913ac79f6cfe49de8f6e401ededb4a8fc3"
+    }
+  },
+  "schema": "osgard.m190.source-manifest/1"
+}

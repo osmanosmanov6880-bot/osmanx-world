@@ -1,0 +1,63 @@
+name: TITAN Original X11-X15 Exact Tasks
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/campaign180/queue.py"
+      - "supreme-director/campaign180/campaign180/effect_outbox.py"
+      - "supreme-director/campaign180/campaign180/scheduler.py"
+      - "supreme-director/campaign180/campaign180/gateway.py"
+      - "supreme-director/campaign180/tests/test_titan_x11_x15.py"
+      - ".github/workflows/titan-original-x11-x15.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: titan-x11-x15-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  titan-x11-x15:
+    name: X11-X15 SQLite and scheduler integration (${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11','3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Compile original five changed modules
+        run: |
+          python -m py_compile supreme-director/campaign180/campaign180/queue.py
+          python -m py_compile supreme-director/campaign180/campaign180/effect_outbox.py
+          python -m py_compile supreme-director/campaign180/campaign180/gateway.py
+          python -m py_compile supreme-director/campaign180/campaign180/scheduler.py
+          python -m py_compile supreme-director/campaign180/tests/test_titan_x11_x15.py
+      - name: X11-X15 direct tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x11_x15.py' -v
+      - name: Queue/gateway/scheduler compatibility tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_access_queue.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_gateway_flow.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_scheduler_backup.py' -v
+      - name: Record honest original acceptance gate
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.audit import audit_original
+          report=audit_original(Path("."))
+          assert report["counts"]["independently_accepted"]==0
+          assert report["counts"]["production_accepted"]==0
+          assert report["counts"]["upstream_approved"]==0
+          print("X11_X15_LOCAL_ONLY_ORIGINAL_UPSTREAM_BLOCKED")
+          PY

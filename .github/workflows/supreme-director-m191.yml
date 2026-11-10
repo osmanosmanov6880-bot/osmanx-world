@@ -1,0 +1,39 @@
+name: OSGARD Supreme Director M191 disaster recovery
+on:
+  push:
+    branches:
+      - recovery/supreme-director-m187-20261104
+    paths:
+      - "supreme-director/m191/**"
+      - ".github/workflows/supreme-director-m191.yml"
+  pull_request:
+    paths:
+      - "supreme-director/m191/**"
+      - ".github/workflows/supreme-director-m191.yml"
+# Preserve the check; cancel only superseded runs for this same event/ref.
+concurrency:
+  group: director-m191-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install pinned M189 signature verification dependency
+        run: python3 -m pip install -r supreme-director/local-kit/requirements-m185.txt
+      - name: Verify exact M191 source SHA-256 manifest
+        run: python3 supreme-director/m191/verify_source.py
+      - name: M191 fault injection, anchored backup and restore regression tests
+        env:
+          PYTHONPATH: supreme-director
+        run: python3 -m unittest discover -s supreme-director/m191/tests -p 'test_*.py' -v
+      - name: Real M189-M190-M191 synthetic integration smoke
+        env:
+          PYTHONPATH: supreme-director
+        run: python3 supreme-director/m191/smoke.py
