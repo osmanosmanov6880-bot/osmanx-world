@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from hashlib import sha256
 from html import escape
+import io
+import zipfile
 import json
 import re
 from typing import Any, Mapping
@@ -359,3 +361,122 @@ def render_site(raw:dict, *, datasets:Mapping[str,list[dict]] | None=None)->dict
             'Локальное превью · без публикации · '+title+'</small></footer></body></html>'
         out[_href(p["slug"])]=doc.encode("utf-8")
     return dict(sorted(out.items()))
+
+
+# TITAN-X17: independently verifiable, reproducible offline code bundle.
+# This is static HTML/CSS generation from a strict, human-reviewed SiteSpec.
+# It does NOT execute user code, publish assets or authorize real product release.
+BUNDLE_SCHEMA="osgard.original180.verified-site-code/1"
+MAX_SITE_ZIP=1024*1024
+
+def _sha256(data:bytes)->str:
+    return sha256(data).hexdigest()
+
+def compile_verified_site(raw:dict,*,expected_spec_sha256:str,
+                          datasets:Mapping[str,list[dict]]|None=None)->dict:
+    """X17: exact specification hash -> deterministic static source archive.
+
+    Output is a ZIP of rendered HTML files plus a canonical machine-readable
+    manifest containing their digests. Uses fixed timestamps, ordering, mode
+    and compression to guarantee byte-identical builds on supported Python.
+    """
+    import re as _re
+    if (type(expected_spec_sha256) is not str or
+        not _re.fullmatch(r"[a-f0-9]{64}",expected_spec_sha256)):
+        raise SiteSpecDenied("Trusted exact source specification SHA256 required")
+    spec=validate_site_spec(raw)
+    actual=_sha256(canonical(spec))
+    if actual!=expected_spec_sha256:
+        raise SiteSpecDenied("Site specification changed since source approval")
+    files=render_site(spec,datasets=datasets)
+    if not files or len(files)>MAX_PAGES or any(
+        name!="index.html" and not _re.fullmatch(r"[a-z][a-z0-9-]{0,39}\.html",name)
+        for name in files):
+        raise SiteSpecDenied("Generated output names violate static code policy")
+    resolved_datasets={} if datasets is None else datasets
+    # Canonical input digest binds any data used for reproducible previews.
+    if not isinstance(resolved_datasets,Mapping):
+        raise SiteSpecDenied("Preview datasets must be structured mapping")
+    data_sha=_sha256(canonical(resolved_datasets))
+    manifest={"schema":BUNDLE_SCHEMA,"tenant_id":spec["tenant_id"],
+              "project_id":spec["project_id"],
+              "spec_sha256":actual,"datasets_sha256":data_sha,
+              "generator":"campaign180.builder.render_site/1",
+              "files":[{"path":name,"size":len(body),
+                        "sha256":_sha256(body)} for name,body in sorted(files.items())],
+              "network_resources":False,"arbitrary_code_execution":False,
+              "production_published":False}
+    manifest_bytes=canonical(manifest)
+    all_files={**files,"site-build-manifest.json":manifest_bytes}
+    with io.BytesIO() as mem:
+        with zipfile.ZipFile(mem,"w",compression=zipfile.ZIP_STORED) as archive:
+            for name,body in sorted(all_files.items()):
+                info=zipfile.ZipInfo(name,(1980,1,1,0,0,0))
+                info.compress_type=zipfile.ZIP_STORED
+                info.external_attr=0o100644<<16
+                archive.writestr(info,body)
+        content=mem.getvalue()
+    if len(content)>MAX_SITE_ZIP:
+        raise SiteSpecDenied("Verified site archive exceeds bounded size")
+    return {"schema":BUNDLE_SCHEMA,"bundle":content,
+            "bundle_sha256":_sha256(content),
+            "manifest_sha256":_sha256(manifest_bytes),
+            "spec_sha256":actual,"files":len(files),
+            "production_published":False}
+
+def verify_compiled_site(content:bytes,*,expected_bundle_sha256:str,
+                         expected_spec_sha256:str)->dict:
+    """Offline verification against trusted independently retained hashes."""
+    import re as _re
+    if (type(content) is not bytes or not 0<len(content)<=MAX_SITE_ZIP or
+        type(expected_bundle_sha256) is not str or
+        not _re.fullmatch(r"[a-f0-9]{64}",expected_bundle_sha256) or
+        type(expected_spec_sha256) is not str or
+        not _re.fullmatch(r"[a-f0-9]{64}",expected_spec_sha256)):
+        raise SiteSpecDenied("Exact bounded archive and hashes required")
+    if _sha256(content)!=expected_bundle_sha256:
+        raise SiteSpecDenied("Generated source archive digest mismatch")
+    try:
+        with zipfile.ZipFile(io.BytesIO(content),"r") as archive:
+            info=archive.infolist()
+            names=[x.filename for x in info]
+            if (len(names)>MAX_PAGES+1 or len(names)<2 or
+                len(set(names))!=len(names) or
+                names!=sorted(names) or
+                "site-build-manifest.json" not in names or
+                any(x.is_dir() or x.file_size>MAX_SPEC_BYTES*4 or
+                    x.compress_type!=zipfile.ZIP_STORED or
+                    (x.external_attr>>16)!=0o100644 or
+                    x.date_time!=(1980,1,1,0,0,0) for x in info)):
+                raise SiteSpecDenied("Unsafe or nondeterministic archive entries")
+            raw=archive.read("site-build-manifest.json")
+            manifest=json.loads(raw)
+            if type(manifest) is not dict or canonical(manifest)!=raw:
+                raise SiteSpecDenied("Build manifest is not canonical")
+            if (manifest.get("schema")!=BUNDLE_SCHEMA or
+                manifest.get("spec_sha256")!=expected_spec_sha256 or
+                manifest.get("production_published") is not False or
+                manifest.get("arbitrary_code_execution") is not False):
+                raise SiteSpecDenied("Build manifest contract or source mismatch")
+            paths=manifest.get("files")
+            if (type(paths) is not list or len(paths)!=len(info)-1 or
+                {x.get("path") for x in paths if type(x) is dict}!=
+                (set(names)-{"site-build-manifest.json"})):
+                raise SiteSpecDenied("Archive file list differs from manifest")
+            for entry in paths:
+                if (type(entry) is not dict or
+                    set(entry)!={"path","size","sha256"} or
+                    type(entry["path"]) is not str or
+                    entry["path"]!="index.html" and not _re.fullmatch(
+                        r"[a-z][a-z0-9-]{0,39}\.html",entry["path"])):
+                    raise SiteSpecDenied("Invalid source artifact path")
+                body=archive.read(entry["path"])
+                if len(body)!=entry["size"] or _sha256(body)!=entry["sha256"]:
+                    raise SiteSpecDenied("Compiled source artifact was changed")
+            return {"schema":BUNDLE_SCHEMA,"spec_sha256":expected_spec_sha256,
+                    "manifest_sha256":_sha256(raw),
+                    "bundle_sha256":expected_bundle_sha256,
+                    "files_verified":len(paths),"reproducible_source_verified":True,
+                    "production_published":False}
+    except (zipfile.BadZipFile,KeyError,UnicodeError,ValueError,TypeError) as exc:
+        raise SiteSpecDenied("Verified code archive validation failed") from exc
