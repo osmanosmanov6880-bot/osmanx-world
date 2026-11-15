@@ -397,7 +397,8 @@ class LocalAppRuntime:
             spec,_=self.drafts._head(db,tenant,project_id)
             self._rule(spec,rule)
             event_hash=digest({"workflow_id":workflow_id,"event_id":event_id,
-                               "trigger":trigger,"row_id":row_id})
+                               "trigger":trigger,"row_id":row_id,
+                               "rule_sha256":found["spec_digest"]})
             old=db.execute("""SELECT run_digest,response_json FROM app_workflow_runs
                 WHERE tenant=? AND project_id=? AND workflow_id=? AND event_id=?""",
                 (tenant,project_id,workflow_id,event_id)).fetchone()

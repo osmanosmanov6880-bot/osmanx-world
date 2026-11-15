@@ -25,6 +25,7 @@ from .revision_restore import LocalRevisionRestorer
 from .mapped_relations import LocalMappedReferenceMigration
 from .project_recovery import LocalProjectRecovery
 from .recovery_drill import LocalRecoveryDrill
+from .visual_builder import LocalVisualBuilder
 from .builder import validate_site_spec
 from .contracts import ACTOR_RE,TENANT_RE
 from .drafts import DraftDenied,_identity
@@ -78,6 +79,7 @@ class LocalConsole:
         self.mapped=LocalMappedReferenceMigration(self.runtime)
         self.recovery=LocalProjectRecovery(self.runtime)
         self.recovery_drill=LocalRecoveryDrill(self.runtime)
+        self.visual=LocalVisualBuilder(self.runtime)
         # Fail early when the trusted local principal was not provisioned.
         self.runtime.policy.get_role(tenant=tenant,project_id=project_id,actor=actor)
 
@@ -190,6 +192,45 @@ class LocalConsole:
             return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/spec":
             out=runtime.get_spec(tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        # X21-X25: use the server-bound identity exclusively.
+        if method=="POST" and path=="/api/v1/forms/submit":
+            data=self._body(environ)
+            self._fields(data,{"slug","section_index","expected_revision",
+                               "data","idempotency_key"},
+                              {"slug","section_index","expected_revision",
+                               "data","idempotency_key"})
+            out=self.visual.submit_form(tenant=tid,project_id=project,
+                                        actor=actor,**data)
+            return self._json(start_response,"201 Created",out)
+        if method=="GET" and path=="/api/v1/members":
+            out=self.visual.list_members(tenant=tid,project_id=project,actor=actor)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/revisions/compare":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision","target_revision"},
+                              {"expected_revision","target_revision"})
+            out=self.visual.compare_revisions(tenant=tid,project_id=project,
+                                              actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        if method=="POST" and path=="/api/v1/staging/inspect":
+            data=self._body(environ)
+            self._fields(data,{"expected_revision"},{"expected_revision"})
+            out=self.visual.inspect_staging(tenant=tid,project_id=project,
+                                            actor=actor,**data)
+            return self._json(start_response,"200 OK",out)
+        match=re.fullmatch(r"/api/v1/workflows/("+_UUID.pattern[1:-1]+r")/(inspect|replace)",path)
+        if method=="POST" and match:
+            workflow_id,operation=match.groups()
+            data=self._body(environ)
+            if operation=="inspect":
+                self._fields(data,{"row_id"},{"row_id"})
+                out=self.visual.inspect_workflow(tenant=tid,project_id=project,
+                    actor=actor,workflow_id=workflow_id,**data)
+            else:
+                self._fields(data,{"expected_revision","rule"},{"expected_revision","rule"})
+                out=self.visual.replace_workflow(tenant=tid,project_id=project,
+                    actor=actor,workflow_id=workflow_id,**data)
             return self._json(start_response,"200 OK",out)
         if method=="GET" and path=="/api/v1/workflows":
             out=runtime.list_workflows(tenant=tid,project_id=project,actor=actor)

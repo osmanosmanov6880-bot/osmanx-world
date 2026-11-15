@@ -138,3 +138,8 @@ All 17 pre-existing M187/M191-M206 workflow checks retain their test steps and e
 - Canonical upstream KRAKEN/DevSwarm/Command approval and independent acceptance are missing. Source release remains NO-GO; nothing deployed.
 
 **X16–X20 final local QA (2026-11-10):** [Python 3.11/3.13 PASS](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126765) and [real Chromium/mobile page-lifecycle PASS](https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126405). Canonical product acceptance still BLOCKED_UPSTREAM.
+
+
+## TITAN-X21-X25 — локальные расширения (2026-11-16)
+
+Интегрированы формы с транзакционным вводом, workflow inspection и версионирование, проверка прав, сравнение ревизий и staging preflight; без публичного выпуска. [Технический отчёт](docs/TITAN_X21_X25_EXECUTION_RU.md) и [негативные тесты](tests/test_titan_x21_x25.py). Независимая приёмка 180 оригинальных задач по-прежнему не подтверждена.

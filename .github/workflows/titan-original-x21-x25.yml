@@ -1,0 +1,55 @@
+name: TITAN Original X21-X25 Local Integrations
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/campaign180/visual_builder.py"
+      - "supreme-director/campaign180/campaign180/app_runtime.py"
+      - "supreme-director/campaign180/campaign180/local_http.py"
+      - "supreme-director/campaign180/tests/test_titan_x21_x25.py"
+      - ".github/workflows/titan-original-x21-x25.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: titan-original-x21-x25
+  cancel-in-progress: true
+jobs:
+  local-visual-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ["3.11", "3.13"]
+      - name: Syntax and module compilation
+        run: python -m compileall -q supreme-director/campaign180/campaign180
+      - name: X21-X25 integration and negative tests
+        env:
+          PYTHONPATH: supreme-director/campaign180
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x21_x25.py' -v
+      - name: Prior builder, app, workflow and recovery regressions
+        env:
+          PYTHONPATH: supreme-director/campaign180
+        run: |
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_app_console.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_builder_drafts_records_preview.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x16_x20.py' -v
+      - name: Original 180 independent acceptance remains blocked
+        env:
+          PYTHONPATH: supreme-director/campaign180
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.audit import audit_original
+          result = audit_original(Path("."))
+          assert result["counts"]["independently_accepted"] == 0
+          assert result["counts"]["production_accepted"] == 0
+          print("LOCAL_X21_X25_ONLY_UPSTREAM_BLOCKED")
+          PY
