@@ -60,7 +60,7 @@ jobs:
 
       - name: Verify public HTTPS content
         env:
-          EXPECTED_MARKER: "osmanx-deploy-probe: 2026-11-16-e2e"
+          EXPECTED_MARKER: "osmanx-horeca-section: 2026-11-16"
         run: |
           set -euo pipefail
           response="$(curl -fLsS --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -H 'Cache-Control: no-cache' "https://osmanx.world/?__deploy_verify=${GITHUB_SHA}")"

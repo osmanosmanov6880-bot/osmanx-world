@@ -36,13 +36,48 @@
     .contact{display:flex;justify-content:space-between;align-items:end;gap:40px;padding-bottom:110px}
     .contact p{max-width:540px;color:var(--muted);font-size:18px}
     footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:13px}
+
+    /* OSMANX HOSPITALITY: premium, responsive services presentation */
+    .hospitality{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(155deg,#181d1a 0%,#121713 53%,#1b1a16 100%)}
+    .hospitality::before{content:"";position:absolute;pointer-events:none;z-index:-1;width:640px;height:640px;top:-370px;right:-230px;border-radius:50%;background:radial-gradient(circle,#a58a5140 0%,transparent 66%)}
+    .hospitality-topline{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:26px}
+    .hospitality-tag{font-size:11px;letter-spacing:.08em;color:#bdc1b6;border:1px solid #46473c;padding:8px 12px}
+    .hospitality-lead{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(230px,.65fr);gap:62px;align-items:end}
+    .hospitality-lead h2{font-size:clamp(48px,6.1vw,84px);margin:0 0 24px;letter-spacing:-.055em}
+    .hospitality-lead h2 em{color:var(--gold);font-style:normal}
+    .hospitality-lead .section-intro{max-width:700px;line-height:1.7;color:#c7cbc0}
+    .hospitality-note{padding:20px 0 0 22px;border-left:1px solid #af935b;max-width:300px}
+    .hospitality-note b{display:block;font-size:13px;font-weight:650;letter-spacing:.03em;color:#e8d1a8;margin-bottom:12px}
+    .hospitality-note p{font-size:14px;line-height:1.7;color:#aeb3a7;margin:0}
+    .hospitality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:53px}
+    .hospitality-card{display:flex;flex-direction:column;min-height:288px;padding:30px 27px;background:#1b211dc9;border:1px solid #394138;transition:border-color .2s,transform .2s}
+    .hospitality-card:hover{border-color:#b59864;transform:translateY(-3px)}
+    .hospitality-card .h-number{font:600 12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.12em;color:#d8b77a}
+    .hospitality-card h3{font-size:25px;line-height:1.19;letter-spacing:-.028em;margin:40px 0 13px;font-weight:620}
+    .hospitality-card p{font-size:14px;line-height:1.75;color:#b9c0b5;margin:0}
+    .hospitality-method{display:grid;grid-template-columns:minmax(0,.77fr) minmax(0,1.23fr);gap:55px;margin-top:24px;padding:35px 0 34px;border-top:1px solid #414439}
+    .hospitality-method h3{font-size:28px;line-height:1.17;letter-spacing:-.035em;font-weight:600;margin:9px 0 13px}
+    .hospitality-method p{font-size:14px;line-height:1.75;color:#b7bcb2;margin:0}
+    .hospitality-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .hospitality-steps .h-step{border-top:1px solid #8b7957;padding-top:12px}
+    .hospitality-steps .h-step small{display:block;font-size:11px;color:#d8b77a;letter-spacing:.11em;margin-bottom:17px}
+    .hospitality-steps .h-step strong{display:block;font-size:15px;font-weight:650;margin-bottom:7px}
+    .hospitality-steps .h-step span{display:block;font-size:13px;line-height:1.6;color:#aeb6ac}
+    .hospitality-cta{display:flex;justify-content:space-between;align-items:center;gap:28px;background:linear-gradient(100deg,#292b23,#1d231e);padding:30px 35px;border:1px solid #4a4b3c}
+    .hospitality-cta h3{font-size:24px;letter-spacing:-.027em;font-weight:600;margin:0 0 7px}
+    .hospitality-cta p{font-size:13px;line-height:1.65;color:#b7bdb1;margin:0}
+    .hospitality-cta .button{flex-shrink:0}
     @media(max-width:800px){.hero{grid-template-columns:1fr;gap:42px;min-height:auto;padding:76px 0}.visual{min-height:330px}.grid{grid-template-columns:1fr}.process{grid-template-columns:1fr 1fr}.contact{display:block}nav{gap:14px;font-size:12px}}
     @media(max-width:480px){.wrap{width:min(100% - 28px,1160px)}header{height:66px}nav a:nth-child(2){display:none}.hero{padding:58px 0}.lead{font-size:17px}.visual{min-height:270px}section{padding:72px 0}.process{grid-template-columns:1fr}.actions .button{width:100%}}
+
+    @media(max-width:950px){.hospitality-lead{gap:25px}.hospitality-card{padding:24px 20px}.hospitality-method{grid-template-columns:1fr;gap:22px}}
+    @media(max-width:800px){.hospitality-lead{grid-template-columns:1fr}.hospitality-note{max-width:none}.hospitality-grid{grid-template-columns:1fr;gap:12px}.hospitality-card{min-height:0}.hospitality-card h3{margin:22px 0 9px}.hospitality-method{margin-top:22px}.hospitality-cta{padding:23px;flex-wrap:wrap}}
+    @media(max-width:480px){.hospitality-topline{flex-wrap:wrap}.hospitality-lead h2{font-size:clamp(43px,11vw,59px)}.hospitality-steps{grid-template-columns:1fr;gap:19px}.hospitality-steps .h-step small{margin-bottom:8px}.hospitality-note{padding-left:17px}.hospitality-cta .button{width:100%}nav{gap:11px;font-size:11px}nav a:nth-child(2){display:inline}nav a:nth-child(3){display:none}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
   </style>
 </head>
 <body>
-<header><div class="wrap nav"><a class="brand" href="#">OSMAN<span>X</span></a><nav aria-label="Основная навигация"><a href="#services">Услуги</a><a href="#approach">Подход</a><a href="#contact">Контакт</a></nav></div></header>
+<header><div class="wrap nav"><a class="brand" href="#">OSMAN<span>X</span></a><nav aria-label="Основная навигация"><a href="#services">Услуги</a><a href="#horeca">Кофейням</a><a href="#approach">Подход</a><a href="#contact">Контакт</a></nav></div></header>
 <main>
   <div class="wrap hero">
     <div><div class="eyebrow">Цифровая разработка · Дизайн · Запуск</div><h1>Идея,<br>которая становится продуктом.</h1><p class="lead">Создаю сайты и мобильные приложения для бизнеса: продумываю структуру, проектирую интерфейс и довожу решение до запуска.</p><div class="actions"><a class="button" href="#contact">Обсудить проект</a><a class="button secondary" href="#services">Что я делаю</a></div></div>
@@ -53,6 +88,37 @@
     <article class="card"><div class="num">02 / MOBILE</div><h3>Мобильные приложения</h3><p>Приложения для iOS и Android, которые упрощают взаимодействие клиентов с вашим бизнесом.</p></article>
     <article class="card"><div class="num">03 / PRODUCT</div><h3>Дизайн и запуск</h3><p>Исследование задачи, прототип, интерфейс, разработка, проверка и подготовка к запуску.</p></article>
   </div></div></section>
+
+  <!-- osmanx-horeca-section: 2026-11-16 -->
+  <section id="horeca" class="hospitality" aria-labelledby="horeca-title">
+    <div class="wrap">
+      <div class="hospitality-topline"><div class="eyebrow">OSMANX / HOSPITALITY</div><div class="hospitality-tag">Для независимых заведений и сетей</div></div>
+      <div class="hospitality-lead">
+        <div>
+          <h2 id="horeca-title">Для кофеен<br>и <em>ресторанов.</em></h2>
+          <p class="section-intro">Не просто цифровое меню. Помогаю выстроить путь гостя — от первого заказа до следующего визита — и находить точки роста на основе реальной обратной связи и операционных данных.</p>
+        </div>
+        <aside class="hospitality-note"><b>Сначала задача бизнеса.</b><p>Система должна помогать принимать решения, а не превращаться в ещё одно приложение, которое никто не открывает.</p></aside>
+      </div>
+      <div class="hospitality-grid">
+        <article class="hospitality-card"><div class="h-number">01 / ОБРАТНАЯ СВЯЗЬ</div><h3>Понять, что<br>теряет заведение.</h3><p>Короткие опросы после визита, анализ причин недовольства и проверяемые гипотезы: что мешает гостям возвращаться.</p></article>
+        <article class="hospitality-card"><div class="h-number">02 / ЗАКАЗЫ И СЕРВИС</div><h3>Сделать путь<br>гостя проще.</h3><p>QR-меню, предзаказ, удобные цифровые сценарии и понятная передача заказов — с учётом реальной работы команды.</p></article>
+        <article class="hospitality-card"><div class="h-number">03 / ПОВТОРНЫЕ ВИЗИТЫ</div><h3>Дать причину<br>вернуться.</h3><p>Лояльность, предложения с согласия гостей и измерение отклика: не раздавать скидки вслепую, а тестировать, что работает.</p></article>
+      </div>
+      <div class="hospitality-method">
+        <div><div class="eyebrow">Мой подход</div><h3>Не обещание роста.<br>Проверка результата.</h3><p>Начинаем с конкретной проблемы заведения, фиксируем исходные показатели и проверяем одно изменение за раз.</p></div>
+        <div class="hospitality-steps">
+          <div class="h-step"><small>01 / ДИАГНОСТИКА</small><strong>Найти потери</strong><span>Разбираем путь гостя, загрузку и причины отказов.</span></div>
+          <div class="h-step"><small>02 / РЕШЕНИЕ</small><strong>Собрать инструмент</strong><span>Выбираем только нужные функции для заведения.</span></div>
+          <div class="h-step"><small>03 / ПРОВЕРКА</small><strong>Измерить эффект</strong><span>Сравниваем показатели и отмечаем ограничения данных.</span></div>
+        </div>
+      </div>
+      <div class="hospitality-cta">
+        <div><h3>У вас кофейня или ресторан?</h3><p>Опишите одну проблему — обсудим, какую цифровую систему имеет смысл внедрять.</p></div>
+        <a class="button" href="mailto:hello@osmanx.world?subject=OSMANX%20%E2%80%94%20%D0%BA%D0%BE%D1%84%D0%B5%D0%B9%D0%BD%D1%8F%20%D0%B8%D0%BB%D0%B8%20%D1%80%D0%B5%D1%81%D1%82%D0%BE%D1%80%D0%B0%D0%BD">Обсудить заведение</a>
+      </div>
+    </div>
+  </section>
   <section id="approach"><div class="wrap"><div class="eyebrow">Рабочий процесс</div><h2>Чётко по этапам.</h2><div class="process">
     <div class="step"><b>Понять задачу</b><p>Цели, аудитория, ограничения и критерии результата.</p></div>
     <div class="step"><b>Спроектировать</b><p>Структура и интерактивный прототип до основной разработки.</p></div>
