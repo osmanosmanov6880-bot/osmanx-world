@@ -1,0 +1,62 @@
+[
+  {
+    "id": "retail",
+    "category": "БИЗНЕС",
+    "name": "Retail Intelligence",
+    "label": "Розница и магазины",
+    "description": "Анонимная обратная связь, пилоты, проверяемые гипотезы, операционная аналитика и контроль внедрения.",
+    "status": "Инженерная версия",
+    "url": "https://github.com/osmanosmanov6880-bot/osmanx-retail-intelligence",
+    "access": "Исходный код, локальный запуск"
+  },
+  {
+    "id": "omnichat",
+    "category": "КОММУНИКАЦИИ",
+    "name": "OSMANX OmniChat",
+    "label": "Единый центр сообщений",
+    "description": "Очереди входящих и исходящих, контроль доставки, диагностика и мультиканальные рабочие процессы.",
+    "status": "Инженерная версия",
+    "url": "https://github.com/osmanosmanov6880-bot/osmanx-omnichat",
+    "access": "Исходный код, интеграции требуют настройки"
+  },
+  {
+    "id": "factory",
+    "category": "РАЗРАБОТКА",
+    "name": "OSMANX App Factory",
+    "label": "Создание цифровых продуктов",
+    "description": "Среда разработки сайтов, CRM и публикаций с контролем релизов и техническими проверками.",
+    "status": "Preview",
+    "url": "https://github.com/osmanosmanov6880-bot/osmanx-app-factory",
+    "access": "Исходный код, тестовые среды"
+  },
+  {
+    "id": "hospitality",
+    "category": "БИЗНЕС",
+    "name": "Для кофеен и ресторанов",
+    "label": "Цифровой сервис для гостей",
+    "description": "Обратная связь, QR-сценарии, предзаказы и проверка повторных посещений. Внедрение обсуждается отдельно.",
+    "status": "Услуги / консультация",
+    "url": "https://osmanx.world/#horeca",
+    "access": "Открыть коммерческое предложение"
+  },
+  {
+    "id": "osgard",
+    "category": "ИГРЫ",
+    "name": "OSGARD / NEBULA",
+    "label": "Игровые миры и эксперименты",
+    "description": "Разработка игровой экосистемы и технологические эксперименты. Статус отдельных релизов уточняется в проекте.",
+    "status": "В разработке",
+    "url": "https://github.com/osmanosmanov6880-bot/osgard-world",
+    "access": "Открыть репозиторий"
+  },
+  {
+    "id": "senqard",
+    "category": "ПЛАТФОРМА",
+    "name": "SENQARD",
+    "label": "Управление командами и проектами",
+    "description": "Закрытая платформа. Текущая конфигурация не объявлена готовой к работе с клиентскими данными.",
+    "status": "Доступ по запросу",
+    "url": null,
+    "access": "Запросите презентацию"
+  }
+]

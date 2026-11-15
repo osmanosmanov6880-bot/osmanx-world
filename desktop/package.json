@@ -1,0 +1,50 @@
+{
+  "name": "osmanx-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OSMANX Desktop: offline project hub and work notes",
+  "main": "main.cjs",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs && node --check main.cjs && node --check preload.cjs && node --check renderer/ui.js",
+    "dist:win": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.3.3",
+    "electron-builder": "26.18.1"
+  },
+  "build": {
+    "appId": "world.osmanx.desktop",
+    "productName": "OSMANX Desktop",
+    "copyright": "© OSMANX",
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "catalog.json",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "OSMANX-Desktop-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "OSMANX Desktop",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

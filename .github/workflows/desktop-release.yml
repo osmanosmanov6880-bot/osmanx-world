@@ -1,0 +1,116 @@
+name: Build and publish OSMANX Desktop for Windows
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: desktop-v1.0.0
+  cancel-in-progress: false
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify desktop source and catalog
+        run: npm test
+      - name: Package Windows x64 installer
+        run: npm run dist:win
+      - name: Assert installer exists
+        shell: pwsh
+        run: |
+          $path = 'dist/OSMANX-Desktop-Setup-1.0.0.exe'
+          if (-not (Test-Path $path)) { throw 'Windows installer missing' }
+          $size=(Get-Item $path).Length
+          if ($size -lt 10000000) { throw 'Windows installer unexpectedly small' }
+          Write-Output "Installer size: $size bytes"
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: osmanx-desktop-windows
+          path: desktop/dist/OSMANX-Desktop-Setup-1.0.0.exe
+          if-no-files-found: error
+          retention-days: 30
+  publish:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: osmanx-desktop-windows
+          path: release
+      - name: Generate SHA-256 checksum
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum OSMANX-Desktop-Setup-1.0.0.exe > SHA256SUMS.txt
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-v1.0.0
+          name: OSMANX Desktop v1.0.0
+          draft: false
+          prerelease: false
+          make_latest: true
+          files: |
+            release/OSMANX-Desktop-Setup-1.0.0.exe
+            release/SHA256SUMS.txt
+          body: |
+            OSMANX Desktop v1.0.0 — Windows 10/11 x64.
+            Offline project catalog and private local task notebook, export/import JSON.
+            This application does not install backend platforms or connect customer databases.
+            Unsigned installer: Windows SmartScreen may display a warning.
+            Verify the supplied SHA256SUMS.txt before installation.
+      - name: Configure pinned VPS SSH host
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/osmanx_deploy
+          chmod 600 ~/.ssh/osmanx_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Deliver installer directly to osmanx.world VPS
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test "$DEPLOY_USER" = "deploy-osmanx"
+          ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'install -d -m 755 /var/www/osmanx.world/assets/downloads'
+          scp -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes release/OSMANX-Desktop-Setup-1.0.0.exe release/SHA256SUMS.txt "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/assets/downloads/"
+          local_sha="$(sha256sum release/OSMANX-Desktop-Setup-1.0.0.exe | cut -d ' ' -f1)"
+          remote_sha="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/assets/downloads/OSMANX-Desktop-Setup-1.0.0.exe' | cut -d ' ' -f1)"
+          test "$local_sha" = "$remote_sha"
+          echo "Windows installer copied to VPS; SHA-256 verified." >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify HTTPS download
+        run: |
+          set -euo pipefail
+          curl -fLsS -I --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 35 'https://osmanx.world/assets/downloads/OSMANX-Desktop-Setup-1.0.0.exe'
+          curl -fLsS --max-time 30 'https://osmanx.world/assets/downloads/SHA256SUMS.txt' | grep -F 'OSMANX-Desktop-Setup-1.0.0.exe'
+          echo "Public HTTPS installer link verified." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove private SSH files
+        if: always()
+        run: rm -f ~/.ssh/osmanx_deploy ~/.ssh/known_hosts

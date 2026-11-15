@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="dark"><title>OSMANX Desktop</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="identity"><div class="logo">OSMAN<span>X</span></div><small>DESKTOP WORKSPACE</small></div>
+    <div class="section-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+    <nav class="navigation" aria-label="Разделы">
+      <button data-view="portfolio" class="nav-item active"><span class="symbol">◈</span>Портфель продуктов</button>
+      <button data-view="tasks" class="nav-item"><span class="symbol">☰</span>Мои задачи <span id="nav-count" class="nav-count">0</span></button>
+      <button data-view="about" class="nav-item"><span class="symbol">◎</span>О приложении</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="connection"><span class="green-dot"></span> Работает без интернета</div><p>Проекты открываются во внешнем браузере. Заметки хранятся на этом ПК.</p><button id="open-site" class="side-link">OSMANX.WORLD <span>↗</span></button></div>
+  </aside>
+  <main class="content">
+    <header class="topbar"><span class="bread">OSMANX / <strong id="crumb">ПОРТФЕЛЬ</strong></span><span class="top-version" id="version">DESKTOP</span></header>
+    <section id="portfolio" class="view active">
+      <div class="eyebrow">ONE WORKSPACE / ALL PROJECTS</div>
+      <div class="hero"><h1>Все продукты.<br><em>Одно пространство.</em></h1><p>Каталог инженерных проектов OSMANX с реальными статусами. Держите задачи под рукой и открывайте нужный проект в браузере.</p></div>
+      <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Найти продукт или направление..." aria-label="Поиск проектов"></div>
+      <div id="filters" class="filters"><button class="filter active" data-filter="Все">Все</button><button class="filter" data-filter="БИЗНЕС">Бизнес</button><button class="filter" data-filter="РАЗРАБОТКА">Разработка</button><button class="filter" data-filter="КОММУНИКАЦИИ">Коммуникации</button><button class="filter" data-filter="ИГРЫ">Игры</button><button class="filter" data-filter="ПЛАТФОРМА">Платформы</button></div></div>
+      <div id="project-list" class="project-grid" aria-live="polite"></div>
+      <div class="subtle-note">Каталог не означает, что все проекты запущены в облаке. Инженерные версии требуют настройки и проверки перед использованием с клиентскими данными.</div>
+    </section>
+    <section id="tasks" class="view" hidden>
+      <div class="eyebrow">PRIVATE / LOCAL FIRST</div>
+      <div class="hero"><h1>Мои задачи.<br><em>Без лишнего шума.</em></h1><p>Небольшой локальный список задач по вашим проектам. Работает без входа и интернета. Никогда не сохраняйте здесь пароли или ключи доступа.</p></div>
+      <form id="task-form" class="task-form"><label for="task-title">Новое действие</label><div class="task-input-row"><input id="task-title" required maxlength="180" placeholder="Например: проверить веб-демо для кафе"><select id="task-project" aria-label="Проект"></select><button class="primary" type="submit">Добавить +</button></div></form>
+      <div class="task-controls"><span id="task-total">0 задач</span><div class="tool-buttons"><button id="task-import" class="quiet">Импорт JSON</button><button id="task-export" class="quiet">Экспорт JSON</button></div></div>
+      <div id="task-list" class="task-list" aria-live="polite"></div>
+    </section>
+    <section id="about" class="view" hidden>
+      <div class="eyebrow">DESIGNED FOR FOCUS</div><div class="hero"><h1>OSMANX.<br><em>Рабочий центр.</em></h1><p>Лёгкое локальное пространство для навигации по проектам и личных задач. Без аккаунта, скрытой синхронизации и сбора аналитики.</p></div>
+      <div class="about-grid"><article class="about-card"><small>ВЕРСИЯ</small><strong id="app-version">—</strong><p>Windows x64. Установщик не подписан издателем: Windows SmartScreen может показать предупреждение.</p></article><article class="about-card"><small>ХРАНЕНИЕ</small><strong>Локально на ПК</strong><p>Заметки остаются в профиле приложения. Для переноса используйте экспорт и импорт JSON.</p></article><article class="about-card"><small>ИНТЕРНЕТ</small><strong>Не обязателен</strong><p>Для открытия сайтов и репозиториев нужен интернет. Сам каталог и задачи доступны офлайн.</p></article></div>
+      <button id="about-site" class="primary">Открыть osmanx.world ↗</button>
+    </section>
+    <footer class="footer"><span>© OSMANX WORLD / DIGITAL PRODUCTS</span><span>PRIVATE BY DEFAULT · NO ACCOUNT</span></footer>
+  </main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="ui.js" defer></script></body></html>
