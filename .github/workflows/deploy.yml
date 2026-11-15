@@ -23,6 +23,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate Sovereign Edition assets
+        run: |
+          set -euo pipefail
+          test -s index.html
+          test -s assets/sovereign/workspace.html
+          node --check assets/sovereign/site.js
+          node --check assets/sovereign/workspace.js
+          test -s assets/sovereign/site.css
+          test -s assets/sovereign/workspace.css
+          test -s assets/sovereign/hero.webp
+
       - name: Configure SSH
         env:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
@@ -60,7 +71,7 @@ jobs:
 
       - name: Verify public HTTPS content
         env:
-          EXPECTED_MARKER: "osmanx-products-2026-11-16"
+          EXPECTED_MARKER: "osmanx-sovereign-live-v1"
         run: |
           set -euo pipefail
           response="$(curl -fLsS --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -H 'Cache-Control: no-cache' "https://osmanx.world/?__deploy_verify=${GITHUB_SHA}")"
@@ -69,6 +80,15 @@ jobs:
             exit 1
           fi
           echo "Public HTTPS served the expected deployment marker." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify live OSMANX workspaces over HTTPS
+        run: |
+          set -euo pipefail
+          for asset in /assets/sovereign/site.css /assets/sovereign/site.js /assets/sovereign/workspace.html /assets/sovereign/workspace.css /assets/sovereign/workspace.js /assets/sovereign/hero.webp; do
+            curl -fsSL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -o /dev/null "https://osmanx.world${asset}?release=${GITHUB_SHA}"
+          done
+          curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/sovereign/workspace.html?app=retail&release=${GITHUB_SHA}" | grep -Fq 'OSMANX — Рабочее пространство'
+          echo "Sovereign workspaces and static assets served over public HTTPS." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove temporary key
         if: always()
