@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101311">
-  <meta name="description" content="Осман — разработка сайтов и мобильных приложений для бизнеса. От идеи и дизайна до запуска.">
+  <meta name="description" content="OSMANX — цифровые решения для бизнеса: Retail Intelligence, OmniChat, App Factory, OSGARD и Desktop для Windows. Проекты, разработка и внедрение.">
   <title>Osman — цифровые продукты для бизнеса</title>
   <style>
     :root{color-scheme:dark;--bg:#101311;--panel:#181c19;--text:#f4f3ed;--muted:#a9ada4;--line:#303630;--gold:#d8b77a;--green:#b9c6a7}
@@ -73,14 +73,75 @@
     @media(max-width:950px){.hospitality-lead{gap:25px}.hospitality-card{padding:24px 20px}.hospitality-method{grid-template-columns:1fr;gap:22px}}
     @media(max-width:800px){.hospitality-lead{grid-template-columns:1fr}.hospitality-note{max-width:none}.hospitality-grid{grid-template-columns:1fr;gap:12px}.hospitality-card{min-height:0}.hospitality-card h3{margin:22px 0 9px}.hospitality-method{margin-top:22px}.hospitality-cta{padding:23px;flex-wrap:wrap}}
     @media(max-width:480px){.hospitality-topline{flex-wrap:wrap}.hospitality-lead h2{font-size:clamp(43px,11vw,59px)}.hospitality-steps{grid-template-columns:1fr;gap:19px}.hospitality-steps .h-step small{margin-bottom:8px}.hospitality-note{padding-left:17px}.hospitality-cta .button{width:100%}nav{gap:11px;font-size:11px}nav a:nth-child(2){display:inline}nav a:nth-child(3){display:none}}
+
+    /* OSMANX PRODUCT ECOSYSTEM — verified public references, not public backend claims */
+    .product-section{position:relative;overflow:hidden;background:#101714}
+    .product-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:26px}
+    .product-heading h2{margin:14px 0 17px;font-size:clamp(42px,5.8vw,74px)}
+    .product-heading h2 em{color:var(--gold);font-style:normal}
+    .product-heading p{max-width:630px;color:#afbcb0;font-size:16px;line-height:1.7;margin:0}
+    .product-heading aside{font-size:11px;line-height:1.7;max-width:230px;border-left:1px solid var(--gold);color:#b0b8ae;padding-left:19px}
+    .product-legend{display:flex;flex-wrap:wrap;gap:12px;margin:32px 0 22px}
+    .product-legend span{font-size:11px;letter-spacing:.05em;border:1px solid #415144;color:#b6c4b8;padding:7px 11px}
+    .product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+    .product-card{display:flex;flex-direction:column;min-height:290px;padding:27px 26px;border:1px solid #38483a;background:linear-gradient(145deg,#1b251e,#141b17 86%);transition:border-color .2s,transform .2s}
+    .product-card:hover{border-color:#c0a572;transform:translateY(-2px)}
+    .product-card .product-top{display:flex;justify-content:space-between;gap:9px;align-items:center}
+    .product-card .product-category{font:650 10px/1.3 ui-monospace,Consolas,monospace;letter-spacing:.12em;color:#d8b77a}
+    .product-card .product-state{font-size:10px;color:#b3c1b5;border:1px solid #516154;padding:5px 8px}
+    .product-card h3{font-size:24px;line-height:1.18;letter-spacing:-.03em;margin:39px 0 11px;font-weight:630}
+    .product-card p{font-size:13px;color:#b0bbb2;line-height:1.7;margin:0 0 23px}
+    .product-card .product-link{display:inline-flex;align-items:center;gap:12px;color:#efdbb3;font-size:12px;font-weight:650;margin-top:auto;align-self:flex-start;border-bottom:1px solid #826e4a;padding:0 0 6px}
+    .product-card .product-link:hover{color:#fff}
+    .product-note{margin-top:23px;color:#9cae9e;font-size:12px;line-height:1.75;max-width:910px}
+    .desktop-section{position:relative;overflow:hidden;background:linear-gradient(115deg,#0b1110 0%,#131b1b 52%,#232119 100%)}
+    .desktop-section::before{content:"";pointer-events:none;position:absolute;right:-220px;top:-320px;width:780px;height:780px;border-radius:50%;background:radial-gradient(circle,#bf9a4944,transparent 67%)}
+    .desktop-layout{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:center}
+    .desktop-label{color:#d9b879;font-size:11px;letter-spacing:.22em;font-weight:750}
+    .desktop-copy h2{font-size:clamp(49px,6vw,83px);letter-spacing:-.06em;margin:16px 0 24px;line-height:1.02}
+    .desktop-copy h2 em{font-style:normal;color:var(--gold)}
+    .desktop-copy p{color:#c1c9c0;font-size:16px;line-height:1.77;max-width:535px}
+    .desktop-bullets{display:flex;flex-wrap:wrap;gap:9px;margin:26px 0 28px}
+    .desktop-bullets span{border:1px solid #53604e;color:#d1d6cc;padding:8px 11px;font-size:11px}
+    .desktop-buttons{display:flex;gap:11px;flex-wrap:wrap;margin:25px 0 14px}
+    .desktop-buttons .button{min-width:220px}
+    .desktop-buttons .button.secondary{border-color:#556051}
+    .desktop-legal{font-size:12px!important;line-height:1.68!important;color:#99a99a!important}
+    .desktop-legal a{color:#e2c38e;border-bottom:1px solid #7e6b4b}
+    .desktop-display{border:1px solid #5b664f;border-radius:13px;background:#0d151c;box-shadow:0 31px 80px #0008,0 0 0 7px #ffffff08;min-height:450px;overflow:hidden}
+    .desktop-windowtop{height:43px;display:flex;gap:7px;align-items:center;padding:0 17px;background:#17212a;border-bottom:1px solid #30424d}
+    .desktop-windowtop i{width:8px;height:8px;border-radius:50%;background:#647687}
+    .desktop-windowtop i:first-child{background:#be646b}
+    .desktop-windowtop span{margin-left:auto;color:#95a6b7;font-size:10px;letter-spacing:.15em}
+    .desktop-windowbody{display:grid;grid-template-columns:135px 1fr;min-height:405px}
+    .desktop-winsidenav{padding:22px 15px;background:#101a24;border-right:1px solid #2b3e50}
+    .desktop-winsidenav strong{font-size:14px;letter-spacing:.12em;color:#e9eefa}
+    .desktop-winsidenav strong em{color:#da6d82;font-style:normal}
+    .desktop-winsidenav small{display:block;margin-top:9px;font-size:8px;color:#8ea0b5;letter-spacing:.13em}
+    .desktop-winsidenav .nav-stub{margin-top:37px;border-radius:5px;background:#233449;color:#d7e4ef;font-size:9px;padding:12px 7px}
+    .desktop-winsidenav .nav-stub+div{font-size:9px;color:#889cb2;margin:15px 0 0 7px}
+    .desktop-winmain{padding:24px 20px}
+    .desktop-winmain>small{font-size:9px;color:#dab579;letter-spacing:.17em}
+    .desktop-winmain h3{font-size:27px;letter-spacing:-.05em;line-height:1.1;margin:12px 0 12px}
+    .desktop-winmain h3 em{font-style:normal;color:#9eb1c5}
+    .desktop-winmain p{color:#8ea6b7;font-size:10px;line-height:1.6;margin:0}
+    .desktop-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:22px}
+    .desktop-mini-grid>div{border:1px solid #304359;background:#162638;border-radius:6px;padding:14px}
+    .desktop-mini-grid small{color:#e0b67f;font-size:8px;letter-spacing:.13em}
+    .desktop-mini-grid b{display:block;color:#ecf2f8;margin:15px 0 5px;font-size:13px}
+    .desktop-mini-grid span{display:block;color:#91a9be;font-size:9px;line-height:1.5}
+    .desktop-privacy{border-top:1px solid #2c4358;margin-top:20px;padding-top:13px;color:#91b7ae;font-size:9px;letter-spacing:.04em}
+    @media(max-width:1000px){.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.desktop-layout{gap:30px}.desktop-display{min-height:0}}
+    @media(max-width:800px){.product-heading{display:block}.product-heading aside{margin-top:20px;max-width:none}.desktop-layout{grid-template-columns:1fr}.desktop-display{max-width:590px;width:100%}}
+    @media(max-width:560px){.product-grid{grid-template-columns:1fr}.product-card{min-height:240px}.product-card h3{margin-top:24px}.desktop-buttons .button{width:100%}.desktop-windowbody{grid-template-columns:110px 1fr}.desktop-winsidenav{padding:18px 8px}.desktop-winmain{padding:17px 10px}.desktop-winmain h3{font-size:22px}.desktop-mini-grid{gap:6px}.desktop-mini-grid>div{padding:10px}.nav{flex-wrap:wrap;gap:11px}header{height:auto;min-height:75px;padding:14px 0}.nav nav{width:100%;display:flex;max-width:100%;overflow-x:auto;white-space:nowrap;gap:16px;padding:0 0 3px;scrollbar-width:thin}.nav nav a:nth-child(n){display:inline}.nav nav a{flex:none;font-size:11px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
   </style>
 </head>
 <body>
-<header><div class="wrap nav"><a class="brand" href="#">OSMAN<span>X</span></a><nav aria-label="Основная навигация"><a href="#services">Услуги</a><a href="#horeca">Кофейням</a><a href="#approach">Подход</a><a href="#contact">Контакт</a></nav></div></header>
+<header><div class="wrap nav"><a class="brand" href="#">OSMAN<span>X</span></a><nav aria-label="Основная навигация"><a href="#products">Продукты</a><a href="#horeca">Кофейням</a><a href="#desktop">Desktop</a><a href="#contact">Контакт</a></nav></div></header>
 <main>
   <div class="wrap hero">
-    <div><div class="eyebrow">Цифровая разработка · Дизайн · Запуск</div><h1>Идея,<br>которая становится продуктом.</h1><p class="lead">Создаю сайты и мобильные приложения для бизнеса: продумываю структуру, проектирую интерфейс и довожу решение до запуска.</p><div class="actions"><a class="button" href="#contact">Обсудить проект</a><a class="button secondary" href="#services">Что я делаю</a></div></div>
+    <div><div class="eyebrow">Цифровая разработка · Дизайн · Запуск</div><h1>Идея,<br>которая становится продуктом.</h1><p class="lead">Создаю сайты и мобильные приложения для бизнеса: продумываю структуру, проектирую интерфейс и довожу решение до запуска.</p><div class="actions"><a class="button" href="#contact">Обсудить проект</a><a class="button secondary" href="#products">Все продукты</a></div></div>
     <div class="visual" role="img" aria-label="Абстрактная композиция в тёплых золотистых тонах"><div class="orb"></div><div class="visual-label">От замысла до работающего продукта</div></div>
   </div>
   <section id="services"><div class="wrap"><div class="eyebrow">Направления</div><h2>Полный цикл<br>цифрового продукта.</h2><p class="section-intro">Один ответственный ведёт проект от первой схемы до публикации, чтобы идея не терялась между дизайном и разработкой.</p><div class="grid">
@@ -116,6 +177,48 @@
       <div class="hospitality-cta">
         <div><h3>У вас кофейня или ресторан?</h3><p>Опишите одну проблему — обсудим, какую цифровую систему имеет смысл внедрять.</p></div>
         <a class="button" href="mailto:hello@osmanx.world?subject=OSMANX%20%E2%80%94%20%D0%BA%D0%BE%D1%84%D0%B5%D0%B9%D0%BD%D1%8F%20%D0%B8%D0%BB%D0%B8%20%D1%80%D0%B5%D1%81%D1%82%D0%BE%D1%80%D0%B0%D0%BD">Обсудить заведение</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- osmanx-products-2026-11-16 -->
+  <section id="products" class="product-section" aria-labelledby="products-title">
+    <div class="wrap">
+      <div class="product-heading"><div><div class="eyebrow">OSMANX / PRODUCT PORTFOLIO</div><h2 id="products-title">Экосистема<br><em>цифровых решений.</em></h2><p>От розничной аналитики и коммуникаций до инструментов разработки. Каждый продукт имеет собственную задачу, дорожную карту и статус готовности.</p></div>
+        <aside>Открытый исходный код не означает, что сервис уже подключён к живым данным или доступен как облачный продукт.</aside></div>
+      <div class="product-legend"><span>06 направлений</span><span>Проверенные репозитории</span><span>Никаких вымышленных результатов</span></div>
+      <div class="product-grid">
+        <article class="product-card"><div class="product-top"><span class="product-category">01 / RETAIL</span><span class="product-state">Инженерная версия</span></div><h3>Retail Intelligence</h3><p>Причины отказа от покупки, опросы, управленческие гипотезы, пилоты и контроль внедрения в магазинах.</p><a class="product-link" href="https://github.com/osmanosmanov6880-bot/osmanx-retail-intelligence" target="_blank" rel="noopener noreferrer">Исходный код <span aria-hidden="true">↗</span></a></article>
+        <article class="product-card"><div class="product-top"><span class="product-category">02 / MESSAGING</span><span class="product-state">Инженерная версия</span></div><h3>OSMANX OmniChat</h3><p>Единая рабочая среда для сообщений, очередей обработки и контроля операционной надёжности.</p><a class="product-link" href="https://github.com/osmanosmanov6880-bot/osmanx-omnichat" target="_blank" rel="noopener noreferrer">Исходный код <span aria-hidden="true">↗</span></a></article>
+        <article class="product-card"><div class="product-top"><span class="product-category">03 / PLATFORM</span><span class="product-state">Preview</span></div><h3>OSMANX App Factory</h3><p>Разработка сайтов, CRM и цифровых сервисов с техническим контролем выпусков.</p><a class="product-link" href="https://github.com/osmanosmanov6880-bot/osmanx-app-factory" target="_blank" rel="noopener noreferrer">Исходный код <span aria-hidden="true">↗</span></a></article>
+        <article class="product-card"><div class="product-top"><span class="product-category">04 / HOSPITALITY</span><span class="product-state">Решения для бизнеса</span></div><h3>Для кофеен и ресторанов</h3><p>Обратная связь гостей, цифровое обслуживание, предзаказы и проверка повторных визитов.</p><a class="product-link" href="#horeca">Посмотреть направление <span aria-hidden="true">↗</span></a></article>
+        <article class="product-card"><div class="product-top"><span class="product-category">05 / CREATIVE</span><span class="product-state">В разработке</span></div><h3>OSGARD / NEBULA</h3><p>Эксперименты с игровыми мирами, разработка игровых систем и интерактивных проектов.</p><a class="product-link" href="https://github.com/osmanosmanov6880-bot/osgard-world" target="_blank" rel="noopener noreferrer">Репозиторий <span aria-hidden="true">↗</span></a></article>
+        <article class="product-card"><div class="product-top"><span class="product-category">06 / OPERATIONS</span><span class="product-state">Закрытый доступ</span></div><h3>SENQARD</h3><p>Платформа управления проектами и исполнением. Коммерческая готовность и доступ оцениваются отдельно.</p><a class="product-link" href="mailto:hello@osmanx.world?subject=SENQARD%20%E2%80%94%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%20%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%D0%B0">Запросить презентацию <span aria-hidden="true">↗</span></a></article>
+      </div>
+      <p class="product-note">Программные платформы требуют собственной серверной среды, авторизации и настройки интеграций. Эта страница представляет подтверждённые проекты; она не открывает доступ к внутренним базам или административным панелям.</p>
+    </div>
+  </section>
+
+  <!-- osmanx-desktop-download-2026-11-16 -->
+  <section id="desktop" class="desktop-section" aria-labelledby="desktop-title">
+    <div class="wrap desktop-layout">
+      <div class="desktop-copy">
+        <div class="desktop-label">OSMANX DESKTOP / WINDOWS</div>
+        <h2 id="desktop-title">Всё под рукой.<br><em>На вашем ПК.</em></h2>
+        <p>Отдельное приложение-каталог OSMANX для Windows. Находите нужный проект, ведите локальный список задач, экспортируйте заметки и открывайте официальные страницы одним нажатием.</p>
+        <div class="desktop-bullets"><span>Windows 10 / 11 · x64</span><span>Каталог офлайн</span><span>Локальные задачи</span><span>Экспорт JSON</span></div>
+        <div class="desktop-buttons"><a class="button" href="/assets/downloads/OSMANX-Desktop-Setup-1.0.0.exe" download>Скачать для Windows · EXE</a><a class="button secondary" href="https://github.com/osmanosmanov6880-bot/osmanx-world/releases/tag/desktop-v1.0.0" target="_blank" rel="noopener noreferrer">Релиз и контрольная сумма ↗</a></div>
+        <p class="desktop-legal">OSMANX Desktop — самостоятельный локальный каталог, а не копия серверных платформ. Не требует аккаунта. Установщик пока не подписан цифровым сертификатом: Windows SmartScreen может показать предупреждение. <a href="/assets/downloads/SHA256SUMS.txt">Проверить SHA-256</a>.</p>
+      </div>
+      <div class="desktop-display" role="img" aria-label="Схематичный вид интерфейса OSMANX Desktop: боковая навигация и карточки проектов">
+        <div class="desktop-windowtop"><i></i><i></i><i></i><span>OSMANX DESKTOP</span></div>
+        <div class="desktop-windowbody">
+          <div class="desktop-winsidenav"><strong>OSMAN<em>X</em></strong><small>DESKTOP</small><div class="nav-stub">◈ &nbsp; Проекты</div><div>☰ &nbsp; Задачи</div><div>◎ &nbsp; О системе</div></div>
+          <div class="desktop-winmain"><small>ONE WORKSPACE / ALL PROJECTS</small><h3>Все продукты.<br><em>Одно пространство.</em></h3><p>Портфель и задачи. Даже без интернета.</p>
+            <div class="desktop-mini-grid"><div><small>01 / RETAIL</small><b>Retail Intelligence</b><span>Магазины и аналитика</span></div><div><small>02 / MESSAGING</small><b>OmniChat</b><span>Операционный контроль</span></div><div><small>03 / PLATFORM</small><b>App Factory</b><span>Цифровые продукты</span></div><div><small>04 / HOSPITALITY</small><b>Кофейни</b><span>Сервис и гости</span></div></div>
+            <div class="desktop-privacy">● OFFLINE-READY · LOCAL BY DEFAULT</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

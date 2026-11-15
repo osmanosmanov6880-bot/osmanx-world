@@ -44,7 +44,7 @@ jobs:
           test -n "$DEPLOY_HOST"
           test "$DEPLOY_USER" = "deploy-osmanx"
           ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'test -d /var/www/osmanx.world && test -w /var/www/osmanx.world'
-          rsync -az --delete --chmod=D2755,F0644             -e "ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes"             --include='/index.html' --include='/assets/***' --exclude='*'             ./ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/"
+          rsync -az --delete --chmod=D2755,F0644             -e "ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes"             --exclude='/assets/downloads/***' --include='/index.html' --include='/assets/***' --exclude='*'             ./ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/"
           ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'test -s /var/www/osmanx.world/index.html'
 
       - name: Verify deployed file integrity on VPS
@@ -60,7 +60,7 @@ jobs:
 
       - name: Verify public HTTPS content
         env:
-          EXPECTED_MARKER: "osmanx-horeca-section: 2026-11-16"
+          EXPECTED_MARKER: "osmanx-products-2026-11-16"
         run: |
           set -euo pipefail
           response="$(curl -fLsS --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -H 'Cache-Control: no-cache' "https://osmanx.world/?__deploy_verify=${GITHUB_SHA}")"
