@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: ["3.11", "3.13"]
+          python-version: ${{ matrix.python }}
       - name: Syntax and module compilation
         run: python -m compileall -q supreme-director/campaign180/campaign180
       - name: X21-X25 integration and negative tests
