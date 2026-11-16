@@ -74,6 +74,7 @@ CREATE TABLE industry.appointments (
   starts_at timestamptz NOT NULL,
   ends_at timestamptz NOT NULL,
   idempotency_key varchar(80),
+  idempotency_fingerprint char(64),
   status varchar(12) NOT NULL DEFAULT 'new'
     CHECK (status IN ('new','confirmed','done','cancelled')),
   created_at timestamptz NOT NULL DEFAULT now(),
