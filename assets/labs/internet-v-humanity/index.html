@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE INTERNET v. HUMANITY — Cinema Preview</title>
+<meta name="description" content="Интерактивный кинематографический пролог цифрового суда">
+<style>
+:root{color-scheme:dark;--gold:#e6be76;--muted:#b9bbc8;--line:#ffffff26}*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#070b12;color:#f8f3e7;font-family:Inter,Arial,sans-serif}
+body{overflow-x:hidden}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:5px}
+#backdrop{position:fixed;inset:-8%;z-index:0;background:radial-gradient(ellipse at 67% 44%,#d5a35b45,transparent 21%),radial-gradient(ellipse at 61% 30%,#47698144,transparent 36%),linear-gradient(128deg,#03070c,#101c28 45%,#06090f);transition:transform 1.5s ease,filter 1.5s ease;animation:camera 24s ease-in-out infinite alternate}
+#backdrop:before{content:"";position:absolute;width:min(75vw,900px);height:min(75vw,900px);left:37%;top:9%;border-radius:50%;border:1px solid #eac89066;box-shadow:0 0 0 25px #ffffff08,0 0 0 85px #ffffff05,inset 0 0 90px #f1b76917,0 0 200px #e5af5740;background:radial-gradient(circle at 35% 36%,#f2c98766,transparent 31%),radial-gradient(circle at 72% 79%,#182b3c,transparent 64%)}
+#backdrop:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#03070df0 4%,#03070d78 46%,transparent 90%),repeating-linear-gradient(90deg,transparent 0 80px,#a8bfd409 81px 82px)}
+@keyframes camera{to{transform:scale(1.055) translate(-1%,.3%)}}@media(prefers-reduced-motion:reduce){#backdrop{animation:none}*{scroll-behavior:auto!important;transition:none!important}}
+header{position:relative;z-index:2;padding:28px clamp(20px,5vw,80px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:20px}
+header strong{font-family:Georgia,serif;color:var(--gold);letter-spacing:.16em;font-size:clamp(12px,1.35vw,22px)}.meta{font-size:12px;letter-spacing:.17em;color:var(--muted)}
+main{position:relative;z-index:1;min-height:calc(100svh - 170px);display:flex;align-items:center;padding:clamp(30px,7vw,120px) clamp(20px,7vw,116px)}
+section{max-width:760px;animation:enter .6s ease both}@keyframes enter{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.eyebrow{color:var(--gold);font-size:12px;letter-spacing:.34em;text-transform:uppercase}
+h1{font-family:Georgia,serif;font-weight:400;text-wrap:balance;font-size:clamp(45px,7.5vw,116px);line-height:.99;letter-spacing:-.035em;margin:22px 0 30px}
+p{max-width:630px;font-size:clamp(16px,1.7vw,22px);line-height:1.68;color:#e3e0dc}
+.choicebar{display:flex;flex-wrap:wrap;gap:12px;margin-top:38px}.choice{border:1px solid #eccb9e70;background:#101722bd;border-radius:3px;color:#f6e8cc;min-height:58px;padding:14px 22px;text-align:left;transition:background .2s,transform .2s}.choice:hover{background:#5d431f99;transform:translateY(-2px)}.choice.primary{background:#ddbd81;color:#100e0b;border-color:#ddbd81}
+.continuation{margin-top:26px;padding:24px;border:1px solid #c6a97988;border-radius:10px;background:linear-gradient(135deg,#19283ac9,#0c1421d9);max-width:670px}.continuation small{display:block;font:700 11px/1.6 Arial,sans-serif;letter-spacing:.14em;color:#e6be76;margin-bottom:10px}.continuation strong{display:block;font:normal clamp(20px,2.5vw,27px)/1.25 Georgia,serif;color:#ffe2ad;margin-bottom:8px}.continuation p{margin:0 0 14px;font-size:13px;line-height:1.6;color:#c5d1d7}.continuation a{display:inline-flex;min-height:44px;align-items:center;padding:11px 19px;border:1px solid #eac389;border-radius:7px;background:#cfac76;color:#101622;text-decoration:none;font-size:12px;font-weight:800}.continuation a:hover{background:#f0d2a0}
+.note{color:#a8adba;font-size:13px;margin-top:22px}footer{position:relative;z-index:2;border-top:1px solid var(--line);padding:18px clamp(20px,5vw,80px);display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}.small{background:#151b24;border:1px solid var(--line);color:#d9deec;padding:9px 13px;border-radius:3px}
+#progress{font-size:12px;color:var(--gold);letter-spacing:.08em}.evidence{border-left:2px solid var(--gold);padding:16px 20px;background:#141c28bb;margin:25px 0;max-width:570px}
+[data-lite="true"] #backdrop{animation:none;filter:none}[data-lite="true"] .choice{transition:none}
+@media(max-width:670px){header{padding:18px 20px}header .meta{display:none}main{min-height:72svh;padding:55px 22px}#backdrop:before{left:22%;top:24%}footer{align-items:flex-start}h1{font-size:clamp(44px,11vw,76px)}}
+</style></head>
+<body><div id="backdrop" aria-hidden="true"></div><header><strong>THE INTERNET <span style="color:#fff">v.</span> HUMANITY</strong><span class="meta">INTERACTIVE CINEMA · OPEN PREVIEW</span></header>
+<main><section id="scene" role="region" aria-label="Кинематографическая сцена" aria-live="polite"></section></main>
+<footer><div id="progress">ПРОЛОГ / 01</div><div class="toolbar"><button class="small" id="back">← Назад</button><button class="small" id="lite" aria-pressed="false">Режим LITE</button><button class="small" id="reset">Начать заново</button></div></footer>
+<script>
+"use strict";
+const SCENES={
+intro:{no:"01",tag:"Пролог",title:"МИР ИЗМЕНИЛСЯ",body:"Интернет дал человечеству знания, свободу и связь. Но кто отвечает за последствия — машина или люди, которые делают выбор?",choices:[["Войти в зал суда","court"],["Изучить архив","archive"]]},
+archive:{no:"02",tag:"Архив",title:"ЗАПИСЬ № 001",body:"Когда ложное сообщение распространяется быстрее доказательства, кто несёт ответственность за причинённый вред?",extra:"НАЙДЕНА УЛИКА: запись архива. Она может изменить твою позицию.",choices:[["Сохранить улику","evidence"],["Идти в суд","court"]]},
+evidence:{no:"03",tag:"Открытие",title:"ТЫ НАШЁЛ ДОКАЗАТЕЛЬСТВО",body:"Информация становится силой только тогда, когда её можно проверить. Теперь суд услышит дополнительный аргумент.",choices:[["Предъявить улику суду","court"]]},
+court:{no:"04",tag:"Первое слушание",title:"КТО ВИНОВЕН?",body:"Машина подбирает слова. Человек решает, повторить ли их. Но каждый повтор влияет на других людей.",choices:[["Ответственность должен нести человек","human"],["Алгоритм тоже должен отвечать","algorithm"]]},
+human:{no:"05",tag:"Вердикт",title:"ЧЕЛОВЕЧЕСКИЙ ВЫБОР",body:"Ты решил, что власть над словом требует человеческой ответственности. Суд записывает твой принцип.",choices:[["Увидеть последствия","end_human"],["Пересмотреть аргументы","court"]]},
+algorithm:{no:"05",tag:"Вердикт",title:"ОТВЕТСТВЕННОСТЬ СИСТЕМЫ",body:"Ты решил, что системы, усиливающие информацию, не могут оставаться вне правил. Суд записывает твой принцип.",choices:[["Увидеть последствия","end_algorithm"],["Пересмотреть аргументы","court"]]},
+end_human:{no:"06",tag:"Последствия",title:"БУДУЩЕЕ — ЭТО ПРАВИЛО",body:"Твой выбор стал частью вымышленной истории. В полной платформе другие люди могут оспорить реальное дело и изменить его исход.",choices:[["Пройти альтернативную ветку","court"],["Начать заново","intro"]]},
+end_algorithm:{no:"06",tag:"Последствия",title:"НИ ОДНО РЕШЕНИЕ НЕ КОНЕЦ",body:"Ты выбрал контроль цифровых систем. В полной платформе последствия определяются действиями участников, а не этой демонстрацией.",choices:[["Пройти альтернативную ветку","court"],["Начать заново","intro"]]}
+};
+const STORE="ivh_github_preview_v1";let history=["intro"],lite=false;
+try{const saved=JSON.parse(localStorage.getItem(STORE));if(saved&&Array.isArray(saved.history)&&saved.history.every(id=>SCENES[id])){history=saved.history.slice(-60);lite=!!saved.lite}}catch{}
+const root=document.getElementById("scene"),progress=document.getElementById("progress");
+function store(){try{localStorage.setItem(STORE,JSON.stringify({history,lite}))}catch{}}
+function navigate(next){if(!SCENES[next])return;history.push(next);render();store()}
+function render(){const id=history[history.length-1],s=SCENES[id];root.replaceChildren();root.innerHTML='<div class="eyebrow"></div><h1></h1><p></p><div class="choicebar"></div><div class="note"></div>';root.querySelector(".eyebrow").textContent=s.tag;root.querySelector("h1").textContent=s.title;root.querySelector("p").textContent=s.body;root.querySelector(".note").textContent="Это автономная демонстрация сюжета: здесь нет регистрации, голосов других людей и серверных данных.";if(s.extra){const d=document.createElement("div");d.className="evidence";d.textContent=s.extra;root.insertBefore(d,root.querySelector(".choicebar"))}for(const [label,next] of s.choices){const b=document.createElement("button");b.className="choice"+(next==="court"||next.startsWith("end")?" primary":"");b.textContent=label+"  →";b.addEventListener("click",()=>navigate(next));root.querySelector(".choicebar").appendChild(b)}if(id==="end_human"||id==="end_algorithm"){
+ const pane=document.createElement("aside");pane.className="continuation";pane.setAttribute("aria-label","Добровольное продолжение истории в MARCOSA");
+ const heading=document.createElement("strong");heading.textContent="История окончена. Мир продолжается.";
+ const eyebrow=document.createElement("small");eyebrow.textContent="MARCOSA / СВЯЗАННАЯ ПЛАТФОРМА";
+ const description=document.createElement("p");description.textContent="Если хочешь изучить другие независимые истории и цифровые миры, можно открыть MARCOSA. Никакие решения или данные этого фильма туда не отправляются.";
+ const link=document.createElement("a");link.href="https://marcosa.club/";link.target="_blank";link.rel="noopener noreferrer";link.textContent="ОТКРЫТЬ MARCOSA ↗";
+ pane.append(eyebrow,heading,description,link);root.append(pane);
+}
+progress.textContent=s.tag.toUpperCase()+" / "+s.no;document.getElementById("back").disabled=history.length<2;document.documentElement.dataset.lite=String(lite);document.getElementById("lite").setAttribute("aria-pressed",String(lite))}
+document.getElementById("back").onclick=()=>{if(history.length>1){history.pop();render();store()}};
+document.getElementById("lite").onclick=()=>{lite=!lite;render();store()};
+document.getElementById("reset").onclick=()=>{history=["intro"];lite=false;render();store()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&history.length>1){history.pop();render();store()}});render();
+</script></body></html>

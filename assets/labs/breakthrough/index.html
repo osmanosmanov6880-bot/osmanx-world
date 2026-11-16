@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#08141c" />
+  <meta name="description" content="BREAKTHROUGH — интерактивный инженерный урок. Открой кран, исследуй поток воды, собери свою первую установку." />
+  <title>BREAKTHROUGH — Первая миссия: вода и движение</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Навигация">
+      <a class="brand" href="#top" aria-label="BREAKTHROUGH — наверх">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="brand-text">BREAK<span>THROUGH</span><small>Инженерные приключения</small></span>
+      </a>
+      <div class="sidebar-topline">НАВИГАЦИЯ</div>
+      <nav class="side-nav" aria-label="Разделы урока">
+        <a href="#laboratory" class="side-link active"><span class="side-icon" aria-hidden="true">✦</span><span>Моя миссия</span><i aria-hidden="true"></i></a>
+        <a href="#path" class="side-link"><span class="side-icon" aria-hidden="true">◫</span><span>Путь открытий</span></a>
+        <a href="#learning" class="side-link"><span class="side-icon" aria-hidden="true">⌘</span><span>Чему я научусь</span></a>
+      </nav>
+      <div class="sidebar-middle">
+        <div class="sidebar-topline">ПЕРВАЯ ЭКСПЕДИЦИЯ</div>
+        <div class="side-mini-topic"><span class="topic-orb blue"></span><span>Вода и движение</span><strong>01</strong></div>
+        <div class="side-mini-topic muted"><span class="topic-orb orange"></span><span>Машины и механизмы</span><span class="lock-icon">⌁</span></div>
+        <div class="side-mini-topic muted"><span class="topic-orb violet"></span><span>Сила электричества</span><span class="lock-icon">⌁</span></div>
+        <p class="sidebar-note">Новые миры откроются в следующих выпусках платформы.</p>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="guest-avatar" aria-hidden="true">✦</div>
+        <div class="guest-info"><strong>Юный изобретатель</strong><span>Гостевой режим</span></div>
+        <button class="round-menu-btn" data-action="open-help" aria-label="Открыть справку">?</button>
+      </div>
+    </aside>
+
+    <div class="workspace" id="top">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>МИР ОТКРЫТИЙ</span><b>/</b><span>ВОДА И ДВИЖЕНИЕ</span><b>/</b><strong>МИССИЯ 01</strong></div>
+        <div class="topbar-right"><span class="saved-status"><span class="status-dot"></span> Прогресс на этом устройстве</span><button class="icon-button" data-action="speak" aria-label="Озвучить задание" title="Озвучить задание"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9a5 5 0 010 6M19.5 6.5a8.5 8.5 0 010 11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg></button><button class="icon-button" data-action="open-help" aria-label="Как пользоваться уроком" title="Помощь"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9.6 9.4a2.5 2.5 0 014.8.7c0 1.6-2.4 1.9-2.4 3.7M12 17h.01" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg></button></div>
+      </header>
+      <main class="content">
+        <div class="hero-head">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-spark">✳</span> ТВОЯ ПЕРВАЯ ИНЖЕНЕРНАЯ МИССИЯ <span class="divider-dot"></span> УРОК 1</div>
+            <h1>Заставь <span>воду работать.</span></h1>
+            <p>Открой кран. Поймай поток. Собери настоящую систему — прямо здесь, своими руками.</p>
+          </div>
+          <div class="hero-lesson-id"><div class="hero-symbol">〰</div><span>ВОДА И ДВИЖЕНИЕ</span><strong>МИССИЯ / 01</strong></div>
+        </div>
+
+        <section class="journey" id="path" aria-label="Прогресс урока">
+          <div class="journey-heading"><span>ТВОЙ ПУТЬ</span><strong id="journeyCount">Шаг 1 из 7</strong></div>
+          <div class="journey-steps" id="journeySteps" aria-live="polite"></div>
+        </section>
+
+        <section class="workbench-grid" id="laboratory" aria-label="Интерактивная лаборатория">
+          <div class="scene-panel">
+            <div class="panel-header">
+              <div class="panel-title"><span class="live-dot"></span><strong>ЖИВАЯ ЛАБОРАТОРИЯ</strong><span class="header-chip">3D · МОЖНО КРУТИТЬ</span></div>
+              <button class="small-quiet-btn" data-action="reset-camera" title="Вернуть исходный вид">↺ <span>Вид спереди</span></button>
+            </div>
+            <div class="scene-area" id="sceneArea">
+              <canvas id="sceneCanvas" aria-label="Трёхмерная модель водяной установки с баком, трубкой, краном и бутылкой. Перетаскивайте для поворота, нажмите на оранжевый кран, чтобы управлять потоком." role="img"></canvas>
+              <div id="sceneFallback" class="scene-fallback" hidden><strong>3D не запустилось на этом устройстве.</strong><p>Урок всё равно работает: открывай кран кнопкой справа и изучай показатели ниже.</p></div>
+              <div class="scene-noise" aria-hidden="true"></div>
+              <span class="scene-scan-label scene-scan-label-top">BT / WATERLAB–01 <span>●</span> LIVE</span>
+              <span class="scene-scan-label scene-scan-label-bottom">МОДЕЛЬ УЧЕБНОГО ЭКСПЕРИМЕНТА</span>
+              <div class="water-indicator" id="waterIndicator"><div class="indicator-droplet">◆</div><div><strong id="waterIndicatorText">Кран закрыт</strong><span id="waterIndicatorSub">Вода ждёт твоей команды</span></div></div>
+              <button class="valve-hotspot" id="valveHotspot" aria-label="Открыть или закрыть кран на трёхмерной модели" title="Нажми на кран"><span>✋</span><b>НАЖМИ НА КРАН</b></button>
+              <div class="drag-help" id="dragHelp">↔ Потяни, чтобы повернуть модель</div>
+              <div class="scene-bottom-controls"><button class="mini-control" data-action="orbit-left" aria-label="Повернуть модель влево">↶</button><button class="mini-control" data-action="orbit-right" aria-label="Повернуть модель вправо">↷</button><button class="mini-control" data-action="zoom-in" aria-label="Приблизить модель">＋</button><button class="mini-control" data-action="zoom-out" aria-label="Отдалить модель">−</button></div>
+            </div>
+            <div class="instrument-row" aria-label="Показания опыта">
+              <div class="instrument"><div class="instrument-icon water">◉</div><div><span>В БАКЕ</span><strong><span id="tankVal">1600</span> <small>мл</small></strong></div></div>
+              <div class="instrument"><div class="instrument-icon flow">〰</div><div><span>СКОРОСТЬ ПОТОКА</span><strong><span id="flowVal">0</span> <small>мл/с</small></strong></div></div>
+              <div class="instrument"><div class="instrument-icon bottle">♧</div><div><span>В БУТЫЛКЕ</span><strong><span id="bottleVal">0</span><small> / 500 мл</small></strong></div></div>
+            </div>
+          </div>
+
+          <aside class="guide-panel" aria-label="Текущее задание">
+            <div class="guide-inner">
+              <div class="guide-heading"><span class="guide-label">ТВОЙ НАСТАВНИК</span><span class="step-pill" id="stepPill">ШАГ 01 / 07</span></div>
+              <div class="mentor-top"><div class="mentor-mascot" aria-hidden="true"><div class="mascot-eye e1"></div><div class="mascot-eye e2"></div><div class="mascot-smile"></div></div><div class="mentor-identity"><strong>Искра</strong><span>Твой помощник в лаборатории</span></div><span class="mentor-wave">✳</span></div>
+              <div class="guide-body" id="guideBody" aria-live="polite"></div>
+            </div>
+            <div class="guide-bottom"><div class="tip-icon">✧</div><p id="bottomTip">Не бойся пробовать. Здесь можно ошибаться сколько угодно раз.</p></div>
+          </aside>
+        </section>
+
+        <section class="learning-strip" id="learning">
+          <div class="learning-intro"><span>ПОСЛЕ ЭТОГО УРОКА</span><h2>Ты сможешь сам.</h2></div>
+          <div class="outcomes"><div class="outcome"><span class="outcome-icon">◈</span><div><strong>Управлять потоком</strong><p>Открывать и закрывать кран</p></div></div><div class="outcome"><span class="outcome-icon">⌁</span><div><strong>Проверять идеи</strong><p>Менять условия и наблюдать</p></div></div><div class="outcome"><span class="outcome-icon">⬡</span><div><strong>Собирать систему</strong><p>Соединять детали в механизм</p></div></div></div>
+        </section>
+        <footer class="footer"><span>BREAKTHROUGH · ENGINEERING ADVENTURE</span><span>Учебный эксперимент · Только виртуальная модель</span><button data-action="restart" class="footer-reset">Начать урок заново ↗</button></footer>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="helpModal" hidden role="presentation"><div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><button class="modal-close" data-action="close-help" aria-label="Закрыть справку">×</button><span class="eyebrow">ПОМОЩЬ НА СТАРТЕ</span><h2 id="helpTitle">Здесь всё можно трогать!</h2><div class="help-items"><div><span>①</span><p><strong>Нажми на кран</strong><br>Он оранжевый, прямо на 3D-установке. Или используй кнопку справа.</p></div><div><span>②</span><p><strong>Поверни модель</strong><br>Зажми мышь и потяни. На телефоне — проведи пальцем.</p></div><div><span>③</span><p><strong>Пробуй снова</strong><br>Кнопка «Повторить опыт» возвращает воду в бак. Ошибки — часть открытия.</p></div><div><span>④</span><p><strong>Пройди все 7 шагов</strong><br>В конце ты соберёшь установку из четырёх частей.</p></div></div><button class="primary-btn modal-ok" data-action="close-help">Понятно, начинаем <span>→</span></button></div></div>
+  <div role="status" aria-live="polite" class="sr-only" id="announcer"></div>
+  <script src="./scene.js" defer></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>
