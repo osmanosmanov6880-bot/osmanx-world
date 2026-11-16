@@ -1,6 +1,6 @@
 {
   "name": "osmanx-desktop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "OSMANX Desktop: offline project hub and work notes",
   "main": "main.cjs",

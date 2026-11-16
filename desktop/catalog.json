@@ -34,10 +34,10 @@
     "category": "КОММУНИКАЦИИ",
     "name": "OSMANX OmniChat",
     "label": "Центр сообщений",
-    "description": "Демонстрация очередей и диалогов без подключения реальных WhatsApp, Instagram или Авито; исходники R36 существуют отдельно.",
-    "status": "Локальное демо",
-    "url": "https://osmanx.world/assets/sovereign/workspace.html?app=omni",
-    "access": "Открыть браузерное демо"
+    "description": "Полный программный проект R36 на сервере для скачивания: FastAPI, React, миграции, Docker и очереди. Реальные каналы и production-сервер на этом домене не подключены.",
+    "status": "Полные исходники R36",
+    "url": "https://osmanx.world/assets/omnichat/index.html",
+    "access": "Код, инструкция и рабочее демо"
   },
   {
     "id": "senqard",

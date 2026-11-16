@@ -7,6 +7,7 @@ const catalog=require('../catalog.json');
 test('catalog contains exactly five selected OSMANX platforms',()=>{
  assert.equal(catalog.length,5);
  assert.deepEqual(catalog.map(p=>p.id),['world','retail','factory','omnichat','senqard']);
+ assert.equal(catalog.find(p=>p.id==='omnichat').url,'https://osmanx.world/assets/omnichat/index.html');
  assert.equal(new Set(catalog.map(x=>x.id)).size,catalog.length);
  for(const p of catalog){assert.match(p.id,/^[a-z]+$/);assert.ok(p.name.length>=5);assert.ok(p.status);assert.ok(p.description.length>=35)}
 });

@@ -9,7 +9,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: desktop-v1.0.1
+  group: desktop-v1.0.2
   cancel-in-progress: false
 jobs:
   build-windows:
@@ -34,7 +34,7 @@ jobs:
       - name: Assert installer exists
         shell: pwsh
         run: |
-          $path = 'dist/OSMANX-Desktop-Setup-1.0.1.exe'
+          $path = 'dist/OSMANX-Desktop-Setup-1.0.2.exe'
           if (-not (Test-Path $path)) { throw 'Windows installer missing' }
           $size=(Get-Item $path).Length
           if ($size -lt 10000000) { throw 'Windows installer unexpectedly small' }
@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: osmanx-desktop-windows
-          path: desktop/dist/OSMANX-Desktop-Setup-1.0.1.exe
+          path: desktop/dist/OSMANX-Desktop-Setup-1.0.2.exe
           if-no-files-found: error
           retention-days: 30
   publish:
@@ -60,20 +60,20 @@ jobs:
         run: |
           set -euo pipefail
           cd release
-          sha256sum OSMANX-Desktop-Setup-1.0.1.exe > SHA256SUMS.txt
+          sha256sum OSMANX-Desktop-Setup-1.0.2.exe > SHA256SUMS.txt
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v1.0.1
-          name: OSMANX Desktop v1.0.1
+          tag_name: desktop-v1.0.2
+          name: OSMANX Desktop v1.0.2
           draft: false
           prerelease: false
           make_latest: true
           files: |
-            release/OSMANX-Desktop-Setup-1.0.1.exe
+            release/OSMANX-Desktop-Setup-1.0.2.exe
             release/SHA256SUMS.txt
           body: |
-            OSMANX Desktop v1.0.1 — Windows 10/11 x64.
+            OSMANX Desktop v1.0.2 — Windows 10/11 x64.
             Offline project catalog and private local task notebook, export/import JSON.
             This application does not install backend platforms or connect customer databases.
             Unsigned installer: Windows SmartScreen may display a warning.
@@ -100,16 +100,16 @@ jobs:
           test -n "$DEPLOY_HOST"
           test "$DEPLOY_USER" = "deploy-osmanx"
           ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'install -d -m 755 /var/www/osmanx.world/assets/downloads'
-          scp -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes release/OSMANX-Desktop-Setup-1.0.1.exe release/SHA256SUMS.txt "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/assets/downloads/"
-          local_sha="$(sha256sum release/OSMANX-Desktop-Setup-1.0.1.exe | cut -d ' ' -f1)"
-          remote_sha="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/assets/downloads/OSMANX-Desktop-Setup-1.0.1.exe' | cut -d ' ' -f1)"
+          scp -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes release/OSMANX-Desktop-Setup-1.0.2.exe release/SHA256SUMS.txt "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/assets/downloads/"
+          local_sha="$(sha256sum release/OSMANX-Desktop-Setup-1.0.2.exe | cut -d ' ' -f1)"
+          remote_sha="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/assets/downloads/OSMANX-Desktop-Setup-1.0.2.exe' | cut -d ' ' -f1)"
           test "$local_sha" = "$remote_sha"
           echo "Windows installer copied to VPS; SHA-256 verified." >> "$GITHUB_STEP_SUMMARY"
       - name: Verify HTTPS download
         run: |
           set -euo pipefail
-          curl -fLsS -I --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 35 'https://osmanx.world/assets/downloads/OSMANX-Desktop-Setup-1.0.1.exe'
-          curl -fLsS --max-time 30 'https://osmanx.world/assets/downloads/SHA256SUMS.txt' | grep -F 'OSMANX-Desktop-Setup-1.0.1.exe'
+          curl -fLsS -I --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 35 'https://osmanx.world/assets/downloads/OSMANX-Desktop-Setup-1.0.2.exe'
+          curl -fLsS --max-time 30 'https://osmanx.world/assets/downloads/SHA256SUMS.txt' | grep -F 'OSMANX-Desktop-Setup-1.0.2.exe'
           echo "Public HTTPS installer link verified." >> "$GITHUB_STEP_SUMMARY"
       - name: Remove private SSH files
         if: always()
