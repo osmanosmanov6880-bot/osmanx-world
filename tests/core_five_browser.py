@@ -1,4 +1,4 @@
-"""End-to-end functional acceptance of precisely five OSMANX public systems."""
+"""End-to-end functional acceptance of the six OSMANX portfolio projects."""
 from __future__ import annotations
 
 import socket
@@ -31,21 +31,22 @@ def main():
         with sync_playwright() as p:
             browser=p.chromium.launch(headless=True,args=["--disable-dev-shm-usage"])
             try:
-                names=["OSMANX WORLD","Retail Intelligence","OSMANX App Factory","OSMANX OmniChat","SENQARD"]
+                names=["OSMANX WORLD","Retail Intelligence","OSMANX App Factory","OSMANX OmniChat","SENQARD","OSGARD WORLD"]
                 for width,height in [(1440,900),(390,844)]:
                     page=browser.new_page(viewport={"width":width,"height":height},accept_downloads=True)
                     errors=[]
                     page.on("pageerror",lambda err:errors.append(str(err)))
                     page.goto(BASE+"/",wait_until="domcontentloaded")
                     page.locator(".product-tile").first.wait_for(timeout=10000)
-                    assert page.locator(".product-tile").count()==5
+                    assert page.locator(".product-tile").count()==6
                     tiles=page.locator(".product-tile h3").all_inner_texts()
                     assert tiles==names,tiles
                     assert page.locator('a[href="/assets/labs/index.html"]').count()==0
                     assert page.locator('a[href*="app=cafe"]').count()==0
                     assert page.locator('a[href*="app=nebula"]').count()==0
-                    assert page.locator('.tile-action').count()==5
+                    assert page.locator('.tile-action').count()==6
                     assert page.locator('.product-tile').nth(3).locator('.tile-action').get_attribute('href')=='/assets/omnichat/index.html'
+                    assert page.locator('.product-tile').nth(5).locator('.tile-action').get_attribute('href')=='https://osgard.world/'
                     assert page.locator('.tile-action').first.get_attribute("href")=="/#home"
                     page.locator(".product-tile").nth(3).locator("a").click()
                     page.wait_for_url("**/assets/omnichat/index.html",timeout=10000)
@@ -56,10 +57,10 @@ def main():
                     assert page.locator(".ws-banner h1").inner_text()=="OSMANX App Factory"
                     page.goto(BASE+"/#projects",wait_until="domcontentloaded")
                     page.locator(".product-tile").first.wait_for()
-                    assert page.locator(".product-tile").count()==5
+                    assert page.locator(".product-tile").count()==6
                     widths=page.evaluate("({scroll:document.documentElement.scrollWidth,inner:innerWidth})")
                     assert widths["scroll"]<=widths["inner"]+2,widths
-                    page.screenshot(path=str(OUT/f"five-platforms-{width}.png"),full_page=True)
+                    page.screenshot(path=str(OUT/f"six-projects-{width}.png"),full_page=True)
                     assert not errors,errors
                     page.close()
 
@@ -98,7 +99,7 @@ def main():
                     page=browser.new_page()
                     page.goto(BASE+f"/assets/sovereign/workspace.html?app={removed}",wait_until="domcontentloaded")
                     page.wait_for_url("**/#projects",timeout=10000)
-                    assert page.locator(".product-tile").count()==5
+                    assert page.locator(".product-tile").count()==6
                     page.close()
 
                 # OmniChat source-backed product page: health gate remains closed
@@ -131,7 +132,7 @@ def main():
                     assert not errors,errors
                     page.close()
             finally:browser.close()
-        print("PASS: Exactly 5 core cards; four operational demos; excluded apps blocked; desktop/mobile Chromium QA")
+        print("PASS: Six portfolio cards; four operational demos; OSGARD portal; excluded apps blocked; desktop/mobile Chromium QA")
     finally:
         server.terminate()
         try:server.wait(timeout=5)
