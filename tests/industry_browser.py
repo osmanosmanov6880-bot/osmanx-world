@@ -92,7 +92,8 @@ def main():
                 portal = browser.new_page(viewport={"width": 1440, "height": 900})
                 portal.goto(BASE + "/", wait_until="domcontentloaded")
                 portal.locator(".product-tile").first.wait_for()
-                assert portal.locator(".product-tile").count() == 5, "Do not alter five core product tiles"
+                assert portal.locator(".product-tile").count() == 6, "Portfolio should show six projects including OSGARD WORLD"
+                assert portal.locator('.product-tile a[href="https://osgard.world/"]').count() == 1, "OSGARD portal link missing"
                 assert portal.locator('a[href="/assets/industry/index.html"]').count() >= 1
                 portal.close()
             finally:
