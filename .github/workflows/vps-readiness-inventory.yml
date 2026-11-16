@@ -1,0 +1,67 @@
+name: OSMANX VPS readiness inventory (read only)
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/vps-readiness-inventory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Configure pinned SSH identity
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/osmanx_inventory"
+          chmod 600 "$HOME/.ssh/osmanx_inventory"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+      - name: Read-only capability and boundaries
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test "$DEPLOY_USER" = deploy-osmanx
+          ssh -i "$HOME/.ssh/osmanx_inventory" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'AUDIT'
+          set -euo pipefail
+          flag() { if "$@" >/dev/null 2>&1; then printf 'YES'; else printf 'NO'; fi; }
+          {
+            echo "## OSMANX VPS readiness (read-only)"
+            echo ""
+            echo "| Capability | Verified |"
+            echo "|:--|:--|"
+            echo "| Site directory writable by deploy user | $(flag test -w /var/www/osmanx.world) |"
+            echo "| Existing Sovereign UI on disk | $(flag test -s /var/www/osmanx.world/assets/sovereign/workspace.html) |"
+            echo "| Python 3 available | $(flag command -v python3) |"
+            echo "| Node.js available | $(flag command -v node) |"
+            echo "| npm available | $(flag command -v npm) |"
+            echo "| Docker available | $(flag command -v docker) |"
+            echo "| Nginx available | $(flag command -v nginx) |"
+            echo "| systemctl available | $(flag command -v systemctl) |"
+            echo "| Nginx active | $(flag systemctl is-active --quiet nginx) |"
+            echo "| User systemd available | $(flag systemctl --user show-environment) |"
+            echo "| Can write to /opt | $(flag test -w /opt) |"
+            echo "| Can change Nginx sites-enabled | $(flag test -w /etc/nginx/sites-enabled) |"
+            echo "| Can change systemd units | $(flag test -w /etc/systemd/system) |"
+            echo "| Passwordless sudo available | $(flag sudo -n true) |"
+            echo ""
+            echo "**No service changes, package installation, account mutations, or DB writes performed.**"
+          } > /tmp/osmanx_readiness_summary.txt
+          cat /tmp/osmanx_readiness_summary.txt
+          AUDIT
+      - name: Clean up SSH key
+        if: always()
+        run: rm -f "$HOME/.ssh/osmanx_inventory" "$HOME/.ssh/known_hosts"
