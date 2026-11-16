@@ -20,7 +20,8 @@ try:
       page.get_by_role('heading',name='OSMANX WORLD').wait_for()
       page.screenshot(path=str(ROOT/f'tests/home-{width}.png'),full_page=True)
       assert page.locator('.product-tile').count()==5
-      assert page.get_by_role('link',name='Открыть демо',exact=False).count()==4
+      assert page.get_by_role('link',name='Открыть демо',exact=False).count()==3
+      assert page.get_by_role('link',name='Открыть полную версию',exact=False).count()==1
       assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'),('horizontal overflow home',width,page.evaluate('document.documentElement.scrollWidth'))
       print('SEARCH',flush=True);page.get_by_role('button',name='Поиск продуктов').click()
       page.locator('#search-query').fill('OmniChat')

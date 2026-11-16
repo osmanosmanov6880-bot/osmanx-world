@@ -28,6 +28,7 @@ jobs:
           set -euo pipefail
           test -s index.html
           test -s assets/sovereign/workspace.html
+          test -s assets/omnichat/index.html
           node --check assets/sovereign/site.js
           node --check assets/sovereign/workspace.js
           test -s assets/sovereign/site.css
@@ -102,6 +103,13 @@ jobs:
           curl -fLsS --retry 3 --retry-all-errors --retry-delay 2 --max-time 35 "https://osmanx.world/assets/sovereign/site.js?scope=${GITHUB_SHA}" -o /tmp/osmanx-core-five.js
           grep -Fq 'osmanx-core-five-live-v1' /tmp/osmanx-core-five.js
           echo 'Core Five public JS verified; unrelated lab files removed from VPS.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify live OmniChat full-source page
+        run: |
+          set -euo pipefail
+          curl -fLsS --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/omnichat/index.html?release=${GITHUB_SHA}" -o /tmp/omnichat-source.html
+          grep -Fq 'osmanx-omnichat-r36-source-live-v1' /tmp/omnichat-source.html
+          echo "OmniChat full-source landing page published over HTTPS." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove temporary key
         if: always()

@@ -45,7 +45,12 @@ def main():
                     assert page.locator('a[href*="app=cafe"]').count()==0
                     assert page.locator('a[href*="app=nebula"]').count()==0
                     assert page.locator('.tile-action').count()==5
+                    assert page.locator('.product-tile').nth(3).locator('.tile-action').get_attribute('href')=='/assets/omnichat/index.html'
                     assert page.locator('.tile-action').first.get_attribute("href")=="/#home"
+                    page.locator(".product-tile").nth(3).locator("a").click()
+                    page.wait_for_url("**/assets/omnichat/index.html",timeout=10000)
+                    assert page.locator("h1").count()==1
+                    page.goto(BASE+"/",wait_until="domcontentloaded")
                     page.locator(".product-tile").nth(2).locator("a").click()
                     page.wait_for_url("**/assets/sovereign/workspace.html?app=factory",timeout=10000)
                     assert page.locator(".ws-banner h1").inner_text()=="OSMANX App Factory"
