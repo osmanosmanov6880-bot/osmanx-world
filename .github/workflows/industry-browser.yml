@@ -29,6 +29,9 @@ jobs:
       - name: Verify JavaScript and required assets
         run: |
           node --check assets/industry/app.js
+          node --check assets/industry/console.js
+          test -s assets/industry/console.html
+          test -s assets/industry/console.css
           node --check assets/sovereign/site.js
           test -s assets/industry/style.css
           test -s assets/industry/index.html
