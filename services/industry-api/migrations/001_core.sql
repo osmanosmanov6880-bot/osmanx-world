@@ -23,6 +23,7 @@ CREATE TABLE industry.memberships (
 CREATE TABLE industry.sessions (
   token_hash char(64) PRIMARY KEY,
   account_id uuid NOT NULL REFERENCES industry.accounts(id) ON DELETE CASCADE,
+  tenant_id uuid NOT NULL REFERENCES industry.tenants(id) ON DELETE CASCADE,
   csrf_hash char(64) NOT NULL,
   expires_at timestamptz NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
@@ -161,3 +162,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON industry.login_attempts TO industry_app;
 GRANT SELECT, INSERT, UPDATE ON industry.resources, industry.customers, industry.services, industry.appointments TO industry_app;
 GRANT SELECT, INSERT ON industry.audit_events, industry.outbox TO industry_app;
 GRANT SELECT, UPDATE ON industry.outbox TO industry_worker;
+
+-- Only reveal the UUID of a tenant by its public slug to the login flow.
+CREATE FUNCTION industry.find_tenant(p_slug text) RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=industry,pg_temp
+AS 'SELECT id FROM industry.tenants WHERE slug=p_slug LIMIT 1';
+REVOKE ALL ON FUNCTION industry.find_tenant(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION industry.find_tenant(text) TO industry_app;
