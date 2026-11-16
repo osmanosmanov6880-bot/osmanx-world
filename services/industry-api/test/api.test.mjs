@@ -105,7 +105,7 @@ test('Block 3: transactional booking, idempotency, no overlap, audit and outbox'
   const overlap=await req('POST','/appointments',loginA,payload,{'idempotency-key':'acceptance-booking-002'});
   assert.equal(overlap.statusCode,409,overlap.body);
   const other=await req('POST','/appointments',loginB,payload,{'idempotency-key':'acceptance-booking-other'});
-  assert.equal(other.statusCode,400,'Cross-tenant FKs must reject foreign customer/service/resource');
+  assert.equal(other.statusCode,404,'A service from another tenant must be invisible');
   const confirm=await req('PATCH','/appointments/'+apptId+'/status',loginA,{status:'confirmed'});
   assert.equal(confirm.statusCode,200,confirm.body);
   const done=await req('PATCH','/appointments/'+apptId+'/status',loginA,{status:'done'});
