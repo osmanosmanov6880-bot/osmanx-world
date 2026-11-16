@@ -25,7 +25,7 @@ async function api(path,method='GET',body,extra={}){
   const contentType=response.headers.get('content-type')||'';
   if(!contentType.includes('application/json'))throw new Error('Сервер API не развёрнут на этом домене');
   const data=await response.json();
-  if(!response.ok)throw new Error(data.error||'Ошибка '+response.status);
+  if(!response.ok){const err=new Error(data.error||'Ошибка '+response.status);err.status=response.status;throw err;}
   return data;
 }
 function shell(content){root.innerHTML='<div class="console-shell"><header class="console-head"><div class="console-brand">OSMAN<em>X</em><small>INDUSTRY OS · SECURE CONSOLE</small></div><div class="console-inline"><span class="micro-pill">Серверные данные · без демо-подмены</span><a class="btn secondary" href="./">Открыть демо ↗</a></div></header>'+content+'<footer class="console-footer">OSMANX INDUSTRY OS R3 · Для реальных организаций требуются настроенные API, TLS, аудит, правовые основания обработки и проверка интеграций.</footer></div>'}
@@ -75,6 +75,7 @@ function appointments(){
   return '<div class="console-two"><div class="console-box"><div class="row between"><h3>Записи</h3><button class="btn ghost" data-action="csv-appointments">CSV ↓</button></div>'+table(['Клиент','Услуга','Календарь','Дата','Статус','Действие'],rows)+'</div><div class="console-box"><h3>Новая запись</h3>'+(!canWrite()?'<p class="console-muted">У вас только просмотр.</p>':!canCreate?'<p class="console-muted">Сначала добавьте клиента, услугу и календарь.</p>':'<form class="console-form" id="booking-form"><label>Клиент'+select('customerId',state.items.customers,'display_name')+'</label><label>Услуга'+select('serviceId',state.items.services.filter(x=>x.active),'name')+'</label><label>Календарь'+select('resourceId',state.items.resources.filter(x=>x.active),'name')+'</label><label>Дата и время<input type="datetime-local" name="startsAt" required></label><button type="submit" class="btn primary">Создать запись</button></form>')+'<p class="console-muted">Конфликт по времени одного ресурса сервер отклонит с кодом 409. Отменённые и завершённые записи не занимают слот.</p></div></div>';
 }
 function audit(){
+  if(!canManage())return '<div class="console-alert">Для просмотра журнала нужна роль управляющего.</div>';
   const rows=state.items.audit.map(v=>'<tr><td>'+e(v.action)+'</td><td>'+e(v.target_id||'—')+'</td><td>'+date(v.occurred_at)+'</td></tr>');
   return '<div class="console-box"><h3>Журнал операций (последние 100)</h3>'+table(['Событие','Объект','Дата'],rows)+'</div>';
 }
@@ -87,10 +88,11 @@ async function refresh(){
       api('/dashboard'),api('/customers'),api('/services'),api('/resources'),api('/appointments')]);
     state.stats=dashboard.stats;
     state.items={...state.items,customers:customers.items,services:services.items,resources:resources.items,appointments:appointments.items};
-    if(canManage())state.items.audit=(await api('/audit')).items;
+    state.items.audit=canManage()?(await api('/audit')).items:[];
     state.notice='';
   }catch(error){
-    if(!state.auth)state.offline=!(error.message.includes('Сессия')||error.message.includes('Требуется вход'));
+    if(error.status===401){state.auth=null;state.stats={};state.items={customers:[],services:[],resources:[],appointments:[],audit:[]};state.offline=false;state.notice='';}
+    else if(!state.auth)state.offline=!(error.message.includes('Сессия')||error.message.includes('Требуется вход'));
     if(state.offline)state.notice=error.message;
     else if(state.auth)state.notice=error.message;
   }finally{state.loading=false;display();}
@@ -136,7 +138,7 @@ root.addEventListener('click',async ev=>{
   if(action.dataset.action.startsWith('csv-')){csv(action.dataset.action.slice(4));return;}
   if(action.dataset.action==='logout'){
     try{await api('/auth/logout','POST')}catch{}
-    state.auth=null;state.notice='';state.tab='overview';login();
+    state.auth=null;state.stats={};state.items={customers:[],services:[],resources:[],appointments:[],audit:[]};state.notice='';state.tab='overview';login();
   }
 });
 root.addEventListener('submit',async ev=>{
