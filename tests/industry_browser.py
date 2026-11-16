@@ -89,6 +89,13 @@ def main():
                 assert page.locator(".finance-summary strong").inner_text().endswith("%")
                 assert page.locator("#toast").count() <= 1
                 page.close()
+                console = browser.new_page(viewport={"width": 390, "height": 844})
+                console.goto(BASE + "/assets/industry/console.html", wait_until="domcontentloaded")
+                console.locator(".api-offline").wait_for(timeout=10000)
+                assert console.get_by_text("Кабинет ожидает API").count() == 1
+                assert console.locator('a[href="./"]').count() >= 1
+                console.screenshot(path=str(OUT / "secure-console-offline-390.png"), full_page=True)
+                console.close()
                 portal = browser.new_page(viewport={"width": 1440, "height": 900})
                 portal.goto(BASE + "/", wait_until="domcontentloaded")
                 portal.locator(".product-tile").first.wait_for()
