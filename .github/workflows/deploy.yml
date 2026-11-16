@@ -33,6 +33,12 @@ jobs:
           test -s assets/sovereign/site.css
           test -s assets/sovereign/workspace.css
           test -s assets/sovereign/hero.webp
+          test -s assets/labs/index.html
+          test -s assets/labs/zion-9/index.html
+          test -s assets/labs/breakthrough/index.html
+          test -s assets/labs/internet-v-humanity/index.html
+          node --check assets/labs/breakthrough/app.js
+          node --check assets/labs/breakthrough/scene.js
 
       - name: Configure SSH
         env:
@@ -90,6 +96,21 @@ jobs:
           curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/sovereign/workspace.html?app=retail&release=${GITHUB_SHA}" | grep -Fq 'OSMANX — Рабочее пространство'
           echo "Sovereign workspaces and static assets served over public HTTPS." >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Verify OSMANX Labs live public assets
+        run: |
+          set -euo pipefail
+          base="https://osmanx.world/assets/labs"
+          for rel in index.html zion-9/index.html breakthrough/index.html breakthrough/styles.css breakthrough/app.js breakthrough/scene.js internet-v-humanity/index.html; do
+            curl -fLsS --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -o /dev/null "$base/$rel?release=${GITHUB_SHA}"
+          done
+          for n in $(seq 20 29); do
+            curl -fLsS --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -o /dev/null "$base/zion-9/queue/ZION-0$n/index.html?release=${GITHUB_SHA}"
+          done
+          curl -fLsS --connect-timeout 8 --max-time 35 "$base/index.html?release=${GITHUB_SHA}" -o /tmp/osmanx-labs.html
+          grep -Fq 'osmanx-labs-live-v1' /tmp/osmanx-labs.html
+          curl -fLsS --connect-timeout 8 --max-time 35 "$base/zion-9/index.html?release=${GITHUB_SHA}" -o /tmp/osmanx-zion.html
+          grep -Fq 'osmanx-zion-labs-v1' /tmp/osmanx-zion.html
+          echo 'Public Labs + 12 independent prototype entrypoints verified over HTTPS' >> "$GITHUB_STEP_SUMMARY"
       - name: Remove temporary key
         if: always()
         run: rm -f ~/.ssh/osmanx_deploy ~/.ssh/known_hosts
