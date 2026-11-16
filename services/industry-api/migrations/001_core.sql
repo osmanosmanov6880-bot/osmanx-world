@@ -110,11 +110,12 @@ CREATE TABLE industry.outbox (
   available_at timestamptz NOT NULL DEFAULT now(),
   locked_until timestamptz,
   delivered_at timestamptz,
+  dead_at timestamptz,
   last_error varchar(240),
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX outbox_queued_idx ON industry.outbox(available_at, created_at)
-  WHERE delivered_at IS NULL;
+  WHERE delivered_at IS NULL AND dead_at IS NULL;
 -- Every tenant-owned row is protected by tenant-scoped Row Level Security.
 ALTER TABLE industry.tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE industry.tenants FORCE ROW LEVEL SECURITY;
