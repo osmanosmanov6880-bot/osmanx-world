@@ -12,15 +12,15 @@ def inline(name):
   return source.replace('<head>', '<head>'+shim,1)
 try:
   with sync_playwright() as playwright:
-    browser=playwright.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox','--disable-dev-shm-usage'])
+    browser=playwright.chromium.launch(headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
     for width,height in [(1600,920),(390,844)]:
       print('HOME',width,flush=True);page=browser.new_page(viewport={'width':width,'height':height},accept_downloads=True);page.set_default_timeout(4000)
       errors=[];page.on('pageerror',lambda exc:errors.append(str(exc)))
       page.set_content(inline('index.html'),wait_until='domcontentloaded')
       page.get_by_role('heading',name='OSMANX WORLD').wait_for()
       page.screenshot(path=str(ROOT/f'tests/home-{width}.png'),full_page=True)
-      assert page.locator('.product-tile').count()==6
-      assert page.get_by_role('link',name='Открыть демо',exact=False).count()==6
+      assert page.locator('.product-tile').count()==5
+      assert page.get_by_role('link',name='Открыть демо',exact=False).count()==4
       assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'),('horizontal overflow home',width,page.evaluate('document.documentElement.scrollWidth'))
       print('SEARCH',flush=True);page.get_by_role('button',name='Поиск продуктов').click()
       page.locator('#search-query').fill('OmniChat')
@@ -74,12 +74,6 @@ try:
     with page.expect_download() as dl:page.get_by_role('button',name='Скачать HTML').click()
     assert dl.value.suggested_filename.endswith('.html')
     assert not err,err;page.close()
-    page,err=work('cafe')
-    page.locator('[data-add-cart=espresso]').click()
-    page.get_by_role('button',name='Корзина').first.click()
-    page.locator('#cafe-checkout button').click()
-    assert page.get_by_text('Заказ №',exact=False).count()>=1
-    assert not err,err;page.close()
     page,err=work('senqard')
     page.locator('#senqard-project input[name=name]').fill('Новый проект')
     page.locator('#senqard-project button').click()
@@ -87,12 +81,7 @@ try:
     page.locator('#senqard-task button').click()
     assert page.get_by_text('Подготовить список требований').count()>=1
     assert not err,err;page.close()
-    page,err=work('nebula')
-    assert page.locator('canvas').count()==1
-    page.get_by_role('button',name='Начать заново').click()
-    page.get_by_role('button',name='→').click()
-    assert not err,err;page.close()
     browser.close()
-    print('PASS: homepage PC/mobile, search, team, analytics; all 6 working products and real local operations')
+    print('PASS: homepage PC/mobile, search, team, analytics; all 4 active workspace demos and real local operations')
 finally:
   pass

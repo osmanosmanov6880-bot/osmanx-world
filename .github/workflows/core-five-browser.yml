@@ -1,0 +1,35 @@
+name: OSMANX Five Core Platforms Chromium
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/sovereign/**"
+      - "tests/core_five_browser.py"
+      - ".github/workflows/core-five-browser.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Chromium tests
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Test five platforms and denied old routes
+        run: python tests/core_five_browser.py
+      - name: Upload browser proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osmanx-core-five-chromium
+          path: qa/core-five/*.png
+          if-no-files-found: ignore
