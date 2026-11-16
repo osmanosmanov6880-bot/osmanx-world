@@ -1,0 +1,63 @@
+name: Industry OS R3 PostgreSQL API acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/industry-api-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/industry-api-ci.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  industry-api:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: industry_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d industry_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      ALLOWED_ORIGIN: http://localhost
+      MIGRATION_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+      DATABASE_URL: postgres://industry_app:industrypass@127.0.0.1:5432/industry_ci
+      WORKER_DB_URL: postgres://industry_worker:workerpass@127.0.0.1:5432/industry_ci
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify JS syntax and dependency manifest
+        run: |
+          for file in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$file"; done
+          node --check ../../assets/industry/console.js
+      - name: Install pinned runtime packages
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Prepare separate least-privilege database users
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+      - name: Apply versioned PostgreSQL schema
+        run: npm run migrate
+      - name: Check repeat migrations are idempotent
+        run: npm run migrate
+      - name: Verify API, tenant RLS, security, bookings, outbox and signed delivery
+        run: npm test
