@@ -30,7 +30,7 @@ jobs:
           test -s assets/sovereign/workspace.html
           test -s assets/industry/index.html
           test -s assets/industry/style.css
-          node --check assets/industry/app.js
+          node --check assets/industry/app.js\n          node --check assets/industry/operations.js\n          test -s assets/industry/operations.css
           test -s assets/omnichat/index.html
           node --check assets/sovereign/site.js
           node --check assets/sovereign/workspace.js
