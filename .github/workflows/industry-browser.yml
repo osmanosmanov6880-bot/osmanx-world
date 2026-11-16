@@ -5,7 +5,7 @@ on:
     paths:
       - "assets/industry/**"
       - "assets/sovereign/site.js"
-      - "tests/industry_browser.py"
+      - "tests/industry_browser.py"\n      - "tests/industry_operations_browser.py"
       - ".github/workflows/industry-browser.yml"
   push:
     branches: [main]
@@ -28,7 +28,7 @@ jobs:
           node-version: '22'
       - name: Verify JavaScript and required assets
         run: |
-          node --check assets/industry/app.js
+          node --check assets/industry/app.js\n          node --check assets/industry/operations.js\n          test -s assets/industry/operations.css
           node --check assets/sovereign/site.js
           test -s assets/industry/style.css
           test -s assets/industry/index.html
@@ -41,7 +41,7 @@ jobs:
           python -m pip install playwright==1.56.0
           python -m playwright install --with-deps chromium
       - name: Seven industries functional browser QA
-        run: python tests/industry_browser.py
+        run: |\n          python tests/industry_browser.py\n          python tests/industry_operations_browser.py
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
