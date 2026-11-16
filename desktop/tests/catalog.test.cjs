@@ -4,14 +4,15 @@ const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const path=require('node:path');
 const catalog=require('../catalog.json');
-test('catalog contains six distinct verified product concepts',()=>{
- assert.equal(catalog.length,6);
+test('catalog contains exactly five selected OSMANX platforms',()=>{
+ assert.equal(catalog.length,5);
+ assert.deepEqual(catalog.map(p=>p.id),['world','retail','factory','omnichat','senqard']);
  assert.equal(new Set(catalog.map(x=>x.id)).size,catalog.length);
  for(const p of catalog){assert.match(p.id,/^[a-z]+$/);assert.ok(p.name.length>=5);assert.ok(p.status);assert.ok(p.description.length>=35)}
 });
 test('no private repo is mistakenly linked as public software',()=>{
  for(const p of catalog){if(p.url){const u=new URL(p.url);assert.equal(u.protocol,'https:');assert.ok(['github.com','osmanx.world'].includes(u.hostname))}
-  if(p.id==='senqard')assert.equal(p.url,null)}
+  if(p.id==='senqard')assert.ok(p.url.endsWith('?app=senqard'))}
 });
 test('renderer has explicit restrictive content security policy',()=>{
  const html=readFileSync(path.join(__dirname,'../renderer/index.html'),'utf8');

@@ -1,62 +1,52 @@
 [
   {
+    "id": "world",
+    "category": "ПЛАТФОРМА",
+    "name": "OSMANX WORLD",
+    "label": "Цифровая штаб-квартира",
+    "description": "Главный портал пяти систем OSMANX: выбранные продукты, локальные задачи, навигация и доступ к демонстрационным сценариям.",
+    "status": "Доступен сайт",
+    "url": "https://osmanx.world/",
+    "access": "Публичный портал"
+  },
+  {
     "id": "retail",
     "category": "БИЗНЕС",
     "name": "Retail Intelligence",
-    "label": "Розница и магазины",
-    "description": "Анонимная обратная связь, пилоты, проверяемые гипотезы, операционная аналитика и контроль внедрения.",
-    "status": "Инженерная версия",
-    "url": "https://github.com/osmanosmanov6880-bot/osmanx-retail-intelligence",
-    "access": "Исходный код, локальный запуск"
-  },
-  {
-    "id": "omnichat",
-    "category": "КОММУНИКАЦИИ",
-    "name": "OSMANX OmniChat",
-    "label": "Единый центр сообщений",
-    "description": "Очереди входящих и исходящих, контроль доставки, диагностика и мультиканальные рабочие процессы.",
-    "status": "Инженерная версия",
-    "url": "https://github.com/osmanosmanov6880-bot/osmanx-omnichat",
-    "access": "Исходный код, интеграции требуют настройки"
+    "label": "Аналитика магазинов",
+    "description": "Демонстрация опросов, причин отказа, гипотез, пилотов и операционных задач. Производственный backend развертывается отдельно.",
+    "status": "Локальное демо",
+    "url": "https://osmanx.world/assets/sovereign/workspace.html?app=retail",
+    "access": "Открыть браузерное демо"
   },
   {
     "id": "factory",
     "category": "РАЗРАБОТКА",
     "name": "OSMANX App Factory",
-    "label": "Создание цифровых продуктов",
-    "description": "Среда разработки сайтов, CRM и публикаций с контролем релизов и техническими проверками.",
-    "status": "Preview",
-    "url": "https://github.com/osmanosmanov6880-bot/osmanx-app-factory",
-    "access": "Исходный код, тестовые среды"
+    "label": "Разработка сайтов",
+    "description": "Редактор и экспорт тестовых HTML-проектов в браузере. Реальные серверные публикации требуют отдельного защищённого контура.",
+    "status": "Локальное демо",
+    "url": "https://osmanx.world/assets/sovereign/workspace.html?app=factory",
+    "access": "Открыть браузерное демо"
   },
   {
-    "id": "hospitality",
-    "category": "БИЗНЕС",
-    "name": "Для кофеен и ресторанов",
-    "label": "Цифровой сервис для гостей",
-    "description": "Обратная связь, QR-сценарии, предзаказы и проверка повторных посещений. Внедрение обсуждается отдельно.",
-    "status": "Услуги / консультация",
-    "url": "https://osmanx.world/#horeca",
-    "access": "Открыть коммерческое предложение"
-  },
-  {
-    "id": "osgard",
-    "category": "ИГРЫ",
-    "name": "OSGARD / NEBULA",
-    "label": "Игровые миры и эксперименты",
-    "description": "Разработка игровой экосистемы и технологические эксперименты. Статус отдельных релизов уточняется в проекте.",
-    "status": "В разработке",
-    "url": "https://github.com/osmanosmanov6880-bot/osgard-world",
-    "access": "Открыть репозиторий"
+    "id": "omnichat",
+    "category": "КОММУНИКАЦИИ",
+    "name": "OSMANX OmniChat",
+    "label": "Центр сообщений",
+    "description": "Демонстрация очередей и диалогов без подключения реальных WhatsApp, Instagram или Авито; исходники R36 существуют отдельно.",
+    "status": "Локальное демо",
+    "url": "https://osmanx.world/assets/sovereign/workspace.html?app=omni",
+    "access": "Открыть браузерное демо"
   },
   {
     "id": "senqard",
     "category": "ПЛАТФОРМА",
     "name": "SENQARD",
-    "label": "Управление командами и проектами",
-    "description": "Закрытая платформа. Текущая конфигурация не объявлена готовой к работе с клиентскими данными.",
-    "status": "Доступ по запросу",
-    "url": null,
-    "access": "Запросите презентацию"
+    "label": "Управление проектами",
+    "description": "Локальная демонстрация проектов и задач без подключения коммерческой базы SENQARD; доступ к production ограничен проверками.",
+    "status": "Локальное демо",
+    "url": "https://osmanx.world/assets/sovereign/workspace.html?app=senqard",
+    "access": "Открыть браузерное демо"
   }
 ]
