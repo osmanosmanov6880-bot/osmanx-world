@@ -102,6 +102,8 @@ test('Block 3: transactional booking, idempotency, no overlap, audit and outbox'
   assert.equal(duplicate.statusCode,200,duplicate.body);
   assert.equal(json(duplicate).duplicate,true);
   assert.equal(json(duplicate).item.id,apptId);
+  const changedPayload=await req('POST','/appointments',loginA,{...payload,startsAt:new Date(new Date(start).getTime()+3600000).toISOString()},headers);
+  assert.equal(changedPayload.statusCode,409,'One idempotency key cannot represent different bookings');
   const overlap=await req('POST','/appointments',loginA,payload,{'idempotency-key':'acceptance-booking-002'});
   assert.equal(overlap.statusCode,409,overlap.body);
   const other=await req('POST','/appointments',loginB,payload,{'idempotency-key':'acceptance-booking-other'});
