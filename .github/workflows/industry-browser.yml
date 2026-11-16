@@ -1,0 +1,51 @@
+name: OSMANX Industry OS Chromium QA
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "assets/industry/**"
+      - "assets/sovereign/site.js"
+      - "tests/industry_browser.py"
+      - ".github/workflows/industry-browser.yml"
+  push:
+    branches: [main]
+    paths:
+      - "assets/industry/**"
+      - "assets/sovereign/site.js"
+      - "tests/industry_browser.py"
+      - ".github/workflows/industry-browser.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  industry-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify JavaScript and required assets
+        run: |
+          node --check assets/industry/app.js
+          node --check assets/sovereign/site.js
+          test -s assets/industry/style.css
+          test -s assets/industry/index.html
+          grep -Fq 'osmanx-industry-os-r2' assets/industry/app.js
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned browser harness
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Seven industries functional browser QA
+        run: python tests/industry_browser.py
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: industry-os-browser-evidence
+          path: qa/industry/*.png
+          if-no-files-found: ignore
