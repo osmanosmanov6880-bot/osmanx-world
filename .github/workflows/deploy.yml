@@ -31,6 +31,8 @@ jobs:
           test -s assets/industry/index.html
           test -s assets/industry/style.css
           node --check assets/industry/app.js
+          node --check assets/industry/operations.js
+          test -s assets/industry/operations.css
           test -s assets/omnichat/index.html
           node --check assets/sovereign/site.js
           node --check assets/sovereign/workspace.js
@@ -49,9 +51,11 @@ jobs:
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/osmanx_deploy
+          printf '%s
+' "$DEPLOY_KEY" > ~/.ssh/osmanx_deploy
           chmod 600 ~/.ssh/osmanx_deploy
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf '%s
+' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
       - name: Validate target and sync static site
