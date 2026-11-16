@@ -1,7 +1,9 @@
 (()=>{'use strict';
 const shell=document.getElementById('workspace'),STORE='osmanx-sovereign-workspace-v1',q=new URLSearchParams(location.search);
-const meta={retail:['Retail Intelligence','Магазины · аналитика'],omni:['OSMANX OmniChat','Коммуникации · очередь'],factory:['OSMANX App Factory','Разработка · сайты'],cafe:['Для кофеен и ресторанов','Гости · заказы'],senqard:['SENQARD','Проекты · исполнение'],nebula:['OSGARD / NEBULA','Игровой прототип']};
-const app=meta[q.get('app')]?q.get('app'):'retail';let tab='overview',activeChat='a',currentProject=null,cart=[],game=null;
+const meta={retail:['Retail Intelligence','Магазины · аналитика'],omni:['OSMANX OmniChat','Коммуникации · очередь'],factory:['OSMANX App Factory','Разработка · сайты'],senqard:['SENQARD','Проекты · исполнение']};
+const requested=q.get('app')||'retail';
+if(!Object.hasOwn(meta,requested)){location.replace('/#projects');return;}
+const app=requested;let tab='overview',activeChat='a',currentProject=null,cart=[],game=null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rand=()=>globalThis.crypto?.randomUUID?.()||Math.random().toString(36).slice(2);
 const today=()=>new Date().toISOString().slice(0,10);
