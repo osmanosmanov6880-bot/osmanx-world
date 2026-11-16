@@ -1,0 +1,96 @@
+name: Publish full OSMANX OmniChat R36 source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/omnichat/index.html"
+      - ".github/workflows/omnichat-source-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osmanx-omnichat-source-archive
+  cancel-in-progress: false
+
+jobs:
+  full-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    steps:
+      - name: Download exact approved original R36 source revision
+        env:
+          SOURCE_SHA: "f3d4e430d879cec5d1ad9fa96ce5e6e5e0e33715"
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          curl -fL --retry 3 --retry-all-errors --retry-delay 3 --connect-timeout 20 --max-time 240 \
+            "https://github.com/osmanosmanov6880-bot/osmanx-omnichat/archive/${SOURCE_SHA}.zip" \
+            -o release/OSMANX-OmniChat-R36-Full-Source.zip
+          test "$(stat -c '%s' release/OSMANX-OmniChat-R36-Full-Source.zip)" -gt 200000
+      - name: Verify complete source and reject credential-looking files
+        run: |
+          python - <<'PY'
+          from pathlib import PurePosixPath
+          from zipfile import ZipFile
+          p="release/OSMANX-OmniChat-R36-Full-Source.zip"
+          with ZipFile(p) as z:
+            assert z.testzip() is None, "Archive corruption"
+            names=[n for n in z.namelist() if not n.endswith('/')]
+            required=('backend/app/main.py','backend/app/webhooks.py','backend/app/services.py',
+                      'frontend/public/app.js','frontend/public/index.html',
+                      'docker-compose.yml','start_windows.bat','start_linux.sh','README.md')
+            for required_path in required:
+              assert any(name.endswith('/'+required_path) for name in names),required_path
+            assert len(names)>=300, f"Incomplete source: {len(names)} files"
+            for name in names:
+              base=PurePosixPath(name).name.lower()
+              assert base not in ('.env','id_rsa','id_ed25519') and not base.endswith(('.pem','.p12','.pfx','.sqlite','.db')),name
+            print("Verified full source:",len(names),"files, no packaged runtime credentials/databases")
+          PY
+          (cd release && sha256sum OSMANX-OmniChat-R36-Full-Source.zip > OSMANX-OmniChat-R36-SHA256SUMS.txt)
+      - name: Configure trusted VPS SSH connection
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY" && test -n "$DEPLOY_KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/osmanx_omnichat"
+          chmod 600 "$HOME/.ssh/osmanx_omnichat"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+      - name: Copy full project and SHA-256 directly to osmanx.world VPS
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST" && test "$DEPLOY_USER" = "deploy-osmanx"
+          ssh -i ~/.ssh/osmanx_omnichat -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            'install -d -m 755 /var/www/osmanx.world/assets/downloads'
+          scp -i ~/.ssh/osmanx_omnichat -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            release/OSMANX-OmniChat-R36-Full-Source.zip release/OSMANX-OmniChat-R36-SHA256SUMS.txt \
+            "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/assets/downloads/"
+          local_sha="$(sha256sum release/OSMANX-OmniChat-R36-Full-Source.zip | cut -d ' ' -f1)"
+          remote_sha="$(ssh -i ~/.ssh/osmanx_omnichat -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/assets/downloads/OSMANX-OmniChat-R36-Full-Source.zip' | cut -d ' ' -f1)"
+          test "$local_sha" = "$remote_sha"
+          echo "Full R36 project source matches original archive bytes on VPS." >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify real HTTPS download checksum
+        run: |
+          set -euo pipefail
+          source_sha="$(sha256sum release/OSMANX-OmniChat-R36-Full-Source.zip | cut -d ' ' -f1)"
+          curl -fLsS --retry 3 --retry-all-errors --retry-delay 3 --connect-timeout 20 --max-time 180 \
+            'https://osmanx.world/assets/downloads/OSMANX-OmniChat-R36-Full-Source.zip' \
+            -o /tmp/omnichat-public.zip
+          public_sha="$(sha256sum /tmp/omnichat-public.zip | cut -d ' ' -f1)"
+          test "$source_sha" = "$public_sha"
+          curl -fLsS --max-time 35 'https://osmanx.world/assets/downloads/OSMANX-OmniChat-R36-SHA256SUMS.txt' \
+            | grep -F "$source_sha"
+          echo "Live HTTPS source archive and manifest match SHA-256." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove SSH credential files
+        if: always()
+        run: rm -f "$HOME/.ssh/osmanx_omnichat" "$HOME/.ssh/known_hosts"
