@@ -101,7 +101,8 @@ jobs:
           for asset in /assets/industry/index.html /assets/industry/style.css /assets/industry/app.js; do
             curl -fsSL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -o /dev/null "https://osmanx.world${asset}?release=${GITHUB_SHA}"
           done
-          curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/industry/app.js?release=${GITHUB_SHA}" | grep -Fq "osmanx-industry-os-r2"
+          curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/industry/app.js?release=${GITHUB_SHA}" -o /tmp/osmanx-industry-live.js
+          grep -Fq "osmanx-industry-os-r2" /tmp/osmanx-industry-live.js
           echo "Sovereign workspaces and static assets served over public HTTPS." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify only five platform scope reached VPS
