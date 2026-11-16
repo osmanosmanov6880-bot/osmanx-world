@@ -100,6 +100,36 @@ def main():
                     page.wait_for_url("**/#projects",timeout=10000)
                     assert page.locator(".product-tile").count()==5
                     page.close()
+
+                # OmniChat source-backed product page: health gate remains closed
+                # until the real API reports the correct PostgreSQL readiness.
+                for width,height in [(1440,900),(390,844)]:
+                    page=browser.new_page(viewport={"width":width,"height":height})
+                    errors=[]
+                    page.on("pageerror",lambda err:errors.append(str(err)))
+                    url="https://chat.osmanx.world/api/health/ready"
+                    def unavailable(route):
+                        route.fulfill(status=503,content_type="application/json",headers={"Access-Control-Allow-Origin":"*"},body='{"status":"error"}')
+                    page.route(url,unavailable)
+                    page.goto(BASE+"/assets/omnichat/index.html",wait_until="domcontentloaded")
+                    page.locator("#check-connection").wait_for(timeout=10000)
+                    assert page.locator("#open-live").is_hidden()
+                    assert page.get_by_role("link",name="Скачать полный исходный код R36").count()==1
+                    page.locator("#check-connection").click()
+                    page.get_by_text("Публичный сервер не подтверждён. Демо доступно выше.").wait_for(timeout=8000)
+                    assert page.locator("#open-live").is_hidden()
+                    page.unroute(url,unavailable)
+                    def ready(route):
+                        route.fulfill(status=200,content_type="application/json",headers={"Access-Control-Allow-Origin":"*"},body='{"status":"ready","database":"ok"}')
+                    page.route(url,ready)
+                    page.locator("#check-connection").click()
+                    page.locator("#open-live").wait_for(state="visible",timeout=8000)
+                    assert page.locator("#open-live").get_attribute("href")=="https://chat.osmanx.world/"
+                    dims=page.evaluate("({scroll:document.documentElement.scrollWidth,inner:innerWidth})")
+                    assert dims["scroll"]<=dims["inner"]+2,dims
+                    page.screenshot(path=str(OUT/f"omnichat-r36-{width}.png"),full_page=True)
+                    assert not errors,errors
+                    page.close()
             finally:browser.close()
         print("PASS: Exactly 5 core cards; four operational demos; excluded apps blocked; desktop/mobile Chromium QA")
     finally:

@@ -17,9 +17,24 @@ main{max-width:1450px;margin:0 auto;padding:76px clamp(20px,5vw,76px) 115px}.eye
 .cta{margin-top:65px;border:1px solid #655742;background:linear-gradient(120deg,#242b29,#182127);padding:34px;display:flex;align-items:center;justify-content:space-between;gap:24px}.cta p{font-size:13px}.meta{margin-top:44px;padding-top:22px;border-top:1px solid #3b4d51;color:#91a4aa;font-size:11px;line-height:1.8}.meta a{color:#ebc386;text-decoration:underline;text-underline-offset:4px}
 @media(max-width:950px){.hero{grid-template-columns:1fr;gap:25px}.hero-aside{max-width:550px}.feature-grid,.step-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:610px){header{height:auto;min-height:76px;padding:15px 19px;flex-wrap:wrap}main{padding:42px 18px 70px}.hero{min-height:0}.hero-aside{padding:20px}h1{font-size:clamp(48px,12.5vw,79px)}.stats,.feature-grid,.step-grid{grid-template-columns:1fr}.stats{margin-bottom:49px}.stat{padding:20px}.feature{min-height:0}.section-line{display:block}.section-line p{margin-top:10px}.cta{display:block;padding:24px}.cta .actions{margin-top:20px}.action{width:100%}}
+
+/* Readiness probe: never display a live SaaS button before real API response. */
+[hidden]{display:none!important}
+.server-box{margin:57px 0 0;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:44px;align-items:center;background:linear-gradient(115deg,#182630,#232720);border:1px solid #847352;padding:34px}
+.server-box h2{font:500 clamp(26px,3vw,38px)/1.2 Georgia,serif;letter-spacing:-.035em}
+.server-box p{font-size:13px;line-height:1.75}
+.server-actions{display:grid;gap:13px;justify-items:stretch}
+.server-status{display:flex;align-items:center;gap:11px;font-size:12px;font-weight:800;color:#e5c290}
+.server-status.ok{color:#91d7b8}
+.server-status i{display:block;width:9px;height:9px;border-radius:50%;background:#caa06c;flex-shrink:0}
+.server-status.ok i{background:#78d4aa}
+.server-actions button{width:100%;font:800 12px Inter,system-ui,sans-serif;cursor:pointer}
+.server-actions small{font-size:11px;color:#a8b9bf;line-height:1.6}
+@media(max-width:730px){.server-box{grid-template-columns:1fr;gap:20px;padding:23px}}
+
 </style>
 </head><body>
-<header><a class="brand" href="/">OSMAN<em>X</em><small>WORLD / OMNICHAT</small></a><nav><a href="/#projects">Пять систем</a><a href="/assets/sovereign/workspace.html?app=omni">Демо</a><a href="https://github.com/osmanosmanov6880-bot/osmanx-omnichat/tree/release/r36-contabo" target="_blank" rel="noopener noreferrer">Исходный код</a></nav></header>
+<header><a class="brand" href="/">OSMAN<em>X</em><small>WORLD / OMNICHAT</small></a><nav><a href="/#projects">Пять систем</a><a href="/assets/sovereign/workspace.html?app=omni">Демо</a><a href="#connection">Статус API</a><a href="https://github.com/osmanosmanov6880-bot/osmanx-omnichat/tree/release/r36-contabo" target="_blank" rel="noopener noreferrer">Исходный код</a></nav></header>
 <main>
 <section class="hero"><div class="hero-main"><div class="eyebrow">OSMANX / COMMUNICATION INTELLIGENCE / SOURCE EDITION</div><h1>Один центр.<br><span>Все диалоги.</span></h1><p>Настоящая система OmniChat: backend на FastAPI, React-интерфейс, база данных, очереди доставки, механизмы подключения каналов и средства диагностики. Здесь можно открыть демонстрацию или скачать полный проект.</p><div class="actions">
 <a class="action gold" href="/assets/sovereign/workspace.html?app=omni">Открыть интерактивное демо</a>
@@ -43,6 +58,13 @@ main{max-width:1450px;margin:0 auto;padding:76px clamp(20px,5vw,76px) 115px}.eye
 <article class="step"><span>03 / PROVIDERS</span><h3>Проверить реальные каналы</h3><p>Подключить разрешённые Meta/WhatsApp, Авито и остальные каналы, подтвердить вебхуки, отправку и восстановление после сбоя.</p></article>
 </div>
 <div class="cta"><div><h3>Код готов к дальнейшей интеграции.</h3><p>Сейчас доступна полная исходная сборка и отдельное интерактивное демо. Для работы нескольких компаний через интернет нужно завершить эксплуатационную настройку.</p></div><div class="actions"><a class="action gold" href="/assets/downloads/OSMANX-OmniChat-R36-Full-Source.zip">Скачать проект R36</a><a class="action" href="https://github.com/osmanosmanov6880-bot/osmanx-omnichat/blob/release/r36-contabo/docs/PRODUCTION.md" target="_blank" rel="noopener noreferrer">Инструкция production</a></div></div>
+<section class="server-box" id="connection" aria-labelledby="server-heading">
+<div><div class="eyebrow">LIVE READINESS / NO FAKE CONNECTION</div><h2 id="server-heading">Проверить реальный<br>сервер OmniChat.</h2><p>Интерфейс не выдаёт локальное демо за работающий backend. Проверка использует HTTPS и статус PostgreSQL без передачи паролей и токенов.</p></div>
+<div class="server-actions"><div class="server-status" id="connection-status" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="connection-text">Публичный сервер не подтверждён</span></div>
+<button id="check-connection" class="action dark" type="button">Проверить API ↻</button>
+<a id="open-live" class="action gold" href="https://chat.osmanx.world/" hidden rel="noopener noreferrer">Открыть реальный OmniChat ↗</a>
+<small>Кнопка входа активируется только при ответе действующего HTTPS API и базы данных.</small>
+</div></section>
 <div class="meta">OSMANX WORLD · Original source: <a href="https://github.com/osmanosmanov6880-bot/osmanx-omnichat/tree/release/r36-contabo" target="_blank" rel="noopener noreferrer">osmanx-omnichat / release/r36-contabo</a> · Pinned revision: <code>f3d4e430d879cec5d1ad9fa96ce5e6e5e0e33715</code><p>Скачать исходный код означает получить программный проект для установки, а не подключённый облачный SaaS.</p></div>
 </main>
-</body></html>
+<script src="/assets/sovereign/omnichat.js" defer></script></body></html>
