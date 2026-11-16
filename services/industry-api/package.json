@@ -1,0 +1,21 @@
+{
+  "name": "@osmanx/industry-api",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "worker": "node src/worker.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@fastify/cookie": "11.1.5",
+    "fastify": "5.12.8",
+    "pg": "8.23.1"
+  }
+}
