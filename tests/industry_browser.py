@@ -43,7 +43,7 @@ def main():
                         assert page.locator(".feature-list").count() >= 2
                         page.locator('[data-nav="client"]').click()
                         page.locator(".device-frame").wait_for()
-                        page.locator('[data-phone="bookings"]').click()
+                        page.locator('.phone-nav [data-phone="bookings"]').click()
                         page.locator('[data-phone="profile"]').click()
                         page.locator('[data-nav="diagnostic"]').click()
                         page.locator('[data-audit="0"]').click()
