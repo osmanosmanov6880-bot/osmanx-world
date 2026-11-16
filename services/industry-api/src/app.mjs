@@ -194,15 +194,20 @@ export async function buildApp(pool){
     if(!Number.isFinite(start.getTime())||start.getTime()<now-60*60*1000||start.getTime()>now+370*24*3600*1000)throw httpError(400,'Запись должна быть в ближайшие 370 дней');
     const key=req.headers['idempotency-key'];
     if(key!==undefined && (typeof key!=='string'||!/^[a-zA-Z0-9._:-]{8,80}$/.test(key)))throw httpError(400,'Некорректный ключ повторного запроса');
+    const fingerprint=sha256(JSON.stringify([customer,service,resource,start.toISOString()]));
     if(key){
-      const prev=await db.query('SELECT id,starts_at,status FROM industry.appointments WHERE tenant_id=$1 AND idempotency_key=$2',[s.tenant_id,key]);
-      if(prev.rowCount) return {item:prev.rows[0],duplicate:true};
+      const prev=await db.query('SELECT id,starts_at,status,idempotency_fingerprint FROM industry.appointments WHERE tenant_id=$1 AND idempotency_key=$2',[s.tenant_id,key]);
+      if(prev.rowCount){
+        if(prev.rows[0].idempotency_fingerprint!==fingerprint)throw httpError(409,'Ключ уже использован для другой записи');
+        const {id,starts_at,status}=prev.rows[0];
+        return {item:{id,starts_at,status},duplicate:true};
+      }
     }
     const duration=(await db.query('SELECT duration_minutes FROM industry.services WHERE tenant_id=$1 AND id=$2 AND active',[s.tenant_id,service])).rows[0]?.duration_minutes;
     if(!duration)throw httpError(404,'Услуга недоступна');
     const r=await db.query(
-      "INSERT INTO industry.appointments(tenant_id,customer_id,service_id,resource_id,starts_at,ends_at,idempotency_key) VALUES($1,$2,$3,$4,$5::timestamptz,$5::timestamptz + make_interval(mins => $6::int),$7) RETURNING id,starts_at,ends_at,status",
-      [s.tenant_id,customer,service,resource,start.toISOString(),duration,key||null]);
+      "INSERT INTO industry.appointments(tenant_id,customer_id,service_id,resource_id,starts_at,ends_at,idempotency_key,idempotency_fingerprint) VALUES($1,$2,$3,$4,$5::timestamptz,$5::timestamptz + make_interval(mins => $6::int),$7,$8) RETURNING id,starts_at,ends_at,status",
+      [s.tenant_id,customer,service,resource,start.toISOString(),duration,key||null,key?fingerprint:null]);
     await recordChange(db,s.tenant_id,s.account_id,'appointment.created',r.rows[0].id,{status:'new'});
     reply.code(201);return {item:r.rows[0]};
   }));
