@@ -7,7 +7,7 @@ const $=(s,r=document)=>r.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))||fallback}catch{return fallback}};
 const core=()=>read(CORE,null),ops=()=>read(KEY,{version:1,capacity:{},audit:[]}),consents=()=>read(CONSENT,{version:1,records:{}});
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const current=()=>{const id=$('[data-industry][aria-pressed="true"]')?.dataset.industry;return industries.includes(id)?id:'lab'};
+const current=()=>{const id=$('[data-industry][aria-pressed="true"]')?.dataset.industry;if(industries.includes(id))return id;return industries.find(key=>document.title.includes(names[key]))||'lab'};
 const toast=m=>{let n=$('#ops-toast');if(!n){n=document.createElement('div');n.id='ops-toast';n.className='ops-toast';document.body.append(n)}n.textContent=m;n.classList.add('show');clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),3200)};
 const download=(name,data,type='application/json')=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)};
 let tab='capacity';
