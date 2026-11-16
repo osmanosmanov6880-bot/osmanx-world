@@ -73,6 +73,7 @@ CREATE TABLE industry.appointments (
   resource_id uuid NOT NULL,
   starts_at timestamptz NOT NULL,
   ends_at timestamptz NOT NULL,
+  idempotency_key varchar(80),
   status varchar(12) NOT NULL DEFAULT 'new'
     CHECK (status IN ('new','confirmed','done','cancelled')),
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -89,6 +90,7 @@ CREATE TABLE industry.appointments (
     tenant_id WITH =, resource_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&
   ) WHERE (status IN ('new','confirmed'))
 );
+CREATE UNIQUE INDEX appointments_idempotency_idx ON industry.appointments (tenant_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
 CREATE INDEX appointments_tenant_start_idx ON industry.appointments (tenant_id, starts_at DESC);
 CREATE TABLE industry.audit_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
