@@ -95,8 +95,10 @@ jobs:
           for asset in /assets/sovereign/site.css /assets/sovereign/site.js /assets/sovereign/workspace.html /assets/sovereign/workspace.css /assets/sovereign/workspace.js /assets/sovereign/hero.webp; do
             curl -fsSL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -o /dev/null "https://osmanx.world${asset}?release=${GITHUB_SHA}"
           done
-          curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/sovereign/workspace.html?app=retail&release=${GITHUB_SHA}" | grep -Fq 'OSMANX — Рабочее пространство'
-          curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/omnichat/index.html?release=${GITHUB_SHA}" | grep -Fq 'osmanx-omnichat-r36-source-live-v1'
+          curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/sovereign/workspace.html?app=retail&release=${GITHUB_SHA}" -o /tmp/osmanx-workspace-live.html
+          grep -Fq 'OSMANX — Рабочее пространство' /tmp/osmanx-workspace-live.html
+          curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/omnichat/index.html?release=${GITHUB_SHA}" -o /tmp/osmanx-omnichat-live.html
+          grep -Fq 'osmanx-omnichat-r36-source-live-v1' /tmp/osmanx-omnichat-live.html
           curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 -o /dev/null "https://osmanx.world/assets/sovereign/omnichat.js?release=${GITHUB_SHA}"
           for asset in /assets/industry/index.html /assets/industry/style.css /assets/industry/app.js; do
             curl -fsSL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -o /dev/null "https://osmanx.world${asset}?release=${GITHUB_SHA}"
