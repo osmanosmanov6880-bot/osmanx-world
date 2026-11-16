@@ -6,6 +6,11 @@ on:
       - "assets/sovereign/**"
       - "tests/core_five_browser.py"
       - ".github/workflows/core-five-browser.yml"
+  pull_request:
+    paths:
+      - "assets/sovereign/**"
+      - "tests/core_five_browser.py"
+      - ".github/workflows/core-five-browser.yml"
   workflow_dispatch:
 
 permissions:
