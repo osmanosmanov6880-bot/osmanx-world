@@ -1,0 +1,26 @@
+name: OSMANX Guest experiment CI
+on:
+  pull_request:
+    paths:
+      - 'assets/guest/**'
+      - 'tests/guest-experiment.test.mjs'
+      - '.github/workflows/guest-experiment.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/guest/**'
+      - 'tests/guest-experiment.test.mjs'
+      - '.github/workflows/guest-experiment.yml'
+permissions:
+  contents: read
+jobs:
+  guest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check assets/guest/experiment-model.js && node --check assets/guest/experiment.js
+      - run: node --test tests/guest-experiment.test.mjs
