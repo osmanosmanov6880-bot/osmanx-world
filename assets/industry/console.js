@@ -80,10 +80,13 @@ function appointments(){
   const rows=a.map(v=>{
     const steps=allowedStatus[v.status]||[];
     const actions=canWrite()&&steps.length?'<select data-status-id="'+e(v.id)+'" aria-label="Изменение статуса"><option value="">Выберите</option>'+steps.map(x=>'<option value="'+x+'">'+labels[x]+'</option>').join('')+'</select>':'—';
-    return '<tr><td class="strong">'+e(v.customer_name)+'</td><td>'+e(v.service_name)+'</td><td>'+e(v.resource_name)+'</td><td>'+date(v.starts_at)+'</td><td><span class="status '+e(v.status)+'">'+labels[v.status]+'</span></td><td>'+actions+'</td></tr>';
+    return '<tr><td class="strong">'+e(v.customer_name)+'</td><td>'+e(v.service_name)+'</td><td>'+e(v.resource_name)+'</td><td>'+date(v.starts_at)+'</td><td><span class="status '+e(v.status)+'">'+labels[v.status]+'</span></td><td>'+actions+(canWrite()&&['new','confirmed'].includes(v.status)?'<button class="action-link" data-reschedule="'+e(v.id)+'">Перенести</button>':'')+'</td></tr>';
   });
   const canCreate=state.items.customers.length&&state.items.services.length&&state.items.resources.length;
-  return '<div class="console-two"><div class="console-box"><div class="row between"><h3>Записи</h3><button class="btn ghost" data-action="csv-appointments">CSV ↓</button></div>'+table(['Клиент','Услуга','Календарь','Дата','Статус','Действие'],rows)+'</div><div class="console-box"><h3>Новая запись</h3>'+(!canWrite()?'<p class="console-muted">У вас только просмотр.</p>':!canCreate?'<p class="console-muted">Сначала добавьте клиента, услугу и календарь.</p>':'<form class="console-form" id="booking-form"><label>Клиент'+select('customerId',state.items.customers,'display_name')+'</label><label>Услуга'+select('serviceId',state.items.services.filter(x=>x.active),'name')+'</label><label>Календарь'+select('resourceId',state.items.resources.filter(x=>x.active),'name')+'</label><label>Дата и время<input type="datetime-local" name="startsAt" required></label><button type="submit" class="btn primary">Создать запись</button></form>')+'<p class="console-muted">Конфликт по времени одного ресурса сервер отклонит с кодом 409. Отменённые и завершённые записи не занимают слот.</p></div></div>';
+  const activeReschedule=state.rescheduleId&&a.find(x=>x.id===state.rescheduleId);
+  const moving=activeReschedule?'<div class="console-box" style="margin-top:14px"><h3>Перенести запись: '+e(activeReschedule.customer_name)+'</h3><form id="reschedule-form" class="console-form"><label>Рабочий календарь<select name="resourceId">'+state.items.resources.filter(x=>x.active).map(x=>'<option value="'+e(x.id)+'" '+(x.id===activeReschedule.resource_id?'selected':'')+'>'+e(x.name)+'</option>').join('')+'</select></label><label>Новая дата<input type="datetime-local" name="startsAt" required></label><button class="btn primary" type="submit">Проверить и перенести</button></form></div>':'';
+
+  return '<div class="console-two"><div class="console-box"><div class="row between"><h3>Записи</h3><button class="btn ghost" data-action="csv-appointments">CSV ↓</button></div>'+table(['Клиент','Услуга','Календарь','Дата','Статус','Действие'],rows)+'</div><div class="console-box"><h3>Новая запись</h3>'+(!canWrite()?'<p class="console-muted">У вас только просмотр.</p>':!canCreate?'<p class="console-muted">Сначала добавьте клиента, услугу и календарь.</p>':'<form class="console-form" id="booking-form"><label>Клиент'+select('customerId',state.items.customers,'display_name')+'</label><label>Услуга'+select('serviceId',state.items.services.filter(x=>x.active),'name')+'</label><label>Календарь'+select('resourceId',state.items.resources.filter(x=>x.active),'name')+'</label><label>Дата и время<input type="datetime-local" name="startsAt" required></label><button type="submit" class="btn primary">Создать запись</button></form>')+'<p class="console-muted">Конфликт по времени одного ресурса сервер отклонит с кодом 409. Отменённые и завершённые записи не занимают слот.</p></div></div>'+moving;
 }
 function audit(){
   if(!canManage())return '<div class="console-alert">Для просмотра журнала нужна роль управляющего.</div>';
@@ -205,6 +208,14 @@ async function createFromForm(form){
     v.hours=await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours');
     v.slots=[];state.notice='Рабочие часы обновлены';display();return;
   }
+  if(type==='reschedule-form'){
+    if(!state.rescheduleId)throw new Error('Запись не выбрана');
+    const d=new Date(String(f.get('startsAt')||''));
+    if(!Number.isFinite(d.getTime()))throw new Error('Некорректная дата');
+    await api('/appointments/'+encodeURIComponent(state.rescheduleId)+'/reschedule','PATCH',
+      {resourceId:String(f.get('resourceId')||''),startsAt:d.toISOString()});
+    state.rescheduleId=null;await refresh();state.tab='appointments';display();return;
+  }
   if(type==='timeoff-form'){
     if(!canManage())throw new Error('Недостаточно прав');
     const v=state.schedule,start=new Date(String(f.get('startsAt'))),end=new Date(String(f.get('endsAt')));
@@ -241,6 +252,8 @@ function csv(table){
 }
 root.addEventListener('click',async ev=>{
   const tab=ev.target.closest('[data-tab]');if(tab){state.tab=tab.dataset.tab;state.notice='';display();return;}
+  const move=ev.target.closest('[data-reschedule]');
+  if(move){state.rescheduleId=move.dataset.reschedule;state.notice='';display();return;}
   const slot=ev.target.closest('[data-slot-book]');
   if(slot){
     const v=state.schedule,chosen=v.slots[Number(slot.dataset.slotBook)];
