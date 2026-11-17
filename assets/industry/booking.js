@@ -76,7 +76,7 @@ function render(){
 }
 function record(kind,detail){try{var o=JSON.parse(localStorage.getItem(OPS)||'{}');o.version=1;o.audit=Array.isArray(o.audit)?o.audit:[];o.audit.unshift({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),at:new Date().toISOString(),industry:industry,kind:kind,detail:detail});o.audit=o.audit.slice(0,120);localStorage.setItem(OPS,JSON.stringify(o))}catch(e){}}
 function submit(e){
- e.preventDefault();var f=new FormData(e.target),name=String(f.get('name')||'').trim(),phone=String(f.get('phone')||'').trim(),digits=normPhone(phone),s=state(),service=currentService(),date=document.getElementById('booking-date').value,time=selectedTime;
+ e.preventDefault();var wasEditing=Boolean(editingId),f=new FormData(e.target),name=String(f.get('name')||'').trim(),phone=String(f.get('phone')||'').trim(),digits=normPhone(phone),s=state(),service=currentService(),date=document.getElementById('booking-date').value,time=selectedTime;
  if(!service||!time)return notify('Выберите услугу и свободное время.');
  if(name.length<2||digits.length<7||digits.length>15)return notify('Проверьте имя и номер телефона.');
  var exists=s.appointments.some(function(a){if(a.id===editingId||a.date!==date||a.status==='cancelled')return false;var x=s.services.find(function(y){return y.id===a.serviceId});var begin=minute(a.time),end=begin+(Number(x&&x.duration)||60),candidate=minute(time);return candidate<end&&candidate+Number(service.duration)>begin});
@@ -86,7 +86,7 @@ function submit(e){
  var recordId=editingId,appt=recordId&&data.appointments.find(function(a){return a.id===recordId});
  if(appt){appt.date=date;appt.time=time;appt.serviceId=service.id;appt.status='new';record('Запись перенесена',date+' '+time+' · '+service.name);editingId='';}
  else{appt={id:'booking-'+(crypto.randomUUID?crypto.randomUUID():Date.now()),customerId:customer.id,serviceId:service.id,date:date,time:time,status:'new'};data.appointments.unshift(appt);record('Клиентская запись создана',date+' '+time+' · '+service.name)}
- localStorage.setItem(CORE,JSON.stringify(db));dateChoice='';lookupPhone=phone;sessionStorage.setItem('osmanx-booking-phone',phone);selectedTime='';notice=appt?'Запись сохранена в демо.':'Демо-запись создана на этом устройстве.';render();window.scrollTo({top:0,behavior:'smooth'})
+ localStorage.setItem(CORE,JSON.stringify(db));dateChoice='';lookupPhone=phone;sessionStorage.setItem('osmanx-booking-phone',phone);selectedTime='';notice=wasEditing?'Запись перенесена в демо.':'Демо-запись создана на этом устройстве.';render();window.scrollTo({top:0,behavior:'smooth'})
 }
 function notify(text){notice=text;render()}
 function downloadCalendar(id){
