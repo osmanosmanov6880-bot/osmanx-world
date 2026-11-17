@@ -21,6 +21,7 @@ case "$database" in
 esac
 existing=$(psql -X -At --dbname="$DR_RESTORE_DB_URL" -c "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname='industry')")
 if test "$existing" != f; then echo 'Refusing restore: target already has industry schema' >&2; exit 1; fi
+psql -X -v ON_ERROR_STOP=1 --dbname="$DR_RESTORE_DB_URL" -c 'CREATE EXTENSION IF NOT EXISTS btree_gist' >/dev/null
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 age -d -i "$AGE_IDENTITY_FILE" -o "$tmp/industry.dump" "$archive"
