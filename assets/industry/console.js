@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const ROOT='/api/industry/v1';
 const root=document.getElementById('console-app');
-const state={auth:null,tab:'overview',stats:{},items:{customers:[],services:[],resources:[],appointments:[],audit:[]},staff:null,integration:null,eventItems:[],calendarResourceId:null,calendarHours:null,availableSlots:[],inviteToken:'',acceptInvite:false,rescheduleId:null,schedule:{resourceId:null,serviceId:null,customerId:null,date:'',slots:[],hours:null,timezone:'UTC'},notice:'',loading:true,offline:false};
+const state={auth:null,tab:'overview',stats:{},items:{customers:[],services:[],resources:[],appointments:[],audit:[]},staff:null,integration:null,eventItems:[],calendarResourceId:null,calendarHours:null,availableSlots:[],inviteToken:'',acceptInvite:false,rescheduleId:null,schedule:{resourceId:null,serviceId:null,customerId:null,date:'',slots:[],hours:null,timezone:'UTC',slotIntervalMinutes:30,bufferMinutes:0,closedDates:[]},notice:'',loading:true,offline:false};
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rub=v=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(Number(v||0)/100);
 const date=v=>v?new Date(v).toLocaleString('ru-RU',{dateStyle:'short',timeStyle:'short'}):'—';
@@ -116,42 +116,18 @@ function integrations(){
 }
 
 function schedule(){
-  const v=state.schedule;
-  const resources=state.items.resources.filter(x=>x.active);
-  const services=state.items.services.filter(x=>x.active);
-  const customers=state.items.customers;
-  const resourceId=v.resourceId||resources[0]?.id||'';
-  const serviceId=v.serviceId||services[0]?.id||'';
-  const customerId=v.customerId||customers[0]?.id||'';
+  const v=state.schedule,resources=state.items.resources.filter(x=>x.active),services=state.items.services.filter(x=>x.active),customers=state.items.customers;
+  const resourceId=v.resourceId||resources[0]?.id||'',serviceId=v.serviceId||services[0]?.id||'',customerId=v.customerId||customers[0]?.id||'';
   const day=v.date||new Date(Date.now()+86400000).toISOString().slice(0,10);
   const opts=(items,label,selected)=>items.map(x=>'<option value="'+e(x.id)+'" '+(x.id===selected?'selected':'')+'>'+e(x[label])+'</option>').join('');
   const slots=v.slots.map((x,i)=>'<button type="button" class="btn secondary" data-slot-book="'+i+'">'+new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'short',timeZone:v.timezone||'UTC'}).format(new Date(x.starts_at))+'</button>').join('');
-  const weekdays=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-  const hours=v.hours?.hours||[];
-  const hoursInput=weekdays.map((label,i)=>{
-    const row=hours.find(x=>x.weekday===i+1);
-    return '<div class="hours-day"><label><input type="checkbox" name="active_'+(i+1)+'" '+(row?'checked':'')+'>'+label+'</label>'+
-    '<input class="console-input" type="time" name="open_'+(i+1)+'" value="'+(row?e(row.opens_at.slice(0,5)):'09:00')+'">'+
-    '<input class="console-input" type="time" name="close_'+(i+1)+'" value="'+(row?e(row.closes_at.slice(0,5)):'18:00')+'"></div>';
-  }).join('');
-  const off=(v.hours?.timeOff||[]).map(x=>'<div class="feature"><div><b>'+e(x.reason)+'</b><small>'+date(x.starts_at)+' — '+date(x.ends_at)+'</small></div>'+
-      (canManage()?'<button class="action-link" data-timeoff-delete="'+e(x.id)+'">Удалить</button>':'')+'</div>').join('');
-  return '<div class="console-two"><div class="console-box"><h3>Свободные окна</h3><p>Рассчитываются сервером по часовому поясу организации, занятым визитам и блокировкам.</p><form id="slots-form" class="console-form"><label>Рабочий календарь<select name="resourceId" required>'+opts(resources,'name',resourceId)+'</select></label>'+
-  '<label>Услуга<select name="serviceId" required>'+opts(services,'name',serviceId)+'</select></label>'+
-  '<label>Клиент<select name="customerId" required>'+opts(customers,'display_name',customerId)+'</select></label>'+
-  '<label>Дата<input type="date" name="date" required value="'+e(day)+'"></label><button class="btn primary" type="submit">Найти свободное время</button></form>'+
-  '<p class="console-muted" style="margin:13px 0">Часовой пояс: '+e(v.timezone||'UTC')+'</p><div class="slots-grid">'+(slots||'<div class="empty">Выберите дату и нажмите «Найти»</div>')+'</div>'+
-  '<p class="console-muted">Нажмите на слот, чтобы создать запись выбранному клиенту. При одновременной записи слот может оказаться занят — сервер вернёт конфликт.</p></div>'+
-  '<div class="console-box"><h3>Рабочие часы и перерывы</h3><label class="console-muted">Календарь для настройки</label><select id="hours-resource" class="console-input">'+opts(resources,'name',resourceId)+'</select>'+
-  '<button type="button" class="btn ghost" data-action="load-hours" style="margin:12px 0">Загрузить график</button>'+
-  (v.hours?'<form id="hours-form" class="console-form"><div class="hours-grid">'+hoursInput+'</div>'+
-   (canManage()?'<button type="submit" class="btn primary">Сохранить график</button>':'')+'</form>'+
-   '<h3 style="margin-top:22px">Заблокированные периоды</h3><div class="feature-list">'+(off||'<p class="console-muted">Нет блокировок</p>')+'</div>'+
-   (canManage()?'<form id="timeoff-form" class="console-form" style="margin-top:12px"><label>С<input type="datetime-local" name="startsAt" required></label><label>До<input type="datetime-local" name="endsAt" required></label>'+
-   '<label>Причина<input name="reason" maxlength="160" value="Перерыв"></label><button type="submit" class="btn secondary">Заблокировать время</button></form>':''):
-  '<div class="console-warning">Загрузите график выбранного рабочего календаря.</div>')+'</div></div>';
+  const weekdays=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],hours=v.hours?.hours||[];
+  const hoursInput=weekdays.map((label,i)=>{const row=hours.find(x=>x.weekday===i+1);return '<div class="hours-day"><label><input type="checkbox" name="active_'+(i+1)+'" '+(row?'checked':'')+'>'+label+'</label><input class="console-input" type="time" name="open_'+(i+1)+'" value="'+(row?e(row.opens_at.slice(0,5)):'09:00')+'"><input class="console-input" type="time" name="close_'+(i+1)+'" value="'+(row?e(row.closes_at.slice(0,5)):'18:00')+'"></div>'}).join('');
+  const off=(v.hours?.timeOff||[]).map(x=>'<div class="feature"><div><b>'+e(x.reason)+'</b><small>'+date(x.starts_at)+' — '+date(x.ends_at)+'</small></div>'+(canManage()?'<button class="action-link" data-timeoff-delete="'+e(x.id)+'">Удалить</button>':'')+'</div>').join('');
+  const closed=(v.hours?.closedDates||[]).map(x=>'<div class="feature"><div><b>'+e(x.closed_date.slice(0,10))+'</b><small>'+e(x.reason)+'</small></div>'+(canManage()?'<button class="action-link" data-closed-date-delete="'+e(x.id)+'">Удалить</button>':'')+'</div>').join('');
+  const timezones=Array.from(new Set(['UTC',v.timezone||'UTC',...(Intl.supportedValuesOf?Intl.supportedValuesOf('timeZone'):['Europe/Moscow','Europe/Berlin','Europe/Stockholm','Asia/Dubai'])])).sort();
+  return '<div class="console-two"><div class="console-box"><h3>Свободные окна</h3><p>Слоты рассчитаны сервером с учётом часового пояса, шагов записи, буфера, календаря и исключённых дат.</p><form id="slots-form" class="console-form"><label>Рабочий календарь<select name="resourceId" required>'+opts(resources,'name',resourceId)+'</select></label><label>Услуга<select name="serviceId" required>'+opts(services,'name',serviceId)+'</select></label><label>Клиент<select name="customerId" required>'+opts(customers,'display_name',customerId)+'</select></label><label>Дата<input type="date" name="date" required value="'+e(day)+'"></label><button class="btn primary" type="submit">Найти свободное время</button></form><p class="console-muted" style="margin:13px 0">Часовой пояс: '+e(v.timezone||'UTC')+' · шаг '+e(v.slotIntervalMinutes)+' мин · буфер '+e(v.bufferMinutes)+' мин</p><div class="slots-grid">'+(slots||'<div class="empty">Выберите дату и нажмите «Найти»</div>')+'</div><p class="console-muted">Сервер заново проверяет сетку и буфер при сохранении, поэтому устаревший слот не пройдёт.</p></div><div class="console-box"><h3>Часовой пояс компании</h3>'+(state.auth.role==='owner'?'<form id="timezone-form" class="console-form"><label>IANA timezone<select name="timezone" class="console-input">'+timezones.map(z=>'<option value="'+e(z)+'" '+(z===(v.timezone||'UTC')?'selected':'')+'>'+e(z)+'</option>').join('')+'</select></label><button class="btn secondary" type="submit">Сохранить часовой пояс</button></form>':'<p class="console-muted">Часовой пояс: '+e(v.timezone||'UTC')+'</p>')+'<p class="console-muted">Изменение запрещено, пока в компании есть будущие активные записи, чтобы время визитов не сдвинулось незаметно.</p><h3>Рабочие часы и правила ресурса</h3><label class="console-muted">Календарь для настройки</label><select id="hours-resource" class="console-input">'+opts(resources,'name',resourceId)+'</select><button type="button" class="btn ghost" data-action="load-hours" style="margin:12px 0">Загрузить график</button>'+(v.hours?'<form id="hours-form" class="console-form"><div class="policy-grid"><label>Шаг записи<select name="slotIntervalMinutes" class="console-input">'+[15,30,60].map(n=>'<option value="'+n+'" '+(n===v.slotIntervalMinutes?'selected':'')+'>'+n+' минут</option>').join('')+'</select></label><label>Буфер вокруг визита<select name="bufferMinutes" class="console-input">'+[0,5,10,15,20,30,45,60,90,120].map(n=>'<option value="'+n+'" '+(n===v.bufferMinutes?'selected':'')+'>'+n+' минут</option>').join('')+'</select></label></div><div class="hours-grid">'+hoursInput+'</div>'+(canManage()?'<button type="submit" class="btn primary">Сохранить график и правила</button>':'')+'</form><h3 style="margin-top:22px">Закрытые даты</h3><div class="feature-list">'+(closed||'<p class="console-muted">Исключённых дат нет</p>')+'</div>'+(canManage()?'<form id="closed-date-form" class="console-form compact-form"><label>Дата<input type="date" name="date" required></label><label>Причина<input name="reason" maxlength="160" value="Выходной / праздник"></label><button type="submit" class="btn secondary">Закрыть дату</button></form>':'')+'<h3 style="margin-top:22px">Блокировки времени</h3><div class="feature-list">'+(off||'<p class="console-muted">Нет блокировок</p>')+'</div>'+(canManage()?'<form id="timeoff-form" class="console-form compact-form"><label>С<input type="datetime-local" name="startsAt" required></label><label>До<input type="datetime-local" name="endsAt" required></label><label>Причина<input name="reason" maxlength="160" value="Перерыв"></label><button type="submit" class="btn secondary">Заблокировать время</button></form>':''):'<div class="console-warning">Загрузите график выбранного календаря.</div>')+'</div></div>';
 }
-
 function view(){return ({overview,appointments,schedule,customers,services,resources,staff,integrations,audit}[state.tab]||overview)()}
 async function refresh(){
   state.loading=true;display();
@@ -196,7 +172,17 @@ async function createFromForm(form){
     v.resourceId=String(f.get('resourceId')||'');v.serviceId=String(f.get('serviceId')||'');
     v.customerId=String(f.get('customerId')||'');v.date=String(f.get('date')||'');
     const result=await api('/availability?resourceId='+encodeURIComponent(v.resourceId)+'&serviceId='+encodeURIComponent(v.serviceId)+'&date='+encodeURIComponent(v.date));
-    v.slots=result.items;v.timezone=result.timezone;state.notice='';display();return;
+    v.slots=result.items;v.timezone=result.timezone;v.slotIntervalMinutes=result.slotIntervalMinutes;v.bufferMinutes=result.bufferMinutes;state.notice='';display();return;
+  }
+  if(type==='timezone-form'){
+    if(state.auth.role!=='owner')throw new Error('Часовой пояс может менять только владелец');
+    const result=await api('/settings/timezone','PATCH',{timezone:String(f.get('timezone')||'')});
+    state.schedule.timezone=result.timezone;state.schedule.slots=[];state.schedule.hours=null;state.notice='Часовой пояс компании обновлён';display();return;
+  }
+  if(type==='closed-date-form'){
+    if(!canManage())throw new Error('Недостаточно прав');
+    const v=state.schedule;await api('/resources/'+encodeURIComponent(v.resourceId)+'/closed-dates','POST',{date:String(f.get('date')||''),reason:String(f.get('reason')||'')});
+    v.hours=await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours');v.slots=[];state.notice='Дата исключена из записи';display();return;
   }
   if(type==='hours-form'){
     if(!canManage())throw new Error('Недостаточно прав');
@@ -204,7 +190,7 @@ async function createFromForm(form){
     for(let d=1;d<=7;d++)if(f.get('active_'+d))hours.push({
       weekday:d,opensAt:String(f.get('open_'+d)),closesAt:String(f.get('close_'+d))
     });
-    await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours','PUT',{hours});
+    await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours','PUT',{hours,slotIntervalMinutes:Number(f.get('slotIntervalMinutes')),bufferMinutes:Number(f.get('bufferMinutes'))});
     v.hours=await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours');
     v.slots=[];state.notice='Рабочие часы обновлены';display();return;
   }
@@ -265,6 +251,8 @@ root.addEventListener('click',async ev=>{
     }catch(error){state.notice=error.message;display();}
     return;
   }
+  const delClosed=ev.target.closest('[data-closed-date-delete]');
+  if(delClosed){const v=state.schedule;try{await api('/resources/'+encodeURIComponent(v.resourceId)+'/closed-dates/'+encodeURIComponent(delClosed.dataset.closedDateDelete),'DELETE');v.hours=await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours');v.slots=[];state.notice='Исключённая дата удалена';display()}catch(error){state.notice=error.message;display()}return;}
   const delTime=ev.target.closest('[data-timeoff-delete]');
   if(delTime){const v=state.schedule;
     try{await api('/resources/'+encodeURIComponent(v.resourceId)+'/time-off/'+encodeURIComponent(delTime.dataset.timeoffDelete),'DELETE');
@@ -294,7 +282,7 @@ root.addEventListener('click',async ev=>{
     v.resourceId=document.getElementById('hours-resource')?.value||v.resourceId||state.items.resources[0]?.id;
     if(!v.resourceId)return;
     try{const [hours,tz]=await Promise.all([api('/resources/'+encodeURIComponent(v.resourceId)+'/hours'),api('/settings/timezone')]);
-      v.hours=hours;v.timezone=tz.timezone;v.slots=[];state.notice='';display();
+      v.hours=hours;v.timezone=tz.timezone;v.slotIntervalMinutes=hours.slotIntervalMinutes;v.bufferMinutes=hours.bufferMinutes;v.closedDates=hours.closedDates||[];v.slots=[];state.notice='';display();
     }catch(error){state.notice=error.message;display()}
     return;
   }
