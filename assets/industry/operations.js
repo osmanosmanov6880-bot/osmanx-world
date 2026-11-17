@@ -12,6 +12,7 @@ const toast=m=>{let n=$('#ops-toast');if(!n){n=document.createElement('div');n.i
 const download=(name,data,type='application/json')=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)};
 let tab='capacity';
 function state(){return core()?.data?.[current()]||{appointments:[],customers:[],services:[]}}
+function minute(v){const p=String(v||'').split(':').map(Number);return p[0]*60+p[1]}
 function schedule(id=current()){const s=ops().schedule?.[id]||{};return {open:/^\d{2}:\d{2}$/.test(s.open)?s.open:'09:00',close:/^\d{2}:\d{2}$/.test(s.close)?s.close:'19:00',interval:[15,30,60].includes(Number(s.interval))?Number(s.interval):30,bufferMinutes:[0,5,10,15,30].includes(Number(s.bufferMinutes))?Number(s.bufferMinutes):0,closedDays:Array.isArray(s.closedDays)?s.closedDays:[],closedDates:Array.isArray(s.closedDates)?s.closedDates:[]}}
 function capacity(id=current()){const d=ops();return Math.max(1,Math.min(100,Number(d.capacity?.[id]||14)))}
 function countBooking(day,id=current()){return state().appointments.filter(a=>a.date===day&&a.status!=='cancelled').length}
