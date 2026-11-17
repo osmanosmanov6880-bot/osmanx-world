@@ -40,6 +40,7 @@ before(async()=>{
     ten.ownerId=await newAccount(ten.email);
     await admin.query("INSERT INTO industry.memberships(tenant_id,account_id,role) VALUES($1,$2,'owner')",[ten.id,ten.ownerId]);
     ten.resourceId=(await admin.query("INSERT INTO industry.resources(tenant_id,name) VALUES($1,'Календарь 1') RETURNING id",[ten.id])).rows[0].id;
+    await admin.query("INSERT INTO industry.resource_hours(tenant_id,resource_id,weekday,opens_at,closes_at) SELECT $1,$2,w,'09:00'::time,'18:00'::time FROM generate_series(1,6) AS w",[ten.id,ten.resourceId]);
   }
   const viewerId=await newAccount(viewerEmail),operatorId=await newAccount(operatorEmail);
   await admin.query("INSERT INTO industry.memberships(tenant_id,account_id,role) VALUES($1,$2,'viewer')",[tenants[0].id,viewerId]);
@@ -92,7 +93,10 @@ test('Block 3: transactional booking, idempotency, no overlap, audit and outbox'
   const bTenant=await req('GET','/customers',loginB);
   assert.equal(bTenant.statusCode,200);
   assert.equal(json(bTenant).items.length,0,'Company B must not read Company A customers');
-  const start=new Date(Date.now()+4*24*3600*1000).toISOString();
+  const future=new Date(Date.now()+4*24*3600*1000);
+  if(future.getUTCDay()===0)future.setUTCDate(future.getUTCDate()+1);
+  future.setUTCHours(12,0,0,0);
+  const start=future.toISOString();
   const payload={customerId,serviceId,resourceId:tenants[0].resourceId,startsAt:start};
   const headers={'idempotency-key':'acceptance-booking-001'};
   const created=await req('POST','/appointments',loginA,payload,headers);
