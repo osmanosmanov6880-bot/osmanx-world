@@ -92,7 +92,7 @@ function notify(text){notice=text;render()}
 function downloadCalendar(id){
  var a=state().appointments.find(function(x){return x.id===id}),svc=a&&state().services.find(function(x){return x.id===a.serviceId}),customer=a&&state().customers.find(function(x){return x.id===a.customerId});if(!a)return;
  var dt=a.date.replace(/-/g,'')+'T'+a.time.replace(':','')+'00',endMin=minute(a.time)+(Number(svc&&svc.duration)||60),end=String(Math.floor(endMin/60)).padStart(2,'0')+String(endMin%60).padStart(2,'0');
- var text='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//OSMANX//Industry Demo//RU\r\nBEGIN:VEVENT\r\nUID:'+esc(a.id)+'@osmanx.world\r\nDTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')+'\r\nDTSTART:'+dt+'00\r\nDTEND:'+a.date.replace(/-/g,'')+'T'+end+'00\r\nSUMMARY:'+String(svc&&svc.name||'Демо-запись').replace(/[\r\n,;]/g,' ')+'\r\nDESCRIPTION:Демо OSMANX. Не является подтверждением реальной записи.\r\nEND:VEVENT\r\nEND:VCALENDAR';
+ var text='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//OSMANX//Industry Demo//RU\r\nBEGIN:VEVENT\r\nUID:'+esc(a.id)+'@osmanx.world\r\nDTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')+'\r\nDTSTART:'+dt+'\r\nDTEND:'+a.date.replace(/-/g,'')+'T'+end+'00\r\nSUMMARY:'+String(svc&&svc.name||'Демо-запись').replace(/[\r\n,;]/g,' ')+'\r\nDESCRIPTION:Демо OSMANX. Не является подтверждением реальной записи.\r\nEND:VEVENT\r\nEND:VCALENDAR';
  var blob=new Blob([text],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='osmanx-demo-visit.ics';link.click();setTimeout(function(){URL.revokeObjectURL(url)},1000)
 }
 app.addEventListener('click',function(e){
