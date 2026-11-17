@@ -59,6 +59,27 @@ def main():
                 assert "Отменена" in page.locator(".visit-card").inner_text()
                 saved=page.evaluate("""() => {const d=JSON.parse(localStorage.getItem('osmanx-industry-demo-r2'));return d.data.dental.appointments.find(x=>x.id.startsWith('booking-'))}""")
                 assert saved["status"]=="cancelled" and saved["date"]==new_day
+                # Company schedule rules: opening hours, date exceptions, slot interval and buffers.
+                closed_day=page.evaluate("""() => {const d=new Date();d.setDate(d.getDate()+12);return d.toISOString().slice(0,10)}""")
+                open_day=page.evaluate("""d => {const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)}""",closed_day)
+                page.evaluate("""d => {localStorage.setItem('osmanx-industry-ops-r3',JSON.stringify({version:1,capacity:{dental:14},audit:[],schedule:{dental:{open:'10:00',close:'17:00',interval:15,bufferMinutes:15,closedDays:[],closedDates:[d]}}}))}""",closed_day)
+                page.goto(BASE+"/assets/industry/booking.html?industry=dental",wait_until="domcontentloaded")
+                page.locator('[data-service="dental-s0"]').click()
+                page.locator("#booking-date").fill(closed_day)
+                assert page.locator("#slots").get_by_text("На эту дату нет приёма.").count()==1
+                page.locator("#booking-date").fill(open_day)
+                assert page.locator('[data-time="10:00"]').count()==1
+                assert page.locator('[data-time="09:00"]').count()==0
+                assert page.locator('[data-time="17:00"]').count()==0
+                page.locator('[data-time="10:00"]').click()
+                page.locator('#booking-form input[name="name"]').fill("Демо График")
+                page.locator('#booking-form input[name="phone"]').fill("+7 900 000 00 02")
+                page.locator('#booking-form input[name="consent"]').check()
+                page.locator('#booking-form button[type="submit"]').click()
+                page.get_by_text("Демо-запись создана на этом устройстве.").wait_for()
+                assert page.locator('[data-time="10:15"]').is_disabled()
+                assert page.locator('[data-time="10:30"]').is_disabled()
+                assert page.locator('[data-time="11:00"]').is_enabled()
                 page.screenshot(path=str(out/"booking-desktop.png"),full_page=True)
                 for sector in SECTORS:
                     page.goto(BASE+"/assets/industry/booking.html?industry="+sector,wait_until="domcontentloaded")
