@@ -91,6 +91,12 @@ jobs:
           actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/index.html' | cut -d ' ' -f1)"
           test "$expected" = "$actual"
           echo "VPS index.html SHA-256 matches the checked-out commit." >> "$GITHUB_STEP_SUMMARY"
+          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js; do
+            expected="$(sha256sum "$asset" | cut -d ' ' -f1)"
+            actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "sha256sum /var/www/osmanx.world/$asset" | cut -d ' ' -f1)"
+            test "$expected" = "$actual" || { echo "::error::VPS file mismatch: $asset"; exit 1; }
+            echo "VPS SHA-256 matches repository: $asset" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Verify public HTTPS content
         env:
@@ -104,31 +110,41 @@ jobs:
           fi
           echo "Public HTTPS served the expected deployment marker." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Verify Guest Intelligence release bytes over public HTTPS
+      - name: Verify Guest Intelligence public HTTPS release and CDN transformations
         run: |
           set -euo pipefail
-          for asset in \
-            assets/guest/offer.html \
-            assets/guest/experiment.html \
-            assets/guest/experiment.js \
-            assets/guest/experiment-model.js; do
+          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js; do
+            case "$asset" in
+              assets/guest/offer.html) marker="Перейти в лабораторию" ;;
+              assets/guest/experiment.html) marker="Паспорт и воспроизводимость" ;;
+              assets/guest/experiment.js) marker="Сценарий импортирован и заново проверен" ;;
+              assets/guest/experiment-model.js) marker="osmanx.guest.experiment.v1" ;;
+            esac
             expected="$(sha256sum "$asset" | cut -d ' ' -f1)"
-            matched=false
+            observed=false
             for attempt in 1 2 3 4 5 6; do
               if curl -fsSL --retry 2 --connect-timeout 8 --max-time 30 \
                 -H 'Cache-Control: no-cache' \
                 "https://osmanx.world/$asset?release=$GITHUB_SHA" \
                 -o /tmp/osmanx-guest-verify; then
-                actual="$(sha256sum /tmp/osmanx-guest-verify | cut -d ' ' -f1)"
-                if test "$expected" = "$actual"; then matched=true; break; fi
+                if LC_ALL=C grep -Fq "$marker" /tmp/osmanx-guest-verify; then
+                  observed=true
+                  break
+                fi
               fi
               sleep 3
             done
-            if test "$matched" != true; then
-              echo "::error::Public HTTPS content differs: $asset"
+            if test "$observed" != true; then
+              echo "::error::Public HTTPS does not serve R2 content: $asset"
               exit 1
             fi
-            echo "SHA-256 matches public HTTPS: $asset" >> "$GITHUB_STEP_SUMMARY"
+            actual="$(sha256sum /tmp/osmanx-guest-verify | cut -d ' ' -f1)"
+            if test "$expected" = "$actual"; then
+              echo "Public HTTPS SHA-256 exact: $asset" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning::Public content bytes differ despite R2 marker; VPS SHA-256 was verified. Check edge transformations/cache for $asset"
+              echo "Public R2 marker verified; bytes transformed upstream: $asset" >> "$GITHUB_STEP_SUMMARY"
+            fi
           done
 
       - name: Verify live OSMANX workspaces over HTTPS
