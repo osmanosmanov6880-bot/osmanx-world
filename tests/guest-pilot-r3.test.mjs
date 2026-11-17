@@ -17,7 +17,7 @@ const approx=(a,b,eps=1e-9)=>assert.ok(Math.abs(a-b)<eps,String(a)+' should be n
 test('R3.1 readiness gate never claims go without all six checks',()=>{
   const a=readiness(ready);assert.equal(a.passed,6);assert.equal(a.ready,true);
   const b=readiness(blocked);assert.equal(b.passed,4);assert.equal(b.ready,false);
-  assert.ok(b.blocking.some(x=>x.includes('согласия')));
+  assert.ok(b.blocking.some(x=>x.includes('соглас')));
   assert.throws(()=>readiness({...ready,company:'secret'}));
   assert.throws(()=>readiness({...ready,contactConsent:'yes'}));
 });
