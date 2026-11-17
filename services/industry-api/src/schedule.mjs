@@ -24,7 +24,7 @@ export async function assertBookable(db,tenantId,resourceId,startISO,endISO,igno
     'AND ($3::timestamptz AT TIME ZONE t.timezone)::time >= h.opens_at '+
     'AND ($4::timestamptz AT TIME ZONE t.timezone)::time <= h.closes_at '+
     'AND ($3::timestamptz AT TIME ZONE t.timezone)::date = ($4::timestamptz AT TIME ZONE t.timezone)::date '+
-    'AND mod((EXTRACT(EPOCH FROM ((($3::timestamptz AT TIME ZONE t.timezone)::time)-h.opens_at))/60)::int,r.slot_interval_minutes)=0 '+
+    'AND mod(EXTRACT(EPOCH FROM ((($3::timestamptz AT TIME ZONE t.timezone)::time)-h.opens_at))/60,r.slot_interval_minutes)=0 '+
     'AND NOT EXISTS (SELECT 1 FROM industry.resource_closed_dates c WHERE c.tenant_id=$1 AND c.resource_id=$2 AND c.closed_date=($3::timestamptz AT TIME ZONE t.timezone)::date)) AS within_hours, '+
     'EXISTS (SELECT 1 FROM industry.appointments a JOIN industry.resources r ON r.tenant_id=a.tenant_id AND r.id=a.resource_id '+
     "WHERE a.tenant_id=$1 AND a.resource_id=$2 AND a.id IS DISTINCT FROM $5::uuid AND a.status IN ('new','confirmed') AND "+
