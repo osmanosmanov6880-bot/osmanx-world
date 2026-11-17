@@ -50,10 +50,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pinned Playwright Chromium
+      - name: Install Playwright and select Chromium
         run: |
+          set -euo pipefail
           python -m pip install playwright==1.56.0
-          python -m playwright install --with-deps chromium
+          BROWSER_BIN="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if test -n "$BROWSER_BIN"; then
+            echo "OSMANX_CHROMIUM_BIN=$BROWSER_BIN" >> "$GITHUB_ENV"
+            "$BROWSER_BIN" --version
+          else
+            python -m playwright install --with-deps chromium
+          fi
       - name: Desktop and mobile end-to-end + download/privacy QA
         run: |
           python tests/guest_experiment_browser.py
