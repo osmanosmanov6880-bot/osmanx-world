@@ -7,6 +7,7 @@ on:
       - "assets/sovereign/site.js"
       - "tests/industry_browser.py"
       - "tests/industry_operations_browser.py"
+      - "tests/industry_booking_browser.py"
       - ".github/workflows/industry-browser.yml"
   push:
     branches: [main]
@@ -31,6 +32,9 @@ jobs:
         run: |
           node --check assets/industry/app.js
           node --check assets/industry/operations.js
+          node --check assets/industry/booking.js
+          test -s assets/industry/booking.html
+          test -s assets/industry/booking.css
           test -s assets/industry/operations.css
           node --check assets/industry/console.js
           test -s assets/industry/console.html
@@ -50,6 +54,7 @@ jobs:
         run: |
           python tests/industry_browser.py
           python tests/industry_operations_browser.py
+          python tests/industry_booking_browser.py
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
