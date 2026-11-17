@@ -1,0 +1,158 @@
+# Production-ready layout; requires operator-run host provisioning.
+# Only the API port is bound to loopback. PostgreSQL is private.
+name: osmanx-industry
+x-api-image: &api-image
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: osmanx-industry-api:r4
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: industry_admin
+      POSTGRES_DB: industry_prod
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?POSTGRES_ADMIN_PASSWORD required}
+    volumes:
+      - industry_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U industry_admin -d industry_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [industry_private]
+    security_opt: ["no-new-privileges:true"]
+  provision:
+    image: postgres:16
+    profiles: [setup]
+    environment:
+      PGHOST: db
+      PGUSER: industry_admin
+      PGDATABASE: industry_prod
+      PGPASSWORD: ${POSTGRES_ADMIN_PASSWORD:?}
+      INDUSTRY_APP_PASSWORD: ${INDUSTRY_APP_PASSWORD:?}
+      INDUSTRY_WORKER_PASSWORD: ${INDUSTRY_WORKER_PASSWORD:?}
+    volumes:
+      - ./ops/provision-roles.sh:/ops/provision-roles.sh:ro
+    entrypoint: ["/bin/sh", "/ops/provision-roles.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [industry_private]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+  migrate:
+    <<: *api-image
+    profiles: [setup]
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      MIGRATION_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/industry_prod
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [industry_private]
+    restart: "no"
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+  bootstrap:
+    <<: *api-image
+    profiles: [setup]
+    command: ["node", "scripts/bootstrap.mjs"]
+    environment:
+      MIGRATION_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/industry_prod
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?}
+      BOOTSTRAP_TENANT_SLUG: ${BOOTSTRAP_TENANT_SLUG:?}
+      BOOTSTRAP_TENANT_NAME: ${BOOTSTRAP_TENANT_NAME:?}
+      BOOTSTRAP_VERTICAL: ${BOOTSTRAP_VERTICAL:?}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [industry_private]
+    restart: "no"
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+  api:
+    <<: *api-image
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      BIND_HOST: 0.0.0.0
+      PORT: "3047"
+      ALLOWED_ORIGIN: https://osmanx.world
+      DATABASE_URL: postgresql://industry_app:${INDUSTRY_APP_PASSWORD:?}@db:5432/industry_prod
+    ports:
+      - "127.0.0.1:3047:3047"
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [industry_private]
+    init: true
+  worker:
+    <<: *api-image
+    profiles: [integrations]
+    command: ["node","src/worker.mjs"]
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      WORKER_DB_URL: postgresql://industry_worker:${INDUSTRY_WORKER_PASSWORD:?}@db:5432/industry_prod
+      WEBHOOK_URL: ${WEBHOOK_URL:?}
+      WEBHOOK_HMAC_KEY: ${WEBHOOK_HMAC_KEY:?}
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [industry_private]
+    init: true
+  backup:
+    profiles: [backup]
+    build:
+      context: .
+      dockerfile: ops/Dockerfile.backup
+    image: osmanx-industry-maintenance:r4
+    command: ["/opt/industry/backup-encrypted.sh", "/backups"]
+    environment:
+      BACKUP_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/industry_prod
+      AGE_RECIPIENT_1: ${AGE_RECIPIENT_1:-}
+      AGE_RECIPIENT_2: ${AGE_RECIPIENT_2:-}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [industry_private]
+    restart: "no"
+  dr:
+    profiles: [backup]
+    build:
+      context: .
+      dockerfile: ops/Dockerfile.backup
+    image: osmanx-industry-maintenance:r4
+    environment:
+      DR_RESTORE_DB_URL: ${DR_RESTORE_DB_URL:-}
+      AGE_IDENTITY_FILE: /run/age-keys/identity.txt
+    volumes:
+      - ./backups:/backups:ro
+      - ./age-keys:/run/age-keys:ro
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [industry_private]
+    restart: "no"
+    command: ["/opt/industry/restore-dr.sh", "/backups/ARCHIVE_REQUIRED.age"]
+networks:
+  industry_private:
+    driver: bridge
+volumes:
+  industry_data:

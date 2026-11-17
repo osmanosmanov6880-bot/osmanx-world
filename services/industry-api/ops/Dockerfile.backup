@@ -1,0 +1,9 @@
+# Disposable maintenance image. Not published to public site.
+FROM postgres:16
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends age ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+COPY ops/backup-encrypted.sh /opt/industry/backup-encrypted.sh
+COPY ops/restore-dr.sh /opt/industry/restore-dr.sh
+USER postgres
+WORKDIR /tmp
+ENTRYPOINT ["/bin/sh"]

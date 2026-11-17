@@ -3,6 +3,9 @@ import cookie from '@fastify/cookie';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { withTenant, requireMembership, recordChange } from './database.mjs';
 import { hashPassword, verifyPassword, sha256 } from './password.mjs';
+import { registerStaffRoutes } from './staff.mjs';
+import { registerScheduleRoutes, lockResource, assertBookable } from './schedule.mjs';
+import { registerIntegrationRoutes } from './integrations.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -155,6 +158,7 @@ export async function buildApp(pool){
   app.post(PREFIX+'/resources',async(req,reply)=>forTenant(req,rolesManage,async(db,s)=>{
     const name=text(bodyOf(req).name,2,100);
     const r=await db.query('INSERT INTO industry.resources(tenant_id,name) VALUES($1,$2) RETURNING id,name,active',[s.tenant_id,name]);
+    await db.query("INSERT INTO industry.resource_hours(tenant_id,resource_id,weekday,opens_at,closes_at) SELECT $1,$2,w,'09:00'::time,'18:00'::time FROM generate_series(1,6) AS w",[s.tenant_id,r.rows[0].id]);
     await recordChange(db,s.tenant_id,s.account_id,'resource.created',r.rows[0].id);
     reply.code(201);return {item:r.rows[0]};
   }));
@@ -205,6 +209,9 @@ export async function buildApp(pool){
     }
     const duration=(await db.query('SELECT duration_minutes FROM industry.services WHERE tenant_id=$1 AND id=$2 AND active',[s.tenant_id,service])).rows[0]?.duration_minutes;
     if(!duration)throw httpError(404,'Услуга недоступна');
+    await lockResource(db,s.tenant_id,resource);
+    const endsAt=new Date(start.getTime()+duration*60000).toISOString();
+    await assertBookable(db,s.tenant_id,resource,start.toISOString(),endsAt);
     const r=await db.query(
       "INSERT INTO industry.appointments(tenant_id,customer_id,service_id,resource_id,starts_at,ends_at,idempotency_key,idempotency_fingerprint) VALUES($1,$2,$3,$4,$5::timestamptz,$5::timestamptz + make_interval(mins => $6::int),$7,$8) RETURNING id,starts_at,ends_at,status",
       [s.tenant_id,customer,service,resource,start.toISOString(),duration,key||null,key?fingerprint:null]);
@@ -224,5 +231,8 @@ export async function buildApp(pool){
     const r=await db.query('SELECT actor_id,action,target_id,occurred_at FROM industry.audit_events WHERE tenant_id=$1 ORDER BY occurred_at DESC LIMIT 100',[s.tenant_id]);
     return {items:r.rows};
   }));
+  registerStaffRoutes(app,{prefix:PREFIX,pool,forTenant,bodyOf});
+  registerScheduleRoutes(app,{prefix:PREFIX,forTenant,bodyOf,identifier});
+  registerIntegrationRoutes(app,{prefix:PREFIX,forTenant});
   return app;
 }
