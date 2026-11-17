@@ -1,26 +1,59 @@
-name: OSMANX Guest experiment CI
+name: OSMANX Guest Intelligence R2 QA
 on:
   pull_request:
+    branches: [main]
     paths:
-      - 'assets/guest/**'
-      - 'tests/guest-experiment.test.mjs'
-      - '.github/workflows/guest-experiment.yml'
+      - "assets/guest/**"
+      - "tests/guest-experiment.test.mjs"
+      - "tests/guest_experiment_browser.py"
+      - ".github/workflows/guest-experiment.yml"
   push:
     branches: [main]
     paths:
-      - 'assets/guest/**'
-      - 'tests/guest-experiment.test.mjs'
-      - '.github/workflows/guest-experiment.yml'
+      - "assets/guest/**"
+      - "tests/guest-experiment.test.mjs"
+      - "tests/guest_experiment_browser.py"
+      - ".github/workflows/guest-experiment.yml"
+  workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
-  guest:
-    runs-on: ubuntu-latest
+  guest-unit:
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: node --check assets/guest/experiment-model.js && node --check assets/guest/experiment.js
-      - run: node --test tests/guest-experiment.test.mjs
+          node-version: "22"
+      - name: Syntax check (both modules)
+        run: |
+          node --check assets/guest/experiment-model.js
+          node --check assets/guest/experiment.js
+      - name: Unit, security and contract tests
+        run: node --test tests/guest-experiment.test.mjs
+
+  guest-browser:
+    needs: guest-unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned Playwright Chromium
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Desktop and mobile end-to-end + download/privacy QA
+        run: python tests/guest_experiment_browser.py
+      - name: Archive Chromium proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osmanx-guest-r2-chromium
+          path: qa/guest/*.png
+          if-no-files-found: ignore
