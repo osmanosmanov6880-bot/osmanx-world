@@ -1,0 +1,7 @@
+aa76efe17b1f113f15d3534103af4160ad1d7c4e93e929bc2e6d47ae3da23836  assets/downloads/source/OSMANX-5-Principles-Assets.zip
+b7c2c36c22ecd1ad8be17eda7d69b53bfbb2a30e7be00df0846ef3c475c02f3c  assets/downloads/source/OSMANX-Fixed-Frames.zip
+f72deff41792e263d175ffc6eba0a26aad9a08215105c469ca6224bf8f70989d  assets/downloads/source/OSMANX-OmniChat-Reliability-v1.2.zip
+c8b453750bcc1bf4c78debb310c79405d377732817cb5f428e363c7dd6b6c162  assets/downloads/source/OSMANX-Restaurant-Ecosystem-R8.zip
+afbca2b037ac8f731ee0f46fcbd85583310be93af1984fb0aff543f48e205ee5  assets/downloads/source/OSMANX-Retail-R20-Verified.zip
+ad09df1d304764d5809217fa750714607ae1008a0f37cb19fd903dbdca5183d5  assets/downloads/source/OSMANX-Retail-R22-Multi-Store.zip
+681e141eed68161060ab615dc0253e38f30d1c48ebbf216504d7e0b5ef6e077e  assets/downloads/source/OSMANX-Service-Platform-R1.zip
