@@ -27,7 +27,7 @@ def main():
                 page.locator("#portal-demo").wait_for()
                 assert "industry=dental" in page.locator("#portal-demo").get_attribute("href")
                 page.goto(BASE+"/assets/industry/booking.html?industry=dental",wait_until="domcontentloaded")
-                assert "Клиентский портал" in page.locator(".intro .eyebrow").inner_text()
+                assert "КЛИЕНТСКИЙ ПОРТАЛ" in page.locator(".intro .eyebrow").inner_text().upper()
                 page.locator("#service-search").fill("гигиена")
                 assert page.locator(".service-card").count()==1
                 page.locator("#service-search").fill("")
