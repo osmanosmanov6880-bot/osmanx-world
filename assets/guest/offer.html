@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#091316">
+  <title>Возвращаются ли гости? — OSMANX Guest Intelligence</title>
+  <meta name="description" content="Пилот для кофеен: проверьте, сколько дополнительных визитов приносит ваше предложение и окупается ли оно.">
+  <style>
+    :root { color-scheme: dark; --bg:#091316; --surface:#102025; --text:#f0efea; --muted:#b5c5c8; --accent:#9ce1de; --line:#365359; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,sans-serif; }
+    main, header, footer { width:min(1100px,92%); margin:auto; }
+    header, footer { display:flex; align-items:center; justify-content:space-between; padding:22px 0; gap:16px; }
+    header { border-bottom:1px solid var(--line); }
+    a { color:var(--accent); text-underline-offset:.25em; }
+    :focus-visible { outline:3px solid #ffcd86; outline-offset:4px; }
+    .brand { text-decoration:none; color:var(--text); letter-spacing:.08em; font-weight:650; }
+    .intro { max-width:770px; padding:clamp(42px,7vw,90px) 0 40px; }
+    .name { color:var(--accent); font-size:.88rem; letter-spacing:.07em; }
+    h1,h2,h3,p { margin:0 0 .65em; }
+    h1 { font-size:clamp(2.55rem,6vw,4.9rem); line-height:.99; font-weight:550; letter-spacing:-.052em; }
+    h2 { font-size:clamp(1.7rem,3.2vw,2.7rem); line-height:1.12; letter-spacing:-.035em; }
+    h3 { font-size:1.45rem; }
+    .lead { max-width:64ch; font-size:1.15rem; color:var(--muted); }
+    .actions { display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:24px; }
+    .button { display:inline-flex; justify-content:center; align-items:center; min-height:46px; background:var(--accent); color:#071719; border:1px solid var(--accent); padding:10px 20px; text-decoration:none; font-weight:640; border-radius:4px; }
+    .button:hover { background:#c5fffa; }
+    .outline { background:transparent; color:var(--accent); }
+    .outline:hover { color:var(--bg); }
+    section + section { margin-top:36px; }
+    .panel { border:1px solid var(--line); border-radius:10px; padding:clamp(20px,4vw,42px); background:var(--surface); }
+    .calculator, .options { display:grid; grid-template-columns:1fr 1fr; gap:clamp(18px,4vw,46px); }
+    .calculator { align-items:center; }
+    label { display:block; margin:16px 0 6px; }
+    input { width:min(100%,16rem); padding:10px; background:var(--bg); color:var(--text); border:1px solid #74868a; border-radius:4px; font:inherit; }
+    output { display:block; font-size:clamp(2rem,4vw,3.5rem); line-height:1.1; color:var(--accent); font-variant-numeric:tabular-nums; }
+    .subtle { color:var(--muted); font-size:.95rem; }
+    .result { border-left:2px solid var(--accent); padding:4px 0 4px 20px; }
+    .options { gap:16px; }
+    .option { display:flex; flex-direction:column; align-items:flex-start; padding:24px; border:1px solid var(--line); border-radius:8px; }
+    .option p { color:var(--muted); }
+    .price { font-size:1.65rem; font-weight:600; }
+    .option ul { padding-left:1.25rem; margin:10px 0 24px; }
+    .option .button { margin-top:auto; }
+    details { padding:14px 0; border-bottom:1px solid var(--line); }
+    summary { cursor:pointer; font-weight:600; }
+    details p { margin-top:10px; max-width:74ch; color:var(--muted); }
+    footer { margin-top:40px; border-top:1px solid var(--line); }
+    @media(max-width:680px) { .options,.calculator { grid-template-columns:1fr; } header,footer { font-size:.86rem; } .button { padding:10px 14px; } }
+  </style>
+</head>
+<body>
+<header><a class="brand" href="/">OSMANX WORLD</a><a href="#plans">Стоимость</a></header>
+<main>
+  <section class="intro">
+    <p class="name">Guest Intelligence · Для кофеен</p>
+    <h1>Сколько гостей вернулось благодаря вашему предложению?</h1>
+    <p class="lead">Проверим одну идею в вашей кофейне. Сравним повторные визиты двух групп и посчитаем, сколько денег осталось после скидок и расходов.</p>
+    <div class="actions"><a class="button" href="./order.html?plan=pilot">Выбрать пилот за 25 000 ₽</a><a href="#calculator">Прикинуть окупаемость ↓</a></div>
+  </section>
+  <section class="panel calculator" id="calculator" aria-labelledby="calc-title">
+    <div><h2 id="calc-title">Сколько визитов окупят сопровождение?</h2>
+      <p class="subtle">Введите сумму, которая остаётся с одного дополнительного визита после скидки, себестоимости и переменных расходов.</p>
+      <label for="margin">Маржа с визита, ₽</label>
+      <input id="margin" type="number" inputmode="decimal" min="0.01" step="0.01" value="250" aria-describedby="margin-note">
+      <p id="margin-note" class="subtle">250 ₽ — пример для расчёта.</p>
+    </div>
+    <div class="result"><output id="visits" for="margin" aria-live="polite">60 визитов</output><p class="subtle">сверх обычного числа за месяц, чтобы покрыть 15 000 ₽ за сопровождение. Дополнительные фиксированные расходы увеличат этот порог.</p></div>
+  </section>
+  <section id="plans" aria-labelledby="plan-title"><h2 id="plan-title">Выберите формат для одной точки</h2>
+    <div class="options">
+      <article class="option"><h3>Пилот</h3><div class="price">25 000 ₽ один раз</div><p>Чтобы проверить первую гипотезу.</p>
+        <ul><li>Разбираем исходные данные и выбираем одну идею.</li><li>Согласуем срок наблюдения и группу сравнения.</li><li>Разбираем результат с владельцем и решаем, повторять ли предложение.</li></ul>
+        <a class="button" href="./order.html?plan=pilot">Оформить пилот</a></article>
+      <article class="option"><h3>Сопровождение</h3><div class="price">15 000 ₽ в месяц</div><p>Для регулярной работы с повторными визитами.</p>
+        <ul><li>Выбираем гипотезу на следующий месяц.</li><li>Следим за возвратами и расходами.</li><li>Раз в месяц обсуждаем цифры и следующее решение.</li></ul>
+        <a class="button outline" href="./order.html?plan=monthly">Выбрать сопровождение</a></article>
+    </div>
+  </section>
+  <section aria-labelledby="questions"><h2 id="questions">До оформления</h2>
+    <details><summary>Какие данные нужны?</summary><p>Даты визитов, суммы чеков и способ отличить повторный визит одного гостя. Для предварительной оценки достаточно описать доступные данные. Если гостям предстоит рассылка, используем только контакты с согласием на такие сообщения.</p></details>
+    <details><summary>Что будет, если гостей слишком мало?</summary><p>До старта обсудим, хватит ли наблюдений для сравнения. Если результат окажется неопределённым, укажем это в разборе. Прирост выручки заранее неизвестен.</p></details>
+    <details><summary>После пилота включится подписка?</summary><p>Пилот оплачивается отдельно. Вы сами выбираете сопровождение, когда хотите продолжить работу.</p></details>
+  </section>
+</main>
+<footer><a href="/">На главную</a><a href="mailto:hello@osmanx.world">Задать вопрос</a></footer>
+<script>
+  const margin = document.getElementById('margin');
+  const visits = document.getElementById('visits');
+  const plurals = new Intl.PluralRules('ru');
+  const words = {one:'визит', few:'визита', many:'визитов', other:'визитов'};
+  const format = new Intl.NumberFormat('ru');
+  function updateEstimate() {
+    const amount = margin.valueAsNumber;
+    if (!Number.isFinite(amount) || amount <= 0 || !margin.validity.valid) {
+      visits.textContent = 'Введите положительную сумму в рублях и копейках';
+      return;
+    }
+    const count = Math.ceil(1500000 / Math.round(amount * 100));
+    visits.textContent = format.format(count) + ' ' + words[plurals.select(count)];
+  }
+  margin.addEventListener('input', updateEstimate);
+</script>
+</body></html>
