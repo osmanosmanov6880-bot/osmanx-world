@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const ROOT='/api/industry/v1';
 const root=document.getElementById('console-app');
-const state={auth:null,tab:'overview',stats:{},items:{customers:[],services:[],resources:[],appointments:[],audit:[]},notice:'',loading:true,offline:false};
+const state={auth:null,tab:'overview',stats:{},items:{customers:[],services:[],resources:[],appointments:[],audit:[]},staff:null,integration:null,eventItems:[],calendarResourceId:null,calendarHours:null,availableSlots:[],inviteToken:'',acceptInvite:false,rescheduleId:null,notice:'',loading:true,offline:false};
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rub=v=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(Number(v||0)/100);
 const date=v=>v?new Date(v).toLocaleString('ru-RU',{dateStyle:'short',timeStyle:'short'}):'—';
@@ -10,7 +10,7 @@ const canWrite=()=>['owner','manager','operator'].includes(state.auth?.role);
 const canManage=()=>['owner','manager'].includes(state.auth?.role);
 const allowedStatus={new:['confirmed','cancelled'],confirmed:['done','cancelled'],done:[],cancelled:[]};
 const labels={new:'Новая',confirmed:'Подтверждена',done:'Выполнена',cancelled:'Отменена'};
-const sections={overview:'Обзор',appointments:'Записи',customers:'Клиенты',services:'Услуги',resources:'Календари',audit:'Журнал'};
+const sections={overview:'Обзор',appointments:'Записи',customers:'Клиенты',services:'Услуги',resources:'Календари',staff:'Команда',integrations:'Интеграции',audit:'Журнал'};
 function csrf(){
   const value=document.cookie.split('; ').find(x=>x.startsWith('__Host-osmanx_industry_csrf=')||x.startsWith('osmanx_industry_csrf='));
   return value?decodeURIComponent(value.slice(value.indexOf('=')+1)):'';
@@ -28,7 +28,7 @@ async function api(path,method='GET',body,extra={}){
   if(!response.ok){const err=new Error(data.error||'Ошибка '+response.status);err.status=response.status;throw err;}
   return data;
 }
-function shell(content){root.innerHTML='<div class="console-shell"><header class="console-head"><div class="console-brand">OSMAN<em>X</em><small>INDUSTRY OS · SECURE CONSOLE</small></div><div class="console-inline"><span class="micro-pill">Серверные данные · без демо-подмены</span><a class="btn secondary" href="./">Открыть демо ↗</a></div></header>'+content+'<footer class="console-footer">OSMANX INDUSTRY OS R3 · Для реальных организаций требуются настроенные API, TLS, аудит, правовые основания обработки и проверка интеграций.</footer></div>'}
+function shell(content){root.innerHTML='<div class="console-shell"><header class="console-head"><div class="console-brand">OSMAN<em>X</em><small>INDUSTRY OS · SECURE CONSOLE</small></div><div class="console-inline"><span class="micro-pill">Серверные данные · без демо-подмены</span><a class="btn secondary" href="./">Открыть демо ↗</a></div></header>'+content+'<footer class="console-footer">OSMANX INDUSTRY OS R4 · Для реальных организаций требуются настроенные API, TLS, аудит, правовые основания обработки и проверка интеграций.</footer></div>'}
 function alert(){return state.notice?'<div class="console-alert" role="alert">'+e(state.notice)+'</div>':''}
 function formLabel(name,type='text',key='',placeholder='',value='',other=''){return '<label>'+e(name)+'<input type="'+type+'" name="'+key+'" placeholder="'+e(placeholder)+'" value="'+e(value)+'" '+other+' required></label>'}
 function login(){
@@ -79,7 +79,29 @@ function audit(){
   const rows=state.items.audit.map(v=>'<tr><td>'+e(v.action)+'</td><td>'+e(v.target_id||'—')+'</td><td>'+date(v.occurred_at)+'</td></tr>');
   return '<div class="console-box"><h3>Журнал операций (последние 100)</h3>'+table(['Событие','Объект','Дата'],rows)+'</div>';
 }
-function view(){return ({overview,appointments,customers,services,resources,audit}[state.tab]||overview)()}
+
+function staff(){
+  if(!canManage())return '<div class="console-alert">Раздел доступен управляющим и владельцам.</div>';
+  const members=state.staff?.members||[],invites=state.staff?.invitations||[];
+  const rows=members.map(m=>{
+    const change=m.role==='owner'?'Владелец':(state.auth.role==='manager'&&m.role==='manager'?'Управляющий':
+      '<select data-staff-role="'+e(m.account_id)+'">'+['manager','operator','viewer'].filter(x=>state.auth.role==='owner'||x!=='manager').map(x=>'<option value="'+x+'" '+(m.role===x?'selected':'')+'>'+e(x)+'</option>').join('')+'</select>');
+    return '<tr><td class="strong">'+e(m.email)+'</td><td>'+change+'</td><td>'+(m.role==='owner'||(state.auth.role==='manager'&&m.role==='manager')?'—':'<button class="action-link" data-staff-remove="'+e(m.account_id)+'">Удалить</button>')+'</td></tr>';
+  });
+  const pending=invites.filter(v=>!v.accepted_at&&!v.revoked_at&&new Date(v.expires_at)>new Date());
+  const invitationRows=pending.map(v=>'<tr><td class="strong">'+e(v.email)+'</td><td>'+e(v.role)+'</td><td>'+date(v.expires_at)+'</td><td><button class="action-link" data-invite-revoke="'+e(v.id)+'">Отозвать</button></td></tr>');
+  const roles=state.auth.role==='owner'?['manager','operator','viewer']:['operator','viewer'];
+  return '<div class="console-two"><div class="console-box"><h3>Сотрудники · '+members.length+'</h3>'+table(['Почта','Роль','Доступ'],rows)+'<h3 style="margin-top:22px">Ожидают приглашение</h3>'+table(['Почта','Роль','Истекает','Действие'],invitationRows)+'</div><div class="console-box"><h3>Пригласить сотрудника</h3><p>Одноразовый токен, действителен 48 часов. Отправьте его адресату через защищённый канал.</p><form id="invite-form" class="console-form">'+formLabel('Email','email','email','colleague@business.com','','maxlength="254"')+'<label>Роль<select name="role">'+roles.map(role=>'<option value="'+role+'">'+role+'</option>').join('')+'</select></label><button class="btn primary" type="submit">Создать приглашение</button></form>'+(state.inviteToken?'<div class="console-warning"><strong>Одноразовое приглашение — скопируйте сейчас</strong><p class="console-muted">Токен больше не будет показан после обновления.</p><input class="console-input" readonly id="invitation-token" aria-label="Токен приглашения" value="'+e(state.inviteToken)+'"><button type="button" class="btn secondary" style="margin-top:10px" data-action="copy-invite">Скопировать токен</button></div>':'')+'<p class="console-muted">Создание аккаунта возможно только по действующему приглашению. Передать его следует адресату вне этой панели.</p></div></div>';
+}
+function integrations(){
+  if(!canManage())return '<div class="console-alert">Раздел доступен управляющим и владельцам.</div>';
+  const st=state.integration?.stats||{};
+  const queued=Number(st.queued||0),delivered=Number(st.delivered||0),dead=Number(st.dead||0);
+  const rows=state.eventItems.map(v=>'<tr><td class="strong">'+e(v.kind)+'</td><td>'+e(v.attempts)+'</td><td>'+date(v.created_at)+'</td><td>'+e(v.dead_at?'Ошибка':v.delivered_at?'Доставлено':'В очереди')+'</td><td>'+(v.dead_at?'<button class="action-link" data-event-retry="'+e(v.id)+'">Повторить</button>':'—')+'</td></tr>');
+  return '<div class="console-stats"><div class="kpi highlight"><small>В очереди</small><strong>'+queued+'</strong></div><div class="kpi"><small>Доставлено</small><strong>'+delivered+'</strong></div><div class="kpi"><small>Требуют внимания</small><strong>'+dead+'</strong></div><div class="kpi"><small>Webhook</small><strong style="font-size:16px;margin-top:20px">'+(state.integration?.webhookConfigured?'Настроен':'Не настроен')+'</strong></div></div><div class="console-box" style="margin-top:16px"><div class="row between"><h3>История событий · последние 100</h3><button class="btn secondary" data-action="refresh-data">Обновить</button></div><p>Содержимое клиентских данных здесь не выводится. Повторять можно только события в статусе ошибки.</p>'+table(['Событие','Попытки','Создано','Статус','Действие'],rows)+'</div><div class="console-warning">Подключение к внешним CRM и мессенджерам не выполняется автоматически. Для доставки нужен разрешённый HTTPS-приёмник и секрет подписи в серверном окружении.</div>';
+}
+
+function view(){return ({overview,appointments,customers,services,resources,staff,integrations,audit}[state.tab]||overview)()}
 async function refresh(){
   state.loading=true;display();
   try{
@@ -88,10 +110,13 @@ async function refresh(){
       api('/dashboard'),api('/customers'),api('/services'),api('/resources'),api('/appointments')]);
     state.stats=dashboard.stats;
     state.items={...state.items,customers:customers.items,services:services.items,resources:resources.items,appointments:appointments.items};
-    state.items.audit=canManage()?(await api('/audit')).items:[];
+    if(canManage()){
+      const [audit,staff,integration,events]=await Promise.all([api('/audit'),api('/staff'),api('/integrations/status'),api('/integrations/events')]);
+      state.items.audit=audit.items;state.staff=staff;state.integration=integration;state.eventItems=events.items;
+    }else{state.items.audit=[];state.staff=null;state.integration=null;state.eventItems=[];}
     state.notice='';
   }catch(error){
-    if(error.status===401){state.auth=null;state.stats={};state.items={customers:[],services:[],resources:[],appointments:[],audit:[]};state.offline=false;state.notice='';}
+    if(error.status===401){state.auth=null;state.stats={};state.items={customers:[],services:[],resources:[],appointments:[],audit:[]};state.staff=null;state.integration=null;state.eventItems=[];state.inviteToken='';state.offline=false;state.notice='';}
     else if(!state.auth)state.offline=!(error.message.includes('Сессия')||error.message.includes('Требуется вход'));
     if(state.offline)state.notice=error.message;
     else if(state.auth)state.notice=error.message;
@@ -138,7 +163,7 @@ root.addEventListener('click',async ev=>{
   if(action.dataset.action.startsWith('csv-')){csv(action.dataset.action.slice(4));return;}
   if(action.dataset.action==='logout'){
     try{await api('/auth/logout','POST')}catch{}
-    state.auth=null;state.stats={};state.items={customers:[],services:[],resources:[],appointments:[],audit:[]};state.notice='';state.tab='overview';login();
+    state.auth=null;state.stats={};state.items={customers:[],services:[],resources:[],appointments:[],audit:[]};state.staff=null;state.integration=null;state.eventItems=[];state.inviteToken='';state.notice='';state.tab='overview';login();
   }
 });
 root.addEventListener('submit',async ev=>{
