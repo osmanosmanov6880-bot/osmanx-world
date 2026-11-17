@@ -1,72 +1,22 @@
 <!doctype html>
 <!-- osmanx-sovereign-live-v1 -->
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#071015">
-<title>OSMANX WORLD — Свой путь. Свои правила.</title>
-<meta name="description" content="История поиска, работы и создания цифровых проектов.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>OSMANX WORLD — Свой путь. Свои правила.</title>
 <style>
-:root{color-scheme:dark;--bg:#071015;--fg:#f2f4f3;--muted:#aeb9bd;--cyan:#39c9ed;--line:#263943;--max:620px}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--fg);font-family:Manrope,Arial,sans-serif;overflow-x:hidden}main,header.wrap,footer.wrap{width:min(100%,620px);margin-inline:auto}a{color:inherit;text-decoration:none}.wrap{width:min(100%,var(--max));margin-inline:auto;padding-left:clamp(12px,2.2cqi,14px);padding-right:clamp(32px,8.2cqi,51px)}
-.nav{height:60px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:5;container-type:inline-size}.brand{font-size:clamp(13px,2.2cqi,18px);font-weight:600;letter-spacing:.035em;white-space:nowrap}.navlinks{display:flex;align-items:center;gap:clamp(18px,4.2cqi,30px);font-size:clamp(10px,1.8cqi,12px);color:#e2e8e9}.navlinks a{padding:9px 0;border-bottom:2px solid transparent}.navlinks a:first-child,.navlinks a:hover{border-color:var(--cyan)}.menu{display:none;border:0;background:transparent;color:white;font-size:23px;cursor:pointer}
-.hero{position:relative;height:600px;min-height:600px;overflow:hidden;isolation:isolate;container-type:inline-size}.hero-art{position:absolute;inset:0;width:100%;height:100%;z-index:-1}.hero-content{position:relative;padding-top:clamp(28px,5cqi,36px);z-index:2}.hero h1{max-width:440px;margin:0 0 14px;font-size:clamp(38px,6.3cqi,46px);line-height:1.03;letter-spacing:-.055em;font-weight:500}.hero p{margin:0 0 12px;color:#c6d0d3;font-size:clamp(13px,2.3cqi,16px)}.cta{display:inline-flex;align-items:center;gap:10px;padding:7px 0;color:var(--cyan);font-weight:600;font-size:clamp(13px,2.2cqi,15px);border-bottom:1px solid var(--cyan)}
-.route{position:absolute;z-index:2;right:clamp(24px,7.6cqi,48px);top:42%;width:min(44%,560px)}.route h2{margin:0 0 16px;font-size:clamp(17px,3.1cqi,20px);line-height:1.2;font-weight:600}.route h2:after{content:"";display:inline-block;width:38px;height:1px;background:var(--cyan);vertical-align:middle;margin-left:14px}.steps{position:relative;display:grid;gap:clamp(16px,3cqi,19px)}.steps:before{content:"";position:absolute;left:8px;top:10px;bottom:12px;width:1px;background:linear-gradient(var(--cyan),#237d9b)}.step{position:relative;display:grid;grid-template-columns:18px 1fr;gap:16px}.dot{width:13px;height:13px;margin-top:4px;border:2px solid var(--cyan);border-radius:50%;background:#071116;box-shadow:0 0 10px #35c9f455}.step h3{margin:0 0 2px;font-size:clamp(15px,2.8cqi,18px);font-weight:600;line-height:1.2}.step p{margin:0;color:#aebbc1;font-size:clamp(10px,1.85cqi,12px);line-height:1.45}
-.projects{position:relative;height:clamp(155px,18cqi,180px);padding-top:13px;overflow:hidden;container-type:inline-size}.section-head{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between}.section-head h2{margin:0;font-size:clamp(21px,3.6cqi,24px);font-weight:500;letter-spacing:-.035em}.section-head h2:after{content:"";display:inline-block;width:28px;height:1px;background:var(--cyan);vertical-align:middle;margin-left:12px}.section-head a{font-size:clamp(11px,1.8cqi,12px);color:#d8e4e6;border-bottom:1px solid #35c9f488;padding-bottom:5px}.wave{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
-.business{position:relative;z-index:2;min-height:105px;border-top:1px solid #30414a;padding-block:24px 28px;display:flex;justify-content:space-between;align-items:center}.business h2{margin:0;font-size:clamp(24px,3vw,34px);font-weight:500;letter-spacing:-.035em}.business p{margin:5px 0 0;color:var(--muted);font-size:clamp(12px,1.25vw,15px)}.button{display:inline-flex;align-items:center;gap:12px;padding:12px 18px;border:1px solid #327c91;color:#e8f8fc;font-size:clamp(11px,1.2vw,14px)}.button:hover{border-color:var(--cyan);background:#35c9f414}
-footer{min-height:58px;border-top:1px solid #1b2a31;display:flex;align-items:center;justify-content:space-between;color:#87959a;font-size:11px}
-@media(max-width:520px){.nav{height:62px}.navlinks{display:none;position:absolute;top:57px;left:15px;right:15px;padding:16px 19px;background:#0a151b;border:1px solid #263943;flex-direction:column;align-items:flex-start;gap:12px}.navlinks.open{display:flex}.menu{display:block}.hero{height:895px;min-height:895px}.hero-art{height:70%}.hero-content{padding-top:36px}.hero h1{font-size:clamp(37px,10vw,46px)}.hero p{font-size:14px}.route{top:390px;left:24px;right:24px;width:auto}.route h2{font-size:20px;margin-left:34px}.steps{gap:16px}.step h3{font-size:16px}.step p{font-size:11px}.projects{height:210px;padding-top:18px}.business{min-height:130px;align-items:flex-start;flex-direction:column;gap:14px;padding-block:22px}.button{padding:10px 15px}footer{gap:12px;flex-wrap:wrap;padding-block:15px}}
+*{box-sizing:border-box}html{scroll-behavior:smooth;background:#080e11;color:#eee9e4;font-family:Arial,sans-serif}body{margin:auto;max-width:1050px;container-type:inline-size}main{position:relative;isolation:isolate;background:#090f12}a{color:inherit;text-decoration:none}a:hover,a:focus-visible{color:#7bd9ea}
+.art{position:absolute;inset:0 0 auto;height:141.64cqw;z-index:-1;background:url('/assets/osmanx-ridge.webp') center top/100% 100% no-repeat;clip-path:polygon(0 31%,23% 31%,47% 24%,55% 21%,55% 7%,0 7%,0 5%,100% 5%,100% 36%,48% 36%,48% 74%,100% 74%,100% 81%,0 81%,0 85.4%,100% 85.4%,100% 100%,0 100%);mask-image:linear-gradient(to bottom,transparent 4%,black 9%,black 98%,transparent)}
+header,section{padding-inline:2.3cqw 4.2cqw}header{height:9cqw;display:flex;align-items:center;justify-content:space-between;font-size:2.45cqw}nav{display:flex;gap:4.9cqw;font-size:1.72cqw}nav a:first-child,.cta,.all{border-bottom:1px solid #57aabb;padding-bottom:.7cqw}
+.hero{height:44cqw;padding-top:5.6cqw}h1,h2,h3,p{margin:0;font-weight:400}h1{font-size:7.05cqw;line-height:.98;letter-spacing:-.028em}.hero p{margin:2.3cqw 0 3.3cqw;font-size:2.4cqw}.cta{color:#75d1e3;font-size:2.15cqw}
+#history{margin-left:50%;height:63cqw;padding:0 2cqw 0 0}h2{font-size:3.3cqw}#history h2:after,#projects h2:after{content:"";display:inline-block;width:4.8cqw;margin-left:2cqw;border-top:1px solid #66cadf;vertical-align:middle}ol{list-style:none;padding:0;margin:3cqw 0 0 1.3cqw}li{position:relative;padding-left:5.5cqw;min-height:9.1cqw}li:not(:last-child){border-left:1px solid #4d9db0}li:before{content:"";position:absolute;top:.7cqw;left:-1.1cqw;width:1.9cqw;height:1.9cqw;border-radius:50%;border:1px solid #73bdca;background:radial-gradient(#65d3e9 34%,#122a32 43%)}h3{font-size:2.9cqw}li p{font-size:1.88cqw;line-height:1.3;margin-top:.5cqw;color:#c3bfb9;max-width:37cqw}
+#projects,#business{display:flex;justify-content:space-between;align-items:baseline}#projects{height:25.7cqw}.all,.contact{font-size:1.9cqw}#business{border-top:1px solid #23353b;margin:0 4.2cqw 0 2.3cqw;padding:3.4cqw 0;align-items:center}#business p{font-size:2cqw;margin-top:1cqw}.contact{border:1px solid #497b88;padding:1.7cqw 3.6cqw}
+@media(max-width:500px){nav{font-size:11px;gap:2cqw}header{min-height:44px}.hero{height:44cqw}#history{height:auto;min-height:68cqw}li{min-height:11cqw}li p{font-size:11px}h3{font-size:14px}.cta,.all,.contact,#business p{font-size:12px}.hero p{font-size:13px}.art{height:149cqw}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-</style>
-</head>
-<body>
-<header class="wrap nav"><a class="brand" href="#top">OSMANX WORLD</a><nav class="navlinks" aria-label="Главная навигация"><a href="#history">История</a><a href="#projects">Проекты</a><a href="#business">Для бизнеса</a><a href="#contacts">Контакты</a></nav><button class="menu" type="button" aria-label="Открыть меню" aria-expanded="false">☰</button></header>
-<main id="top">
-<section class="hero" aria-labelledby="hero-title">
-<svg class="hero-art" viewBox="0 0 620 760" preserveAspectRatio="none" aria-hidden="true"><defs>
-<linearGradient id="sky" x2="0" y2="1"><stop stop-color="#071015"/><stop offset=".57" stop-color="#0a171e"/><stop offset="1" stop-color="#071015"/></linearGradient>
-<linearGradient id="cliff" x1=".18" y1=".1" x2=".78" y2=".9"><stop stop-color="#c4c8c5"/><stop offset=".18" stop-color="#657985"/><stop offset=".36" stop-color="#354751"/><stop offset=".65" stop-color="#182830"/><stop offset="1" stop-color="#081116"/></linearGradient>
-<linearGradient id="snow" x1="0" y1="0" x2="1" y2=".45"><stop stop-color="#e1ddd4" stop-opacity=".78"/><stop offset=".38" stop-color="#a7b2b3" stop-opacity=".44"/><stop offset="1" stop-color="#243c49" stop-opacity="0"/></linearGradient>
-<linearGradient id="blueRidge"><stop stop-color="#35c9f4" stop-opacity="0"/><stop offset=".68" stop-color="#35c9f4" stop-opacity=".78"/><stop offset="1" stop-color="#35c9f4" stop-opacity="0"/></linearGradient>
-<linearGradient id="netFade" x2="0" y2="1"><stop stop-color="white" stop-opacity=".84"/><stop offset=".7" stop-color="white" stop-opacity=".48"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
-<mask id="netMask"><rect width="620" height="760" fill="url(#netFade)"/></mask>
-<clipPath id="digitalCliff"><path d="M250 760 C240 661 264 570 306 491 C343 423 386 363 412 294 C439 223 474 162 514 111 C548 68 584 35 650 4 L650 760Z"/></clipPath>
-<pattern id="cliffMesh" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M0 0H24M0 0V24" fill="none" stroke="#31c9f1" stroke-opacity=".42" stroke-width=".72"/><circle cx="0" cy="0" r="1.25" fill="#5cddff" fill-opacity=".9"/></pattern>
-<pattern id="foreMesh" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M0 0H18M0 0V18" fill="none" stroke="#25bce8" stroke-opacity=".38" stroke-width=".7"/><circle cx="0" cy="0" r="1.1" fill="#53d8ff" fill-opacity=".88"/></pattern>
-<linearGradient id="meshShade" x2="0" y2="1"><stop stop-color="#071015" stop-opacity="0"/><stop offset=".55" stop-color="#071015" stop-opacity=".12"/><stop offset="1" stop-color="#071015" stop-opacity=".9"/></linearGradient>
-<radialGradient id="mist"><stop stop-color="#39869d" stop-opacity=".24"/><stop offset="1" stop-color="#071015" stop-opacity="0"/></radialGradient>
-</defs>
-<rect width="620" height="760" fill="url(#sky)"/><ellipse cx="488" cy="330" rx="340" ry="290" fill="url(#mist)"/>
-<!-- Layered alpine ridge, using smooth contours to match the reference mountain. -->
-<path d="M-70 590 C18 536 49 477 121 434 C166 408 183 377 229 352 C275 327 297 291 343 271 C388 251 402 217 447 197 C486 180 506 146 546 123 C579 103 600 64 666 23 L666 760 L-70 760Z" fill="url(#cliff)"/>
-<path d="M-70 563 C17 510 55 462 117 423 C157 397 184 367 228 344 C263 325 291 288 336 269 C371 253 400 222 442 198 C477 179 502 147 544 120 C580 96 604 60 661 20 C617 68 601 105 570 134 C534 168 517 197 485 220 C449 247 433 274 397 297 C363 320 345 351 309 372 C270 394 250 426 213 447 C167 473 148 503 105 523 C44 552 7 595 -70 626Z" fill="url(#snow)"/>
-<path d="M-65 615 C27 559 69 514 128 479 C173 452 195 425 239 402 C281 379 306 343 347 325 C388 305 407 275 446 254 C478 238 499 211 536 185 C574 159 601 123 650 88" fill="none" stroke="#dbe1df" stroke-opacity=".32" stroke-width="2"/>
-<path d="M-50 665 C35 609 78 574 132 539 C178 510 208 488 253 459 C296 431 325 399 367 379 C407 358 431 327 467 306 C506 282 528 252 562 226 C594 200 620 167 662 139" fill="none" stroke="#162b35" stroke-width="23" opacity=".8"/>
-<path d="M-40 548 C54 492 83 443 148 409 C189 387 207 352 255 333 C291 318 322 279 364 260 C407 241 424 210 466 189 C502 170 522 138 559 117 C594 96 616 62 663 31" fill="none" stroke="#e1e4df" stroke-opacity=".44" stroke-width="2.4"/>
-<path d="M-30 579 C61 527 98 482 155 448 C202 419 221 391 265 370 C308 349 332 315 374 294 C417 273 439 245 476 224 C512 204 533 175 568 151 C604 126 624 95 666 67" fill="none" stroke="#263c46" stroke-opacity=".9" stroke-width="15"/>
-<path d="M250 760 C240 661 264 570 306 491 C343 423 386 363 412 294 C439 223 474 162 514 111 C548 68 584 35 650 4 L650 760Z" fill="url(#cliffMesh)" opacity=".83" clip-path="url(#digitalCliff)" mask="url(#netMask)"/>
-<path d="M-30 704 C36 665 81 623 121 605 C166 586 201 556 239 543 C275 531 308 507 348 498" fill="none" stroke="#35c9f4" stroke-opacity=".55" stroke-width="12"/>
-<path d="M-35 704 C39 657 78 624 122 605 C169 585 201 555 239 543 C277 530 309 506 348 498 L405 760H-35Z" fill="url(#foreMesh)" opacity=".85"/>
-<path d="M-35 704 C39 657 78 624 122 605 C169 585 201 555 239 543 C277 530 309 506 348 498" fill="none" stroke="#8ce9ff" stroke-opacity=".63" stroke-width="1.6"/>
-<rect width="620" height="760" fill="url(#meshShade)"/>
-</svg>
-<div class="wrap hero-content"><h1 id="hero-title">Свой путь.<br>Свои правила.</h1><p>История поиска, работы и создания.</p><a class="cta" href="#history">Открыть историю <span aria-hidden="true">→</span></a></div>
-<div class="route" id="history"><h2>Маршрут истории</h2><div class="steps">
-<article class="step"><span class="dot" aria-hidden="true"></span><div><h3>Горы</h3><p>Начало пути и первые ориентиры.</p></div></article>
-<article class="step"><span class="dot" aria-hidden="true"></span><div><h3>Школа</h3><p>Опыт, дисциплина и самостоятельность.</p></div></article>
-<article class="step"><span class="dot" aria-hidden="true"></span><div><h3>Поиск профессии</h3><p>Выбор направления и первые решения.</p></div></article>
-<article class="step"><span class="dot" aria-hidden="true"></span><div><h3>Работа с отцом</h3><p>Практика и ответственность.</p></div></article>
-<article class="step"><span class="dot" aria-hidden="true"></span><div><h3>Программирование</h3><p>Инструмент, который открыл новые возможности.</p></div></article>
-</div></div></section>
-<section class="wrap projects" id="projects" aria-labelledby="projects-title"><div class="section-head"><h2 id="projects-title">Проекты</h2><a href="/assets/sovereign/portal.html">Все проекты <span aria-hidden="true">→</span></a></div>
-<svg class="wave" viewBox="0 0 620 300" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="waveGrid" width="18" height="17" patternUnits="userSpaceOnUse"><path d="M0 0H18M0 0V17" fill="none" stroke="#27bce5" stroke-opacity=".32" stroke-width=".75"/><circle cx="0" cy="0" r="1.25" fill="#56d8ff" fill-opacity=".9"/></pattern><linearGradient id="waveFade" x2="0" y2="1"><stop stop-color="#071015" stop-opacity="0"/><stop offset=".55" stop-color="#071015" stop-opacity=".16"/><stop offset="1" stop-color="#071015" stop-opacity=".83"/></linearGradient></defs><path d="M-20 18 C46 10 76 70 138 78 C193 86 218 45 272 47 C324 49 352 67 395 68 C454 69 476 32 528 45 C566 54 588 79 640 87 V300H-20Z" fill="url(#waveGrid)"/><path d="M-20 18 C46 10 76 70 138 78 C193 86 218 45 272 47 C324 49 352 67 395 68 C454 69 476 32 528 45 C566 54 588 79 640 87" fill="none" stroke="#35c9f4" stroke-opacity=".62" stroke-width="1.4"/><rect width="620" height="300" fill="url(#waveFade)"/></svg></section>
-<section class="wrap business" id="business"><div><h2>Для бизнеса</h2><p>Сотрудничество, проекты, запросы.</p></div><a class="button" href="mailto:hello@osmanx.world" id="contacts">Контакты <span aria-hidden="true">→</span></a></section>
-</main>
-<footer class="wrap"><span>OSMANX WORLD</span><span>Личная история и проекты</span><a href="#top">Наверх ↑</a></footer>
-<script>const menu=document.querySelector('.menu'),nav=document.querySelector('.navlinks');menu.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open))});nav.addEventListener('click',e=>{if(e.target.closest('a')){nav.classList.remove('open');menu.setAttribute('aria-expanded','false')}});</script>
-</body>
-</html>
+</style><main><div class="art" aria-hidden="true"></div><header><a href="/">OSMANX WORLD</a><nav><a href="#history">История</a><a href="#projects">Проекты</a><a href="#business">Для бизнеса</a><a href="mailto:hello@osmanx.world">Контакты</a></nav></header>
+<section class="hero"><h1>Свой путь.<br>Свои правила.</h1><p>История поиска, работы и создания.</p><a class="cta" href="#history">Открыть историю →</a></section>
+<section id="history"><h2>Маршрут истории</h2><ol>
+<li><h3>Горы</h3><p>Начало пути и первые ориентиры.</p></li>
+<li><h3>Школа</h3><p>Опыт, дисциплина и самостоятельность.</p></li>
+<li><h3>Поиск профессии</h3><p>Выбор направления и первые решения.</p></li>
+<li><h3>Работа с отцом</h3><p>Практика и ответственность.</p></li>
+<li><h3>Программирование</h3><p>Инструмент, который открыл новые возможности.</p></li></ol></section>
+<section id="projects"><h2>Проекты</h2><a class="all" href="/assets/sovereign/portal.html">Все проекты →</a></section>
+<section id="business"><div><h2>Для бизнеса</h2><p>Сотрудничество, проекты, запросы.</p></div><a class="contact" href="mailto:hello@osmanx.world">Контакты →</a></section></main></html>
