@@ -31,17 +31,16 @@ function state(){return load().data[industry]}
 function normPhone(v){return String(v||'').replace(/\D/g,'')}
 function currentService(){return state().services.find(function(s){return s.id===selectedService})}
 function getCapacity(){try{var x=JSON.parse(localStorage.getItem(OPS)||'{}');return Math.max(1,Math.min(100,Number(x.capacity&&x.capacity[industry])||14))}catch(e){return 14}}
+function getSchedule(){var fallback={open:'09:00',close:'19:00',interval:30,bufferMinutes:0,closedDays:[],closedDates:[]};try{var x=JSON.parse(localStorage.getItem(OPS)||'{}'),s=x.schedule&&x.schedule[industry]||{};return {open:/^\\d{2}:\\d{2}$/.test(s.open)?s.open:fallback.open,close:/^\\d{2}:\\d{2}$/.test(s.close)?s.close:fallback.close,interval:[15,30,60].includes(Number(s.interval))?Number(s.interval):30,bufferMinutes:[0,5,10,15,30].includes(Number(s.bufferMinutes))?Number(s.bufferMinutes):0,closedDays:Array.isArray(s.closedDays)?s.closedDays:[],closedDates:Array.isArray(s.closedDates)?s.closedDates:[]}}catch(e){return fallback}}
 function minute(v){var p=String(v||'').split(':').map(Number);return p[0]*60+p[1]}
 function timeText(v){return String(v).padStart(2,'0')+':00'}
 function slots(){
- var s=currentService(),day=(document.getElementById('booking-date')||{}).value||later(1);
+ var s=currentService(),day=(document.getElementById('booking-date')||{}).value||later(1),q=getSchedule();
  if(!s)return [];
- var events=state().appointments.filter(function(a){return a.date===day&&a.status!=='cancelled'}).map(function(a){var svc=state().services.find(function(x){return x.id===a.serviceId});return{start:minute(a.time),end:minute(a.time)+(Number(svc&&svc.duration)||60)}});
- var count=events.length,cap=getCapacity(),out=[];
- for(var m=9*60;m<=18*60;m+=30){
-  var end=m+Number(s.duration||60),conflict=events.some(function(e){return m<e.end&&end>e.start});
-  out.push({time:String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),free:!conflict&&count<cap&&end<=19*60})
- }
+ var weekday=new Date(day+'T12:00:00').getDay();if(q.closedDates.includes(day)||q.closedDays.includes(weekday))return [];
+ var events=state().appointments.filter(function(a){return a.id!==editingId&&a.date===day&&a.status!=='cancelled'}).map(function(a){var svc=state().services.find(function(x){return x.id===a.serviceId});return{start:minute(a.time)-q.bufferMinutes,end:minute(a.time)+(Number(svc&&svc.duration)||60)+q.bufferMinutes}});
+ var count=events.length,cap=getCapacity(),out=[],open=minute(q.open),close=minute(q.close);
+ for(var m=open;m<close;m+=q.interval){var end=m+Number(s.duration||60),conflict=events.some(function(e){return m<e.end&&end>e.start});out.push({time:String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),free:!conflict&&count<cap&&end<=close})}
  return out
 }
 function portalUrl(){return '?industry='+encodeURIComponent(industry)}
@@ -51,7 +50,7 @@ function serviceCards(){
  return list.map(function(s){return '<button type="button" class="service-card '+(selectedService===s.id?'chosen':'')+'" data-service="'+esc(s.id)+'" aria-pressed="'+(selectedService===s.id)+'"><span class="service-top"><span class="service-icon">✦</span><span class="service-price">'+money(s.price)+'</span></span><strong>'+esc(s.name)+'</strong><small>'+Number(s.duration)+' мин · '+catalog[industry].name+'</small></button>'}).join('')
 }
 function slotButtons(){
- var items=slots();if(!items.length)return '<p class="hint">Сначала выберите услугу.</p>';
+ var items=slots();if(!items.length)return currentService()?'<div class="empty-card">На эту дату нет приёма. Выберите другую дату.</div>':'<p class="hint">Сначала выберите услугу.</p>';
  if(items.every(function(x){return !x.free}))return '<div class="empty-card">На эту дату свободного времени нет. Выберите другой день.</div>';
  return '<div class="slot-grid">'+items.map(function(x){return '<button type="button" class="slot '+(selectedTime===x.time?'chosen':'')+'" data-time="'+x.time+'" '+(!x.free?'disabled':'')+' aria-pressed="'+(selectedTime===x.time)+'">'+x.time+'</button>'}).join('')+'</div>'
 }
@@ -79,7 +78,8 @@ function submit(e){
  e.preventDefault();var wasEditing=Boolean(editingId),f=new FormData(e.target),name=String(f.get('name')||'').trim(),phone=String(f.get('phone')||'').trim(),digits=normPhone(phone),s=state(),service=currentService(),date=document.getElementById('booking-date').value,time=selectedTime;
  if(!service||!time)return notify('Выберите услугу и свободное время.');
  if(name.length<2||digits.length<7||digits.length>15)return notify('Проверьте имя и номер телефона.');
- var exists=s.appointments.some(function(a){if(a.id===editingId||a.date!==date||a.status==='cancelled')return false;var x=s.services.find(function(y){return y.id===a.serviceId});var begin=minute(a.time),end=begin+(Number(x&&x.duration)||60),candidate=minute(time);return candidate<end&&candidate+Number(service.duration)>begin});
+ var q=getSchedule(),candidate=minute(time),close=minute(q.close),weekday=new Date(date+'T12:00:00').getDay();if(q.closedDates.includes(date)||q.closedDays.includes(weekday)||candidate<minute(q.open)||candidate+Number(service.duration)>close)return notify('Выбранное время вне графика компании. Обновите дату и слот.');
+ var exists=s.appointments.some(function(a){if(a.id===editingId||a.date!==date||a.status==='cancelled')return false;var x=s.services.find(function(y){return y.id===a.serviceId});var begin=minute(a.time)-q.bufferMinutes,end=minute(a.time)+(Number(x&&x.duration)||60)+q.bufferMinutes;return candidate<end&&candidate+Number(service.duration)>begin});
  if(exists||s.appointments.filter(function(a){return a.date===date&&a.status!=='cancelled'&&a.id!==editingId}).length>=getCapacity())return notify('Слот уже занят или достигнут дневной лимит. Выберите другое время.');
  var db=load(),data=db.data[industry],customer=data.customers.find(function(c){return normPhone(c.phone)===digits});
  if(!customer){customer={id:'client-'+(crypto.randomUUID?crypto.randomUUID():Date.now()),name:name,phone:phone};data.customers.push(customer)}else customer.name=name;
