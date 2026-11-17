@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+import os
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,7 +31,7 @@ def main():
     server = boot()
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, args=["--disable-dev-shm-usage"])
+            browser = playwright.chromium.launch(headless=True, args=["--disable-dev-shm-usage"], executable_path=os.environ.get("OSMANX_CHROMIUM_BIN") or None)
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 960}, accept_downloads=True)
                 errors = []
