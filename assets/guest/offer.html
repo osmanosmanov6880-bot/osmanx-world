@@ -32,6 +32,10 @@
     .panel { border:1px solid var(--line); border-radius:10px; padding:clamp(20px,4vw,42px); background:var(--surface); }
     .calculator, .options { display:grid; grid-template-columns:1fr 1fr; gap:clamp(18px,4vw,46px); }
     .calculator { align-items:center; }
+    .example-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 20px; }
+    .example-grid input { width:100%; }
+    .example-result { margin-top:20px; }
+    .example-result strong { color:var(--accent); }
     label { display:block; margin:16px 0 6px; }
     input { width:min(100%,16rem); padding:10px; background:var(--bg); color:var(--text); border:1px solid #74868a; border-radius:4px; font:inherit; }
     output { display:block; font-size:clamp(2rem,4vw,3.5rem); line-height:1.1; color:var(--accent); font-variant-numeric:tabular-nums; }
@@ -67,6 +71,18 @@
       <p id="margin-note" class="subtle">250 ₽ — пример для расчёта.</p>
     </div>
     <div class="result"><output id="visits" for="margin" aria-live="polite">60 визитов</output><p class="subtle">сверх обычного числа за месяц, чтобы покрыть 15 000 ₽ за сопровождение. Дополнительные фиксированные расходы увеличат этот порог.</p></div>
+  </section>
+  <section class="panel" aria-labelledby="example-title">
+    <h2 id="example-title">Посмотрите, как сравнить две группы</h2>
+    <p class="subtle">Это учебный пример, а не прогноз. Меняйте данные и посмотрите на разницу в повторных визитах. Расчёт остаётся в вашем браузере.</p>
+    <div class="example-grid">
+      <div><label for="control-size">Гостей без предложения</label><input id="control-size" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
+      <div><label for="control-return">Вернулись без предложения</label><input id="control-return" type="number" min="0" step="1" value="20" inputmode="numeric"></div>
+      <div><label for="offer-size">Гостей с предложением</label><input id="offer-size" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
+      <div><label for="offer-return">Вернулись с предложением</label><input id="offer-return" type="number" min="0" step="1" value="30" inputmode="numeric"></div>
+    </div>
+    <p class="example-result" id="comparison" role="status" aria-live="polite"></p>
+    <p class="subtle">Для надёжного вывода нужны сопоставимые группы и достаточно наблюдений. Расчёт не учитывает стоимость скидок и статистическую погрешность.</p>
   </section>
   <section id="plans" aria-labelledby="plan-title"><h2 id="plan-title">Выберите формат для одной точки</h2>
     <div class="options">
@@ -106,5 +122,24 @@
     visits.textContent = format.format(count) + ' ' + words[plurals.select(count)];
   }
   margin.addEventListener('input', updateEstimate);
+
+  const comparisonInputs = ['control-size', 'control-return', 'offer-size', 'offer-return'].map(id => document.getElementById(id));
+  const comparison = document.getElementById('comparison');
+  const percent = new Intl.NumberFormat('ru', { maximumFractionDigits: 1 });
+  function updateComparison() {
+    const [controlSize, controlReturn, offerSize, offerReturn] = comparisonInputs.map(input => input.valueAsNumber);
+    if (comparisonInputs.some(input => !input.validity.valid || !Number.isSafeInteger(input.valueAsNumber)) || controlSize < 1 || offerSize < 1 || controlReturn > controlSize || offerReturn > offerSize) {
+      comparison.textContent = 'Укажите целые числа: вернувшихся не может быть больше, чем гостей в группе.';
+      return;
+    }
+    const controlRate = controlReturn / controlSize * 100;
+    const offerRate = offerReturn / offerSize * 100;
+    const difference = offerRate - controlRate;
+    const sign = difference > 0 ? '+' : '';
+    comparison.textContent = `Вернулись ${percent.format(controlRate)}% без предложения и ${percent.format(offerRate)}% с предложением. Разница: ${sign}${percent.format(difference)} процентных пункта.`;
+  }
+  comparisonInputs.forEach(input => input.addEventListener('input', updateComparison));
+  updateComparison();
+
 </script>
 </body></html>
