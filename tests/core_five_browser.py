@@ -13,6 +13,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
 BASE="http://127.0.0.1:18769"
+PORTAL=BASE+"/assets/sovereign/portal.html"
 OUT=ROOT/"qa"/"core-five"
 
 def main():
@@ -36,7 +37,7 @@ def main():
                     page=browser.new_page(viewport={"width":width,"height":height},accept_downloads=True)
                     errors=[]
                     page.on("pageerror",lambda err:errors.append(str(err)))
-                    page.goto(BASE+"/",wait_until="domcontentloaded")
+                    page.goto(PORTAL,wait_until="domcontentloaded")
                     page.locator(".product-tile").first.wait_for(timeout=10000)
                     assert page.locator(".product-tile").count()==6
                     tiles=page.locator(".product-tile h3").all_inner_texts()
@@ -47,15 +48,15 @@ def main():
                     assert page.locator('.tile-action').count()==6
                     assert page.locator('.product-tile').nth(3).locator('.tile-action').get_attribute('href')=='/assets/omnichat/index.html'
                     assert page.locator('.product-tile').nth(5).locator('.tile-action').get_attribute('href')=='https://osgard.world/'
-                    assert page.locator('.tile-action').first.get_attribute("href")=="/#home"
+                    assert page.locator('.tile-action').first.get_attribute("href")=="/assets/sovereign/portal.html#home"
                     page.locator(".product-tile").nth(3).locator("a").click()
                     page.wait_for_url("**/assets/omnichat/index.html",timeout=10000)
                     assert page.locator("h1").count()==1
-                    page.goto(BASE+"/",wait_until="domcontentloaded")
+                    page.goto(PORTAL,wait_until="domcontentloaded")
                     page.locator(".product-tile").nth(2).locator("a").click()
                     page.wait_for_url("**/assets/sovereign/workspace.html?app=factory",timeout=10000)
                     assert page.locator(".ws-banner h1").inner_text()=="OSMANX App Factory"
-                    page.goto(BASE+"/#projects",wait_until="domcontentloaded")
+                    page.goto(PORTAL+"#projects",wait_until="domcontentloaded")
                     page.locator(".product-tile").first.wait_for()
                     assert page.locator(".product-tile").count()==6
                     widths=page.evaluate("({scroll:document.documentElement.scrollWidth,inner:innerWidth})")
