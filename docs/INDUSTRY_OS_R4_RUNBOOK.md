@@ -49,3 +49,9 @@ GET /api/industry/v1/integrations/status; GET /integrations/events; POST /integr
 - .github/workflows/industry-dr-ci.yml — два независимых age-ключа, восстановление обеих копий, запрет production-restore, проверка sha256, Docker Compose и nonroot-контейнеров.
 - .github/workflows/industry-browser.yml — мобильная и десктопная визуальная приёмка и подтверждение, что статический кабинет честно отображает отсутствие backend.
 - .github/workflows/deploy.yml — только доставка статических файлов; после merge проверка публичного HTTPS.
+
+
+## OSMANX Industry OS R7 — resource schedule policy
+The R7 schema migration adds per-calendar slot intervals (15, 30, or 60 minutes), a 0–120 minute buffer in 5-minute increments, and tenant-scoped closed dates. Availability, new booking, and rescheduling all enforce the same policy inside the database transaction. The operator console exposes timezone, interval, buffer, weekly hours, date closures, and time-off controls. Schedule changes remain protected by resource locks and the future-appointment guard.
+
+R7 is repository code and static console UI. It does not change the VPS runtime boundary above: the current deploy workflow publishes static files but does not install or start the Industry API. Until the API runtime and Nginx route are configured by an authorized administrator, the secure console continues to report the API as unavailable and must not be used with real customer data.
