@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const ROOT='/api/industry/v1';
 const root=document.getElementById('console-app');
-const state={auth:null,tab:'overview',stats:{},items:{customers:[],services:[],resources:[],appointments:[],audit:[]},staff:null,integration:null,eventItems:[],calendarResourceId:null,calendarHours:null,availableSlots:[],inviteToken:'',acceptInvite:false,rescheduleId:null,notice:'',loading:true,offline:false};
+const state={auth:null,tab:'overview',stats:{},items:{customers:[],services:[],resources:[],appointments:[],audit:[]},staff:null,integration:null,eventItems:[],calendarResourceId:null,calendarHours:null,availableSlots:[],inviteToken:'',acceptInvite:false,rescheduleId:null,schedule:{resourceId:null,serviceId:null,customerId:null,date:'',slots:[],hours:null,timezone:'UTC'},notice:'',loading:true,offline:false};
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rub=v=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(Number(v||0)/100);
 const date=v=>v?new Date(v).toLocaleString('ru-RU',{dateStyle:'short',timeStyle:'short'}):'—';
@@ -10,7 +10,7 @@ const canWrite=()=>['owner','manager','operator'].includes(state.auth?.role);
 const canManage=()=>['owner','manager'].includes(state.auth?.role);
 const allowedStatus={new:['confirmed','cancelled'],confirmed:['done','cancelled'],done:[],cancelled:[]};
 const labels={new:'Новая',confirmed:'Подтверждена',done:'Выполнена',cancelled:'Отменена'};
-const sections={overview:'Обзор',appointments:'Записи',customers:'Клиенты',services:'Услуги',resources:'Календари',staff:'Команда',integrations:'Интеграции',audit:'Журнал'};
+const sections={overview:'Обзор',appointments:'Записи',schedule:'Расписание',customers:'Клиенты',services:'Услуги',resources:'Календари',staff:'Команда',integrations:'Интеграции',audit:'Журнал'};
 function csrf(){
   const value=document.cookie.split('; ').find(x=>x.startsWith('__Host-osmanx_industry_csrf=')||x.startsWith('osmanx_industry_csrf='));
   return value?decodeURIComponent(value.slice(value.indexOf('=')+1)):'';
@@ -112,7 +112,44 @@ function integrations(){
   return '<div class="console-stats"><div class="kpi highlight"><small>В очереди</small><strong>'+queued+'</strong></div><div class="kpi"><small>Доставлено</small><strong>'+delivered+'</strong></div><div class="kpi"><small>Требуют внимания</small><strong>'+dead+'</strong></div><div class="kpi"><small>Webhook</small><strong style="font-size:16px;margin-top:20px">'+(state.integration?.webhookConfigured?'Настроен':'Не настроен')+'</strong></div></div><div class="console-box" style="margin-top:16px"><div class="row between"><h3>История событий · последние 100</h3><button class="btn secondary" data-action="refresh-data">Обновить</button></div><p>Содержимое клиентских данных здесь не выводится. Повторять можно только события в статусе ошибки.</p>'+table(['Событие','Попытки','Создано','Статус','Действие'],rows)+'</div><div class="console-warning">Подключение к внешним CRM и мессенджерам не выполняется автоматически. Для доставки нужен разрешённый HTTPS-приёмник и секрет подписи в серверном окружении.</div>';
 }
 
-function view(){return ({overview,appointments,customers,services,resources,staff,integrations,audit}[state.tab]||overview)()}
+function schedule(){
+  const v=state.schedule;
+  const resources=state.items.resources.filter(x=>x.active);
+  const services=state.items.services.filter(x=>x.active);
+  const customers=state.items.customers;
+  const resourceId=v.resourceId||resources[0]?.id||'';
+  const serviceId=v.serviceId||services[0]?.id||'';
+  const customerId=v.customerId||customers[0]?.id||'';
+  const day=v.date||new Date(Date.now()+86400000).toISOString().slice(0,10);
+  const opts=(items,label,selected)=>items.map(x=>'<option value="'+e(x.id)+'" '+(x.id===selected?'selected':'')+'>'+e(x[label])+'</option>').join('');
+  const slots=v.slots.map((x,i)=>'<button type="button" class="btn secondary" data-slot-book="'+i+'">'+new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'short',timeZone:v.timezone||'UTC'}).format(new Date(x.starts_at))+'</button>').join('');
+  const weekdays=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const hours=v.hours?.hours||[];
+  const hoursInput=weekdays.map((label,i)=>{
+    const row=hours.find(x=>x.weekday===i+1);
+    return '<div class="hours-day"><label><input type="checkbox" name="active_'+(i+1)+'" '+(row?'checked':'')+'>'+label+'</label>'+
+    '<input class="console-input" type="time" name="open_'+(i+1)+'" value="'+(row?e(row.opens_at.slice(0,5)):'09:00')+'">'+
+    '<input class="console-input" type="time" name="close_'+(i+1)+'" value="'+(row?e(row.closes_at.slice(0,5)):'18:00')+'"></div>';
+  }).join('');
+  const off=(v.hours?.timeOff||[]).map(x=>'<div class="feature"><div><b>'+e(x.reason)+'</b><small>'+date(x.starts_at)+' — '+date(x.ends_at)+'</small></div>'+
+      (canManage()?'<button class="action-link" data-timeoff-delete="'+e(x.id)+'">Удалить</button>':'')+'</div>').join('');
+  return '<div class="console-two"><div class="console-box"><h3>Свободные окна</h3><p>Рассчитываются сервером по часовому поясу организации, занятым визитам и блокировкам.</p><form id="slots-form" class="console-form"><label>Рабочий календарь<select name="resourceId" required>'+opts(resources,'name',resourceId)+'</select></label>'+
+  '<label>Услуга<select name="serviceId" required>'+opts(services,'name',serviceId)+'</select></label>'+
+  '<label>Клиент<select name="customerId" required>'+opts(customers,'display_name',customerId)+'</select></label>'+
+  '<label>Дата<input type="date" name="date" required value="'+e(day)+'"></label><button class="btn primary" type="submit">Найти свободное время</button></form>'+
+  '<p class="console-muted" style="margin:13px 0">Часовой пояс: '+e(v.timezone||'UTC')+'</p><div class="slots-grid">'+(slots||'<div class="empty">Выберите дату и нажмите «Найти»</div>')+'</div>'+
+  '<p class="console-muted">Нажмите на слот, чтобы создать запись выбранному клиенту. При одновременной записи слот может оказаться занят — сервер вернёт конфликт.</p></div>'+
+  '<div class="console-box"><h3>Рабочие часы и перерывы</h3><label class="console-muted">Календарь для настройки</label><select id="hours-resource" class="console-input">'+opts(resources,'name',resourceId)+'</select>'+
+  '<button type="button" class="btn ghost" data-action="load-hours" style="margin:12px 0">Загрузить график</button>'+
+  (v.hours?'<form id="hours-form" class="console-form"><div class="hours-grid">'+hoursInput+'</div>'+
+   (canManage()?'<button type="submit" class="btn primary">Сохранить график</button>':'')+'</form>'+
+   '<h3 style="margin-top:22px">Заблокированные периоды</h3><div class="feature-list">'+(off||'<p class="console-muted">Нет блокировок</p>')+'</div>'+
+   (canManage()?'<form id="timeoff-form" class="console-form" style="margin-top:12px"><label>С<input type="datetime-local" name="startsAt" required></label><label>До<input type="datetime-local" name="endsAt" required></label>'+
+   '<label>Причина<input name="reason" maxlength="160" value="Перерыв"></label><button type="submit" class="btn secondary">Заблокировать время</button></form>':''):
+  '<div class="console-warning">Загрузите график выбранного рабочего календаря.</div>')+'</div></div>';
+}
+
+function view(){return ({overview,appointments,schedule,customers,services,resources,staff,integrations,audit}[state.tab]||overview)()}
 async function refresh(){
   state.loading=true;display();
   try{
