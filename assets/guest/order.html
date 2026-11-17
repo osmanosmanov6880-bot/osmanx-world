@@ -95,11 +95,15 @@ function showPlan(key) {
   checkout.hidden = true;
   checkout.removeAttribute('href');
   byId('email-section').hidden = false;
-  if (plan.paymentUrl && new URL(plan.paymentUrl).protocol === 'https:') {
-    checkout.href = plan.paymentUrl;
-    checkout.hidden = false;
-    checkout.textContent = key === 'monthly' ? 'Оформить подписку' : 'Оплатить пилот';
-    byId('email-section').hidden = true;
+  try {
+    const payment = new URL(plan.paymentUrl);
+    if (payment.protocol === 'https:' && payment.hostname === 'buy.stripe.com') {
+      checkout.href = payment.href;
+      checkout.hidden = false;
+      checkout.textContent = key === 'monthly' ? 'Оформить подписку' : 'Оплатить пилот';
+    }
+  } catch {
+    // Keep the request form available when no valid payment link is configured.
   }
 }
 function selectedFromLocation() {
@@ -123,6 +127,7 @@ byId('copy').addEventListener('click', async () => {
     byId('status').textContent = 'Текст выделен. Скопируйте его и отправьте на ' + email + '.';
   }
 });
+window.addEventListener('popstate', () => showPlan(selectedFromLocation()));
 showPlan(selectedFromLocation());
 byId('plans').hidden = false;
 byId('summary').hidden = false;

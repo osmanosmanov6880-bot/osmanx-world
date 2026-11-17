@@ -97,7 +97,12 @@
       visits.textContent = 'Введите положительную сумму в рублях и копейках';
       return;
     }
-    const count = Math.ceil(1500000 / Math.round(amount * 100));
+    const kopecks = Math.round(amount * 100);
+    const count = Math.ceil(1500000 / kopecks);
+    if (!Number.isSafeInteger(count)) {
+      visits.textContent = 'Введите большую сумму';
+      return;
+    }
     visits.textContent = format.format(count) + ' ' + words[plurals.select(count)];
   }
   margin.addEventListener('input', updateEstimate);
