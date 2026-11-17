@@ -62,10 +62,13 @@ jobs:
           test -f ops/.env.example
       - name: Install migration runtime
         run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Create least privilege DB roles
+      - name: Test operator SQL provisioning idempotence
         run: |
-          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
-          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+          export PGHOST=127.0.0.1 PGUSER=postgres PGDATABASE=industry_ci PGPASSWORD=postgres
+          export INDUSTRY_APP_PASSWORD=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          export INDUSTRY_WORKER_PASSWORD=cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+          sh ops/provision-roles.sh
+          sh ops/provision-roles.sh
       - name: Migrate and seed synthetic sample
         run: |
           npm run migrate
@@ -122,3 +125,5 @@ jobs:
           export BOOTSTRAP_TENANT_NAME=Example
           export BOOTSTRAP_VERTICAL=dental
           docker compose --file compose.yml --profile setup --profile integrations config --quiet
+          docker build --tag osmanx-industry-api:ci .
+          docker run --rm --entrypoint id osmanx-industry-api:ci -u | grep -Fq 'uid=1000(node)'
