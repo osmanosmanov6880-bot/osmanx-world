@@ -188,6 +188,33 @@ async function createFromForm(form){
     const result=await api('/staff/invitations','POST',{email:String(f.get('email')||'').trim(),role:String(f.get('role')||'')});
     state.inviteToken=result.token;await refresh();return;
   }
+  if(type==='slots-form'){
+    const v=state.schedule;
+    v.resourceId=String(f.get('resourceId')||'');v.serviceId=String(f.get('serviceId')||'');
+    v.customerId=String(f.get('customerId')||'');v.date=String(f.get('date')||'');
+    const result=await api('/availability?resourceId='+encodeURIComponent(v.resourceId)+'&serviceId='+encodeURIComponent(v.serviceId)+'&date='+encodeURIComponent(v.date));
+    v.slots=result.items;v.timezone=result.timezone;state.notice='';display();return;
+  }
+  if(type==='hours-form'){
+    if(!canManage())throw new Error('Недостаточно прав');
+    const v=state.schedule,hours=[];
+    for(let d=1;d<=7;d++)if(f.get('active_'+d))hours.push({
+      weekday:d,opensAt:String(f.get('open_'+d)),closesAt:String(f.get('close_'+d))
+    });
+    await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours','PUT',{hours});
+    v.hours=await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours');
+    v.slots=[];state.notice='Рабочие часы обновлены';display();return;
+  }
+  if(type==='timeoff-form'){
+    if(!canManage())throw new Error('Недостаточно прав');
+    const v=state.schedule,start=new Date(String(f.get('startsAt'))),end=new Date(String(f.get('endsAt')));
+    if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime()))throw new Error('Укажите даты и время');
+    await api('/resources/'+encodeURIComponent(v.resourceId)+'/time-off','POST',{
+      startsAt:start.toISOString(),endsAt:end.toISOString(),reason:String(f.get('reason')||'Перерыв')
+    });
+    v.hours=await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours');
+    v.slots=[];state.notice='Период заблокирован';display();return;
+  }
   if(type==='customer-form'){path='/customers';body={displayName:String(f.get('displayName')||'').trim(),phone:String(f.get('phone')||'').trim()||undefined,email:String(f.get('email')||'').trim()||undefined};}
   if(type==='service-form'){path='/services';body={name:String(f.get('name')||'').trim(),durationMinutes:Number(f.get('durationMinutes')),priceMinor:Math.round(Number(f.get('priceRub'))*100)};}
   if(type==='resource-form'){path='/resources';body={name:String(f.get('name')||'').trim()};}
@@ -214,6 +241,23 @@ function csv(table){
 }
 root.addEventListener('click',async ev=>{
   const tab=ev.target.closest('[data-tab]');if(tab){state.tab=tab.dataset.tab;state.notice='';display();return;}
+  const slot=ev.target.closest('[data-slot-book]');
+  if(slot){
+    const v=state.schedule,chosen=v.slots[Number(slot.dataset.slotBook)];
+    if(!chosen||!canWrite())return;
+    try{
+      await api('/appointments','POST',{customerId:v.customerId,serviceId:v.serviceId,resourceId:v.resourceId,startsAt:chosen.starts_at},
+        {'Idempotency-Key':crypto.randomUUID?crypto.randomUUID():'slot-'+Date.now()});
+      v.slots=[];await refresh();state.tab='schedule';display();
+    }catch(error){state.notice=error.message;display();}
+    return;
+  }
+  const delTime=ev.target.closest('[data-timeoff-delete]');
+  if(delTime){const v=state.schedule;
+    try{await api('/resources/'+encodeURIComponent(v.resourceId)+'/time-off/'+encodeURIComponent(delTime.dataset.timeoffDelete),'DELETE');
+      v.hours=await api('/resources/'+encodeURIComponent(v.resourceId)+'/hours');v.slots=[];display();
+    }catch(error){state.notice=error.message;display()}return;
+  }
   const remove=ev.target.closest('[data-staff-remove]');
   if(remove){if(!confirm('Отозвать доступ сотрудника? Его сессии будут закрыты.'))return;
     try{await api('/staff/'+encodeURIComponent(remove.dataset.staffRemove),'DELETE');await refresh()}
@@ -232,6 +276,15 @@ root.addEventListener('click',async ev=>{
   if(action.dataset.action==='retry')return refresh();
   if(action.dataset.action==='toggle-invite'){state.acceptInvite=!state.acceptInvite;state.notice='';login();return;}
   if(action.dataset.action==='refresh-data')return refresh();
+  if(action.dataset.action==='load-hours'){
+    const v=state.schedule;
+    v.resourceId=document.getElementById('hours-resource')?.value||v.resourceId||state.items.resources[0]?.id;
+    if(!v.resourceId)return;
+    try{const [hours,tz]=await Promise.all([api('/resources/'+encodeURIComponent(v.resourceId)+'/hours'),api('/settings/timezone')]);
+      v.hours=hours;v.timezone=tz.timezone;v.slots=[];state.notice='';display();
+    }catch(error){state.notice=error.message;display()}
+    return;
+  }
   if(action.dataset.action==='copy-invite'){
     const el=document.getElementById('invitation-token');
     if(!el)return;
@@ -251,6 +304,9 @@ root.addEventListener('submit',async ev=>{
   try{await createFromForm(form)}catch(error){state.loading=false;state.notice=error.message;display();}
 });
 root.addEventListener('change',async ev=>{
+  if(ev.target.id==='hours-resource'){
+    state.schedule.resourceId=ev.target.value;state.schedule.hours=null;state.schedule.slots=[];display();return;
+  }
   const role=ev.target.closest('[data-staff-role]');
   if(role){try{await api('/staff/'+encodeURIComponent(role.dataset.staffRole),'PATCH',{role:role.value});await refresh()}
     catch(error){state.notice=error.message;display()}return;}
