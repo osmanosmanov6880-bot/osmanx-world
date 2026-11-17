@@ -76,3 +76,6 @@ GRANT UPDATE ON industry.tenants TO industry_app;
 
 -- Per-delivery lease token prevents stale worker acknowledgements.
 ALTER TABLE industry.outbox ADD COLUMN lease_token uuid;
+
+-- Operator retry endpoint may only UPDATE outbox rows that belong to its tenant (RLS).
+GRANT UPDATE ON industry.outbox TO industry_app;
