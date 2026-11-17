@@ -13,7 +13,7 @@ var catalog={
 };
 var params=new URLSearchParams(location.search),industry=params.get('industry');
 if(!catalog[industry])industry='dental';
-var selectedService='',selectedTime='',editingId='',lookupPhone=sessionStorage.getItem('osmanx-booking-phone')||'',notice='',search='';
+var selectedService='',selectedTime='',editingId='',dateChoice='',lookupPhone=sessionStorage.getItem('osmanx-booking-phone')||'',notice='',search='';
 var app=document.getElementById('booking-app');
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function money(v){return new Intl.NumberFormat('ru-RU').format(Number(v)||0)+' ₽'}
@@ -63,7 +63,7 @@ function bookings(){
  return rows.map(function(a){var svc=s.services.find(function(x){return x.id===a.serviceId});return '<article class="visit-card"><div><span class="status '+esc(a.status)+'">'+(a.status==='cancelled'?'Отменена':a.status==='confirmed'?'Подтверждена':a.status==='done'?'Выполнена':'Ожидает подтверждения')+'</span><h3>'+esc(svc?svc.name:'Услуга')+'</h3><p>'+esc(a.date)+' · '+esc(a.time)+' · '+money(svc&&svc.price)+'</p></div><div class="visit-actions">'+(a.status!=='cancelled'&&a.status!=='done'?'<button type="button" class="small-btn" data-reschedule="'+esc(a.id)+'">Перенести</button><button type="button" class="small-btn danger" data-cancel="'+esc(a.id)+'">Отменить</button>':'')+'<button type="button" class="small-btn" data-ics="'+esc(a.id)+'">В календарь</button></div></article>'}).join('')
 }
 function render(){
- load();var svc=currentService();
+ load();var svc=currentService(),editing=state().appointments.find(function(x){return x.id===editingId}),editingCustomer=editing&&state().customers.find(function(x){return x.id===editing.customerId}),dateValue=dateChoice||(document.getElementById('booking-date')||{}).value||(editing&&editing.date)||later(1);
  app.innerHTML='<header class="top"><a class="brand" href="./index.html">OSMAN<span>X</span><small>INDUSTRY OS</small></a><a class="back-link" href="./index.html">← К демо компании</a></header>'+
  '<main class="layout"><section class="intro"><span class="eyebrow">'+esc(catalog[industry].name)+' · КЛИЕНТСКИЙ ПОРТАЛ</span><h1>Запись без звонка.<br><em>В удобное время.</em></h1><p>Выберите услугу и свободный слот. Это интерактивный пример клиентского пути для сайта и приложения.</p><div class="demo-alert"><b>Демо-режим</b> Данные остаются в localStorage этого браузера. Используйте вымышленные имя и номер: сервер, SMS и реальная запись не подключены.</div><div class="sector-links" aria-label="Выбрать отрасль">'+Object.keys(catalog).map(function(k){return '<a class="'+(k===industry?'active':'')+'" href="?industry='+k+'">'+esc(catalog[k].name)+'</a>'}).join('')+'</div></section>'+
  '<section class="workspace"><div class="flow"><section class="panel"><div class="step"><span>01</span><div><h2>Выберите услугу</h2><p>Стоимость и длительность указаны для демонстрации.</p></div></div><label class="search-label">Поиск услуги<input id="service-search" type="search" placeholder="Например, консультация" value="'+esc(search)+'"></label><div class="service-grid">'+serviceCards()+'</div></section>'+
@@ -76,7 +76,7 @@ function render(){
 }
 function record(kind,detail){try{var o=JSON.parse(localStorage.getItem(OPS)||'{}');o.version=1;o.audit=Array.isArray(o.audit)?o.audit:[];o.audit.unshift({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),at:new Date().toISOString(),industry:industry,kind:kind,detail:detail});o.audit=o.audit.slice(0,120);localStorage.setItem(OPS,JSON.stringify(o))}catch(e){}}
 function submit(e){
- e.preventDefault();var f=new FormData(e.currentTarget),name=String(f.get('name')||'').trim(),phone=String(f.get('phone')||'').trim(),digits=normPhone(phone),s=state(),service=currentService(),date=document.getElementById('booking-date').value,time=selectedTime;
+ e.preventDefault();var f=new FormData(e.target),name=String(f.get('name')||'').trim(),phone=String(f.get('phone')||'').trim(),digits=normPhone(phone),s=state(),service=currentService(),date=document.getElementById('booking-date').value,time=selectedTime;
  if(!service||!time)return notify('Выберите услугу и свободное время.');
  if(name.length<2||digits.length<7||digits.length>15)return notify('Проверьте имя и номер телефона.');
  var exists=s.appointments.some(function(a){if(a.id===editingId||a.date!==date||a.status==='cancelled')return false;var x=s.services.find(function(y){return y.id===a.serviceId});var begin=minute(a.time),end=begin+(Number(x&&x.duration)||60),candidate=minute(time);return candidate<end&&candidate+Number(service.duration)>begin});
@@ -86,7 +86,7 @@ function submit(e){
  var recordId=editingId,appt=recordId&&data.appointments.find(function(a){return a.id===recordId});
  if(appt){appt.date=date;appt.time=time;appt.serviceId=service.id;appt.status='new';record('Запись перенесена',date+' '+time+' · '+service.name);editingId='';}
  else{appt={id:'booking-'+(crypto.randomUUID?crypto.randomUUID():Date.now()),customerId:customer.id,serviceId:service.id,date:date,time:time,status:'new'};data.appointments.unshift(appt);record('Клиентская запись создана',date+' '+time+' · '+service.name)}
- localStorage.setItem(CORE,JSON.stringify(db));lookupPhone=phone;sessionStorage.setItem('osmanx-booking-phone',phone);selectedTime='';notice=appt?'Запись сохранена в демо.':'Демо-запись создана на этом устройстве.';render();window.scrollTo({top:0,behavior:'smooth'})
+ localStorage.setItem(CORE,JSON.stringify(db));dateChoice='';lookupPhone=phone;sessionStorage.setItem('osmanx-booking-phone',phone);selectedTime='';notice=appt?'Запись сохранена в демо.':'Демо-запись создана на этом устройстве.';render();window.scrollTo({top:0,behavior:'smooth'})
 }
 function notify(text){notice=text;render()}
 function downloadCalendar(id){
@@ -98,12 +98,12 @@ function downloadCalendar(id){
 app.addEventListener('click',function(e){
  var s=e.target.closest('[data-service]');if(s){selectedService=s.dataset.service;selectedTime='';render();return}
  var t=e.target.closest('[data-time]');if(t&&!t.disabled){selectedTime=t.dataset.time;render();return}
- var c=e.target.closest('[data-cancel]');if(c){var ap=state().appointments.find(function(x){return x.id===c.dataset.cancel});if(ap&&confirm('Отменить эту демо-запись?')){ap.status='cancelled';localStorage.setItem(CORE,JSON.stringify(load()));record('Демо-запись отменена',ap.date+' '+ap.time);notice='Демо-запись отменена.';render()}return}
- var r=e.target.closest('[data-reschedule]');if(r){var appt=state().appointments.find(function(x){return x.id===r.dataset.reschedule});if(appt){editingId=appt.id;selectedService=appt.serviceId;selectedTime='';notice='Выберите новую дату и свободное время.';render();document.getElementById('booking-date').focus()}return}
+ var c=e.target.closest('[data-cancel]');if(c){var db=load(),ap=db.data[industry].appointments.find(function(x){return x.id===c.dataset.cancel});if(ap&&confirm('Отменить эту демо-запись?')){ap.status='cancelled';localStorage.setItem(CORE,JSON.stringify(db));record('Демо-запись отменена',ap.date+' '+ap.time);notice='Демо-запись отменена.';render()}return}
+ var r=e.target.closest('[data-reschedule]');if(r){var appt=state().appointments.find(function(x){return x.id===r.dataset.reschedule});if(appt){editingId=appt.id;selectedService=appt.serviceId;selectedTime='';dateChoice=appt.date;notice='Выберите новую дату и свободное время.';render();document.getElementById('booking-date').focus()}return}
  var i=e.target.closest('[data-ics]');if(i){downloadCalendar(i.dataset.ics);return}
 });
 app.addEventListener('input',function(e){if(e.target.id==='service-search'){search=e.target.value;var pos=e.target.selectionStart;render();var n=document.getElementById('service-search');n.focus();n.setSelectionRange(pos,pos)}});
-app.addEventListener('change',function(e){if(e.target.id==='booking-date'){selectedTime='';render()}})
+app.addEventListener('change',function(e){if(e.target.id==='booking-date'){selectedTime='';dateChoice=e.target.value;render()}})
 app.addEventListener('submit',function(e){if(e.target.id==='booking-form')submit(e);if(e.target.id==='lookup-form'){e.preventDefault();lookupPhone=String(new FormData(e.target).get('lookup')||'').trim();sessionStorage.setItem('osmanx-booking-phone',lookupPhone);render()}})
 render();
 })();
