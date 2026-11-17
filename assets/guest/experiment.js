@@ -1,47 +1,109 @@
-import {cohort,economics,csv} from './experiment-model.js';
+import {cohort,economics,csv,createSnapshot,readSnapshot,pilotBrief,protocol,riskFlags,INPUT_KEYS} from './experiment-model.js';
 const $=id=>document.getElementById(id);
-const ids=['control','controlReturn','offer','offerReturn','margin','discount','fixed','fee'];
-const number=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1});
-const rub=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0});
-let latest=null;
-function input(){return Object.fromEntries(ids.map(k=>[k,$(k).value]));}
+const integer=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1});
+const rub=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
+const protocolKeys=['startDate','endDate','allocation','outcomeWindowDays'];
+let latest=null, snapshot=null;
+const values=keys=>Object.fromEntries(keys.map(key=>[key,$(key).value]));
+function setStatus(message){$('status').textContent=message;}
 function render(){
+  latest=null;snapshot=null;
+  $('downloadCsv').disabled=true;
+  $('downloadJson').disabled=true;
+  $('copyBrief').disabled=true;
+  $('briefText').value='';
+  $('riskList').replaceChildren();
   try{
-    const data=input(); const c=cohort(data); const e=economics(data,c); latest={data,c,e};
-    $('error').textContent='';
-    $('numbers').textContent=`Сравнение: ${number.format(c.controlRate*100)}% → ${number.format(c.offerRate*100)}%; разница ${c.difference>=0?'+':''}${number.format(c.difference*100)} п.п.`;
-    $('interval').textContent=`Приблизительный 95%-й интервал разницы: ${number.format(c.range[0]*100)}…${number.format(c.range[1]*100)} п.п. ${c.uncertain?'Интервал включает ноль: неопределённость высока.':'Интервал не включает ноль; это всё равно не доказывает причинность.'}`;
-    $('net').textContent=`Условный финансовый итог: ${rub.format(e.net)} при ${number.format(e.incrementalVisits)} дополнительных визитах по сценарию.`;
-    $('threshold').textContent=e.breakEven===null?'При нулевой марже порог окупаемости не вычисляется.':`Порог покрытия всех перечисленных затрат: ${number.format(e.breakEven)} дополнительных визитов.`;
-    $('export').disabled=false;
+    const inputs=values(INPUT_KEYS);
+    const c=cohort(inputs), e=economics(inputs,c);
+    latest={inputs,c,e};
+    $('errors').textContent='';
+    $('numbers').textContent='Контроль '+integer.format(c.controlRate*100)+'% · Предложение '+integer.format(c.offerRate*100)+'% · Разница '+(c.difference>=0?'+':'')+integer.format(c.difference*100)+' п.п.';
+    $('interval').textContent='Приблизительный 95%-й интервал: '+integer.format(c.range[0]*100)+'…'+integer.format(c.range[1]*100)+' п.п.';
+    $('net').textContent='Условный чистый результат: '+rub.format(e.net)+' (с учётом расходов '+rub.format(e.costs)+').';
+    $('netRange').textContent='Сценарный диапазон результата: '+rub.format(e.rangeNet[0])+' — '+rub.format(e.rangeNet[1])+'.';
+    $('visits').textContent='Оценка дополнительных визитов по разности долей: '+integer.format(e.incrementalVisits)+'.';
+    $('threshold').textContent=e.breakEven===null?'При нулевой марже порог окупаемости не вычисляется.':'Требуемые дополнительные визиты для покрытия затрат: '+integer.format(e.breakEven)+'.';
+    $('downloadCsv').disabled=false;
+    const inputProtocol=values(protocolKeys);
+    try{
+      const p=protocol(inputProtocol);
+      snapshot=createSnapshot(inputs,inputProtocol);
+      $('briefText').value=pilotBrief(snapshot);
+      $('briefNotice').textContent='Протокол заполнен. Это проект, а не акт принятия результата.';
+      $('downloadJson').disabled=false;
+      $('copyBrief').disabled=false;
+      for(const flag of riskFlags(c,p)) {
+        const item=document.createElement('li');item.textContent=flag;$('riskList').append(item);
+      }
+    } catch (err) {
+      $('briefNotice').textContent='Для паспорта пилота: '+err.message;
+      const item=document.createElement('li');item.textContent=c.small?'Для небольших групп результат может быть нестабилен.':'Убедитесь в сопоставимости групп и корректном сборе данных.';
+      $('riskList').append(item);
+    }
   }catch(err){
-    latest=null; $('error').textContent=err.message;
-    ['numbers','interval','net','threshold'].forEach(k=>$(k).textContent='—');
-    $('export').disabled=true;
+    $('errors').textContent=err.message;
+    for(const id of ['numbers','interval','net','netRange','visits','threshold']) $(id).textContent='—';
+    $('briefNotice').textContent='Исправьте исходные числа для расчёта.';
   }
 }
-for(const id of ids) $(id).addEventListener('input',render);
-$('export').addEventListener('click',()=>{
+function download(filename,content,type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const anchor=document.createElement('a');
+  anchor.href=url;anchor.download=filename;
+  document.body.append(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportCsv(){
   if(!latest)return;
-  const {data,c,e}=latest;
+  const {inputs,c,e}=latest;
   const rows=[
-    ['OSMANX Guest Intelligence','Сценарий без персональных данных'],
-    ['Параметр','Значение'],
-    ...Object.entries(data).map(([k,v])=>[k,v]),
-    ['Разница в долях',c.difference],
-    ['Нижняя граница 95%',c.range[0]],
-    ['Верхняя граница 95%',c.range[1]],
-    ['Условные дополнительные визиты',e.incrementalVisits],
-    ['Условный финансовый результат (₽)',e.net],
-    ['Порог визитов',e.breakEven??'не определён'],
-    ['Ограничение','Данные не доказывают причинную связь; проверьте сопоставимость групп и дополнительные расходы']
+    ['OSMANX Guest Intelligence','Сценарий, не причинное доказательство'],
+    ['Параметр','Значение'],...Object.entries(inputs),
+    ['Доля контроля',c.controlRate],['Доля предложения',c.offerRate],
+    ['Разница долей',c.difference],['Интервал нижняя',c.range[0]],['Интервал верхняя',c.range[1]],
+    ['Условные дополнительные визиты',e.incrementalVisits],['Все учтённые расходы в ₽',e.costs],
+    ['Чистый результат в ₽',e.net],['Нижний сценарий в ₽',e.rangeNet[0]],['Верхний сценарий в ₽',e.rangeNet[1]],
+    ['Порог дополнительных визитов',e.breakEven??'не определён'],
+    ['Предупреждение','Не причинный эффект. Для реального исследования проверяйте пересечения гостей и формирование групп.']
   ];
-  const blob=new Blob([csv(rows)],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='guest-intelligence-scenario.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-});
+  download('osmanx-guest-scenario.csv',csv(rows),'text/csv;charset=utf-8');
+  setStatus('CSV подготовлен локально без отправки данных.');
+}
+function exportJson(){
+  if(!snapshot)return;
+  download('osmanx-guest-pilot.json',JSON.stringify(snapshot,null,2)+'\n','application/json;charset=utf-8');
+  setStatus('Паспорт сценария сохранён в JSON. На сервер ничего не отправлено.');
+}
+async function importJson(){
+  const file=$('importJson').files[0];
+  if(!file)return;
+  try{
+    if(file.size>16384)throw new RangeError('Файл слишком большой (максимум 16 КБ)');
+    const parsed=readSnapshot(await file.text());
+    for(const key of INPUT_KEYS)$(key).value=parsed.inputs[key];
+    for(const key of protocolKeys)$(key).value=parsed.protocol[key];
+    render();
+    setStatus('Сценарий импортирован и заново проверен.');
+  }catch(err){setStatus('Импорт отклонён: '+err.message);}
+  finally{$('importJson').value='';}
+}
+for(const id of [...INPUT_KEYS,...protocolKeys]) $(id).addEventListener('input',render);
+$('downloadCsv').addEventListener('click',exportCsv);
+$('downloadJson').addEventListener('click',exportJson);
+$('importJson').addEventListener('change',importJson);
 $('copyBrief').addEventListener('click',async()=>{
-  const text=`Заявка на пилот OSMANX Guest Intelligence. Точка: [название]. Период сравнения: [даты]. Главный показатель: повторный визит. Доступные агрегированные данные: [описание]. Кто утверждает эксперимент: [ответственный]. Нужен план измерения и условия пилота.\nНикаких персональных данных гостей в письме не прикладываю.`;
-  try{await navigator.clipboard.writeText(text);$('briefStatus').textContent='Шаблон скопирован.';}
-  catch{$('briefStatus').textContent='Скопировать не получилось. Используйте ссылку «Запросить пилот».';}
+  if(!snapshot)return;
+  const value=$('briefText').value;
+  try{
+    await navigator.clipboard.writeText(value);
+    setStatus('Паспорт пилота скопирован.');
+  }catch{
+    $('briefText').focus();$('briefText').select();
+    setStatus('Текст выделен. Скопируйте его обычной командой.');
+  }
 });
+$('presetPilot').addEventListener('click',()=>{$('fee').value='25000';render();setStatus('Цена пилота: 25 000 ₽ разово. Это гипотеза, не счёт на оплату.');});
+$('presetMonthly').addEventListener('click',()=>{$('fee').value='15000';render();setStatus('Цена сопровождения: 15 000 ₽ в месяц. Это гипотеза, не подписка.');});
 render();
