@@ -1,3 +1,4 @@
+// Reliable signed integration delivery. Endpoint operator-configured, never from user input.
 import pg from 'pg';
 import { createHmac } from 'node:crypto';
 const {WORKER_DB_URL,WEBHOOK_URL,WEBHOOK_HMAC_KEY}=process.env;
@@ -11,16 +12,12 @@ let closing=false;
 process.once('SIGINT',()=>closing=true);
 process.once('SIGTERM',()=>closing=true);
 async function claim(batch=12){
-  const client=await pool.connect();
-  try{
-    await client.query('BEGIN');
-    const {rows}=await client.query(
-      "SELECT id,tenant_id,kind,payload,attempts FROM industry.outbox WHERE delivered_at IS NULL AND dead_at IS NULL AND available_at<=now() AND (locked_until IS NULL OR locked_until<now()) ORDER BY created_at ASC FOR UPDATE SKIP LOCKED LIMIT $1",[batch]);
-    if(rows.length)await client.query(
-      "UPDATE industry.outbox SET locked_until=now()+interval '90 seconds', attempts=attempts+1 WHERE id=ANY($1::uuid[])",[rows.map(r=>r.id)]);
-    await client.query('COMMIT');return rows;
-  }catch(err){await client.query('ROLLBACK').catch(()=>{});throw err}
-  finally{client.release()}
+  const r=await pool.query(
+    "WITH selected AS (SELECT id FROM industry.outbox WHERE delivered_at IS NULL AND dead_at IS NULL AND available_at<=now() "+
+    "AND (locked_until IS NULL OR locked_until<now()) ORDER BY created_at ASC FOR UPDATE SKIP LOCKED LIMIT $1) "+
+    "UPDATE industry.outbox o SET locked_until=now()+interval '180 seconds',lease_token=gen_random_uuid(),attempts=o.attempts+1 "+
+    "FROM selected s WHERE o.id=s.id RETURNING o.id,o.tenant_id,o.kind,o.payload,o.attempts,o.lease_token",[batch]);
+  return r.rows;
 }
 async function deliver(row){
   const now=String(Math.floor(Date.now()/1000));
@@ -34,16 +31,20 @@ async function deliver(row){
     success=response.ok;
     if(!success)errorText='Receiver HTTP '+response.status;
   }catch(error){errorText=String(error.message).slice(0,220)}
-  if(success) {
-    await pool.query('UPDATE industry.outbox SET delivered_at=now(),locked_until=NULL,last_error=NULL WHERE id=$1',[row.id]);
+  if(success){
+    const result=await pool.query(
+      'UPDATE industry.outbox SET delivered_at=now(),locked_until=NULL,lease_token=NULL,last_error=NULL WHERE id=$1 AND lease_token=$2 AND delivered_at IS NULL',
+      [row.id,row.lease_token]);
+    if(!result.rowCount)console.warn('Stale webhook acknowledgement rejected:',row.id);
     return;
   }
-  const attempts=row.attempts+1;
-  const delay=Math.min(3600,30*Math.pow(2,Math.min(attempts,7)));
-  await pool.query(
-    "UPDATE industry.outbox SET locked_until=NULL,available_at=now()+($2::int * interval '1 second'),dead_at=CASE WHEN $3 THEN now() ELSE NULL END,last_error=$4 WHERE id=$1",
-    [row.id,delay,attempts>=8,errorText]);
-  console.warn('Webhook deferred:',row.id,'attempt',attempts,errorText);
+  const delay=Math.min(3600,30*Math.pow(2,Math.min(row.attempts,7)));
+  const result=await pool.query(
+    "UPDATE industry.outbox SET locked_until=NULL,lease_token=NULL,available_at=now()+($3::int * interval '1 second'),"+
+    "dead_at=CASE WHEN $4 THEN now() ELSE NULL END,last_error=$5 WHERE id=$1 AND lease_token=$2 AND delivered_at IS NULL",
+    [row.id,row.lease_token,delay,row.attempts>=8,errorText]);
+  if(!result.rowCount)console.warn('Stale webhook retry rejected:',row.id);
+  else console.warn('Webhook deferred:',row.id,'attempt',row.attempts,errorText);
 }
 try{
   do{
