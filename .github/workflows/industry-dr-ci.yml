@@ -127,3 +127,5 @@ jobs:
           docker compose --file compose.yml --profile setup --profile integrations config --quiet
           docker build --tag osmanx-industry-api:ci .
           docker run --rm --entrypoint id osmanx-industry-api:ci -u | grep -Fq 'uid=1000(node)'
+          docker build --file ops/Dockerfile.backup --tag osmanx-industry-maintenance:ci .
+          test "$(docker run --rm --entrypoint id osmanx-industry-maintenance:ci -u)" -ne 0
