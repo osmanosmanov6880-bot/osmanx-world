@@ -31,6 +31,8 @@ jobs:
           test -s assets/industry/index.html
           test -s assets/industry/style.css
           node --check assets/industry/app.js
+          node --check assets/industry/operations.js
+          test -s assets/industry/operations.css
           node --check assets/industry/console.js
           test -s assets/industry/console.html
           test -s assets/industry/console.css
@@ -103,7 +105,7 @@ jobs:
           curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/omnichat/index.html?release=${GITHUB_SHA}" -o /tmp/osmanx-omnichat-live.html
           grep -Fq 'osmanx-omnichat-r36-source-live-v1' /tmp/osmanx-omnichat-live.html
           curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 -o /dev/null "https://osmanx.world/assets/sovereign/omnichat.js?release=${GITHUB_SHA}"
-          for asset in /assets/industry/index.html /assets/industry/style.css /assets/industry/app.js /assets/industry/console.html /assets/industry/console.css /assets/industry/console.js; do
+          for asset in /assets/industry/index.html /assets/industry/style.css /assets/industry/app.js /assets/industry/console.html /assets/industry/console.css /assets/industry/console.js /assets/industry/operations.css /assets/industry/operations.js; do
             curl -fsSL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 8 --max-time 35 -o /dev/null "https://osmanx.world${asset}?release=${GITHUB_SHA}"
           done
           curl -fsSL --retry 3 --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/industry/app.js?release=${GITHUB_SHA}" -o /tmp/osmanx-industry-live.js
