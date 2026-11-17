@@ -34,6 +34,6 @@ export function economics(input, result) {
   return {incrementalVisits,net,breakEven,assumption:'Разность долей не доказывает причинный эффект. Скидка учитывается для всех гостей группы с предложением.'};
 }
 export function csv(rows) {
-  const cell=value=>'"'+String(value??'').replace(/^[=+\-@\t\r]/,'\'$&').replaceAll('"','""')+'"';
+  const cell=value=>'"'+String(value??'').replace(/^[=+\-@\t\r]/, match => String.fromCharCode(39)+match).replaceAll('"','""')+'"';
   return '\uFEFF'+rows.map(row=>row.map(cell).join(';')).join('\r\n')+'\r\n';
 }
