@@ -42,7 +42,9 @@ def main():
                 page.locator('#booking-form button[type="submit"]').click()
                 page.get_by_text("Демо-запись создана на этом устройстве.").wait_for()
                 assert page.locator(".visit-card").count()==1
-                assert page.locator('[data-time="09:00"]').is_disabled()
+                debug=page.evaluate("""() => {const d=JSON.parse(localStorage.getItem('osmanx-industry-demo-r2'));const o=JSON.parse(localStorage.getItem('osmanx-industry-ops-r3'));return {day:document.querySelector('#booking-date').value,visits:d.data.dental.appointments.filter(a=>a.date===document.querySelector('#booking-date').value),capacity:o.capacity.dental,slots:[...document.querySelectorAll('[data-time]')].slice(0,3).map(x=>({time:x.dataset.time,disabled:x.disabled}))}}""")
+                print("BOOKING SLOT DEBUG:",debug,flush=True)
+                assert page.locator('[data-time="09:00"]').is_disabled(),debug
                 page.locator("[data-reschedule]").click()
                 new_day=page.evaluate("d=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)}",day)
                 page.locator("#booking-date").fill(new_day)
