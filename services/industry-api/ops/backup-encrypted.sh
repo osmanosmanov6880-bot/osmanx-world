@@ -10,6 +10,7 @@ dest="$1"
 test -n "$dest"
 mkdir -p "$dest"
 test -d "$dest"
+dest=$(cd "$dest" && pwd -P)
 temp_dir=$(mktemp -d "$dest/.industry-backup-XXXXXX")
 trap 'rm -rf "$temp_dir"' EXIT HUP INT TERM
 name="industry-$(date -u +%Y%m%dT%H%M%SZ)-$$.dump.age"
