@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b141d"><title>Реестр задач OSGARD · OSMANX WORLD</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b141d;color:#f3f2ed;font:16px/1.5 Inter,system-ui,sans-serif}main{max-width:940px;margin:auto;padding:32px clamp(16px,5vw,48px) 64px}a{color:#9ddce5}h1{margin:48px 0 0;font-size:clamp(32px,6vw,60px);line-height:1.08}h2{margin:32px 0 4px;font-size:21px}.summary,small{color:#bdcbd2}.filters{display:flex;flex-wrap:wrap;gap:16px;margin:24px 0}.filters label{flex:1 1 220px}.filters input,.filters select{width:100%;display:block;padding:12px;margin-top:6px;font:inherit;border:1px solid #637683;background:#14232f;color:inherit;border-radius:6px}.row{display:grid;grid-template-columns:1fr 11rem;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #2c414c}.id{display:block;font:13px/1.5 ui-monospace,monospace;color:#a6d7df}.state{font-size:14px;color:#c0ced6}[hidden]{display:none!important}a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #9ddce5;outline-offset:3px}@media(max-width:560px){.row{grid-template-columns:1fr;gap:3px}h1{margin-top:30px}}
+</style></head><body><main><a href="/">← OSMANX WORLD</a><h1>Реестр задач OSGARD</h1><p class="summary">Срез R149 · 18 ноября 2026. Из 180 задач принято в эксплуатацию 0.</p><ul><li>Ожидает выполнения условий — 12</li><li>Ожидает приёмки — 160</li><li>Исключена из текущего объёма — 4</li><li>Ожидает исходников — 4</li></ul>
+<div class="filters" id="filters" hidden><label>Поиск по номеру или названию<input type="search" id="query" autocomplete="off"></label><label>Статус<select id="status"><option value="">Все статусы</option><option value="BLOCKED_GATE">Ожидает выполнения условий</option><option value="NOT_ACCEPTED">Ожидает приёмки</option><option value="EXCLUDED_PER_LATEST_HANDOFF">Исключена из текущего объёма</option><option value="BLOCKED_MISSING_SOURCE">Ожидает исходников</option></select></label></div><p id="found" role="status"></p>
+<section><h2>TITAN</h2><div class="row" data-status="BLOCKED_GATE"><div><span class="id">TITAN-X01</span>Канонические Git baseline всех инженерных компонентов</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X02</span>Реестр исходников, пакетов и зависимостей</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X03</span>CODEOWNERS и контроль конфликтов изменений</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X04</span>Воспроизводимые сборки и подписанные артефакты</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="BLOCKED_GATE"><div><span class="id">TITAN-X05</span>Восстановление отсутствующих test dependencies</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X06</span>Унифицированный контракт TaskEnvelope / ResultEnvelope</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X07</span>Identity, tenant mapping и scopes</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X08</span>RBAC и deny-by-default authorization</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="BLOCKED_GATE"><div><span class="id">TITAN-X09</span>Защищённый sandbox исполнения задач</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X10</span>Лимиты CPU, RAM, диска и сети</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X11</span>DevSwarm durable queue и транзакционные leases</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X12</span>Fencing и exactly-once-effect через идемпотентность</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X13</span>Восстановление после сбоя worker</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X14</span>Многопроцессный и многосерверный scheduler</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X15</span>Планирование ресурсов и admission control</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X16</span>Этапы brief-to-spec-to-code-to-release</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X17</span>Генерация кода из проверяемой спецификации</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X18</span>Независимая проверка патчей и policy gates</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X19</span>Автоматизированное исправление ошибок с лимитами</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X20</span>Полноценный no-AI редактор страниц</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X21</span>Визуальные формы, таблицы и связи данных</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X22</span>API и workflows в визуальном конструкторе</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X23</span>Политики и разрешения в созданных приложениях</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X24</span>Версионирование, импорт и экспорт проектов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X25</span>Система превью, тестовых окружений и публикации</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X26</span>CI/CD, dependency и secrets scanning</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X27</span>Observability, SLO, трассировка и audit</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X28</span>Backup/restore и сценарии аварийного возврата</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X29</span>Нагрузочные, хаос- и security-испытания</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">TITAN-X30</span>Интеграционный KRAKEN–NEXUS–Command релиз-кандидат</div><span class="state">Ожидает приёмки</span></div></section>
+<section><h2>NEXUS</h2><div class="row" data-status="BLOCKED_GATE"><div><span class="id">NEXUS-X01</span>Канонические Git baseline и реестр моделей</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X02</span>Утверждённый DecisionRef и capability intent contract</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X03</span>Trusted identity binding для всех операций</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X04</span>Tenant isolation и document-level ACL</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X05</span>Версионированный граф решений ÆTHERION</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X06</span>Система альтернатив и критериев решений</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X07</span>Provenance, digest и воспроизводимость ссылок</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X08</span>Независимые checkpoints журнала доказательств</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X09</span>Revocation и expiry принятых полномочий</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X10</span>Защищённый gateway инструментов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X11</span>Ограничения запросов, размеров, времени и бюджетов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X12</span>Защита от prompt injection и untrusted retrieval</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X13</span>Jarvis: память с изоляцией пользователей</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X14</span>Jarvis: разрешённые workflows и подтверждения</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X15</span>Jarvis: offline fallback и восстановление</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X16</span>Jarvis: безопасный голосовой интерфейс</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X17</span>MAGNEX: конвейер загрузки документов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X18</span>MAGNEX: версионированный индекс и обновление</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X19</span>MAGNEX: гибридный retrieval и reranking</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X20</span>MAGNEX: цитирование и проверяемые evidence IDs</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X21</span>MAGNEX: revocation и удаление из кэша</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X22</span>Реальный retrieval evaluation corpus</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X23</span>Ollama: инвентаризация моделей и аппаратуры</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X24</span>CPU/GPU benchmark и контроль VRAM</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X25</span>Model router по качеству, затратам и правам</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X26</span>Fallback, timeouts и circuit breakers моделей</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X27</span>Модельные адаптеры для GENESIS/HUMAN</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X28</span>Read-only интеграция с TITAN execution</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X29</span>Staging E2E, attack tests и restore</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">NEXUS-X30</span>Независимый аудит интеллектуального ядра</div><span class="state">Ожидает приёмки</span></div></section>
+<section><h2>COMMERCE</h2><div class="row" data-status="BLOCKED_GATE"><div><span class="id">COMMERCE-X01</span>Канонические исходники всех бизнес-продуктов</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X02</span>Схемы PostgreSQL и безопасные миграции</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="BLOCKED_GATE"><div><span class="id">COMMERCE-X03</span>Row-Level Security и отрицательные тесты</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X04</span>Подключение общего identity и tenant mapping</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X05</span>Серверные RBAC, аудит и управление сессиями</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X06</span>Модель клиентов и организаций</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X07</span>CRM: воронка продаж, сделки и задачи</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X08</span>CRM: проекты, этапы и обязательства</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X09</span>Клиентский кабинет с независимым доступом</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X10</span>Документы, версии и безопасные вложения</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X11</span>Предложения и протокол согласований</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X12</span>Событийная интеграция CRM и приложений</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X13</span>Privacy: экспорт клиентских данных</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X14</span>Privacy: удаление, retention и backup policy</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X15</span>Outreach: consent provenance и версии</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X16</span>Outreach: expiry, revocation и suppression</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X17</span>Outreach: атомарный send-time authorization</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X18</span>Outreach: durable outbox и восстановление</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X19</span>Outreach: idempotency и frequency caps</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X20</span>Outreach: провайдерский mock и receipts</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X21</span>Outreach: конкурентные проверки и гонки</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X22</span>SOULMATCH: карточки с evidence и provenance</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X23</span>SOULMATCH: ручная проверка и объяснения</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X24</span>SOULMATCH: интеграция read-only с MAGNEX</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X25</span>FluxSend: Decimal и minor-unit арифметика</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X26</span>FluxSend: валютные exponent, rounding, invariants</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X27</span>FluxSend: audit, reconciliation и sandbox reports</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X28</span>Русскоязычный premium CRM UI с реальными API</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X29</span>HTTP E2E, mobile accessibility и performance</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">COMMERCE-X30</span>Staging, backup/restore и security acceptance</div><span class="state">Ожидает приёмки</span></div></section>
+<section><h2>EXPERIENCE</h2><div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X01</span>Канонические источники и SHA шести продуктов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X02</span>Раздельные доменные схемы, tenant и RBAC</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X03</span>PHANTOM: транзакционная модель бронирования</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X04</span>PHANTOM: конкуренция и защита от double booking</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X05</span>PHANTOM: idempotency и восстановление</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X06</span>PHANTOM: русский booking UX и E2E</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X07</span>PHANTOM: админ-панель расписаний и мест</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X08</span>STYLO: реальные экспорт/импорт данных</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X09</span>STYLO: конфликты версий и rollback</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X10</span>STYLO: изоляция нескольких аккаунтов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X11</span>STYLO: гардероб, каталогизация, фильтры</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X12</span>STYLO: рекомендации с offline fallback</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="EXCLUDED_PER_LATEST_HANDOFF"><div><span class="id">EXPERIENCE-X13</span>SkillCred: подписанный формат удостоверений</div><span class="state">Исключена из текущего объёма</span></div>
+<div class="row" data-status="EXCLUDED_PER_LATEST_HANDOFF"><div><span class="id">EXPERIENCE-X14</span>SkillCred: независимый verifier</div><span class="state">Исключена из текущего объёма</span></div>
+<div class="row" data-status="EXCLUDED_PER_LATEST_HANDOFF"><div><span class="id">EXPERIENCE-X15</span>SkillCred: revocation, expiry и key rotation</div><span class="state">Исключена из текущего объёма</span></div>
+<div class="row" data-status="EXCLUDED_PER_LATEST_HANDOFF"><div><span class="id">EXPERIENCE-X16</span>SkillCred: privacy, portable credentials и UX</div><span class="state">Исключена из текущего объёма</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X17</span>EchoTrace: pilot schema и data provenance</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X18</span>EchoTrace: безопасный ingestion и ACL</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X19</span>EchoTrace: тесты качества и false-positive policy</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X20</span>EchoTrace: UX отчёта без диагностических заявлений</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="BLOCKED_MISSING_SOURCE"><div><span class="id">EXPERIENCE-X21</span>Noor: восстановление исходников и исходных данных</div><span class="state">Ожидает исходников</span></div>
+<div class="row" data-status="BLOCKED_MISSING_SOURCE"><div><span class="id">EXPERIENCE-X22</span>Noor: курсы, уроки и прогресс</div><span class="state">Ожидает исходников</span></div>
+<div class="row" data-status="BLOCKED_MISSING_SOURCE"><div><span class="id">EXPERIENCE-X23</span>Noor: подсказки через ограниченный NEXUS API</div><span class="state">Ожидает исходников</span></div>
+<div class="row" data-status="BLOCKED_MISSING_SOURCE"><div><span class="id">EXPERIENCE-X24</span>Noor: офлайн обучение и проверка прогресса</div><span class="state">Ожидает исходников</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X25</span>CIVIC: deterministic replay и журнал событий</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X26</span>CIVIC: инварианты и fault injection</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X27</span>CIVIC: визуальный редактор сценариев</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X28</span>Единая русская UX-база и локализация</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X29</span>Accessibility, mobile/browser и реальные E2E</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">EXPERIENCE-X30</span>Restore, негативные тесты и release-ready review</div><span class="state">Ожидает приёмки</span></div></section>
+<section><h2>GENESIS</h2><div class="row" data-status="BLOCKED_GATE"><div><span class="id">GENESIS-X01</span>Гит-baseline и восстановление архитектуры продуктов</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X02</span>Версионированная семантическая scene schema</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X03</span>Миграции старых сцен и обратимая конвертация</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X04</span>3D редактор: дерево объектов и инспектор</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X05</span>3D редактор: манипуляторы, трансформации, undo</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X06</span>3D редактор: материалы, свет, камеры</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X07</span>3D редактор: события и интерактивное поведение</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X08</span>3D редактор: коллизии и навигация</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X09</span>3D редактор: импорт/экспорт ассетов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X10</span>Безопасные ZIP и filesystem boundaries</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X11</span>История проектов и конфликтующие сохранения</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X12</span>World Studio: multi-user permissions</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X13</span>World Studio: оптимизация 5k+ сцен</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X14</span>LOD, culling и streaming ассетов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="BLOCKED_GATE"><div><span class="id">GENESIS-X15</span>GPU и VRAM профилирование движка</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="BLOCKED_GATE"><div><span class="id">GENESIS-X16</span>Русскоязычный браузерный World Studio E2E</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X17</span>CineVault: индекс ассетов и метаданных</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X18</span>CineVault: поиск, теги и provenance</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X19</span>CINEOS: монтажные таймлайны и EDL</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X20</span>Video Forge: FFmpeg pipeline integration</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X21</span>Видео QC: ffprobe, decode, integrity receipt</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X22</span>Версионирование источников и лицензий контента</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X23</span>Cinema: durable job queue и worker leases</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X24</span>Cinema: отмена, повторы и crash recovery</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="BLOCKED_GATE"><div><span class="id">GENESIS-X25</span>Ресурсный admission-контракт TITAN</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="BLOCKED_GATE"><div><span class="id">GENESIS-X26</span>AI-adapter NEXUS с измеренными ограничениями</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X27</span>Очереди CPU/GPU без взаимного starvation</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X28</span>Бенчмарки кодеков и аппаратной совместимости</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X29</span>Безопасность загрузок и медиапесочница</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">GENESIS-X30</span>Полный сценарий scene→render→QC→export</div><span class="state">Ожидает приёмки</span></div></section>
+<section><h2>ORBITAL</h2><div class="row" data-status="BLOCKED_GATE"><div><span class="id">ORBITAL-X01</span>Исходный baseline и разделение research/production</div><span class="state">Ожидает выполнения условий</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X02</span>Определить threat model канала и ledger</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X03</span>Формат версионированного command envelope</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X04</span>Проверка identity терминала в sandbox</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X05</span>Аутентификация команд и подтверждений ACK</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X06</span>TTL, nonce и устойчивый replay register</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X07</span>Отделение transport ACK от execution ACK</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X08</span>Durable queue, outbox и транзакционная запись</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X09</span>Idempotency, fencing и конкурентные receivers</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X10</span>Virtual-time transport simulator</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X11</span>Loss, duplication и out-of-order delivery</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X12</span>Partition, disconnect и delayed ACK</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X13</span>Bandwidth, byte budget, cost model</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X14</span>Seeded reproducible scenario suite</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X15</span>Crash/restart/corruption transport tests</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X16</span>Модель provider API без реального подключения</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X17</span>Тесты устойчивости под высокой нагрузкой</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X18</span>Контракт command authorization с NEXUS/TITAN</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X19</span>Ledger: сравнительная архитектурная оценка</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X20</span>Ledger: документирование доверенных сторон</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X21</span>Ledger: баланс и nonce state machine</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X22</span>Ledger: инварианты и property-based tests</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X23</span>Ledger: fault injection и проверка хранения</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X24</span>Ledger: изолированная модель валидаторов</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X25</span>Ledger: BFT failure and partition experiments</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X26</span>Ledger: конфликты веток и модель финальности</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X27</span>Ledger: криптографические ключи в тестовой модели</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X28</span>Ledger: экономические допущения и затраты</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X29</span>Ledger: независимая проверка и audit report</div><span class="state">Ожидает приёмки</span></div>
+<div class="row" data-status="NOT_ACCEPTED"><div><span class="id">ORBITAL-X30</span>Решение research GO/NO-GO по доказательствам</div><span class="state">Ожидает приёмки</span></div></section>
+</main><script>
+const filters=document.getElementById("filters"), query=document.getElementById("query"), statusFilter=document.getElementById("status"), found=document.getElementById("found");
+function filterRows(){
+  const term=query.value.trim().toLocaleLowerCase("ru");
+  let count=0;
+  for(const section of document.querySelectorAll("section")){
+    let matches=0;
+    for(const row of section.querySelectorAll(".row")){
+      const match=(!statusFilter.value || row.dataset.status===statusFilter.value) && row.firstElementChild.textContent.toLocaleLowerCase("ru").includes(term);
+      row.hidden=!match;
+      if(match)matches++;
+    }
+    section.hidden=matches===0;
+    count+=matches;
+  }
+  found.textContent=count ? "Показано задач: "+count+" из 180." : "Совпадений нет. Измените запрос или статус.";
+}
+filters.hidden=false;
+query.addEventListener("input",filterRows);
+statusFilter.addEventListener("change",filterRows);
+filterRows();
+</script></body></html>
