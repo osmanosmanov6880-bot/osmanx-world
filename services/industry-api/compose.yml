@@ -112,6 +112,45 @@ services:
     security_opt: ["no-new-privileges:true"]
     networks: [industry_private]
     init: true
+  backup:
+    profiles: [backup]
+    build:
+      context: .
+      dockerfile: ops/Dockerfile.backup
+    image: osmanx-industry-maintenance:r4
+    command: ["/opt/industry/backup-encrypted.sh", "/backups"]
+    environment:
+      BACKUP_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/industry_prod
+      AGE_RECIPIENT_1: ${AGE_RECIPIENT_1:-}
+      AGE_RECIPIENT_2: ${AGE_RECIPIENT_2:-}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [industry_private]
+    restart: "no"
+  dr:
+    profiles: [backup]
+    build:
+      context: .
+      dockerfile: ops/Dockerfile.backup
+    image: osmanx-industry-maintenance:r4
+    environment:
+      DR_RESTORE_DB_URL: ${DR_RESTORE_DB_URL:-}
+      AGE_IDENTITY_FILE: /run/age-keys/identity.txt
+    volumes:
+      - ./backups:/backups:ro
+      - ./age-keys:/run/age-keys:ro
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [industry_private]
+    restart: "no"
+    command: ["/opt/industry/restore-dr.sh", "/backups/ARCHIVE_REQUIRED.age"]
 networks:
   industry_private:
     driver: bridge
