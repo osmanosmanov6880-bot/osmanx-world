@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {count,money,cohort,economics,csv} from '../assets/guest/experiment-model.js';
+test('strict input validation',()=>{assert.throws(()=>count('1.3','N'));assert.throws(()=>count(-1,'N'));assert.throws(()=>count('','N'));assert.equal(count(0,'N'),0);assert.throws(()=>money('NaN','R'));assert.throws(()=>money(-2,'R'));});
+test('cohorts and confidence range',()=>{const c=cohort({control:100,controlReturn:20,offer:100,offerReturn:30});assert.equal(c.difference,.1);assert.equal(c.uncertain,true);assert.ok(c.range[0]<0 && c.range[1]>0);});
+test('cannot count more returns than people',()=>{assert.throws(()=>cohort({control:10,controlReturn:11,offer:10,offerReturn:3}));});
+test('zero and negative lift are not silently positive',()=>{const c=cohort({control:100,controlReturn:80,offer:100,offerReturn:20});assert.ok(c.difference<0);assert.equal(c.uncertain,false);});
+test('economics accounts for all offer recipients and service fee',()=>{const c=cohort({control:100,controlReturn:20,offer:100,offerReturn:30});const e=economics({margin:250,discount:10,fixed:100,fee:15000},c);assert.equal(e.breakEven,65);assert.equal(e.net,-13600);});
+test('zero margin does not claim break even',()=>{const c=cohort({control:2,controlReturn:1,offer:2,offerReturn:1});assert.equal(economics({margin:0,discount:0,fixed:0,fee:0},c).breakEven,null);});
+test('csv neutralizes formula injection and escapes quotes',()=>{const s=csv([['=2+2','hello "world"'],['@cmd','-10']]);assert.ok(!s.includes('"=2+2"'));assert.ok(s.includes('""world""'));assert.ok(!s.includes('"@cmd"'));});
+test('frontend links and local-only statement exist',async()=>{const {readFile}=await import('node:fs/promises');const html=await readFile(new URL('../assets/guest/experiment.html',import.meta.url),'utf8');assert.match(html,/experiment\.js/);assert.match(html,/ничего не отправляется/);assert.match(html,/order\.html\?plan=pilot/);});
