@@ -13,3 +13,6 @@
 .console-box .feature-list .feature{justify-content:space-between;align-items:center}
 .console-box .console-table select{background:#faf6ff;border:1px solid #e2d8f5;border-radius:10px;padding:6px}
 @media(max-width:410px){.hours-day{grid-template-columns:58px 1fr 1fr;gap:6px;padding:8px 6px}.hours-day .console-input{font-size:11px;padding:6px 4px}}
+
+/* R7 resource scheduling controls */
+.policy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.policy-grid label{display:grid;gap:6px;font-size:12px;font-weight:750;color:#655c7b}.compact-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.compact-form label{display:grid;gap:5px;font-size:12px;font-weight:700;color:#655c7b}.compact-form button{align-self:end;min-height:40px}.console-box h3{margin-top:16px}.console-box h3:first-child{margin-top:0}@media(max-width:700px){.policy-grid,.compact-form{grid-template-columns:1fr}}
