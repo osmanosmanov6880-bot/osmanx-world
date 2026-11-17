@@ -39,19 +39,19 @@ def main():
                 page.goto(BASE + "/assets/guest/offer.html", wait_until="networkidle")
                 page.get_by_role("link", name="Перейти в лабораторию").click()
                 assert page.url.endswith("/assets/guest/experiment.html"), page.url
-                page.locator("#numbers").get_by_text("10 п.п.", exact=False).wait_for()
+                assert "10 п.п." in page.locator("#numbers").inner_text()
                 assert "−" in page.locator("#net").inner_text() or "-" in page.locator("#net").inner_text()
                 assert page.locator("#downloadCsv").is_enabled()
                 assert page.locator("#downloadJson").is_disabled()
                 # Reject impossible return counts and keep exports disabled.
                 page.locator("#offerReturn").fill("101")
-                page.locator("#errors").get_by_text("превышать размер группы", exact=False).wait_for()
+                assert "превышать размер группы" in page.locator("#errors").inner_text()
                 assert page.locator("#downloadCsv").is_disabled()
                 page.locator("#offerReturn").fill("30")
                 page.locator("#startDate").fill("2026-11-18")
                 page.locator("#endDate").fill("2026-12-17")
                 page.locator("#allocation").select_option("random")
-                page.locator("#briefNotice").get_by_text("Протокол заполнен", exact=False).wait_for()
+                assert "Протокол заполнен" in page.locator("#briefNotice").inner_text()
                 assert page.locator("#downloadJson").is_enabled()
                 assert "2026-11-18" in page.locator("#briefText").input_value()
                 # Profit cannot be claimed as guaranteed.
@@ -80,11 +80,11 @@ def main():
                 page.locator("#importJson").set_input_files(
                     {"name": "personal.json", "mimeType": "application/json",
                      "buffer": json.dumps(poisoned).encode("utf-8")})
-                page.locator("#status").get_by_text("Импорт отклонён", exact=False).wait_for()
+                assert "Импорт отклонён" in page.locator("#status").inner_text()
                 # Price presets must adjust the model rather than starting a charge.
                 page.locator("#presetPilot").click()
                 assert page.locator("#fee").input_value() == "25000"
-                assert page.locator("#status").get_by_text("не счёт на оплату", exact=False).count() == 1
+                assert "не счёт на оплату" in page.locator("#status").inner_text()
                 page.locator("#presetMonthly").click()
                 assert page.locator("#fee").input_value() == "15000"
                 page.screenshot(path=str(SCREENSHOTS / "desktop.png"), full_page=True)
