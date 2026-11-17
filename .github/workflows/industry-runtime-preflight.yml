@@ -46,7 +46,16 @@ jobs:
           check_bin psql psql
           check_bin nginx nginx
           check_bin systemctl systemctl
+          check_bin php php
+          check_bin python3 python3
+          check_bin pm2 pm2
+          check_bin supervisorctl supervisorctl
+          command -v node >/dev/null 2>&1 || { for candidate in /usr/bin/node /usr/local/bin/node /opt/node/bin/node "$HOME/.nvm/current/bin/node" "$HOME/.local/share/mise/shims/node"; do if test -x "$candidate"; then printf 'node_candidate=%s\\n' "$candidate"; fi; done; }
           if command -v node >/dev/null 2>&1; then node --version; fi
+          for path in "$HOME/.nvm" "$HOME/.local/share/mise/installs/node" "$HOME/.local/bin" /opt/node /usr/local/lib/node_modules; do
+            if test -e "$path"; then printf 'runtime_path_present=%s\\n' "$path"; fi
+          done
+          if command -v psql >/dev/null 2>&1 && psql -X -Atqc 'SELECT 1' >/dev/null 2>&1; then echo local_postgres_default_auth=available; else echo local_postgres_default_auth=unavailable; fi
           if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then echo docker_daemon=available; else echo docker_daemon=unavailable; fi
           if command -v systemctl >/dev/null 2>&1; then
             for unit in industry-api.service osmanx-industry-api.service postgresql.service nginx.service; do
