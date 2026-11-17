@@ -1,0 +1,62 @@
+name: Industry API runtime preflight
+on:
+  push:
+    branches: [feat/industry-runtime-preflight-20261117]
+    paths:
+      - ".github/workflows/industry-runtime-preflight.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: industry-runtime-preflight
+  cancel-in-progress: false
+jobs:
+  inspect-existing-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Configure existing deployment SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/osmanx_deploy
+          chmod 600 ~/.ssh/osmanx_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Read runtime, proxy and write capabilities
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test "$DEPLOY_USER" = "deploy-osmanx"
+          ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          check_bin() { if command -v "$1" >/dev/null 2>&1; then printf '%s=available\n' "$2"; else printf '%s=missing\n' "$2"; fi; }
+          check_bin node node
+          check_bin npm npm
+          check_bin docker docker
+          check_bin podman podman
+          check_bin psql psql
+          check_bin nginx nginx
+          check_bin systemctl systemctl
+          if command -v node >/dev/null 2>&1; then node --version; fi
+          if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then echo docker_daemon=available; else echo docker_daemon=unavailable; fi
+          if command -v systemctl >/dev/null 2>&1; then
+            for unit in industry-api.service osmanx-industry-api.service postgresql.service nginx.service; do
+              if systemctl is-active --quiet "$unit" 2>/dev/null; then printf '%s=active\n' "$unit"; elif systemctl list-unit-files "$unit" --no-legend 2>/dev/null | grep -q "$unit"; then printf '%s=installed-inactive\n' "$unit"; else printf '%s=not-installed\n' "$unit"; fi
+            done
+          fi
+          for path in /opt/osmanx /srv/osmanx /var/www/osmanx.world; do
+            if test -d "$path" && test -w "$path"; then printf 'writable_path=%s\n' "$path"; fi
+          done
+          if command -v curl >/dev/null 2>&1 && curl -fsS --max-time 2 http://127.0.0.1:3000/api/industry/v1/health/live >/dev/null 2>&1; then echo local_api_3000=responding; else echo local_api_3000=not-responding; fi
+          if command -v nginx >/dev/null 2>&1 && nginx -T 2>/dev/null | grep -Eq 'location[[:space:]]+/api/|proxy_pass'; then echo nginx_proxy_rules=present; else echo nginx_proxy_rules=not-detected; fi
+          if sudo -n true >/dev/null 2>&1; then echo passwordless_sudo=available; else echo passwordless_sudo=unavailable; fi
+          REMOTE
