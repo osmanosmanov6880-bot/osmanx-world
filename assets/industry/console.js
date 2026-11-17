@@ -32,7 +32,18 @@ function shell(content){root.innerHTML='<div class="console-shell"><header class
 function alert(){return state.notice?'<div class="console-alert" role="alert">'+e(state.notice)+'</div>':''}
 function formLabel(name,type='text',key='',placeholder='',value='',other=''){return '<label>'+e(name)+'<input type="'+type+'" name="'+key+'" placeholder="'+e(placeholder)+'" value="'+e(value)+'" '+other+' required></label>'}
 function login(){
-  shell('<div class="login-layout"><div><span class="eyebrow">ENTERPRISE OPERATIONS</span><h1>Управление сервисом.<br><span style="color:#8856df">На ваших данных.</span></h1><p class="muted">Защищённый кабинет для компаний: клиенты, услуги, рабочие календари, записи и контроль действий. Доступ работает только после подключения серверной инфраструктуры.</p><div class="console-warning">На этой странице нет тестового аккаунта или общего пароля. Учётные записи создаются администратором на сервере.</div><a class="btn secondary" href="./">← Публичная демонстрация</a></div><div class="login-card"><span class="eyebrow">Вход сотрудника</span><h2 style="margin:10px 0 19px">Войти в организацию</h2>'+alert()+'<form id="login-form" class="console-form">'+formLabel('Код компании','text','tenantSlug','Например, dental-center','','minlength="2" maxlength="64"')+formLabel('Рабочая почта','email','email','director@company.ru','','autocomplete="username" maxlength="254"')+formLabel('Пароль','password','password','Не менее 12 символов','','autocomplete="current-password"')+'<button class="btn primary" type="submit">Войти безопасно →</button></form><p class="console-muted" style="margin-top:17px">Сессия — HttpOnly cookie, действия защищены CSRF-токеном. Пароль не сохраняется в браузере.</p></div></div>');
+  const form=state.acceptInvite?
+    '<span class="eyebrow">Присоединиться к команде</span><h2 style="margin:10px 0 19px">Принять приглашение</h2>'+alert()+
+    '<form id="accept-form" class="console-form">'+formLabel('Одноразовый токен','text','token','64 символа','','minlength="64" maxlength="64"')+
+    formLabel('Пароль аккаунта','password','password','12–200 символов','','minlength="12" maxlength="200" autocomplete="new-password"')+
+    '<button class="btn primary" type="submit">Принять приглашение</button></form>'+
+    '<p class="console-muted">Если рабочая почта уже зарегистрирована, укажите существующий пароль. Токен подтверждает только право вступления в организацию.</p>':
+    '<span class="eyebrow">Вход сотрудника</span><h2 style="margin:10px 0 19px">Войти в организацию</h2>'+alert()+
+    '<form id="login-form" class="console-form">'+formLabel('Код компании','text','tenantSlug','Например, dental-center','','minlength="2" maxlength="64"')+
+    formLabel('Рабочая почта','email','email','director@company.ru','','autocomplete="username" maxlength="254"')+
+    formLabel('Пароль','password','password','Не менее 12 символов','','autocomplete="current-password"')+
+    '<button class="btn primary" type="submit">Войти безопасно →</button></form>';
+  shell('<div class="login-layout"><div><span class="eyebrow">ENTERPRISE OPERATIONS</span><h1>Управление сервисом.<br><span style="color:#8856df">На ваших данных.</span></h1><p class="muted">Кабинет компании: клиенты, команда, календари, записи и интеграции. Доступ работает после подключения серверной инфраструктуры.</p><div class="console-warning">Нет общего демо-пароля и открытой регистрации. Новые аккаунты создаются по приглашению администратора.</div><a class="btn secondary" href="./">← Публичная демонстрация</a></div><div class="login-card">'+form+'<button type="button" class="btn ghost" data-action="toggle-invite" style="margin-top:16px">'+(state.acceptInvite?'← Вернуться к входу':'У меня есть приглашение →')+'</button><p class="console-muted" style="margin-top:17px">Сессия — HttpOnly cookie; операции защищены CSRF-токеном.</p></div></div>');
 }
 function offline(){
   shell('<div class="api-offline"><span class="chip orange">Серверная часть не подключена</span><h1 style="margin:17px 0 10px">Кабинет ожидает API</h1><p class="muted">Публичный сайт работает как демонстрация. Сервер OSMANX Industry API пока не подключён к этому домену, поэтому реальные данные, записи и вход не доступны — никаких поддельных подключений.</p>'+alert()+'<div class="cta-row"><button class="btn primary" data-action="retry">Проверить соединение</button><a class="btn secondary" href="./">Перейти к демо</a></div><p class="console-muted" style="margin-top:17px">Требуется reverse proxy для /api/industry/v1, PostgreSQL и отдельная защищённая инфраструктура.</p></div>');
@@ -132,6 +143,14 @@ async function createFromForm(form){
     return;
   }
   let path='',body={};
+  if(type==='accept-form'){
+    await api('/staff/invitations/accept','POST',{token:String(f.get('token')||'').trim(),password:String(f.get('password')||'')});
+    state.acceptInvite=false;state.notice='Приглашение принято. Войдите с почтой вашей организации.';login();return;
+  }
+  if(type==='invite-form'){
+    const result=await api('/staff/invitations','POST',{email:String(f.get('email')||'').trim(),role:String(f.get('role')||'')});
+    state.inviteToken=result.token;await refresh();return;
+  }
   if(type==='customer-form'){path='/customers';body={displayName:String(f.get('displayName')||'').trim(),phone:String(f.get('phone')||'').trim()||undefined,email:String(f.get('email')||'').trim()||undefined};}
   if(type==='service-form'){path='/services';body={name:String(f.get('name')||'').trim(),durationMinutes:Number(f.get('durationMinutes')),priceMinor:Math.round(Number(f.get('priceRub'))*100)};}
   if(type==='resource-form'){path='/resources';body={name:String(f.get('name')||'').trim()};}
@@ -158,8 +177,31 @@ function csv(table){
 }
 root.addEventListener('click',async ev=>{
   const tab=ev.target.closest('[data-tab]');if(tab){state.tab=tab.dataset.tab;state.notice='';display();return;}
+  const remove=ev.target.closest('[data-staff-remove]');
+  if(remove){if(!confirm('Отозвать доступ сотрудника? Его сессии будут закрыты.'))return;
+    try{await api('/staff/'+encodeURIComponent(remove.dataset.staffRemove),'DELETE');await refresh()}
+    catch(error){state.notice=error.message;display()}
+    return;
+  }
+  const revoke=ev.target.closest('[data-invite-revoke]');
+  if(revoke){try{await api('/staff/invitations/'+encodeURIComponent(revoke.dataset.inviteRevoke)+'/revoke','POST');state.inviteToken='';await refresh()}
+    catch(error){state.notice=error.message;display()}return;
+  }
+  const retry=ev.target.closest('[data-event-retry]');
+  if(retry){try{await api('/integrations/events/'+encodeURIComponent(retry.dataset.eventRetry)+'/retry','POST');await refresh()}
+    catch(error){state.notice=error.message;display()}return;
+  }
   const action=ev.target.closest('[data-action]');if(!action)return;
   if(action.dataset.action==='retry')return refresh();
+  if(action.dataset.action==='toggle-invite'){state.acceptInvite=!state.acceptInvite;state.notice='';login();return;}
+  if(action.dataset.action==='refresh-data')return refresh();
+  if(action.dataset.action==='copy-invite'){
+    const el=document.getElementById('invitation-token');
+    if(!el)return;
+    try{await navigator.clipboard.writeText(el.value);state.notice='Токен скопирован. Передайте его адресату безопасно.';}
+    catch{el.focus();el.select();state.notice='Выделите и скопируйте токен вручную.';}
+    display();return;
+  }
   if(action.dataset.action.startsWith('csv-')){csv(action.dataset.action.slice(4));return;}
   if(action.dataset.action==='logout'){
     try{await api('/auth/logout','POST')}catch{}
@@ -172,6 +214,9 @@ root.addEventListener('submit',async ev=>{
   try{await createFromForm(form)}catch(error){state.loading=false;state.notice=error.message;display();}
 });
 root.addEventListener('change',async ev=>{
+  const role=ev.target.closest('[data-staff-role]');
+  if(role){try{await api('/staff/'+encodeURIComponent(role.dataset.staffRole),'PATCH',{role:role.value});await refresh()}
+    catch(error){state.notice=error.message;display()}return;}
   const select=ev.target.closest('[data-status-id]');if(!select||!select.value)return;
   try{await api('/appointments/'+encodeURIComponent(select.dataset.statusId)+'/status','PATCH',{status:select.value});await refresh()}
   catch(error){state.notice=error.message;display();}
