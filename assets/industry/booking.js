@@ -40,7 +40,7 @@ function slots(){
  var weekday=new Date(day+'T12:00:00').getDay();if(q.closedDates.includes(day)||q.closedDays.includes(weekday))return [];
  var events=state().appointments.filter(function(a){return a.id!==editingId&&a.date===day&&a.status!=='cancelled'}).map(function(a){var svc=state().services.find(function(x){return x.id===a.serviceId});return{start:minute(a.time)-q.bufferMinutes,end:minute(a.time)+(Number(svc&&svc.duration)||60)+q.bufferMinutes}});
  var count=events.length,cap=getCapacity(),out=[],open=minute(q.open),close=minute(q.close);
- for(var m=open;m<close;m+=q.interval){var end=m+Number(s.duration||60),conflict=events.some(function(e){return m<e.end&&end>e.start});out.push({time:String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),free:!conflict&&count<cap&&end<=close})}
+ for(var m=open;m<close;m+=q.interval){var end=m+Number(s.duration||60),protectedStart=m-q.bufferMinutes,protectedEnd=end+q.bufferMinutes,conflict=events.some(function(e){return protectedStart<e.end&&protectedEnd>e.start});out.push({time:String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),free:!conflict&&count<cap&&end<=close})}
  return out
 }
 function portalUrl(){return '?industry='+encodeURIComponent(industry)}
