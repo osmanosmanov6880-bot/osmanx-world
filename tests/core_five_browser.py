@@ -99,7 +99,7 @@ def main():
                 for removed in ["cafe","nebula"]:
                     page=browser.new_page()
                     page.goto(BASE+f"/assets/sovereign/workspace.html?app={removed}",wait_until="domcontentloaded")
-                    page.wait_for_url("**/#projects",timeout=10000)
+                    page.wait_for_url("**/portal.html#projects",timeout=10000)
                     assert page.locator(".product-tile").count()==6
                     page.close()
 
