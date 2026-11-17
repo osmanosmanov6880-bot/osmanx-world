@@ -97,7 +97,7 @@ def main():
                 console.screenshot(path=str(OUT / "secure-console-offline-390.png"), full_page=True)
                 console.close()
                 portal = browser.new_page(viewport={"width": 1440, "height": 900})
-                portal.goto(BASE + "/", wait_until="domcontentloaded")
+                portal.goto(BASE + "/assets/sovereign/portal.html", wait_until="domcontentloaded")
                 portal.locator(".product-tile").first.wait_for()
                 assert portal.locator(".product-tile").count() == 6, "Portfolio should show six projects including OSGARD WORLD"
                 assert portal.locator('.product-tile a[href="https://osgard.world/"]').count() == 1, "OSGARD portal link missing"
