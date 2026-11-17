@@ -15,6 +15,7 @@ try {
   const account = (await client.query('INSERT INTO industry.accounts(email,password_hash) VALUES($1,$2) ON CONFLICT(email) DO UPDATE SET email=EXCLUDED.email RETURNING id',[email,password])).rows[0];
   await client.query("INSERT INTO industry.memberships(tenant_id,account_id,role) VALUES($1,$2,'owner') ON CONFLICT (tenant_id,account_id) DO NOTHING",[tenant.id,account.id]);
   await client.query("INSERT INTO industry.resources(tenant_id,name) SELECT $1,'Общий календарь' WHERE NOT EXISTS(SELECT 1 FROM industry.resources WHERE tenant_id=$1)",[tenant.id]);
+  await client.query("INSERT INTO industry.resource_hours(tenant_id,resource_id,weekday,opens_at,closes_at) SELECT r.tenant_id,r.id,day.weekday,'09:00'::time,'18:00'::time FROM industry.resources r CROSS JOIN generate_series(1,6) AS day(weekday) WHERE r.tenant_id=$1 AND NOT EXISTS (SELECT 1 FROM industry.resource_hours h WHERE h.tenant_id=r.tenant_id AND h.resource_id=r.id) ON CONFLICT DO NOTHING",[tenant.id]);
   await client.query('COMMIT');
   console.log('Bootstrap completed for tenant', BOOTSTRAP_TENANT_SLUG, '(no secrets printed)');
 } catch (error) {
