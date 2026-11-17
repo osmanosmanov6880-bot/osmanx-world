@@ -91,12 +91,12 @@ def run():
                 # Restoring valid snapshot works; malicious extra personal field fails without mutation.
                 page.locator("#weeks .week").first.locator('[data-field="controlReturn"]').fill("30")
                 page.locator("#upload").set_input_files({"name":"pilot.json","mimeType":"application/json","buffer":json_bytes})
-                assert "Сценарий восстановлен" in page.locator("#operationStatus").inner_text()
+                page.wait_for_function("() => document.querySelector('#operationStatus').textContent.includes('Сценарий восстановлен')")
                 assert page.locator("#weeks .week").first.locator('[data-field="controlReturn"]').input_value()=="20"
                 altered={**snapshot,"contact":"should be rejected"}
                 page.locator("#upload").set_input_files({"name":"bad.json","mimeType":"application/json",
                                                        "buffer":json.dumps(altered).encode()})
-                assert "Импорт отклонён" in page.locator("#operationStatus").inner_text()
+                page.wait_for_function("() => document.querySelector('#operationStatus').textContent.includes('Импорт отклонён')")
                 assert page.locator("#weeks .week").first.locator('[data-field="controlReturn"]').input_value()=="20"
                 page.screenshot(path=str(PROOF/"desktop.png"),full_page=True)
 
