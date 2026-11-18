@@ -1,0 +1,73 @@
+name: Guest R6 verified private server release
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r6-release.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r6-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-and-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check release scripts and runtime syntax
+        run: |
+          set -euo pipefail
+          bash -n ops/build-release.sh
+          bash -n ops/verify-release.sh
+          node --check scripts/preflight.mjs
+          node --check src/app.mjs
+      - name: Rebuild twice and require byte-for-byte reproducibility
+        run: |
+          set -euo pipefail
+          bash ops/build-release.sh "$RUNNER_TEMP/release-a"
+          bash ops/build-release.sh "$RUNNER_TEMP/release-b"
+          archive="$(find "$RUNNER_TEMP/release-a" -name '*.tar.gz' -print -quit)"
+          test -n "$archive"
+          bash ops/verify-release.sh "$archive"
+          cmp "$archive" "$RUNNER_TEMP/release-b/$(basename "$archive")"
+          echo "Deterministic and verified release archive."
+      - name: Corrupted archive must fail verification
+        run: |
+          set -euo pipefail
+          archive="$(find "$RUNNER_TEMP/release-a" -name '*.tar.gz' -print -quit)"
+          mkdir -p "$RUNNER_TEMP/tampered"
+          cp "$archive" "$archive.sha256" "$RUNNER_TEMP/tampered/"
+          printf 'corruption' >> "$RUNNER_TEMP/tampered/$(basename "$archive")"
+          if bash ops/verify-release.sh "$RUNNER_TEMP/tampered/$(basename "$archive")"; then
+            echo "::error::Corrupted release was accepted"
+            exit 1
+          fi
+      - name: Verify real nonroot production image import
+        run: |
+          set -euo pipefail
+          docker build --tag osmanx-industry-api:r6-ci .
+          test "$(docker run --rm --entrypoint id osmanx-industry-api:r6-ci -u)" -eq 1000
+          docker run --rm --entrypoint node osmanx-industry-api:r6-ci --input-type=module -e \
+            "await import('./src/guest.mjs'); await import('./shared/pilot-model.js'); console.log('R6 container loaded')"
+      - name: Upload release for authorized operator only
+        uses: actions/upload-artifact@v4
+        with:
+          name: osmanx-industry-r6-release
+          path: |
+            ${{ runner.temp }}/release-a/*.tar.gz
+            ${{ runner.temp }}/release-a/*.sha256
+          retention-days: 7
+          if-no-files-found: error
