@@ -137,7 +137,11 @@ def main():
                 assert not errors,errors
                 page.screenshot(path=str(OUT/"desktop.png"),full_page=True)
                 page.close()
-                mobile=context.new_page(viewport={"width":390,"height":844})
+                mobile_context=browser.new_context(viewport={"width":390,"height":844})
+                mobile_context.add_cookies([{"name":"osmanx_industry_csrf","value":"csrf-test-2026","url":BASE,
+                                            "httpOnly":False,"sameSite":"Strict"}])
+                mobile_context.route("**/api/industry/v1/**",intercept)
+                mobile=mobile_context.new_page()
                 mobile.on("pageerror",lambda e:errors.append(str(e)))
                 mobile.goto(BASE+"/assets/guest/console.html",wait_until="networkidle")
                 widths=mobile.evaluate("({documentWidth:document.documentElement.scrollWidth,viewport:innerWidth})")
@@ -146,6 +150,7 @@ def main():
                 mobile.screenshot(path=str(OUT/"mobile.png"),full_page=True)
                 assert not errors,errors
                 mobile.close()
+                mobile_context.close()
                 context.close()
             finally:
                 browser.close()
