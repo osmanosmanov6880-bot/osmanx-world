@@ -17,7 +17,7 @@ test('R11 operations is a real RU owner UI, with timeline, reassignment and veri
   for(const control of ['operationsRefresh','assignmentCancel','actionAssignmentForm',
     'downloadOperations','assignmentAssignee','assignmentDue'])
     assert.ok(js.includes("$('"+control+"')"),'Unwired '+control);
-  assert.match(html,/Guest Intelligence \/ R11 \/ Защищённый кабинет/);
+  assert.match(html,/Guest Intelligence \/ R12 \/ Защищённый кабинет/);
   assert.match(html,/Без автоматических платежей/);
 });
 test('R11 client verifies both integrity digests in Web Crypto, without local persistence or injection',()=>{
