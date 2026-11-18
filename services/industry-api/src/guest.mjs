@@ -210,12 +210,11 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
 
   // R8 BLOCK 3: owner dashboard. No guest names/contacts: only RLS-filtered aggregates.
   app.get(P+'/overview',req=>forTenant(req,MANAGE,async(db,s)=>{
-    const [requestStates,pilotStates,quotaResult,observations]=await Promise.all([
-      db.query("SELECT state,count(*)::int AS n FROM industry.guest_requests WHERE tenant_id=$1 AND created_at>=now()-interval '365 days' GROUP BY state",[s.tenant_id]),
-      db.query("SELECT phase,count(*)::int AS n FROM industry.guest_pilots WHERE tenant_id=$1 GROUP BY phase",[s.tenant_id]),
-      db.query("SELECT annual_request_limit,active_pilot_limit FROM industry.guest_quotas WHERE tenant_id=$1",[s.tenant_id]),
-      db.query("SELECT count(*)::int AS periods,coalesce(sum(control_count),0)::bigint AS control,coalesce(sum(offer_count),0)::bigint AS offered FROM industry.guest_observations WHERE tenant_id=$1 AND voided_at IS NULL",[s.tenant_id])
-    ]);
+    // One transaction-scoped pg Client: always await queries sequentially.
+    const requestStates=await db.query("SELECT state,count(*)::int AS n FROM industry.guest_requests WHERE tenant_id=$1 AND created_at>=now()-interval '365 days' GROUP BY state",[s.tenant_id]);
+    const pilotStates=await db.query("SELECT phase,count(*)::int AS n FROM industry.guest_pilots WHERE tenant_id=$1 GROUP BY phase",[s.tenant_id]);
+    const quotaResult=await db.query("SELECT annual_request_limit,active_pilot_limit FROM industry.guest_quotas WHERE tenant_id=$1",[s.tenant_id]);
+    const observations=await db.query("SELECT count(*)::int AS periods,coalesce(sum(control_count),0)::bigint AS control,coalesce(sum(offer_count),0)::bigint AS offered FROM industry.guest_observations WHERE tenant_id=$1 AND voided_at IS NULL",[s.tenant_id]);
     const requestCounts=Object.fromEntries(['new','qualified','declined','converted'].map(x=>[x,0]));
     const phases=Object.fromEntries(['draft','running','in_review','returned','reviewed','archived'].map(x=>[x,0]));
     for(const row of requestStates.rows)requestCounts[row.state]=row.n;
