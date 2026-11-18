@@ -8,7 +8,7 @@ if (( $#!=2 )); then
   exit 2
 fi
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-test "$1" = /* && test "$2" = /* || {
+[[ "$1" == /* && "$2" == /* ]] || {
   echo "Absolute paths are mandatory" >&2;exit 2;
 }
 test ! -L "$1" && test ! -L "$2" || {
