@@ -115,7 +115,14 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 <div class="actions"><button id="submitReview" type="button">Отправить на проверку</button><button id="resume" class="secondary" type="button">Вернуть к наблюдению</button></div>
 <hr class="separator"><h3>Проверка результатов</h3><p>Приёмку выполняет другой владелец или управляющий, не тот, кто отправил результаты.</p>
 <div class="actions"><button id="accept" type="button">Принять к обсуждению</button><button id="return" class="secondary" type="button">Запросить исправления</button></div>
-<div class="actions"><button id="loadReport" class="secondary" type="button">Обновить отчёт</button><button id="downloadReport" class="secondary" type="button">Скачать CSV</button></div>
+<div class="actions"><button id="loadReport" class="secondary" type="button">Обновить отчёт</button><button id="downloadReport" class="secondary" type="button">Скачать CSV</button><button id="downloadEvidence" class="secondary" type="button">Скачать доказательства JSON + SHA-256</button></div>
+<div id="archivePanel" hidden><hr class="separator">
+<h3>Закрыть проверенный пилот</h3>
+<p>Только владелец компании может архивировать уже проверенный пилот. Это необратимое действие в интерфейсе; история исправлений и проверок остаётся доступной.</p>
+<label for="archiveReason">Причина архивации (без личных данных гостей)</label>
+<input id="archiveReason" type="text" minlength="6" maxlength="160" placeholder="Пилот рассмотрен, дальнейшие измерения завершены">
+<div class="actions"><button id="archivePilot" class="danger" type="button">Архивировать с подтверждением</button></div>
+</div>
 <pre id="reportBox" class="info">Результат появится после записи наблюдений.</pre>
 <p class="small">«Принять к обсуждению» не подтверждает причинную связь, поступившую оплату или обещанную прибыль. Клиентские данные и номера телефонов в эту систему не вносить.</p></section>
 </div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R4 · Без автоматических платежей и подписок</span></footer>
