@@ -166,8 +166,8 @@ async function verify(db){
     "SELECT count(*)::int AS n FROM industry.audit_events WHERE tenant_id=$1 AND target_id=$2 AND action='guest.pilot.archived'",
     [pilot.tenant_id,pilot.id]);
   const events=await db.query(
-    "SELECT count(*)::int AS n FROM industry.outbox WHERE tenant_id=$1 AND kind='guest.pilot.archived'",
-    [pilot.tenant_id]);
+    "SELECT count(*)::int AS n FROM industry.outbox WHERE tenant_id=$1 AND kind='guest.pilot.archived' AND payload->>'entityId'=$2",
+    [pilot.tenant_id,pilot.id]);
   if(audits.rows[0].n!==1||events.rows[0].n!==1)throw Error('Audit or outbox missing');
   const modernResult=await db.query(
     "SELECT * FROM industry.guest_pilots WHERE tenant_id=$1 AND title='R10 synthetic v2 proof'",
