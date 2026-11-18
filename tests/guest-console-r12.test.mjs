@@ -59,5 +59,5 @@ test('R12 PostgreSQL is immutable and RLS-protected without app grants for UPDAT
   assert.doesNotMatch(db,/GRANT\s+[^\n]*(?:UPDATE|DELETE|TRUNCATE) ON industry\.guest_launch_attestations/);
   assert.match(readiness,/'010_guest_launch_gate\.sql'/);
   assert.match(readiness,/'guest_launch_attestations'/);
-  assert.match(release,/"migration":"010_guest_launch_gate\.sql"/);
+  assert.match(release,/"migration":"011_guest_pilot_safety\.sql"/);
 });
