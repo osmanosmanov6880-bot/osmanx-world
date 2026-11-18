@@ -48,7 +48,7 @@ test('R13 no raw guest identities, executable HTML or local credential persisten
 });
 test('R13 PostgreSQL and readiness require immutable history and no bypass role',()=>{
  for(const table of ['guest_pilot_holds','guest_pilot_hold_events']){
-  assert.match(migration,new RegExp('ALTER TABLE industry\\\\.'+table+' FORCE ROW LEVEL SECURITY'));
+  assert.ok(migration.includes('ALTER TABLE industry.'+table+' FORCE ROW LEVEL SECURITY'));
   assert.ok(readiness.includes("'"+table+"'"));
  }
  assert.match(migration,/BEFORE UPDATE OR DELETE ON industry\.guest_pilot_hold_events/);
