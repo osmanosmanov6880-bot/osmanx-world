@@ -13,7 +13,7 @@ test('R8 interface exposes all six locked experiment protocol controls and owner
     'retentionRun','overviewRefresh']){
     assert.ok(html.includes('id="'+id+'"'),'Missing '+id);
   }
-  assert.match(html,/Зафиксированный протокол/);
+  assert.match(html,/зафиксированный протокол/i);
   assert.match(html,/РЕТРОСПЕКТИВ|ретроспективный риск/);
 });
 test('R8 frontend always submits a fixed metric and explicit protocol to the real API',()=>{
