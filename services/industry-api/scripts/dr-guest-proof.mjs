@@ -117,7 +117,7 @@ async function verify(db){
     [['guest_requests','guest_pilots','guest_observations','guest_reviews']]);
   if(policies.rows[0].n!==4)throw Error('Row-level security was not restored');
   const migration=await db.query(
-    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='006_guest_readiness_permissions.sql'"
+    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='007_guest_protocol_governance.sql'"
   );
   if(migration.rows[0].n!==1)throw Error('Latest migration version not restored');
   return {ok:true,stage:'verify',observations:rows.rowCount,
