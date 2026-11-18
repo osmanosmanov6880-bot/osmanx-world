@@ -62,6 +62,8 @@ jobs:
           bash -n ops/build-release.sh
           bash -n ops/verify-release.sh
           bash -n ops/stage-launch.sh
+          bash -n ops/r10-operator-gate.sh
+          node --check scripts/r10-stage-gate.mjs
           node --check scripts/dr-guest-proof.mjs
           node --check scripts/preflight.mjs
           node --check scripts/dr-guest-proof.mjs
@@ -190,6 +192,14 @@ jobs:
           curl --fail --silent --max-time 5 \
             http://127.0.0.1:3149/api/industry/v1/health/ready |
             grep -q '"leastPrivilege":true'
+          node scripts/r10-stage-gate.mjs --require-ready
+          bash ops/build-release.sh "$RUNNER_TEMP/r10-operator-release" > /dev/null
+          release="$(find "$RUNNER_TEMP/r10-operator-release" -name '*.tar.gz' -print -quit)"
+          test -n "$release"
+          bash ops/r10-operator-gate.sh "$dir/staging.env" "$release"
+          if DOCKER_HOST=tcp://127.0.0.1:2375 bash ops/r10-operator-gate.sh "$dir/staging.env" "$release"; then
+            echo "::error::R10 operator check allowed a remote Docker context"; exit 1
+          fi
           R7_STAGE_ACK=CONFIRM_ISOLATED_STAGE_ONLY bash ops/stage-launch.sh stop "$dir/staging.env"
           if curl --fail --silent --max-time 3 \
               http://127.0.0.1:3149/api/industry/v1/health/live; then
