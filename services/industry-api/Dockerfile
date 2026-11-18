@@ -6,6 +6,7 @@ COPY --chown=node:node package.json ./
 RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund \
     && npm cache clean --force
 COPY --chown=node:node src/ ./src/
+COPY --chown=node:node shared/ ./shared/
 COPY --chown=node:node scripts/ ./scripts/
 COPY --chown=node:node migrations/ ./migrations/
 USER node

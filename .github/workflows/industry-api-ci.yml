@@ -49,6 +49,14 @@ jobs:
         run: |
           for file in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$file"; done
           node --check ../../assets/industry/console.js
+      - name: Verify self-contained Guest engine matches published browser models
+        run: |
+          cmp shared/experiment-model.js ../../assets/guest/experiment-model.js
+          cmp shared/pilot-model.js ../../assets/guest/pilot-model.js
+          node --check shared/experiment-model.js
+          node --check shared/pilot-model.js
+          node --check src/guest.mjs
+          test "$(grep -c "from '../shared/" src/guest.mjs)" -eq 2
       - name: Install pinned runtime packages
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: Prepare separate least-privilege database users

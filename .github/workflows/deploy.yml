@@ -31,6 +31,8 @@ jobs:
           test -s assets/guest/experiment.html
           test -s assets/guest/pilot.html
           test -s assets/guest/console.html
+          test -s assets/guest/join.html
+          test -s assets/guest/join.js
           test -s assets/guest/console.js
           test -s assets/guest/pilot.js
           test -s assets/guest/pilot-model.js
@@ -40,8 +42,9 @@ jobs:
           node --check assets/guest/experiment.js
           node --check assets/guest/pilot.js
           node --check assets/guest/console.js
+          node --check assets/guest/join.js
           node --check assets/guest/pilot-model.js
-          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs
+          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs tests/guest-console-r5.test.mjs
           test -s assets/sovereign/workspace.html
           test -s assets/industry/index.html
           test -s assets/industry/style.css
@@ -99,7 +102,7 @@ jobs:
           actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/index.html' | cut -d ' ' -f1)"
           test "$expected" = "$actual"
           echo "VPS index.html SHA-256 matches the checked-out commit." >> "$GITHUB_STEP_SUMMARY"
-          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js; do
+          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js assets/guest/join.html assets/guest/join.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js; do
             expected="$(sha256sum "$asset" | cut -d ' ' -f1)"
             actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "sha256sum /var/www/osmanx.world/$asset" | cut -d ' ' -f1)"
             test "$expected" = "$actual" || { echo "::error::VPS file mismatch: $asset"; exit 1; }
@@ -121,7 +124,7 @@ jobs:
       - name: Verify Guest Intelligence public HTTPS release and CDN transformations
         run: |
           set -euo pipefail
-          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js; do
+          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js assets/guest/join.html assets/guest/join.js; do
             case "$asset" in
               assets/guest/offer.html) marker="Перейти в лабораторию" ;;
               assets/guest/experiment.html) marker="Паспорт и воспроизводимость" ;;
@@ -132,6 +135,8 @@ jobs:
               assets/guest/pilot-model.js) marker="osmanx.guest.pilot.v1" ;;
               assets/guest/console.html) marker="Закрытый кабинет" ;;
               assets/guest/console.js) marker="Нет соединения с Industry API" ;;
+              assets/guest/join.html) marker="Приглашение сотрудника" ;;
+              assets/guest/join.js) marker="/staff/invitations/accept" ;;
             esac
             expected="$(sha256sum "$asset" | cut -d ' ' -f1)"
             observed=false

@@ -43,13 +43,31 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 <div><label for="email">Рабочий email</label><input id="email" name="email" type="email" autocomplete="username" required maxlength="254"></div>
 <div><label for="password">Пароль</label><input id="password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="200"></div></div>
 <div class="actions"><button type="submit">Войти</button></div></form>
-<p class="small">Публичной регистрации нет. Владелец компании добавляет сотрудников через приглашения. Пароль не записывается в хранилище браузера.</p></section>
+<p class="small">Публичной регистрации нет. Владелец компании добавляет сотрудников через приглашения. Пароль не записывается в хранилище браузера. <a href="./join.html">Принять приглашение</a>.</p></section>
 
 <div id="workPanel" hidden>
 <section class="panel"><div class="actions" style="justify-content:space-between;align-items:center;margin:0">
 <div><h2 id="tenantLabel">Организация</h2><p class="small" id="accountLabel">—</p></div>
 <div class="actions"><button id="refresh" class="secondary" type="button">Обновить</button><button id="logout" class="secondary" type="button">Выйти</button></div></div>
 <p class="small">Данные поступают из базы компании. Операции с изменением данных защищены проверкой ролей, CSRF и версий записей.</p></section>
+
+<section id="staffPanel" class="panel" hidden aria-labelledby="staffTitle">
+  <span class="eyebrow">Доступы / Два сотрудника</span>
+  <h2 id="staffTitle">Приглашение второго участника</h2>
+  <p>Владелец или управляющий может пригласить другого сотрудника. Чтобы проверить чужие результаты, человек должен войти под своим аккаунтом. Передавайте одноразовый токен только адресату по защищённому каналу.</p>
+  <form id="inviteForm" class="grid">
+    <div><label for="inviteEmail">Email сотрудника</label><input id="inviteEmail" type="email" autocomplete="off" required maxlength="254" placeholder="person@company.com"></div>
+    <div><label for="inviteRole">Роль</label><select id="inviteRole"><option value="viewer">Наблюдатель</option><option value="operator">Оператор</option><option value="manager">Управляющий (только владелец)</option></select></div>
+    <div class="actions"><button type="submit">Создать одноразовое приглашение</button></div>
+  </form>
+  <div id="newInvite" hidden>
+    <label for="inviteToken">Одноразовый токен — показывается только сейчас, никому кроме адресата не отправляется</label>
+    <textarea id="inviteToken" readonly rows="3" spellcheck="false"></textarea>
+    <div class="actions"><button id="copyInvite" type="button" class="secondary">Скопировать токен</button><a href="./join.html">Страница принятия приглашения</a></div>
+  </div>
+  <h3>Текущие сотрудники и приглашения</h3>
+  <ul id="staffList" class="items"></ul>
+</section>
 
 <div class="grid">
 <section class="panel"><h2>01 / Заявки</h2>
@@ -97,7 +115,14 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 <div class="actions"><button id="submitReview" type="button">Отправить на проверку</button><button id="resume" class="secondary" type="button">Вернуть к наблюдению</button></div>
 <hr class="separator"><h3>Проверка результатов</h3><p>Приёмку выполняет другой владелец или управляющий, не тот, кто отправил результаты.</p>
 <div class="actions"><button id="accept" type="button">Принять к обсуждению</button><button id="return" class="secondary" type="button">Запросить исправления</button></div>
-<div class="actions"><button id="loadReport" class="secondary" type="button">Обновить отчёт</button><button id="downloadReport" class="secondary" type="button">Скачать CSV</button></div>
+<div class="actions"><button id="loadReport" class="secondary" type="button">Обновить отчёт</button><button id="downloadReport" class="secondary" type="button">Скачать CSV</button><button id="downloadEvidence" class="secondary" type="button">Скачать доказательства JSON + SHA-256</button></div>
+<div id="archivePanel" hidden><hr class="separator">
+<h3>Закрыть проверенный пилот</h3>
+<p>Только владелец компании может архивировать уже проверенный пилот. Это необратимое действие в интерфейсе; история исправлений и проверок остаётся доступной.</p>
+<label for="archiveReason">Причина архивации (без личных данных гостей)</label>
+<input id="archiveReason" type="text" minlength="6" maxlength="160" placeholder="Пилот рассмотрен, дальнейшие измерения завершены">
+<div class="actions"><button id="archivePilot" class="danger" type="button">Архивировать с подтверждением</button></div>
+</div>
 <pre id="reportBox" class="info">Результат появится после записи наблюдений.</pre>
 <p class="small">«Принять к обсуждению» не подтверждает причинную связь, поступившую оплату или обещанную прибыль. Клиентские данные и номера телефонов в эту систему не вносить.</p></section>
 </div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R4 · Без автоматических платежей и подписок</span></footer>

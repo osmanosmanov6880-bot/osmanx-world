@@ -61,6 +61,8 @@ async function safely(task){
 function showAuth(){
   $('loginPanel').hidden=false;$('workPanel').hidden=true;
   $('password').value='';
+  $('newInvite').hidden=true;$('inviteToken').value='';
+  $('staffPanel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -68,6 +70,10 @@ function showWorkspace(){
   $('accountLabel').textContent=model.me.account.email+' · роль: '+model.me.role;
   $('requestForm').querySelector('button[type=submit]').disabled=!write();
   $('pilotForm').querySelector('button[type=submit]').disabled=!manage();
+  $('staffPanel').hidden=!manage();
+  const managerRole=$('inviteRole').querySelector('option[value=manager]');
+  managerRole.hidden=model.me.role!=='owner';
+  if(model.me.role!=='owner' && $('inviteRole').value==='manager')$('inviteRole').value='viewer';
 }
 async function loadMe(){
   const data=await api('/auth/me');
@@ -78,6 +84,7 @@ async function refresh(){
   const [requests,pilots]=await Promise.all([api('/guest/requests'),api('/guest/pilots')]);
   model.requests=requests.items;model.pilots=pilots.items;
   drawRequests();drawPilots();
+  if(manage())await loadStaff();
   if(model.selected?.item)await openPilot(model.selected.item.id);
 }
 function appendText(parent,tag,text,css){
@@ -91,6 +98,32 @@ function actionButton(label,onClick,secondary=false){
   button.textContent=label;
   button.addEventListener('click',()=>safely(()=>onClick()));
   return button;
+}
+async function loadStaff(){
+  const data=await api('/staff');
+  const list=$('staffList');list.replaceChildren();
+  if(!data.members.length && !data.invitations.length)
+    appendText(list,'li','Сотрудников и приглашений пока нет.','small');
+  for(const member of data.members){
+    const row=document.createElement('li');
+    appendText(row,'span',member.email+' · '+member.role);
+    list.append(row);
+  }
+  for(const inv of data.invitations){
+    const row=document.createElement('li'),detail=document.createElement('div');
+    const expired=Date.parse(inv.expires_at)<=Date.now();
+    const state=inv.accepted_at?'принято':inv.revoked_at?'отозвано':expired?'истекло':'ожидает принятия';
+    appendText(detail,'strong',inv.email);
+    appendText(detail,'span',inv.role+' · '+state,'small');row.append(detail);
+    if(!inv.accepted_at&&!inv.revoked_at&&!expired && (model.me.role==='owner'||inv.role!=='manager')){
+      row.append(actionButton('Отозвать приглашение',async()=>{
+        await api('/staff/invitations/'+inv.id+'/revoke',{method:'POST',body:{}});
+        await loadStaff();
+        setStatus('Приглашение отозвано; одноразовый токен больше не действителен.');
+      },true));
+    }
+    list.append(row);
+  }
 }
 function drawRequests(){
   const list=$('requestsList');
@@ -143,6 +176,9 @@ function enablePilotActions(){
   $('resume').disabled=!isManage||phase!=='returned';
   $('accept').disabled=!isManage||phase!=='in_review'||item.submittedBy===model.me.account.id;
   $('return').disabled=!isManage||phase!=='in_review'||item.submittedBy===model.me.account.id;
+  $('archivePanel').hidden=!(model.me.role==='owner'&&phase==='reviewed');
+  $('archivePilot').disabled=model.me.role!=='owner'||phase!=='reviewed';
+  $('downloadEvidence').disabled=!(model.selected.observations?.length);
   for(const checkbox of document.querySelectorAll('[data-ready]'))checkbox.disabled=!isManage||phase!=='draft';
 }
 async function openPilot(id){
@@ -201,6 +237,27 @@ $('loginForm').addEventListener('submit',event=>{
     await loadMe();setStatus('Вход выполнен. Права определяются ролью сотрудника.');
   });
 });
+$('inviteForm').addEventListener('submit',event=>{
+  event.preventDefault();safely(async()=>{
+    if(!manage())throw Error('Недостаточно прав.');
+    const email=$('inviteEmail').value.trim().toLowerCase();
+    const role=$('inviteRole').value;
+    const data=await api('/staff/invitations',{method:'POST',body:{email,role}});
+    // This raw 256-bit token is returned by the server exactly once.
+    // Keep it in the current tab only, never in a URL or persistent storage.
+    $('inviteToken').value=data.token;
+    $('newInvite').hidden=false;
+    $('inviteEmail').value='';
+    await loadStaff();
+    setStatus('Приглашение создано. Передайте токен лично адресату и сообщите код компании отдельно.');
+  });
+});
+$('copyInvite').addEventListener('click',()=>safely(async()=>{
+  const token=$('inviteToken').value;
+  if(!/^[a-f0-9]{64}$/.test(token))throw Error('Токен уже очищен. Создайте новое приглашение.');
+  try{await navigator.clipboard.writeText(token);setStatus('Токен скопирован. Сохраните его только у адресата.');}
+  catch{$('inviteToken').focus();$('inviteToken').select();setStatus('Токен выделен для ручного копирования.');}
+}));
 $('logout').addEventListener('click',()=>safely(async()=>{
   await api('/auth/logout',{method:'POST',body:{}});
   model.me=null;model.selected=null;model.report=null;showAuth();setStatus('Сессия завершена.');
@@ -268,6 +325,42 @@ for(const [id,decision] of [['accept','accept_for_discussion'],['return','reques
     await refreshCurrent();setStatus(data.disclaimer);
   }));
 }
+async function saveEvidence(){
+  const pilot=currentPilot();
+  const response=await fetch(API+'/guest/pilots/'+pilot.id+'/evidence.json',{
+    method:'GET',credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}
+  });
+  const type=response.headers.get('content-type')||'';
+  if(!type.includes('application/json'))throw Error('Сервер вернул неверный формат доказательств.');
+  const data=await response.json();
+  if(!response.ok)throw Error(data?.error||'Не удалось скачать доказательства');
+  if(data.format!=='osmanx.guest.evidence.export.v1'||!data.evidence||
+     !/^[a-f0-9]{64}$/.test(String(data.sha256)))
+    throw Error('Неверная структура доказательств');
+  const encoded=new TextEncoder().encode(JSON.stringify(data.evidence));
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoded)))
+    .map(x=>x.toString(16).padStart(2,'0')).join('');
+  if(hash!==data.sha256)throw Error('Контрольная сумма JSON не совпала с SHA-256 сервера.');
+  const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json;charset=utf-8'});
+  if(blob.size>1000000)throw Error('Слишком большой архив доказательств.');
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='osmanx-guest-evidence.json';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  setStatus('Проверенный экспорт JSON сохранён. SHA-256: '+data.sha256);
+}
+$('downloadEvidence').addEventListener('click',()=>safely(saveEvidence));
+$('archivePilot').addEventListener('click',()=>safely(async()=>{
+  if(model.me?.role!=='owner')throw Error('Архивация доступна только владельцу компании.');
+  const pilot=currentPilot(),reason=$('archiveReason').value.trim();
+  if(reason.length<6||reason.length>160)throw Error('Укажите причину от 6 до 160 символов.');
+  if(!window.confirm('Заархивировать проверенный пилот? Вернуть его в работу через кабинет будет нельзя.'))return;
+  const response=await api('/guest/pilots/'+pilot.id+'/archive',{
+    method:'POST',body:{expectedVersion:pilot.version,reason}
+  });
+  $('archiveReason').value='';
+  await refreshCurrent();
+  setStatus('Пилот заархивирован, исходные данные сохранены. SHA-256: '+response.sha256);
+}));
 $('loadReport').addEventListener('click',()=>safely(()=>loadReport()));
 $('downloadReport').addEventListener('click',()=>safely(async()=>{
   await downloadCsv('/guest/pilots/'+currentPilot().id+'/report.csv');

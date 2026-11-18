@@ -47,7 +47,7 @@ def main():
                 missing.screenshot(path=str(OUT/"offline.png"),full_page=True)
                 offline.close()
 
-                state={"authenticated":False,"requests":[],"pilots":[],"calls":[]}
+                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[]}
                 pilot_id="4929420c-375c-4e64-8916-8d774e182c63"
                 owner_id="0a61dbcb-e23e-474a-a9df-9b3f1338b165"
                 response_profile={"account":{"id":owner_id,"email":"owner@example.test"},
@@ -70,6 +70,30 @@ def main():
                         assert body["email"]=="owner@example.test"
                         state["authenticated"]=True
                         return respond(200,{"authenticated":True})
+                    if path=="/staff" and method=="GET":
+                        members=[{"account_id":owner_id,"email":"owner@example.test","role":"owner"}]
+                        return respond(200,{"members":members,"invitations":state["invites"]})
+                    if path=="/staff/invitations" and method=="POST":
+                        payload=req.post_data_json
+                        assert payload["role"]=="manager"
+                        assert payload["email"]=="manager@example.test"
+                        token="f"*64
+                        inv={"id":"bdfd36df-e2f1-4f41-9cdf-000000000001",
+                             "email":payload["email"],"role":payload["role"],
+                             "expires_at":"2099-01-01T00:00:00Z",
+                             "accepted_at":None,"revoked_at":None}
+                        state["invites"].append(inv)
+                        return respond(201,{"invitation":inv,"token":token})
+                    if path=="/staff/invitations/accept" and method=="POST":
+                        payload=req.post_data_json
+                        assert payload["token"]=="f"*64
+                        assert len(payload["password"])>=12
+                        assert not req.headers.get("cookie"),"Invitation acceptance must not leak session cookies"
+                        if state["accepted"]:
+                            return respond(404,{"error":"Приглашение недействительно"})
+                        state["accepted"].append(payload["token"])
+                        state["invites"][0]["accepted_at"]="2026-11-18T01:00:00Z"
+                        return respond(200,{"accepted":True})
                     if path=="/guest/requests" and method=="GET":
                         return respond(200,{"items":state["requests"]})
                     if path=="/guest/requests" and method=="POST":
@@ -116,6 +140,25 @@ def main():
                 page.locator("#loginForm button[type=submit]").click()
                 page.locator("#workPanel").wait_for(state="visible")
                 assert "Учебная кофейня" in page.locator("#tenantLabel").inner_text()
+                assert page.locator("#staffPanel").is_visible()
+                page.locator("#inviteEmail").fill("manager@example.test")
+                page.locator("#inviteRole").select_option("manager")
+                page.locator("#inviteForm button[type=submit]").click()
+                page.locator("#newInvite").wait_for(state="visible")
+                token=page.locator("#inviteToken").input_value()
+                assert len(token)==64
+                assert token not in page.url
+                joined=context.new_page()
+                joined.goto(BASE+"/assets/guest/join.html",wait_until="networkidle")
+                joined.locator("#token").fill(token)
+                joined.locator("#password").fill("Some-Long-Password-2026")
+                joined.locator("#repeat").fill("Some-Long-Password-2026")
+                joined.locator("#joinForm button[type=submit]").click()
+                joined.locator("#success").wait_for(state="visible")
+                assert joined.locator("#token").input_value()==""
+                assert token not in joined.url
+                joined.screenshot(path=str(OUT/"join.png"),full_page=True)
+                joined.close()
                 page.locator("#requestTitle").fill("Повторные визиты после 30 дней")
                 page.locator("#requestSource").select_option("field")
                 page.locator("#requestForm button[type=submit]").click()
@@ -133,7 +176,7 @@ def main():
                 page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('Наблюдений пока нет')")
                 # Only same-origin requests; mutation requests must carry CSRF.
                 for method,path,headers in state["calls"]:
-                    if method in ("POST","PATCH","DELETE") and path!="/auth/login":
+                    if method in ("POST","PATCH","DELETE") and path not in ("/auth/login","/staff/invitations/accept"):
                         assert headers.get("x-csrf-token")=="csrf-test-2026",(method,path)
                 assert not errors,errors
                 page.screenshot(path=str(OUT/"desktop.png"),full_page=True)
