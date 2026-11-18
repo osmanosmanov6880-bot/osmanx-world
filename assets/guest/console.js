@@ -493,8 +493,75 @@ function defaultStudyDates(){
   $('studyStart').value=now.toISOString().slice(0,10);
   $('studyEnd').value=plus.toISOString().slice(0,10);
   $('obsDate').max=now.toISOString().slice(0,10);
+  $('actionDue').value=new Date(now.getTime()+7*86400000).toISOString().slice(0,10);
 }
 defaultStudyDates();
+$('refreshDiagnostics').addEventListener('click',()=>safely(async()=>{
+  await loadDiagnostics();await loadActions();
+  setStatus('Диагностика обновлена по сохранённым данным.');
+}));
+$('actionForm').addEventListener('submit',event=>{
+  event.preventDefault();safely(async()=>{
+    if(!manage())throw Error('Назначать действия могут владелец и управляющий.');
+    const pilot=currentPilot();
+    await api('/guest/pilots/'+pilot.id+'/actions',{method:'POST',body:{
+      expectedPilotVersion:pilot.version,
+      code:$('actionCode').value,
+      assigneeId:$('actionAssignee').value,
+      dueDate:$('actionDue').value
+    }});
+    await loadActions();
+    setStatus('Задача зарегистрирована с ответственным и сроком. Это не доказательство эффекта.');
+  });
+});
+function resetBatchPreview(){
+  model.bulkPreview=null;$('bulkCommit').disabled=true;
+  $('bulkResult').textContent='CSV изменён. Требуется новая проверка без сохранения.';
+}
+$('bulkCsv').addEventListener('input',resetBatchPreview);
+$('bulkFile').addEventListener('change',()=>safely(async()=>{
+  const file=$('bulkFile').files?.[0];
+  if(!file)return;
+  if(file.size>4096)throw Error('Допускаются только небольшие CSV до 4 КБ.');
+  const csv=await file.text();
+  if(new TextEncoder().encode(csv).byteLength>4096)throw Error('CSV слишком большой.');
+  $('bulkCsv').value=csv;
+  resetBatchPreview();
+  setStatus('Файл загружен только в память этой вкладки. Проверьте CSV перед записью.');
+}));
+$('bulkPreview').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot(),csv=$('bulkCsv').value;
+  if(pilot.phase!=='running'||!write())throw Error('Запись разрешена только в открытом пилоте.');
+  const data=await api('/guest/pilots/'+pilot.id+'/observations/import/preview',{
+    method:'POST',body:{expectedVersion:pilot.version,csv}
+  });
+  if(data.schema!=='osmanx.guest.csv.preview.v1'||!/^[a-f0-9]{64}$/.test(data.sha256))
+    throw Error('Сервер вернул неверный формат предварительной проверки');
+  model.bulkPreview={pilotId:pilot.id,version:pilot.version,csv,sha256:data.sha256};
+  $('bulkCommit').disabled=false;
+  $('bulkResult').textContent='Проверено '+data.summary.rowCount+' периодов: '+
+    data.summary.firstDate+' — '+data.summary.lastDate+
+    '. Контроль: '+data.summary.totals.control+'; предложение: '+
+    data.summary.totals.offer+'. Контрольная сумма SHA-256: '+data.sha256+
+    '. Пока ничего не сохранено.';
+}));
+$('bulkCommit').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot(),preview=model.bulkPreview;
+  if(!preview||preview.pilotId!==pilot.id||preview.version!==pilot.version||
+     preview.csv!==$('bulkCsv').value)
+    throw Error('CSV изменился или версия пилота устарела. Проверьте повторно.');
+  if(!window.confirm('Сохранить '+$('bulkResult').textContent.split(' ')[1]+
+    ' проверенных периодов одной транзакцией?'))return;
+  $('bulkCommit').disabled=true;
+  const result=await api('/guest/pilots/'+pilot.id+'/observations/import',{
+    method:'POST',headers:{'Idempotency-Key':idempotency()},
+    body:{expectedVersion:preview.version,csv:preview.csv,sha256:preview.sha256}
+  });
+  model.bulkPreview=null;$('bulkCsv').value='';$('bulkFile').value='';
+  $('bulkResult').textContent='Сохранено '+result.rowsImported+' периодов. SHA-256: '+result.sha256;
+  await refreshCurrent();
+  setStatus('Пакет агрегатов записан атомарно; все строки подтверждены сервером.');
+}));
 $('loadReport').addEventListener('click',()=>safely(()=>loadReport()));
 $('downloadReport').addEventListener('click',()=>safely(async()=>{
   await downloadCsv('/guest/pilots/'+currentPilot().id+'/report.csv');
