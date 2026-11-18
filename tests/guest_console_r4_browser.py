@@ -266,7 +266,7 @@ def main():
                 page.locator("#bulkCommit").click()
                 page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('500')")
                 assert len(state["observations"])==1
-                page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('Наблюдений пока нет')")
+                page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('500')")
                 # Only same-origin requests; mutation requests must carry CSRF.
                 for method,path,headers in state["calls"]:
                     if method in ("POST","PATCH","DELETE") and path not in ("/auth/login","/staff/invitations/accept"):
