@@ -44,7 +44,7 @@ if find "$dst" -type f \( -name '.env' -o -name '*.key' -o -name '*.pem' -o -nam
 fi
 
 # Machine-readable, non-secret release contract; pinned to this exact Git tree.
-printf '{"schema":"osmanx.industry.r8.release.v1","commit":"%s","migration":"007_guest_protocol_governance.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
+printf '{"schema":"osmanx.industry.r9.release.v1","commit":"%s","migration":"008_guest_actions_and_imports.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
 # Only the output artifact name references a commit SHA. No data from the live environment.
 (
   cd "$dst"
