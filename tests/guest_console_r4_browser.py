@@ -4,6 +4,7 @@ by services/industry-api/test/guest.test.mjs against PostgreSQL 16.
 """
 import http.server
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -34,7 +35,7 @@ def main():
     proc=boot()
     try:
         with sync_playwright() as pw:
-            browser=pw.chromium.launch(headless=True,args=["--disable-dev-shm-usage"])
+            browser=pw.chromium.launch(headless=True,args=["--disable-dev-shm-usage"], executable_path=os.environ.get("OSMANX_CHROMIUM_BIN") or None)
             try:
                 # Graceful failure when no protected API has been deployed.
                 offline=browser.new_context(viewport={"width":1280,"height":850})
