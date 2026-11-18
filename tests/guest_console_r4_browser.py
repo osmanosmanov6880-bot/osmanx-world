@@ -47,7 +47,7 @@ def main():
                 missing.screenshot(path=str(OUT/"offline.png"),full_page=True)
                 offline.close()
 
-                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[]}
+                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[],"actions":[],"observations":[]}
                 pilot_id="4929420c-375c-4e64-8916-8d774e182c63"
                 owner_id="0a61dbcb-e23e-474a-a9df-9b3f1338b165"
                 response_profile={"account":{"id":owner_id,"email":"owner@example.test"},
@@ -136,7 +136,60 @@ def main():
                         state["pilots"].append(item)
                         return respond(201,{"item":item})
                     if path==f"/guest/pilots/{pilot_id}" and method=="GET":
-                        return respond(200,{"item":state["pilots"][0],"observations":[],"reviews":[]})
+                        return respond(200,{"item":state["pilots"][0],"observations":state["observations"],"reviews":[]})
+                    if path==f"/guest/pilots/{pilot_id}/diagnostics" and method=="GET":
+                        return respond(200,{
+                            "pilotId":pilot_id,"version":state["pilots"][0]["version"],
+                            "evidenceDigest":"a"*64,
+                            "diagnostic":{"schema":"osmanx.guest.diagnostic.v1",
+                                "disposition":"NO_DATA","observedPeriods":len(state["observations"]),
+                                "sample":{"control":0,"offer":0,"minimumPerGroup":294,"enough":False},
+                                "rates":{"controlPct":None,"offerPct":None,"differencePp":None},
+                                "findingCount":1,
+                                "recommendations":[{"code":"COLLECT_OBSERVATIONS","severity":"high",
+                                  "title":"Собрать обезличенные наблюдения",
+                                  "why":"Нет проверяемых периодов",
+                                  "nextStep":"Запишите агрегированные данные"}],
+                                "disclaimer":"Не доказанная причина потери клиентов"}
+                        })
+                    if path==f"/guest/pilots/{pilot_id}/actions" and method=="GET":
+                        return respond(200,{"pilotId":pilot_id,"items":state["actions"]})
+                    if path==f"/guest/pilots/{pilot_id}/actions" and method=="POST":
+                        body=req.post_data_json
+                        assert body["code"]=="COLLECT_OBSERVATIONS"
+                        assert body["assigneeId"]==owner_id
+                        assert body["dueDate"]
+                        item={"id":"d7609b01-422d-49c1-82ce-444444444444",
+                              "code":body["code"],"status":"open","assigned_to":owner_id,
+                              "created_by":owner_id,"dueDate":body["dueDate"],"version":1}
+                        state["actions"].append(item)
+                        return respond(201,{"item":item})
+                    if path.startswith(f"/guest/pilots/{pilot_id}/actions/") and method=="PATCH":
+                        body=req.post_data_json
+                        item=state["actions"][0]
+                        assert body["expectedVersion"]==item["version"]
+                        item["status"]=body["status"]
+                        item["version"]+=1
+                        return respond(200,{"item":item})
+                    if path==f"/guest/pilots/{pilot_id}/observations/import/preview" and method=="POST":
+                        body=req.post_data_json
+                        assert body["csv"].startswith("date,control,controlReturn,offer,offerReturn")
+                        return respond(200,{"schema":"osmanx.guest.csv.preview.v1",
+                            "expectedVersion":state["pilots"][0]["version"],"sha256":"f"*64,
+                            "remainingSlots":12,"summary":{"rowCount":1,"firstDate":"2026-11-10",
+                              "lastDate":"2026-11-10",
+                              "totals":{"control":500,"offer":500,"controlReturn":100,"offerReturn":150}}})
+                    if path==f"/guest/pilots/{pilot_id}/observations/import" and method=="POST":
+                        body=req.post_data_json
+                        assert body["sha256"]=="f"*64 and req.headers.get("idempotency-key")
+                        state["observations"].append({"id":"84416d00-ae43-4a8a-9725-cf2323232323",
+                            "date":"2026-11-10","control":500,"controlReturn":100,
+                            "offer":500,"offerReturn":150})
+                        state["pilots"][0]["version"]+=1
+                        return respond(201,{"importId":"228c4095-3122-4bde-9f15-222222222222",
+                            "rowsImported":1,"version":state["pilots"][0]["version"],
+                            "sha256":"f"*64})
+
                     if path==f"/guest/pilots/{pilot_id}/report" and method=="GET":
                         return respond(200,{"item":state["pilots"][0],"report":None,"analysis":None,
                                             "evidenceDigest":"a"*64})
@@ -193,7 +246,27 @@ def main():
                 assert "Пилот по лояльности" in page.locator("#pilotHeading").inner_text()
                 assert "294" in page.locator("#sample").inner_text()
                 assert "Зафиксированный протокол" in page.locator("#protocolStatus").inner_text()
-                page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('Наблюдений пока нет')")
+                assert "Нет проверяемых периодов" in page.locator("#diagnosticFindings").inner_text()
+                assert page.locator("#actionForm").is_visible()
+                page.locator("#actionCode").select_option("COLLECT_OBSERVATIONS")
+                page.locator("#actionAssignee").select_option(owner_id)
+                page.locator("#actionForm button[type=submit]").click()
+                page.wait_for_function("() => document.querySelector('#actionList').textContent.includes('Собрать обезличенные наблюдения')")
+                page.get_by_role("button",name="Взять в работу").click()
+                page.wait_for_function("() => document.querySelector('#actionList').textContent.includes('in_progress')")
+                # Mocked plan transitions to running to verify the R9 preview/commit UI.
+                state["pilots"][0]["phase"]="running"
+                page.locator("#refresh").click()
+                page.wait_for_function("() => !document.querySelector('#bulkPreview').disabled")
+                page.locator("#bulkCsv").fill(
+                    "date,control,controlReturn,offer,offerReturn\n2026-11-10,500,100,500,150\n")
+                page.locator("#bulkPreview").click()
+                page.wait_for_function("() => document.querySelector('#bulkResult').textContent.includes('Проверено 1 периодов')")
+                page.on("dialog",lambda dialog:dialog.accept())
+                page.locator("#bulkCommit").click()
+                page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('500')")
+                assert len(state["observations"])==1
+                page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('500')")
                 # Only same-origin requests; mutation requests must carry CSRF.
                 for method,path,headers in state["calls"]:
                     if method in ("POST","PATCH","DELETE") and path not in ("/auth/login","/staff/invitations/accept"):

@@ -4,10 +4,12 @@ export const REQUIRED_MIGRATIONS=Object.freeze([
   '004_guest_intelligence.sql',
   '005_guest_evidence_archive.sql',
   '006_guest_readiness_permissions.sql',
-  '007_guest_protocol_governance.sql'
+  '007_guest_protocol_governance.sql',
+  '008_guest_actions_and_imports.sql'
 ]);
 export const GUARDED_TABLES=Object.freeze([
-  'guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas'
+  'guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas',
+  'guest_actions','guest_bulk_imports'
 ]);
 function unavailable(){
   const e=new Error('Сервер ещё не готов к безопасной работе');
@@ -20,7 +22,7 @@ export function assertGuestDatabaseState(row){
      row.forced_rls!==true || row.privileged_role!==false ||
      row.can_read_guests!==true || row.can_modify_migrations!==false)
     throw unavailable();
-  return {schemaVersion:'007_guest_protocol_governance.sql',
+  return {schemaVersion:'008_guest_actions_and_imports.sql',
     leastPrivilege:true,forcedRls:true};
 }
 export async function probeGuestDatabase(pool){
@@ -40,7 +42,9 @@ export async function probeGuestDatabase(pool){
     " (has_table_privilege(current_user,'industry.guest_pilots','SELECT') AND",
     " has_table_privilege(current_user,'industry.guest_observations','SELECT') AND",
     " has_table_privilege(current_user,'industry.guest_reviews','SELECT') AND",
-    " has_table_privilege(current_user,'industry.guest_quotas','SELECT')) AS can_read_guests,",
+    " has_table_privilege(current_user,'industry.guest_quotas','SELECT') AND",
+    " has_table_privilege(current_user,'industry.guest_actions','SELECT') AND",
+    " has_table_privilege(current_user,'industry.guest_bulk_imports','SELECT')) AS can_read_guests,",
     " has_table_privilege(current_user,'industry.schema_migrations','UPDATE') AS can_modify_migrations"
   ].join('\n');
   try{

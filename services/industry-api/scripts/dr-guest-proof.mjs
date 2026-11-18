@@ -2,6 +2,7 @@
 // Never run against a non-loopback host, a production database, or live accounts.
 import pg from 'pg';
 import {createHash} from 'node:crypto';
+import {batchDigest} from '../src/guest-bulk.mjs';
 const hash=obj=>createHash('sha256').update(JSON.stringify(obj)).digest('hex');
 const plan={baselinePct:20,liftPp:10,margin:300,discount:5,fixed:1000,fee:25000};
 const readiness={repeatDefinition:true,sameWindow:true,independentGroups:true,
@@ -69,6 +70,20 @@ async function seed(db){
     await db.query(
       "INSERT INTO industry.guest_reviews(tenant_id,pilot_id,actor_id,decision,evidence_digest) VALUES($1,$2,$3,'accept_for_discussion',$4)",
       [tenant,pilot,manager,originalHash]);
+    // R9 disaster recovery also proves the new auditable action and batch import ledgers.
+    const task=(await db.query(
+      "INSERT INTO industry.guest_actions(tenant_id,pilot_id,code,status,assigned_to,created_by,due_on,version) VALUES($1,$2,'REVIEW_CONTROLLED_FOLLOWUP','done',$3,$4,'2026-11-16'::date,3) RETURNING id",
+      [tenant,pilot,manager,owner])).rows[0].id;
+    const recoveredImportHash=batchDigest(pilot,3,observations);
+    const imported=(await db.query(
+      "INSERT INTO industry.guest_bulk_imports(tenant_id,pilot_id,idempotency_key,payload_digest,rows_imported,committed_version,created_by) VALUES($1,$2,'r9-dr-legacy-import',$3,2,4,$4) RETURNING id",
+      [tenant,pilot,recoveredImportHash,owner])).rows[0].id;
+    await db.query(
+      "INSERT INTO industry.audit_events(tenant_id,actor_id,action,target_id) VALUES($1,$2,'guest.action.done',$3),($1,$2,'guest.observations.batch_imported',$4)",
+      [tenant,owner,task,pilot]);
+    await db.query(
+      "INSERT INTO industry.outbox(tenant_id,kind,payload) VALUES($1,'guest.action.done',$2::jsonb),($1,'guest.observations.batch_imported',$3::jsonb)",
+      [tenant,JSON.stringify({event:'guest.action.done',entityId:task}),JSON.stringify({event:'guest.observations.batch_imported',entityId:pilot,batchId:imported})]);
     await db.query(
       "INSERT INTO industry.audit_events(tenant_id,actor_id,action,target_id) VALUES($1,$2,'guest.pilot.archived',$3)",
       [tenant,owner,pilot]);
@@ -114,14 +129,33 @@ async function verify(db){
   if(audits.rows[0].n!==1||events.rows[0].n!==1)throw Error('Audit or outbox missing');
   const policies=await db.query(
     "SELECT count(*)::int AS n FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='industry' AND c.relname=ANY($1::text[]) AND c.relrowsecurity AND c.relforcerowsecurity",
-    [['guest_requests','guest_pilots','guest_observations','guest_reviews']]);
-  if(policies.rows[0].n!==4)throw Error('Row-level security was not restored');
+    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports']]);
+  if(policies.rows[0].n!==7)throw Error('Row-level security was not restored');
+  const task=await db.query(
+    "SELECT code,status,assigned_to,created_by,version,due_on::text AS due_date FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2",
+    [pilot.tenant_id,pilot.id]);
+  if(task.rowCount!==1||task.rows[0].code!=='REVIEW_CONTROLLED_FOLLOWUP'||
+     task.rows[0].status!=='done'||task.rows[0].version!==3||
+     task.rows[0].assigned_to!==pilot.reviewed_by||task.rows[0].due_date!=='2026-11-16')
+    throw Error('R9 action ledger not independently recovered');
+  const importRow=await db.query(
+    "SELECT payload_digest,rows_imported,committed_version FROM industry.guest_bulk_imports WHERE tenant_id=$1 AND pilot_id=$2",
+    [pilot.tenant_id,pilot.id]);
+  const expectedImportHash=batchDigest(pilot.id,3,rows.rows);
+  if(importRow.rowCount!==1||importRow.rows[0].payload_digest!==expectedImportHash||
+     importRow.rows[0].rows_imported!==2||importRow.rows[0].committed_version!==4)
+    throw Error('R9 idempotent import proof did not recover');
+  const actionAudit=await db.query(
+    "SELECT count(*)::int AS n FROM industry.audit_events WHERE tenant_id=$1 AND action IN ('guest.action.done','guest.observations.batch_imported')",
+    [pilot.tenant_id]);
+  if(actionAudit.rows[0].n!==2)throw Error('R9 follow-up audit not recovered');
   const migration=await db.query(
-    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='007_guest_protocol_governance.sql'"
+    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='008_guest_actions_and_imports.sql'"
   );
   if(migration.rows[0].n!==1)throw Error('Latest migration version not restored');
   return {ok:true,stage:'verify',observations:rows.rowCount,
-    reviewedIndependently:true,proofSha256:digest,forcedRls:true};
+    reviewedIndependently:true,proofSha256:digest,forcedRls:true,
+    actionRecovered:true,importRecovered:true,importSha256:expectedImportHash};
 }
 if(process.argv[1]?.endsWith('/dr-guest-proof.mjs')){
   const [mode]=process.argv.slice(2),url=process.env.R7_DR_DB_URL;

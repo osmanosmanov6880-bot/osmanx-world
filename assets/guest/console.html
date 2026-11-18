@@ -29,7 +29,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 @media(max-width:700px){.grid,.triple,.checks{grid-template-columns:1fr}.actions button{flex:1 1 100%}nav{font-size:.82rem}header{align-items:flex-start}.items li{align-items:flex-start}}
 </style></head><body>
 <header><a href="/">OSMANX WORLD</a><nav><a href="./pilot.html">Лаборатория</a><a href="./offer.html">Предложение</a></nav></header>
-<main><section class="hero"><span class="eyebrow">Guest Intelligence / R8 / Защищённый кабинет</span>
+<main><section class="hero"><span class="eyebrow">Guest Intelligence / R9 / Защищённый кабинет</span>
 <h1>Результаты, которые можно проверить.</h1>
 <p>Заявки, проведение пилота, обезличенные наблюдения, проверка вторым сотрудником и отчёт для владельца. Авторизация — через существующий защищённый Industry API.</p>
 <div class="alert">Не демонстрация успешных продаж. Для входа требуется действующий аккаунт сотрудника и работающий сервер. Если API ещё не развёрнут, кабинет покажет недоступность и не сохранит введённые сведения.</div>
@@ -137,10 +137,39 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 <div class="actions"><button type="submit">Записать период</button></div></form></section></div>
 <hr class="separator">
 <h3>Наблюдения (только активные)</h3><div class="scroll"><table><thead><tr><th>Дата</th><th>Контроль</th><th>Предложение</th><th>Действие</th></tr></thead><tbody id="observationList"></tbody></table></div>
+<section id="bulkPanel" aria-labelledby="bulkHeading">
+<h3 id="bulkHeading">Пакетный импорт агрегатов CSV</h3>
+<p class="small">Только пять столбцов без фамилий, контактов и формул: date,control,controlReturn,offer,offerReturn. Сначала проверка без записи, затем отдельное подтверждение. Максимум 12 непересекающихся периодов.</p>
+<label for="bulkFile">Файл с агрегатами (CSV UTF-8)</label><input id="bulkFile" type="file" accept=".csv,text/csv">
+<label for="bulkCsv">CSV для предварительной проверки</label>
+<textarea id="bulkCsv" rows="5" spellcheck="false" maxlength="4096" placeholder="date,control,controlReturn,offer,offerReturn"></textarea>
+<div class="actions"><button type="button" id="bulkPreview" class="secondary">Проверить CSV</button>
+<button type="button" id="bulkCommit" disabled>Записать проверенный пакет</button></div>
+<pre id="bulkResult" class="small" aria-live="polite">CSV ещё не проверен.</pre>
+</section>
+<hr class="separator">
 <div class="actions"><button id="submitReview" type="button">Отправить на проверку</button><button id="resume" class="secondary" type="button">Вернуть к наблюдению</button></div>
 <hr class="separator"><h3>Проверка результатов</h3><p>Приёмку выполняет другой владелец или управляющий, не тот, кто отправил результаты.</p>
 <div class="actions"><button id="accept" type="button">Принять к обсуждению</button><button id="return" class="secondary" type="button">Запросить исправления</button></div>
 <div class="actions"><button id="loadReport" class="secondary" type="button">Обновить отчёт</button><button id="downloadReport" class="secondary" type="button">Скачать CSV</button><button id="downloadEvidence" class="secondary" type="button">Скачать доказательства JSON + SHA-256</button></div>
+<hr class="separator">
+<section id="diagnosticsPanel" aria-labelledby="diagnosticsHeading">
+<span class="eyebrow">R9 / Доказательства → действия</span>
+<h3 id="diagnosticsHeading">Диагностика причин риска и следующий шаг</h3>
+<p class="small">Система проверяет качество агрегатов и формулирует гипотезы для дальнейшей проверки. Она не устанавливает достоверную причину потери клиентов.</p>
+<p id="diagnosticSummary" class="info" aria-live="polite">Откройте пилот для проверки данных.</p>
+<ul id="diagnosticFindings" class="items"></ul>
+<div class="actions"><button id="refreshDiagnostics" class="secondary" type="button">Пересчитать диагностику</button></div>
+<h3>Журнал управленческих решений</h3>
+<p class="small">Ответственный, срок и выполнение фиксируются сервером. Завершение задачи не означает подтверждённый прирост продаж.</p>
+<form id="actionForm" class="grid">
+  <div><label for="actionCode">Вывод для работы</label><select id="actionCode" required><option value="">Сначала проведите диагностику</option></select></div>
+  <div><label for="actionAssignee">Ответственный сотрудник</label><select id="actionAssignee" required><option value="">Выберите сотрудника</option></select></div>
+  <div><label for="actionDue">Срок исполнения</label><input id="actionDue" type="date" required></div>
+  <div class="actions"><button type="submit">Назначить действие</button></div>
+</form>
+<ul id="actionList" class="items"></ul>
+</section>
 <div id="archivePanel" hidden><hr class="separator">
 <h3>Закрыть проверенный пилот</h3>
 <p>Только владелец компании может архивировать уже проверенный пилот. Это необратимое действие в интерфейсе; история исправлений и проверок остаётся доступной.</p>
@@ -150,5 +179,5 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 </div>
 <pre id="reportBox" class="info">Результат появится после записи наблюдений.</pre>
 <p class="small">«Принять к обсуждению» не подтверждает причинную связь, поступившую оплату или обещанную прибыль. Клиентские данные и номера телефонов в эту систему не вносить.</p></section>
-</div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R8 · Без автоматических платежей и подписок</span></footer>
+</div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R9 · Без автоматических платежей и подписок</span></footer>
 <script type="module" src="./console.js"></script></body></html>

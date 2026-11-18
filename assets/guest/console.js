@@ -5,7 +5,8 @@ const API='/api/industry/v1';
 const $=id=>document.getElementById(id);
 const flags=['repeatDefinition','sameWindow','independentGroups','marginVerified','contactConsent','ownerAgreed'];
 const currencies=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
-const model={me:null,requests:[],pilots:[],selected:null,report:null};
+const model={me:null,requests:[],pilots:[],selected:null,report:null,
+  staffMembers:[],diagnostic:null,bulkPreview:null};
 const manage=()=>['owner','manager'].includes(model.me?.role);
 const write=()=>['owner','manager','operator'].includes(model.me?.role);
 function setStatus(message,error=false){
@@ -64,6 +65,7 @@ function showAuth(){
   $('newInvite').hidden=true;$('inviteToken').value='';
   $('staffPanel').hidden=true;
   $('overviewPanel').hidden=true;
+  model.bulkPreview=null;model.diagnostic=null;model.staffMembers=[];
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -74,6 +76,7 @@ function showWorkspace(){
   $('staffPanel').hidden=!manage();
   $('overviewPanel').hidden=!manage();
   $('retentionRun').hidden=model.me.role!=='owner';
+  $('actionForm').hidden=!manage();
   const managerRole=$('inviteRole').querySelector('option[value=manager]');
   managerRole.hidden=model.me.role!=='owner';
   if(model.me.role!=='owner' && $('inviteRole').value==='manager')$('inviteRole').value='viewer';
@@ -120,6 +123,16 @@ async function loadOverview(){
 }
 async function loadStaff(){
   const data=await api('/staff');
+  model.staffMembers=data.members; 
+  const assignees=$('actionAssignee'),selected=assignees.value;
+  assignees.replaceChildren();
+  const placeholder=document.createElement('option');
+  placeholder.value='';placeholder.textContent='Выберите сотрудника';assignees.append(placeholder);
+  for(const member of data.members.filter(m=>m.role!=='viewer')){
+    const option=document.createElement('option');option.value=member.account_id;
+    option.textContent=member.email+' · '+member.role;assignees.append(option);
+  }
+  if([...assignees.options].some(o=>o.value===selected))assignees.value=selected;
   const list=$('staffList');list.replaceChildren();
   if(!data.members.length && !data.invitations.length)
     appendText(list,'li','Сотрудников и приглашений пока нет.','small');
@@ -198,11 +211,17 @@ function enablePilotActions(){
   $('archivePanel').hidden=!(model.me.role==='owner'&&phase==='reviewed');
   $('archivePilot').disabled=model.me.role!=='owner'||phase!=='reviewed';
   $('downloadEvidence').disabled=!(model.selected.observations?.length);
+  $('bulkPreview').disabled=!isWrite||phase!=='running';
+  $('bulkCommit').disabled=!isWrite||phase!=='running'||!model.bulkPreview;
+  $('actionForm').hidden=!isManage;
   for(const checkbox of document.querySelectorAll('[data-ready]'))checkbox.disabled=!isManage||phase!=='draft';
 }
 async function openPilot(id){
+  const switched=model.selected?.item?.id!==id;
   const data=await api('/guest/pilots/'+id);
   model.selected=data;
+  if(switched){model.bulkPreview=null;$('bulkCommit').disabled=true;
+    $('bulkResult').textContent='CSV ещё не проверен.';}
   $('detailPanel').hidden=false;
   const item=data.item;
   $('pilotHeading').textContent=item.title;
@@ -243,12 +262,76 @@ async function openPilot(id){
   }
   enablePilotActions();
   await loadReport();
+  await Promise.all([loadDiagnostics(),loadActions()]);
 }
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
   $('reportBox').textContent=model.report.report ||
     'Нет наблюдений. Загрузите обезличенные показатели после запуска пилота.';
+}
+async function loadDiagnostics(){
+  const pilot=currentPilot();
+  const result=await api('/guest/pilots/'+pilot.id+'/diagnostics');
+  if(result.diagnostic?.schema!=='osmanx.guest.diagnostic.v1')
+    throw Error('Неожиданный формат диагностики');
+  model.diagnostic=result;
+  const d=result.diagnostic;
+  $('diagnosticSummary').textContent=
+    'Периоды: '+d.observedPeriods+' · контроль: '+d.sample.control+
+    ' · предложение: '+d.sample.offer+
+    ' · повторные визиты: '+(d.rates.controlPct??'—')+'% / '+
+    (d.rates.offerPct??'—')+'% · разница: '+(d.rates.differencePp??'—')+
+    ' п.п. · замечаний: '+d.findingCount+'. '+d.disclaimer;
+  const list=$('diagnosticFindings');list.replaceChildren();
+  if(!d.recommendations.length)appendText(list,'li','Правила не обнаружили приоритетных предупреждений; это не означает отсутствие проблем.','small');
+  for(const r of d.recommendations){
+    const li=document.createElement('li'),info=document.createElement('div');
+    appendText(info,'strong',r.title+' · '+r.severity);
+    appendText(info,'p',r.why+' '+r.nextStep,'small');li.append(info);list.append(li);
+  }
+  const dropdown=$('actionCode'),selected=dropdown.value;
+  dropdown.replaceChildren();
+  const placeholder=document.createElement('option');placeholder.value='';
+  placeholder.textContent='Выберите вывод диагностики';dropdown.append(placeholder);
+  for(const r of d.recommendations){
+    const opt=document.createElement('option');opt.value=r.code;
+    opt.textContent=r.title;dropdown.append(opt);
+  }
+  if([...dropdown.options].some(o=>o.value===selected))dropdown.value=selected;
+}
+async function loadActions(){
+  const pilot=currentPilot(),response=await api('/guest/pilots/'+pilot.id+'/actions');
+  const list=$('actionList');list.replaceChildren();
+  if(!response.items.length)appendText(list,'li','Назначенных действий пока нет.','small');
+  for(const item of response.items){
+    const row=document.createElement('li'),info=document.createElement('div');
+    const title=model.diagnostic?.diagnostic.recommendations
+      .find(r=>r.code===item.code)?.title||item.code;
+    const staff=model.staffMembers.find(m=>m.account_id===item.assigned_to);
+    appendText(info,'strong',title);
+    appendText(info,'p','Статус: '+item.status+' · срок: '+item.dueDate+
+      ' · ответственный: '+(staff?.email||'назначенный сотрудник'),'small');
+    row.append(info);
+    const mayUpdate=manage()||(write()&&item.assigned_to===model.me?.account?.id);
+    if(mayUpdate){
+      const next=item.status==='open'?[['in_progress','Взять в работу'],['dismissed','Отклонить']]:
+        item.status==='in_progress'?[['done','Завершить'],['dismissed','Отклонить']]:[];
+      const controls=document.createElement('div');controls.className='actions';
+      for(const [state,caption] of next){
+        controls.append(actionButton(caption,async()=>{
+          if(state==='dismissed'&&!window.confirm('Отметить действие как отклонённое?'))return;
+          await api('/guest/pilots/'+pilot.id+'/actions/'+item.id,{
+            method:'PATCH',body:{expectedVersion:item.version,status:state}
+          });
+          await loadActions();
+          setStatus('Действие обновлено в журнале компании.');
+        },state==='dismissed'));
+      }
+      row.append(controls);
+    }
+    list.append(row);
+  }
 }
 function currentPilot(){
   if(!model.selected)throw Error('Сначала откройте пилот.');
@@ -410,8 +493,75 @@ function defaultStudyDates(){
   $('studyStart').value=now.toISOString().slice(0,10);
   $('studyEnd').value=plus.toISOString().slice(0,10);
   $('obsDate').max=now.toISOString().slice(0,10);
+  $('actionDue').value=new Date(now.getTime()+7*86400000).toISOString().slice(0,10);
 }
 defaultStudyDates();
+$('refreshDiagnostics').addEventListener('click',()=>safely(async()=>{
+  await loadDiagnostics();await loadActions();
+  setStatus('Диагностика обновлена по сохранённым данным.');
+}));
+$('actionForm').addEventListener('submit',event=>{
+  event.preventDefault();safely(async()=>{
+    if(!manage())throw Error('Назначать действия могут владелец и управляющий.');
+    const pilot=currentPilot();
+    await api('/guest/pilots/'+pilot.id+'/actions',{method:'POST',body:{
+      expectedPilotVersion:pilot.version,
+      code:$('actionCode').value,
+      assigneeId:$('actionAssignee').value,
+      dueDate:$('actionDue').value
+    }});
+    await loadActions();
+    setStatus('Задача зарегистрирована с ответственным и сроком. Это не доказательство эффекта.');
+  });
+});
+function resetBatchPreview(){
+  model.bulkPreview=null;$('bulkCommit').disabled=true;
+  $('bulkResult').textContent='CSV изменён. Требуется новая проверка без сохранения.';
+}
+$('bulkCsv').addEventListener('input',resetBatchPreview);
+$('bulkFile').addEventListener('change',()=>safely(async()=>{
+  const file=$('bulkFile').files?.[0];
+  if(!file)return;
+  if(file.size>4096)throw Error('Допускаются только небольшие CSV до 4 КБ.');
+  const csv=await file.text();
+  if(new TextEncoder().encode(csv).byteLength>4096)throw Error('CSV слишком большой.');
+  $('bulkCsv').value=csv;
+  resetBatchPreview();
+  setStatus('Файл загружен только в память этой вкладки. Проверьте CSV перед записью.');
+}));
+$('bulkPreview').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot(),csv=$('bulkCsv').value;
+  if(pilot.phase!=='running'||!write())throw Error('Запись разрешена только в открытом пилоте.');
+  const data=await api('/guest/pilots/'+pilot.id+'/observations/import/preview',{
+    method:'POST',body:{expectedVersion:pilot.version,csv}
+  });
+  if(data.schema!=='osmanx.guest.csv.preview.v1'||!/^[a-f0-9]{64}$/.test(data.sha256))
+    throw Error('Сервер вернул неверный формат предварительной проверки');
+  model.bulkPreview={pilotId:pilot.id,version:pilot.version,csv,sha256:data.sha256};
+  $('bulkCommit').disabled=false;
+  $('bulkResult').textContent='Проверено '+data.summary.rowCount+' периодов: '+
+    data.summary.firstDate+' — '+data.summary.lastDate+
+    '. Контроль: '+data.summary.totals.control+'; предложение: '+
+    data.summary.totals.offer+'. Контрольная сумма SHA-256: '+data.sha256+
+    '. Пока ничего не сохранено.';
+}));
+$('bulkCommit').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot(),preview=model.bulkPreview;
+  if(!preview||preview.pilotId!==pilot.id||preview.version!==pilot.version||
+     preview.csv!==$('bulkCsv').value)
+    throw Error('CSV изменился или версия пилота устарела. Проверьте повторно.');
+  if(!window.confirm('Сохранить '+$('bulkResult').textContent.split(' ')[1]+
+    ' проверенных периодов одной транзакцией?'))return;
+  $('bulkCommit').disabled=true;
+  const result=await api('/guest/pilots/'+pilot.id+'/observations/import',{
+    method:'POST',headers:{'Idempotency-Key':idempotency()},
+    body:{expectedVersion:preview.version,csv:preview.csv,sha256:preview.sha256}
+  });
+  model.bulkPreview=null;$('bulkCsv').value='';$('bulkFile').value='';
+  $('bulkResult').textContent='Сохранено '+result.rowsImported+' периодов. SHA-256: '+result.sha256;
+  await refreshCurrent();
+  setStatus('Пакет агрегатов записан атомарно; все строки подтверждены сервером.');
+}));
 $('loadReport').addEventListener('click',()=>safely(()=>loadReport()));
 $('downloadReport').addEventListener('click',()=>safely(async()=>{
   await downloadCsv('/guest/pilots/'+currentPilot().id+'/report.csv');

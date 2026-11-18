@@ -44,7 +44,7 @@ jobs:
           node --check assets/guest/console.js
           node --check assets/guest/join.js
           node --check assets/guest/pilot-model.js
-          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs tests/guest-console-r5.test.mjs tests/guest-console-r8.test.mjs
+          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs tests/guest-console-r5.test.mjs tests/guest-console-r8.test.mjs tests/guest-console-r9.test.mjs
           test -s assets/sovereign/workspace.html
           test -s assets/industry/index.html
           test -s assets/industry/style.css
@@ -133,7 +133,7 @@ jobs:
               assets/guest/pilot.html) marker="PILOT OPERATIONS R3" ;;
               assets/guest/pilot.js) marker="Сценарий восстановлен после строгой проверки полей" ;;
               assets/guest/pilot-model.js) marker="osmanx.guest.pilot.v1" ;;
-              assets/guest/console.html) marker="Guest Intelligence / R8 / Защищённый кабинет" ;;
+              assets/guest/console.html) marker="Guest Intelligence / R9 / Защищённый кабинет" ;;
               assets/guest/console.js) marker="Нет соединения с Industry API" ;;
               assets/guest/join.html) marker="Приглашение сотрудника" ;;
               assets/guest/join.js) marker="/staff/invitations/accept" ;;

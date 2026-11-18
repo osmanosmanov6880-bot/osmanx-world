@@ -3,6 +3,8 @@
 // Deliberately does NOT issue invoices, charge cards, email prospects or assert causal lift.
 import { createHash } from 'node:crypto';
 import { recordChange } from './database.mjs';
+import {diagnoseAggregates,RECOMMENDATIONS} from './guest-diagnostics.mjs';
+import {parseAggregateCsv,validateBatchWindow,batchDigest,summarizeBatch} from './guest-bulk.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -205,6 +207,22 @@ function calculate(pilot,observations){
 async function record(db,session,action,targetId,data){
   await recordChange(db,session.tenant_id,session.account_id,'guest.'+action,targetId,data);
 }
+async function checkBatchSlots(db,tenant,pilot,rows){
+  const active=await db.query(
+    'SELECT observed_on::text AS date FROM industry.guest_observations WHERE tenant_id=$1 AND pilot_id=$2 AND voided_at IS NULL',
+    [tenant,pilot.id]);
+  const occupied=new Set(active.rows.map(row=>row.date));
+  for(const row of rows)if(occupied.has(row.date))
+    throw problem(409,'CSV содержит дату, уже занятую активным наблюдением: '+row.date);
+  if(active.rowCount+rows.length>12)
+    throw problem(409,'Максимум 12 активных непересекающихся периодов на пилот');
+  return 12-active.rowCount;
+}
+function validatedCsv(raw,pilot,version){
+  const rows=guard(()=>validateBatchWindow(parseAggregateCsv(raw),pilot.protocol));
+  const hash=batchDigest(pilot.id,version,rows);
+  return {rows,hash,summary:summarizeBatch(rows)};
+}
 export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   const P=prefix+'/guest';
 
@@ -327,6 +345,76 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       [s.tenant_id,pilot.id]);
     return {item:flatPilot(pilot),observations:obs,reviews:reviews.rows};
   }));
+  // R9.1+2: authenticated, deterministic diagnosis from aggregate-only tenant data.
+  app.get(P+'/pilots/:id/diagnostics',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const rows=await activeObservations(db,s.tenant_id,pilot.id);
+    return {
+      pilotId:pilot.id,version:pilot.version,evidenceDigest:proof(pilot,rows),
+      diagnostic:diagnoseAggregates({pilot,observations:rows})
+    };
+  }));
+
+  // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
+  app.get(P+'/pilots/:id/actions',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const actions=await db.query(
+      'SELECT id,code,status,assigned_to,created_by,due_on::text AS "dueDate",version,created_at,updated_at FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY due_on ASC,created_at ASC,id ASC LIMIT 100',
+      [s.tenant_id,pilot.id]
+    );
+    return {pilotId:pilot.id,items:actions.rows};
+  }));
+  app.post(P+'/pilots/:id/actions',(req,reply)=>forTenant(req,MANAGE,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedPilotVersion','code','assigneeId','dueDate'],'Решение по пилоту');
+    if(typeof b.code!=='string'||!Object.hasOwn(RECOMMENDATIONS,b.code))
+      throw problem(400,'Такого проверяемого диагностического решения нет');
+    const dueDate=parseDate(b.dueDate),today=new Date().toISOString().slice(0,10);
+    const delta=(Date.parse(dueDate+'T00:00:00.000Z')-Date.parse(today+'T00:00:00.000Z'))/86400000;
+    if(delta<0||delta>180)throw problem(400,'Срок исполнения должен быть в пределах 180 дней');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    verifyVersion(pilot,versionOf({expectedVersion:b.expectedPilotVersion}));
+    const rows=await activeObservations(db,s.tenant_id,pilot.id);
+    const recommendations=diagnoseAggregates({pilot,observations:rows}).recommendations;
+    if(!recommendations.some(r=>r.code===b.code))
+      throw problem(409,'Это действие уже не подтверждается текущей диагностикой');
+    const assignee=uuid(b.assigneeId);
+    const member=await db.query(
+      "SELECT m.role FROM industry.memberships m JOIN industry.accounts a ON a.id=m.account_id WHERE m.tenant_id=$1 AND m.account_id=$2 AND NOT a.disabled",
+      [s.tenant_id,assignee]);
+    if(!member.rowCount||member.rows[0].role==='viewer')
+      throw problem(400,'Назначить можно только действующего сотрудника с правом работы');
+    const result=await db.query(
+      "INSERT INTO industry.guest_actions(tenant_id,pilot_id,code,status,assigned_to,created_by,due_on) VALUES($1,$2,$3,'open',$4,$5,$6::date) RETURNING id,code,status,assigned_to,created_by,due_on::text AS \"dueDate\",version,created_at,updated_at",
+      [s.tenant_id,pilot.id,b.code,assignee,s.account_id,dueDate]
+    );
+    await record(db,s,'action.created',result.rows[0].id,{pilotId:pilot.id,code:b.code});
+    reply.code(201);return {item:result.rows[0]};
+  }));
+  app.patch(P+'/pilots/:id/actions/:actionId',req=>forTenant(req,null,async(db,s,role)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','status'],'Обновление решения');
+    if(!['in_progress','done','dismissed'].includes(b.status))
+      throw problem(400,'Недопустимый статус задачи');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const id=uuid(req.params.actionId);
+    const result=await db.query(
+      'SELECT * FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2 AND id=$3 FOR UPDATE',
+      [s.tenant_id,pilot.id,id]);
+    if(!result.rowCount)throw problem(404,'Задача не найдена');
+    const item=result.rows[0];
+    if(role==='viewer'||(role==='operator'&&s.account_id!==item.assigned_to))
+      throw problem(403,'Недостаточно прав для изменения этой задачи');
+    if(item.version!==versionOf(b))throw problem(409,'Задача уже изменена, обновите список');
+    const transitions={open:['in_progress','dismissed'],in_progress:['done','dismissed'],done:[],dismissed:[]};
+    if(!transitions[item.status].includes(b.status))
+      throw problem(409,'Этот переход статуса запрещён');
+    const update=await db.query(
+      'UPDATE industry.guest_actions SET status=$1,version=version+1,updated_at=now() WHERE tenant_id=$2 AND pilot_id=$3 AND id=$4 RETURNING id,code,status,assigned_to,created_by,due_on::text AS "dueDate",version,created_at,updated_at',
+      [b.status,s.tenant_id,pilot.id,id]
+    );
+    await record(db,s,'action.'+b.status,id,{pilotId:pilot.id});
+    return {item:update.rows[0]};
+  }));
+
   app.patch(P+'/pilots/:id/readiness',req=>forTenant(req,MANAGE,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion','readiness'],'Готовность пилота');
     const version=versionOf(b),checked=parseReadiness(b.readiness);
@@ -380,6 +468,67 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     reply.code(201);
     return {observationId:inserted.rows[0].id,version:changed.rows[0].version};
   }));
+  // R9.4: isolated, strict dry-run. Preview NEVER writes any observation/import row.
+  app.post(P+'/pilots/:id/observations/import/preview',req=>forTenant(req,ROLES,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','csv'],'Предварительная проверка CSV');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const version=versionOf(b);verifyVersion(pilot,version);expectPhase(pilot,['running']);
+    const {rows,hash,summary}=validatedCsv(b.csv,pilot,version);
+    const remaining=await checkBatchSlots(db,s.tenant_id,pilot,rows);
+    return {schema:'osmanx.guest.csv.preview.v1',pilotId:pilot.id,
+      expectedVersion:version,sha256:hash,remainingSlots:remaining,summary,
+      disclaimer:'Предварительная проверка без сохранения. Подтверждение не доказывает корректность источника или независимость групп.'};
+  }));
+
+  app.get(P+'/pilots/:id/observations/imports',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const rows=await db.query(
+      'SELECT id,rows_imported,committed_version,created_at,created_by FROM industry.guest_bulk_imports WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY created_at DESC LIMIT 40',
+      [s.tenant_id,pilot.id]);
+    return {items:rows.rows};
+  }));
+
+  // Commit is atomic within withTenant's BEGIN/COMMIT and serialized by the pilot FOR UPDATE.
+  app.post(P+'/pilots/:id/observations/import',(req,reply)=>forTenant(req,ROLES,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','csv','sha256'],'Импорт агрегатов');
+    const version=versionOf(b),key=keyOf(req),pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    const {rows,hash,summary}=validatedCsv(b.csv,pilot,version);
+    if(typeof b.sha256!=='string'||b.sha256!==hash)
+      throw problem(409,'CSV изменён после предварительной проверки. Запустите просмотр заново.');
+    const old=await db.query(
+      'SELECT id,payload_digest,rows_imported,committed_version FROM industry.guest_bulk_imports WHERE tenant_id=$1 AND pilot_id=$2 AND idempotency_key=$3',
+      [s.tenant_id,pilot.id,key]);
+    if(old.rowCount){
+      if(old.rows[0].payload_digest!==hash)
+        throw problem(409,'Idempotency-Key уже использован для другого пакета');
+      return {duplicate:true,importId:old.rows[0].id,
+        rowsImported:old.rows[0].rows_imported,version:old.rows[0].committed_version,sha256:hash};
+    }
+    verifyVersion(pilot,version);expectPhase(pilot,['running']);
+    await checkBatchSlots(db,s.tenant_id,pilot,rows);
+    for(let i=0;i<rows.length;i++){
+      const r=rows[i];
+      // Exact row fingerprint is retained, raw CSV text and personal data are NOT stored.
+      const perRowKey='bulk:'+digest({batchKey:key,rowIndex:i});
+      await db.query(
+        'INSERT INTO industry.guest_observations(tenant_id,pilot_id,observed_on,control_count,control_return,offer_count,offer_return,created_by,idempotency_key,payload_digest) VALUES($1,$2,$3::date,$4,$5,$6,$7,$8,$9,$10)',
+        [s.tenant_id,pilot.id,r.date,r.control,r.controlReturn,r.offer,r.offerReturn,s.account_id,perRowKey,digest(r)]
+      );
+    }
+    const changed=await db.query(
+      'UPDATE industry.guest_pilots SET version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING version',
+      [s.tenant_id,pilot.id]);
+    const imported=await db.query(
+      'INSERT INTO industry.guest_bulk_imports(tenant_id,pilot_id,idempotency_key,payload_digest,rows_imported,committed_version,created_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',
+      [s.tenant_id,pilot.id,key,hash,rows.length,changed.rows[0].version,s.account_id]);
+    await record(db,s,'observations.batch_imported',pilot.id,{
+      batchId:imported.rows[0].id,rowCount:rows.length,sha256:hash
+    });
+    reply.code(201);
+    return {importId:imported.rows[0].id,rowsImported:rows.length,
+      version:changed.rows[0].version,sha256:hash,summary};
+  }));
+
   app.post(P+'/pilots/:id/observations/:observationId/void',req=>forTenant(req,MANAGE,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion'],'Отзыв наблюдения');
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
