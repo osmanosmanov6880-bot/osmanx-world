@@ -48,7 +48,7 @@ def main():
                 missing.screenshot(path=str(OUT/"offline.png"),full_page=True)
                 offline.close()
 
-                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[],"actions":[],"observations":[],"history":[]}
+                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[],"actions":[],"observations":[],"history":[],"launch_enrolled":False,"owner_signed":False,"manager_signed":False}
                 pilot_id="4929420c-375c-4e64-8916-8d774e182c63"
                 owner_id="0a61dbcb-e23e-474a-a9df-9b3f1338b165"
                 response_profile={"account":{"id":owner_id,"email":"owner@example.test"},
@@ -148,6 +148,51 @@ def main():
                         return respond(201,{"item":item})
                     if path==f"/guest/pilots/{pilot_id}" and method=="GET":
                         return respond(200,{"item":state["pilots"][0],"observations":state["observations"],"reviews":[]})
+                    if path==f"/guest/pilots/{pilot_id}/launch/gate" and method=="GET":
+                        enrolled=state["launch_enrolled"]
+                        ready=bool(state["pilots"]) and all(state["pilots"][0]["readiness"].values())
+                        draft=bool(state["pilots"]) and state["pilots"][0]["phase"]=="draft"
+                        checks={"enrolled":enrolled,"draft":draft,"protocol":True,
+                          "prospective":True,"measurementWindow":True,"sixReadiness":ready,
+                          "ownerPresent":True,"managerPresent":True,
+                          "ownerSigned":state["owner_signed"],
+                          "managerSigned":state["manager_signed"],
+                          "independent":state["owner_signed"] and state["manager_signed"]}
+                        return respond(200,{"schema":"osmanx.guest.launch.gate.v1",
+                          "pilotId":pilot_id,"phase":state["pilots"][0]["phase"],
+                          "version":state["pilots"][0]["version"],"enrolled":enrolled,
+                          "snapshotDigest":"b"*64,
+                          "attestations":{"owner":{
+                            "role":"owner","actorId":owner_id,
+                            "acceptedAt":"2026-11-18T11:00:00.000Z",
+                            "expiresAt":"2099-01-01T00:00:00.000Z",
+                            "current":True} if state["owner_signed"] else None,
+                            "manager":None},
+                          "checks":checks,
+                          "blockers":[{"code":k,"reason":"Нужно выполнить проверку"} for k,v in checks.items() if not v],
+                          "canStartIsolatedPilot":all(checks.values()),
+                          "customerProductionAuthorized":False})
+                    if path==f"/guest/pilots/{pilot_id}/launch/enroll" and method=="POST":
+                        assert req.post_data_json["confirm"] is True
+                        assert not state["launch_enrolled"]
+                        state["launch_enrolled"]=True
+                        state["pilots"][0]["version"]+=1
+                        state["pilots"][0]["launchGateEnrolledAt"]="2026-11-18T11:00:00Z"
+                        return respond(200,{"item":state["pilots"][0],"gate":{}})
+                    if path==f"/guest/pilots/{pilot_id}/launch/attest" and method=="POST":
+                        assert req.headers.get("idempotency-key")
+                        assert req.post_data_json["acknowledge"] is True
+                        state["owner_signed"]=True
+                        return respond(201,{"attestationId":"b7609b01-422d-49c1-82ce-555555555555","gate":{}})
+                    if path==f"/guest/pilots/{pilot_id}/launch/evidence.json" and method=="GET":
+                        compact=lambda o:json.dumps(o,separators=(",",":"),ensure_ascii=False).encode("utf-8")
+                        sha=lambda o:hashlib.sha256(compact(o)).hexdigest()
+                        snapshot={"schema":"osmanx.guest.launch.export.snapshot.v1",
+                          "pilotId":pilot_id,"originalEvidenceSha256":"a"*64,
+                          "attestations":[{"actor_id":owner_id,"role":"owner"}] if state["owner_signed"] else []}
+                        return respond(200,{"format":"osmanx.guest.launch.export.v1",
+                          "sha256":sha(snapshot),"snapshot":snapshot,
+                          "disclaimer":"SHA-256 is not digital signature"})
                     if path==f"/guest/pilots/{pilot_id}/diagnostics" and method=="GET":
                         return respond(200,{
                             "pilotId":pilot_id,"version":state["pilots"][0]["version"],
@@ -307,6 +352,26 @@ def main():
                 assert "294" in page.locator("#sample").inner_text()
                 assert "Зафиксированный протокол" in page.locator("#protocolStatus").inner_text()
                 assert "Нет проверяемых периодов" in page.locator("#diagnosticFindings").inner_text()
+                # R12: owner can enroll an empty draft; signoff requires later verified prerequisites.
+                assert page.locator("#launchGatePanel").is_visible()
+                assert page.locator("#launchGateEnroll").is_visible()
+                page.on("dialog",lambda dialog:dialog.accept())
+                page.locator("#launchGateEnroll").click()
+                page.wait_for_function("() => document.querySelector('#launchGateState').textContent.includes('заблокирован')")
+                assert state["launch_enrolled"]
+                assert page.locator("#launchGateEnroll").is_hidden()
+                assert page.locator("#launchGateAttest").is_disabled()
+                state["pilots"][0]["readiness"]={k:True for k in state["pilots"][0]["readiness"]}
+                page.locator("#launchGateRefresh").click()
+                page.wait_for_function("() => !document.querySelector('#launchGateAttest').disabled")
+                page.locator("#launchGateAttest").click()
+                page.wait_for_function("() => document.querySelector('#launchGateApprovals').textContent.includes('подтверждено до')")
+                assert state["owner_signed"] and not state["manager_signed"]
+                assert page.locator("#start").is_disabled()
+                with page.expect_download() as proof_download:
+                    page.locator("#launchGateExport").click()
+                assert proof_download.value.suggested_filename=="osmanx-guest-r12-launch-proof.json"
+
                 assert page.locator("#actionForm").is_visible()
                 page.locator("#actionCode").select_option("COLLECT_OBSERVATIONS")
                 page.locator("#actionAssignee").select_option(owner_id)
