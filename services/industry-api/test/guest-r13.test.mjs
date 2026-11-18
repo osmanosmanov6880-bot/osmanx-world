@@ -73,7 +73,9 @@ test('R13 emergency stop blocks all five aggregate mutation paths until independ
  const initial=expect(await send('GET',check,staff.viewer),200);
  assert.equal(initial.guestCollectionPaused,false);
  assert.equal(initial.quality.schema,'osmanx.guest.quality.v1');
- assert.equal(initial.quality.flags[0].code,'NO_OBSERVATIONS');
+ assert.ok(initial.quality.flags.some(f=>f.code==='NO_OBSERVATIONS'));
+ assert.ok(initial.quality.flags.some(f=>f.code==='LATE_REGISTRATION'),
+  'Same-day registration must be classified as retrospective under strict midnight UTC policy');
  assert.equal((await send('GET',check,staff.foreign)).statusCode,404);
  assert.equal((await send('POST',check+'/hold',staff.viewer,
   {expectedVersion:pilot.version,reasonCode:'data_quality'})).statusCode,403);
