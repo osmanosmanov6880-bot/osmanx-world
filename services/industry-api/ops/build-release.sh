@@ -31,7 +31,8 @@ done
 # Explicit allowlist; never copy .env, credentials, backups, archives, identity files.
 for name in .env.example Dockerfile.backup nginx-industry.conf provision-roles.sh \
   backup-encrypted.sh restore-dr.sh runtime-check.sh build-release.sh verify-release.sh \
-  compose.staging.yml stage-launch.sh r10-operator-gate.sh; do
+  compose.staging.yml stage-launch.sh r10-operator-gate.sh \
+  compose.r14.yml r14-canary.sh; do
   cp -- "$ROOT/ops/$name" "$dst/ops/$name"
 done
 
@@ -44,7 +45,7 @@ if find "$dst" -type f \( -name '.env' -o -name '*.key' -o -name '*.pem' -o -nam
 fi
 
 # Machine-readable, non-secret release contract; pinned to this exact Git tree.
-printf '{"schema":"osmanx.industry.r13.release.v1","commit":"%s","migration":"011_guest_pilot_safety.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
+printf '{"schema":"osmanx.industry.r14.release.v1","commit":"%s","migration":"011_guest_pilot_safety.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
 # Only the output artifact name references a commit SHA. No data from the live environment.
 (
   cd "$dst"
@@ -57,7 +58,7 @@ tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner \
   -C "$tmp" -cf - industry-api | gzip -n -9 > "$OUT/$archive"
 (cd "$OUT" && sha256sum "$archive" > "$archive.sha256")
 test -s "$OUT/$archive" && test -s "$OUT/$archive.sha256"
-printf 'R13 release packaged: %s\n' "$OUT/$archive"
-printf 'R13 archive checksum: %s\n' "$OUT/$archive.sha256"
+printf 'R14 release packaged: %s\n' "$OUT/$archive"
+printf 'R14 archive checksum: %s\n' "$OUT/$archive.sha256"
 printf 'Source commit: %s\n' "$VERSION"
 printf 'No secrets included, no infrastructure changed.\n'
