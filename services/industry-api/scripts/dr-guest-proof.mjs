@@ -3,6 +3,7 @@
 import pg from 'pg';
 import {createHash} from 'node:crypto';
 import {batchDigest} from '../src/guest-bulk.mjs';
+import {snapshotLaunch,launchPreflight} from '../src/guest-launch.mjs';
 const hash=obj=>createHash('sha256').update(JSON.stringify(obj)).digest('hex');
 const plan={baselinePct:20,liftPp:10,margin:300,discount:5,fixed:1000,fee:25000};
 const readiness={repeatDefinition:true,sameWindow:true,independentGroups:true,
@@ -137,8 +138,28 @@ async function seed(db){
     await db.query(
       "INSERT INTO industry.outbox(tenant_id,kind,payload) VALUES($1,'guest.pilot.archived',$2::jsonb)",
       [tenant,JSON.stringify({event:'guest.pilot.archived',entityId:modern})]);
+    // R12: a third, not-yet-launched synthetic pilot proves independent, expiring
+    // human attestations survive TWO-key restore without changing historical v1/v2.
+    const future=days=>new Date(Date.now()+days*86400000).toISOString().slice(0,10);
+    const launchProtocol={
+      startDate:future(2),endDate:future(11),outcomeWindowDays:1,
+      allocation:'random',source:'pos',primaryMetric:'repeat_visit'
+    };
+    const launchPilot=(await db.query(
+      "INSERT INTO industry.guest_pilots(tenant_id,created_by,title,phase,plan,readiness,target_per_group,protocol,protocol_registered_at,launch_gate_enrolled_at,version) VALUES($1,$2,'R12 synthetic pending two-person launch','draft',$3::jsonb,$4::jsonb,700,$5::jsonb,now(),now(),2) RETURNING *",
+      [tenant,owner,JSON.stringify(plan),JSON.stringify(readiness),JSON.stringify(launchProtocol)]
+    )).rows[0];
+    const launchDigest=hash(snapshotLaunch(launchPilot));
+    for(const [role,actor,key] of [
+      ['owner',owner,'r12-dr-owner-proof'],
+      ['manager',manager,'r12-dr-manager-proof']
+    ])await db.query(
+      "INSERT INTO industry.guest_launch_attestations(tenant_id,pilot_id,actor_id,role,snapshot_digest,pilot_version,idempotency_key) VALUES($1,$2,$3,$4,$5,$6,$7)",
+      [tenant,launchPilot.id,actor,role,launchDigest,launchPilot.version,key]
+    );
     await db.query('COMMIT');
-    return {ok:true,stage:'seed',proofSha256:originalHash,proofSha256V2:modernHash};
+    return {ok:true,stage:'seed',proofSha256:originalHash,
+      proofSha256V2:modernHash,proofSha256R12:launchDigest};
   }catch(e){await db.query('ROLLBACK');throw e}
 }
 async function verify(db){
@@ -205,8 +226,8 @@ async function verify(db){
     throw Error('R10 reviewed-by-independent-manager evidence invalid');
   const policies=await db.query(
     "SELECT count(*)::int AS n FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='industry' AND c.relname=ANY($1::text[]) AND c.relrowsecurity AND c.relforcerowsecurity",
-    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports','guest_action_history']]);
-  if(policies.rows[0].n!==8)throw Error('Row-level security was not restored');
+    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports','guest_action_history','guest_launch_attestations']]);
+  if(policies.rows[0].n!==9)throw Error('Row-level security was not restored');
   const task=await db.query(
     "SELECT code,status,assigned_to,created_by,version,due_on::text AS due_date FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2",
     [pilot.tenant_id,pilot.id]);
@@ -232,14 +253,42 @@ async function verify(db){
     "SELECT count(*)::int AS n FROM industry.audit_events WHERE tenant_id=$1 AND action IN ('guest.action.done','guest.observations.batch_imported')",
     [pilot.tenant_id]);
   if(actionAudit.rows[0].n!==2)throw Error('R9 follow-up audit not recovered');
+  const launchProof=await db.query(
+    "SELECT * FROM industry.guest_pilots WHERE tenant_id=$1 AND title='R12 synthetic pending two-person launch'",
+    [pilot.tenant_id]);
+  if(launchProof.rowCount!==1||launchProof.rows[0].phase!=='draft'||
+     !launchProof.rows[0].launch_gate_enrolled_at)
+    throw Error('R12 launch gate enrollment missing after recovery');
+  const launchPilot=launchProof.rows[0];
+  const launchHistory=await db.query(
+    "SELECT role,actor_id,snapshot_digest,accepted_at,expires_at,pilot_version FROM industry.guest_launch_attestations WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY role",
+    [pilot.tenant_id,launchPilot.id]);
+  if(launchHistory.rowCount!==2||launchHistory.rows[0].role!=='manager'||
+     launchHistory.rows[1].role!=='owner'||
+     launchHistory.rows[0].actor_id===launchHistory.rows[1].actor_id)
+    throw Error('Independent R12 human approvals were not restored');
+  const digestR12=hash(snapshotLaunch(launchPilot));
+  const expectedR12=process.env.R12_EXPECTED_DR_DIGEST;
+  if(!/^[a-f0-9]{64}$/.test(String(expectedR12||''))||digestR12!==expectedR12||
+     launchHistory.rows.some(r=>r.snapshot_digest!==digestR12||r.pilot_version!==launchPilot.version))
+    throw Error('R12 attestation SHA or original version differs after recovery');
+  const gate=launchPreflight({
+    pilot:launchPilot,members:[
+      {role:'owner',account_id:launchHistory.rows[1].actor_id,active:true},
+      {role:'manager',account_id:launchHistory.rows[0].actor_id,active:true}
+    ],attestations:launchHistory.rows
+  });
+  if(!gate.canStartIsolatedPilot||gate.customerProductionAuthorized!==false)
+    throw Error('R12 restored signoffs are invalid or claimed production authorization');
   const migration=await db.query(
-    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='009_guest_action_history.sql'"
+    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='010_guest_launch_gate.sql'"
   );
   if(migration.rows[0].n!==1)throw Error('Latest migration version not restored');
   return {ok:true,stage:'verify',observations:rows.rowCount,
     reviewedIndependently:true,proofSha256:digest,forcedRls:true,
     actionRecovered:true,actionHistoryRecovered:true,importRecovered:true,importSha256:expectedImportHash,
-    v2ProofRecovered:true,proofSha256V2:v2Hash};
+    v2ProofRecovered:true,proofSha256V2:v2Hash,
+    launchProofRecovered:true,proofSha256R12:digestR12};
 }
 if(process.argv[1]?.endsWith('/dr-guest-proof.mjs')){
   const [mode]=process.argv.slice(2),url=process.env.R7_DR_DB_URL;

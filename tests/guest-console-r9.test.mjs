@@ -16,7 +16,7 @@ test('R9 all operator controls have accessible stable IDs and real event handler
     assert.ok(html.includes('id="'+id+'"'),id);
     assert.ok(js.includes("$('"+id+"')")||id==='diagnosticsPanel'||id==='bulkPanel',id);
   }
-  assert.match(html,/R11 \/ Защищённый кабинет/);
+  assert.match(html,/R12 \/ Защищённый кабинет/);
   assert.match(html,/Без автоматических платежей/);
 });
 test('R9 browser respects role gates, preview-before-commit and no local persistence',()=>{

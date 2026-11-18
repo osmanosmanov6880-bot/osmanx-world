@@ -44,7 +44,7 @@ if find "$dst" -type f \( -name '.env' -o -name '*.key' -o -name '*.pem' -o -nam
 fi
 
 # Machine-readable, non-secret release contract; pinned to this exact Git tree.
-printf '{"schema":"osmanx.industry.r11.release.v1","commit":"%s","migration":"009_guest_action_history.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
+printf '{"schema":"osmanx.industry.r12.release.v1","commit":"%s","migration":"010_guest_launch_gate.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
 # Only the output artifact name references a commit SHA. No data from the live environment.
 (
   cd "$dst"
@@ -57,7 +57,7 @@ tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner \
   -C "$tmp" -cf - industry-api | gzip -n -9 > "$OUT/$archive"
 (cd "$OUT" && sha256sum "$archive" > "$archive.sha256")
 test -s "$OUT/$archive" && test -s "$OUT/$archive.sha256"
-printf 'R11 release packaged: %s\n' "$OUT/$archive"
+printf 'R12 release packaged: %s\n' "$OUT/$archive"
 printf 'R10 archive checksum: %s\n' "$OUT/$archive.sha256"
 printf 'Source commit: %s\n' "$VERSION"
 printf 'No secrets included, no infrastructure changed.\n'

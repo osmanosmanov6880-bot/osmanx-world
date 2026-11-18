@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 const flags=['repeatDefinition','sameWindow','independentGroups','marginVerified','contactConsent','ownerAgreed'];
 const currencies=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
 const model={me:null,requests:[],pilots:[],selected:null,report:null,
-  staffMembers:[],diagnostic:null,bulkPreview:null,operations:null,selectedAction:null};
+  staffMembers:[],diagnostic:null,bulkPreview:null,operations:null,selectedAction:null,launchGate:null};
 const manage=()=>['owner','manager'].includes(model.me?.role);
 const write=()=>['owner','manager','operator'].includes(model.me?.role);
 function setStatus(message,error=false){
@@ -67,7 +67,7 @@ function showAuth(){
   $('overviewPanel').hidden=true;$('operationsPanel').hidden=true;
   $('actionAssignmentForm').hidden=true;$('actionHistoryPanel').hidden=true;
   model.bulkPreview=null;model.diagnostic=null;model.operations=null;
-  model.selectedAction=null;model.staffMembers=[];
+  model.selectedAction=null;model.launchGate=null;model.staffMembers=[];
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -300,13 +300,14 @@ function enablePilotActions(){
   $('bulkPreview').disabled=!isWrite||phase!=='running';
   $('bulkCommit').disabled=!isWrite||phase!=='running'||!model.bulkPreview;
   $('actionForm').hidden=!isManage;
+  updateLaunchButtons();
   for(const checkbox of document.querySelectorAll('[data-ready]'))checkbox.disabled=!isManage||phase!=='draft';
 }
 async function openPilot(id){
   const switched=model.selected?.item?.id!==id;
   const data=await api('/guest/pilots/'+id);
   model.selected=data;
-  if(switched){model.bulkPreview=null;model.selectedAction=null;
+  if(switched){model.bulkPreview=null;model.selectedAction=null;model.launchGate=null;
     $('bulkCommit').disabled=true;$('actionHistoryPanel').hidden=true;
     $('actionAssignmentForm').hidden=true;
     $('bulkResult').textContent='CSV ещё не проверен.';}
@@ -350,13 +351,106 @@ async function openPilot(id){
   }
   enablePilotActions();
   await loadReport();
-  await Promise.all([loadDiagnostics(),loadActions()]);
+  await Promise.all([loadDiagnostics(),loadActions(),loadLaunchGate()]);
 }
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
   $('reportBox').textContent=model.report.report ||
     'Нет наблюдений. Загрузите обезличенные показатели после запуска пилота.';
+}
+const LAUNCH_LABELS={
+  enrolled:'Режим R12 включён',
+  draft:'Пилот в черновике',
+  protocol:'Зафиксирован протокол',
+  prospective:'Протокол зарегистрирован заблаговременно',
+  measurementWindow:'Срок наблюдения ещё не завершён',
+  sixReadiness:'Шесть условий подготовлены',
+  ownerPresent:'Действующий владелец',
+  managerPresent:'Действующий управляющий',
+  ownerSigned:'Актуальное подтверждение владельца',
+  managerSigned:'Актуальное подтверждение управляющего',
+  independent:'Подтверждения от разных сотрудников'
+};
+function updateLaunchButtons(){
+  const pilot=model.selected?.item,gate=model.launchGate;
+  if(!pilot)return;
+  const draft=pilot.phase==='draft',isManage=manage();
+  $('launchGateEnroll').hidden=!draft||!!gate?.enrolled||model.me?.role!=='owner';
+  $('launchGateEnroll').disabled=!draft||model.me?.role!=='owner'||!!gate?.enrolled;
+  const role=model.me?.role;
+  const otherBlockers=gate?.blockers?.filter(b=>
+    !['ownerSigned','managerSigned','independent'].includes(b.code))||[];
+  $('launchGateAttest').hidden=!draft||!gate?.enrolled||!isManage;
+  $('launchGateAttest').disabled=!draft||!gate?.enrolled||!isManage||
+    otherBlockers.length>0||!!gate?.attestations?.[role]?.current;
+  $('launchGateExport').hidden=!isManage;
+  $('launchGateExport').disabled=!isManage;
+  $('start').disabled=!isManage||!draft||(gate?.enrolled&&!gate.canStartIsolatedPilot);
+}
+async function loadLaunchGate(){
+  const pilot=currentPilot();
+  const gate=await api('/guest/pilots/'+pilot.id+'/launch/gate');
+  if(gate.schema!=='osmanx.guest.launch.gate.v1'||!Array.isArray(gate.blockers))
+    throw Error('Неверная версия допуска R12. Не запускайте пилот.');
+  model.launchGate=gate;
+  $('launchGateState').textContent=gate.canStartIsolatedPilot
+    ?'Оба сотрудника подтвердили текущий протокол и готовность. Можно начать только изолированный пилот; production отдельно не разрешён.'
+    :gate.enrolled
+      ?'Запуск с контролем R12 заблокирован. Устраните '+gate.blockers.length+
+        ' препятствий и получите подтверждения двух сотрудников.'
+      :'Контроль R12 ещё не включён. Владелец может активировать необратимый двухсотрудниковый допуск.';
+  const items=$('launchGateChecklist');items.replaceChildren();
+  for(const [key,value] of Object.entries(gate.checks)){
+    const row=document.createElement('li'),reason=gate.blockers.find(b=>b.code===key);
+    appendText(row,'span',(value?'Пройдено: ':'Требуется: ')+
+      (LAUNCH_LABELS[key]||key)+(reason?' — '+reason.reason:''),'small');
+    items.append(row);
+  }
+  const approvals=['owner','manager'].map(role=>{
+    const current=gate.attestations?.[role];
+    return (role==='owner'?'Владелец':'Управляющий')+': '+
+      (current?.current?'подтверждено до '+new Date(current.expiresAt).toLocaleDateString('ru-RU'):
+        'нужно актуальное подтверждение');
+  });
+  $('launchGateApprovals').textContent=approvals.join(' · ')+
+    ' · SHA-256 условий: '+gate.snapshotDigest;
+  updateLaunchButtons();
+}
+async function downloadLaunchGateProof(){
+  if(!manage())throw Error('Журнал запуска доступен только руководителю.');
+  const pilot=currentPilot();
+  const response=await fetch(API+'/guest/pilots/'+pilot.id+'/launch/evidence.json',{
+    method:'GET',credentials:'same-origin',cache:'no-store',
+    headers:{Accept:'application/json'}
+  });
+  if(!(response.headers.get('content-type')||'').includes('application/json'))
+    throw Error('Сервер не вернул JSON журнала допуска.');
+  if(!response.ok){
+    const error=await response.json();
+    throw Error(error?.error||'Ошибка выгрузки '+response.status);
+  }
+  if(Number(response.headers.get('content-length')||0)>2000000)
+    throw Error('Превышен размер пакета.');
+  const packet=await response.json();
+  if(packet.format!=='osmanx.guest.launch.export.v1'||!packet.snapshot||
+    !/^[a-f0-9]{64}$/.test(packet.sha256)||
+    !/^[a-f0-9]{64}$/.test(packet.snapshot.originalEvidenceSha256))
+    throw Error('Неверный формат проверяемого пакета.');
+  const bytes=new TextEncoder().encode(JSON.stringify(packet.snapshot));
+  if(bytes.byteLength>2000000)throw Error('Пакет слишком большой.');
+  const value=await crypto.subtle.digest('SHA-256',bytes);
+  const digest=[...new Uint8Array(value)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  if(digest!==packet.sha256)throw Error('SHA-256 пакета не совпадает. Файл не сохранён.');
+  const objectUrl=URL.createObjectURL(new Blob([JSON.stringify(packet,null,2)],{
+    type:'application/json'
+  }));
+  try{
+    const a=document.createElement('a');a.href=objectUrl;
+    a.download='osmanx-guest-r12-launch-proof.json';
+    document.body.append(a);a.click();a.remove();
+  }finally{setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);}
+  setStatus('Журнал допуска выгружен. SHA-256 проверен в браузере. Это не цифровая подпись.');
 }
 async function loadDiagnostics(){
   const pilot=currentPilot();
@@ -602,6 +696,33 @@ function defaultStudyDates(){
   $('actionDue').value=new Date(now.getTime()+7*86400000).toISOString().slice(0,10);
 }
 defaultStudyDates();
+$('launchGateRefresh').addEventListener('click',()=>safely(async()=>{
+  await loadLaunchGate();setStatus('Условия запуска пересчитаны на сервере.');
+}));
+$('launchGateEnroll').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot();
+  if(model.me?.role!=='owner'||pilot.phase!=='draft')
+    throw Error('Только владелец может включить режим R12 для черновика.');
+  if(!window.confirm('Включить необратимый двухсотрудниковый контроль запуска? Отключить его будет нельзя.'))return;
+  await api('/guest/pilots/'+pilot.id+'/launch/enroll',{
+    method:'POST',body:{expectedVersion:pilot.version,confirm:true}
+  });
+  await refresh();
+  setStatus('R12 включён. Теперь требуются действующие подтверждения владельца и управляющего.');
+}));
+$('launchGateAttest').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot(),gate=model.launchGate;
+  if(!manage()||!gate?.enrolled||pilot.phase!=='draft')
+    throw Error('Подтверждение в этом состоянии запрещено.');
+  if(!window.confirm('Подтвердить текущий протокол, проверку согласий и шесть условий запуска именно вашей учётной записью?'))return;
+  await api('/guest/pilots/'+pilot.id+'/launch/attest',{
+    method:'POST',headers:{'Idempotency-Key':idempotency()},
+    body:{expectedVersion:pilot.version,acknowledge:true}
+  });
+  await loadLaunchGate();
+  setStatus('Ваше подтверждение сохранено в неизменяемом журнале на 14 дней.');
+}));
+$('launchGateExport').addEventListener('click',()=>safely(()=>downloadLaunchGateProof()));
 $('operationsRefresh').addEventListener('click',()=>safely(async()=>{
   await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
 }));

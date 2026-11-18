@@ -6,6 +6,7 @@ import { recordChange } from './database.mjs';
 import {diagnoseAggregates,RECOMMENDATIONS} from './guest-diagnostics.mjs';
 import {parseAggregateCsv,validateBatchWindow,batchDigest,summarizeBatch} from './guest-bulk.mjs';
 import {createOperationsOverview,createOperationsExport} from './guest-operations.mjs';
+import {launchPreflight} from './guest-launch.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -152,6 +153,7 @@ const flatPilot=row=>({
   version:row.version,plan:row.plan,readiness:row.readiness,targetPerGroup:row.target_per_group,
   protocol:row.protocol||null,protocolRegisteredAt:row.protocol_registered_at||null,
   prospectivelyRegistered:prospective(row),
+  launchGateEnrolledAt:row.launch_gate_enrolled_at||null,
   createdAt:row.created_at,updatedAt:row.updated_at,
   submittedDigest:row.submitted_digest,
   submittedBy:row.submitted_by,reviewedBy:row.reviewed_by,reviewedAt:row.reviewed_at,
@@ -247,6 +249,20 @@ function validDueWithin180(raw){
   const delta=(Date.parse(dueDate+'T00:00:00.000Z')-Date.parse(today+'T00:00:00.000Z'))/86400000;
   if(delta<0||delta>180)throw problem(400,'Срок исполнения должен быть в пределах 180 дней');
   return dueDate;
+}
+async function currentLaunchGate(db,tenant,pilot){
+  // The tenant RLS transaction is inherited; expired and demoted signers never authorize.
+  const members=await db.query(
+    "SELECT m.account_id,m.role,NOT a.disabled AS active FROM industry.memberships m"+
+    " JOIN industry.accounts a ON a.id=m.account_id"+
+    " WHERE m.tenant_id=$1 AND m.role IN ('owner','manager')",
+    [tenant]);
+  const signed=await db.query(
+    "SELECT DISTINCT ON (role) role,actor_id,snapshot_digest,accepted_at,expires_at"+
+    " FROM industry.guest_launch_attestations WHERE tenant_id=$1 AND pilot_id=$2"+
+    " ORDER BY role,accepted_at DESC,id DESC",
+    [tenant,pilot.id]);
+  return launchPreflight({pilot,members:members.rows,attestations:signed.rows});
 }
 export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   const P=prefix+'/guest';
@@ -383,6 +399,86 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       [s.tenant_id,pilot.id]);
     return {item:flatPilot(pilot),observations:obs,reviews:reviews.rows};
   }));
+  // R12 human pilot gate. Optional enrollment is irreversible; legacy pilots stay compatible.
+  app.get(P+'/pilots/:id/launch/gate',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    return currentLaunchGate(db,s.tenant_id,pilot);
+  }));
+
+  app.post(P+'/pilots/:id/launch/enroll',req=>forTenant(req,['owner'],async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','confirm'],'Включение двухсотрудникового допуска');
+    if(b.confirm!==true)throw problem(400,'Требуется прямое подтверждение необратимого включения');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    verifyVersion(pilot,versionOf(b));expectPhase(pilot,['draft']);
+    if(pilot.launch_gate_enrolled_at)
+      throw problem(409,'Двухсотрудниковый допуск уже включён и не может быть отменён');
+    if(!pilot.protocol)
+      throw problem(409,'Нужен предварительно зафиксированный протокол');
+    const updated=await db.query(
+      'UPDATE industry.guest_pilots SET launch_gate_enrolled_at=now(),version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING *',
+      [s.tenant_id,pilot.id]);
+    await record(db,s,'launch.enrolled',pilot.id);
+    return {item:flatPilot(updated.rows[0]),gate:await currentLaunchGate(db,s.tenant_id,updated.rows[0])};
+  }));
+
+  app.post(P+'/pilots/:id/launch/attest',(req,reply)=>forTenant(req,MANAGE,async(db,s,role)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','acknowledge'],'Подтверждение запуска');
+    if(b.acknowledge!==true)throw problem(400,'Подтверждение должно быть явным');
+    const key=keyOf(req);
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    verifyVersion(pilot,versionOf(b));expectPhase(pilot,['draft']);
+    if(!pilot.launch_gate_enrolled_at)throw problem(409,'Сначала владелец должен включить R12');
+    const gate=await currentLaunchGate(db,s.tenant_id,pilot);
+    const conflicting=gate.blockers.filter(x=>!['ownerSigned','managerSigned','independent'].includes(x.code));
+    if(conflicting.length)
+      throw problem(409,'Нельзя подтвердить допуск: '+conflicting.map(x=>x.reason).join(' '));
+    const existing=await db.query(
+      'SELECT id,actor_id,role,snapshot_digest FROM industry.guest_launch_attestations WHERE tenant_id=$1 AND pilot_id=$2 AND idempotency_key=$3',
+      [s.tenant_id,pilot.id,key]);
+    if(existing.rowCount){
+      const e=existing.rows[0];
+      if(e.actor_id!==s.account_id||e.role!==role||e.snapshot_digest!==gate.snapshotDigest)
+        throw problem(409,'Idempotency-Key использован для другого подтверждения');
+      return {duplicate:true,attestationId:e.id,gate};
+    }
+    if(gate.attestations[role]?.current)
+      throw problem(409,'Подтверждение этой роли уже действительно. Повторять запись нельзя');
+    const created=await db.query(
+      "INSERT INTO industry.guest_launch_attestations(tenant_id,pilot_id,actor_id,role,snapshot_digest,pilot_version,idempotency_key) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+      [s.tenant_id,pilot.id,s.account_id,role,gate.snapshotDigest,pilot.version,key]);
+    await record(db,s,'launch.attested',pilot.id,{role});
+    reply.code(201);
+    return {attestationId:created.rows[0].id,gate:await currentLaunchGate(db,s.tenant_id,pilot)};
+  }));
+
+  // R12 export preserves the ORIGINAL protocol/aggregate digest and adds a distinct launch SHA.
+  app.get(P+'/pilots/:id/launch/evidence.json',(req,reply)=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const gate=await currentLaunchGate(db,s.tenant_id,pilot);
+    const rows=await db.query(
+      "SELECT id,role,actor_id,snapshot_digest,pilot_version,accepted_at,expires_at"+
+      " FROM industry.guest_launch_attestations WHERE tenant_id=$1 AND pilot_id=$2"+
+      " ORDER BY accepted_at ASC,id ASC LIMIT 101",
+      [s.tenant_id,pilot.id]);
+    if(rows.rowCount>100)
+      throw problem(409,'История больше допустимого полного пакета');
+    const observations=await activeObservations(db,s.tenant_id,pilot.id);
+    const snapshot={
+      schema:'osmanx.guest.launch.export.snapshot.v1',pilotId:pilot.id,
+      enrolledAt:pilot.launch_gate_enrolled_at||null,
+      gate,attestations:rows.rows,
+      originalEvidenceSha256:proof(pilot,observations)
+    };
+    const packet={
+      format:'osmanx.guest.launch.export.v1',
+      sha256:digest(snapshot),snapshot,
+      disclaimer:'Хеш подтверждает целостность пакета, не подпись, не согласие клиента, не платёж и не разрешение на production.'
+    };
+    reply.header('Content-Disposition','attachment; filename="osmanx-guest-r12-launch-proof.json"');
+    reply.header('Content-Type','application/json; charset=utf-8');
+    return reply.send(packet);
+  }));
+
   // R9.1+2: authenticated, deterministic diagnosis from aggregate-only tenant data.
   app.get(P+'/pilots/:id/diagnostics',req=>forTenant(req,null,async(db,s)=>{
     const pilot=await getPilot(db,s.tenant_id,req.params.id);
@@ -513,6 +609,11 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     verifyVersion(pilot,version);expectPhase(pilot,['draft']);
     if(!pilot.protocol)throw problem(409,'Исторический пилот без зарегистрированного протокола: запуск запрещён');
     if(!parseReadiness(pilot.readiness).ready)throw problem(409,'Не закрыты условия готовности');
+    if(pilot.launch_gate_enrolled_at){
+      const gate=await currentLaunchGate(db,s.tenant_id,pilot);
+      if(!gate.canStartIsolatedPilot)
+        throw problem(409,'R12: запуск заблокирован. Нужны действующие независимые подтверждения владельца и управляющего и все предварительные условия');
+    }
     const r=await db.query(
       "UPDATE industry.guest_pilots SET phase='running',version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING *",
       [s.tenant_id,pilot.id]);

@@ -89,7 +89,7 @@ after(async()=>{
 });
 test('R10 production-like HTTP: independent users, protected evidence and audited R9 actions through final archive',async()=>{
   const beforeReady=ok(await call('GET','/health/ready'),200);
-  assert.equal(beforeReady.schemaVersion,'009_guest_action_history.sql');
+  assert.equal(beforeReady.schemaVersion,'010_guest_launch_gate.sql');
   assert.equal(beforeReady.guestWritesEnabled,false);
   assert.equal(beforeReady.forcedRls,true);
   ok(await call('POST','/guest/requests',owner,
