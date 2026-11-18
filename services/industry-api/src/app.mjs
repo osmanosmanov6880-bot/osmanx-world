@@ -6,6 +6,7 @@ import { hashPassword, verifyPassword, sha256 } from './password.mjs';
 import { registerStaffRoutes } from './staff.mjs';
 import { registerScheduleRoutes, lockResource, assertBookable } from './schedule.mjs';
 import { registerIntegrationRoutes } from './integrations.mjs';
+import { registerGuestRoutes } from './guest.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -234,5 +235,6 @@ export async function buildApp(pool){
   registerStaffRoutes(app,{prefix:PREFIX,pool,forTenant,bodyOf});
   registerScheduleRoutes(app,{prefix:PREFIX,forTenant,bodyOf,identifier});
   registerIntegrationRoutes(app,{prefix:PREFIX,forTenant});
+  registerGuestRoutes(app,{prefix:PREFIX,forTenant,bodyOf});
   return app;
 }
