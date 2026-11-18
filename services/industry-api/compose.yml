@@ -5,7 +5,7 @@ x-api-image: &api-image
   build:
     context: .
     dockerfile: Dockerfile
-  image: osmanx-industry-api:r4
+  image: osmanx-industry-api:r6
 services:
   db:
     image: postgres:16
@@ -83,6 +83,7 @@ services:
       BIND_HOST: 0.0.0.0
       PORT: "3047"
       ALLOWED_ORIGIN: https://osmanx.world
+      GUEST_WRITES_ENABLED: ${GUEST_WRITES_ENABLED:-false}
       DATABASE_URL: postgresql://industry_app:${INDUSTRY_APP_PASSWORD:?}@db:5432/industry_prod
     ports:
       - "127.0.0.1:3047:3047"
@@ -117,7 +118,7 @@ services:
     build:
       context: .
       dockerfile: ops/Dockerfile.backup
-    image: osmanx-industry-maintenance:r4
+    image: osmanx-industry-maintenance:r6
     command: ["/opt/industry/backup-encrypted.sh", "/backups"]
     environment:
       BACKUP_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/industry_prod
