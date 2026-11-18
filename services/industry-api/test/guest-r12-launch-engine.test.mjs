@@ -73,10 +73,10 @@ test('R12 retroactive protocol, stale period and un-enrolled drafts fail closed'
   assert.ok(launchPreflight({pilot:stale,members,attestations:signs,now}).blockers.some(x=>x.code==='measurementWindow'));
   assert.equal(launchPreflight({pilot:{...pilot,launch_gate_enrolled_at:null},members,attestations:signs,now}).canStartIsolatedPilot,false);
 });
-test('R12 digest is deterministic, version-independent, but binds exact protocol and target',()=>{
+test('R12 digest binds pilot revision, protocol and target; prior signoffs cannot reactivate after reverting changes',()=>{
   const baseline=snapshotLaunch(pilot),hash=launchPreflight({pilot,members,now}).snapshotDigest;
-  assert.deepEqual(snapshotLaunch({...pilot,version:900}),baseline);
-  assert.equal(launchPreflight({pilot:{...pilot,version:900},members,now}).snapshotDigest,hash);
+  assert.notDeepEqual(snapshotLaunch({...pilot,version:900}),baseline);
+  assert.notEqual(launchPreflight({pilot:{...pilot,version:900},members,now}).snapshotDigest,hash);
   assert.notEqual(launchPreflight({pilot:{...pilot,target_per_group:500},members,now}).snapshotDigest,hash);
   assert.notEqual(launchPreflight({pilot:{...pilot,protocol:{...pilot.protocol,source:'crm'}},members,now}).snapshotDigest,hash);
 });
