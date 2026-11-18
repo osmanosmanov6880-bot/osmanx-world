@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 
 export const PROD_BASE='https://osmanx.world';
-export const EXPECTED_SCHEMA='008_guest_actions_and_imports.sql';
+export const EXPECTED_SCHEMA='009_guest_action_history.sql';
 const PILOT='00000000-0000-4000-8000-000000000000';
 export const CHECKS=Object.freeze([
   {key:'staticConsole',path:'/assets/guest/console.html',expect:200,marker:'Guest Intelligence / R9 / Защищённый кабинет'},
