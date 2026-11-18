@@ -64,8 +64,9 @@ test('R6 real HTTP: cookies, invitation, two-person proof, archival and CSRF',as
     {'Idempotency-Key':'r6-lead-'+tag}),201).item;
   code(await http('PATCH','/guest/requests/'+lead.id,reviewer,{state:'qualified'}),200);
   const plan={baselinePct:20,liftPp:10,margin:300,discount:5,fixed:1000,fee:25000};
+  const protocol={startDate:'2026-11-01',endDate:'2026-11-16',outcomeWindowDays:1,allocation:'random',source:'pos',primaryMetric:'repeat_visit'};
   let pilot=code(await http('POST','/guest/pilots',owner,
-    {title:'Synthetic HTTP pilot',plan,requestId:lead.id}),201).item;
+    {title:'Synthetic HTTP pilot',plan,requestId:lead.id,protocol}),201).item;
   const checks=Object.fromEntries(['repeatDefinition','sameWindow','independentGroups',
     'marginVerified','contactConsent','ownerAgreed'].map(k=>[k,true]));
   pilot=code(await http('PATCH','/guest/pilots/'+pilot.id+'/readiness',owner,
