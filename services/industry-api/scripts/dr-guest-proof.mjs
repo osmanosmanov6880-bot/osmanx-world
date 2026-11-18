@@ -114,10 +114,10 @@ async function verify(db){
   if(audits.rows[0].n!==1||events.rows[0].n!==1)throw Error('Audit or outbox missing');
   const policies=await db.query(
     "SELECT count(*)::int AS n FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='industry' AND c.relname=ANY($1::text[]) AND c.relrowsecurity AND c.relforcerowsecurity",
-    [['guest_requests','guest_pilots','guest_observations','guest_reviews']]);
-  if(policies.rows[0].n!==4)throw Error('Row-level security was not restored');
+    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports']]);
+  if(policies.rows[0].n!==7)throw Error('Row-level security was not restored');
   const migration=await db.query(
-    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='007_guest_protocol_governance.sql'"
+    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='008_guest_actions_and_imports.sql'"
   );
   if(migration.rows[0].n!==1)throw Error('Latest migration version not restored');
   return {ok:true,stage:'verify',observations:rows.rowCount,
