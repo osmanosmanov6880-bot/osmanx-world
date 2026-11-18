@@ -208,6 +208,54 @@ async function record(db,session,action,targetId,data){
 export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   const P=prefix+'/guest';
 
+  // R8 BLOCK 3: owner dashboard. No guest names/contacts: only RLS-filtered aggregates.
+  app.get(P+'/overview',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const [requestStates,pilotStates,quotaResult,observations]=await Promise.all([
+      db.query("SELECT state,count(*)::int AS n FROM industry.guest_requests WHERE tenant_id=$1 AND created_at>=now()-interval '365 days' GROUP BY state",[s.tenant_id]),
+      db.query("SELECT phase,count(*)::int AS n FROM industry.guest_pilots WHERE tenant_id=$1 GROUP BY phase",[s.tenant_id]),
+      db.query("SELECT annual_request_limit,active_pilot_limit FROM industry.guest_quotas WHERE tenant_id=$1",[s.tenant_id]),
+      db.query("SELECT count(*)::int AS periods,coalesce(sum(control_count),0)::bigint AS control,coalesce(sum(offer_count),0)::bigint AS offered FROM industry.guest_observations WHERE tenant_id=$1 AND voided_at IS NULL",[s.tenant_id])
+    ]);
+    const requestCounts=Object.fromEntries(['new','qualified','declined','converted'].map(x=>[x,0]));
+    const phases=Object.fromEntries(['draft','running','in_review','returned','reviewed','archived'].map(x=>[x,0]));
+    for(const row of requestStates.rows)requestCounts[row.state]=row.n;
+    for(const row of pilotStates.rows)phases[row.phase]=row.n;
+    const limits=quotaResult.rows[0]||{annual_request_limit:250,active_pilot_limit:50};
+    const requestsUsed=Object.values(requestCounts).reduce((n,v)=>n+v,0);
+    const pilotsUsed=Object.entries(phases).filter(([key])=>key!=='archived')
+      .reduce((n,[,value])=>n+value,0);
+    return {
+      schema:'osmanx.guest.overview.v1',
+      requests:requestCounts,pilots:phases,
+      quotas:{requests:{used:requestsUsed,limit:limits.annual_request_limit,windowDays:365},
+        activePilots:{used:pilotsUsed,limit:limits.active_pilot_limit}},
+      aggregate:{periods:observations.rows[0].periods,
+        control:Number(observations.rows[0].control),offered:Number(observations.rows[0].offered)},
+      warning:'Числа показывают деятельность в компании, не причинный эффект, подтверждённую прибыль или оплату.'
+    };
+  }));
+
+  // R8 BLOCK 4: safe bounded cleanup of declined, unlinked requests.
+  // Preserve IDs, audit/outbox and decision; scrub only free-text PII-prone title.
+  app.post(P+'/requests/retention',req=>forTenant(req,['owner'],async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['confirm'],'Очистка запросов');
+    if(b.confirm!==true)throw problem(400,'Требуется явное подтверждение очистки');
+    const changed=await db.query(
+      "WITH candidates AS ("+
+      " SELECT r.id FROM industry.guest_requests r WHERE r.tenant_id=$1"+
+      " AND r.state='declined' AND r.redacted_at IS NULL"+
+      " AND r.updated_at<now()-interval '90 days'"+
+      " AND NOT EXISTS (SELECT 1 FROM industry.guest_pilots p WHERE p.tenant_id=$1 AND p.request_id=r.id)"+
+      " ORDER BY r.updated_at ASC LIMIT 100 FOR UPDATE OF r SKIP LOCKED"+
+      ") UPDATE industry.guest_requests r SET title='Данные удалены по сроку хранения',"+
+      " redacted_at=now(),updated_at=now() FROM candidates c"+
+      " WHERE r.tenant_id=$1 AND r.id=c.id RETURNING r.id",
+      [s.tenant_id]
+    );
+    for(const {id} of changed.rows)await record(db,s,'request.redacted',id);
+    return {redacted:changed.rowCount,limitPerRun:100,policy:'declined-unlinked-older-than-90-days'};
+  }));
+
   // BLOCK 2: authenticated commercial intake with tenant-scoped idempotency.
   app.get(P+'/requests',req=>forTenant(req,null,async(db,s)=>{
     const rows=await db.query(
