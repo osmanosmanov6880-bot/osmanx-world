@@ -3,6 +3,8 @@
 // Deliberately does NOT issue invoices, charge cards, email prospects or assert causal lift.
 import { createHash } from 'node:crypto';
 import { recordChange } from './database.mjs';
+import {diagnoseAggregates,RECOMMENDATIONS} from './guest-diagnostics.mjs';
+import {parseAggregateCsv,validateBatchWindow,batchDigest,summarizeBatch} from './guest-bulk.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -327,6 +329,76 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       [s.tenant_id,pilot.id]);
     return {item:flatPilot(pilot),observations:obs,reviews:reviews.rows};
   }));
+  // R9.1+2: authenticated, deterministic diagnosis from aggregate-only tenant data.
+  app.get(P+'/pilots/:id/diagnostics',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const rows=await activeObservations(db,s.tenant_id,pilot.id);
+    return {
+      pilotId:pilot.id,version:pilot.version,evidenceDigest:proof(pilot,rows),
+      diagnostic:diagnoseAggregates({pilot,observations:rows})
+    };
+  }));
+
+  // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
+  app.get(P+'/pilots/:id/actions',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const actions=await db.query(
+      'SELECT id,code,status,assigned_to,created_by,due_on::text AS "dueDate",version,created_at,updated_at FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY due_on ASC,created_at ASC,id ASC LIMIT 100',
+      [s.tenant_id,pilot.id]
+    );
+    return {pilotId:pilot.id,items:actions.rows};
+  }));
+  app.post(P+'/pilots/:id/actions',(req,reply)=>forTenant(req,MANAGE,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedPilotVersion','code','assigneeId','dueDate'],'Решение по пилоту');
+    if(typeof b.code!=='string'||!Object.hasOwn(RECOMMENDATIONS,b.code))
+      throw problem(400,'Такого проверяемого диагностического решения нет');
+    const dueDate=parseDate(b.dueDate),today=new Date().toISOString().slice(0,10);
+    const delta=(Date.parse(dueDate+'T00:00:00.000Z')-Date.parse(today+'T00:00:00.000Z'))/86400000;
+    if(delta<0||delta>180)throw problem(400,'Срок исполнения должен быть в пределах 180 дней');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    verifyVersion(pilot,versionOf({expectedVersion:b.expectedPilotVersion}));
+    const rows=await activeObservations(db,s.tenant_id,pilot.id);
+    const recommendations=diagnoseAggregates({pilot,observations:rows}).recommendations;
+    if(!recommendations.some(r=>r.code===b.code))
+      throw problem(409,'Это действие уже не подтверждается текущей диагностикой');
+    const assignee=uuid(b.assigneeId);
+    const member=await db.query(
+      "SELECT m.role FROM industry.memberships m JOIN industry.accounts a ON a.id=m.account_id WHERE m.tenant_id=$1 AND m.account_id=$2 AND NOT a.disabled",
+      [s.tenant_id,assignee]);
+    if(!member.rowCount||member.rows[0].role==='viewer')
+      throw problem(400,'Назначить можно только действующего сотрудника с правом работы');
+    const result=await db.query(
+      "INSERT INTO industry.guest_actions(tenant_id,pilot_id,code,status,assigned_to,created_by,due_on) VALUES($1,$2,$3,'open',$4,$5,$6::date) RETURNING id,code,status,assigned_to,created_by,due_on::text AS \"dueDate\",version,created_at,updated_at",
+      [s.tenant_id,pilot.id,b.code,assignee,s.account_id,dueDate]
+    );
+    await record(db,s,'action.created',result.rows[0].id,{pilotId:pilot.id,code:b.code});
+    reply.code(201);return {item:result.rows[0]};
+  }));
+  app.patch(P+'/pilots/:id/actions/:actionId',req=>forTenant(req,null,async(db,s,role)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','status'],'Обновление решения');
+    if(!['in_progress','done','dismissed'].includes(b.status))
+      throw problem(400,'Недопустимый статус задачи');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const id=uuid(req.params.actionId);
+    const result=await db.query(
+      'SELECT * FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2 AND id=$3 FOR UPDATE',
+      [s.tenant_id,pilot.id,id]);
+    if(!result.rowCount)throw problem(404,'Задача не найдена');
+    const item=result.rows[0];
+    if(role==='viewer'||(role==='operator'&&s.account_id!==item.assigned_to))
+      throw problem(403,'Недостаточно прав для изменения этой задачи');
+    if(item.version!==versionOf(b))throw problem(409,'Задача уже изменена, обновите список');
+    const transitions={open:['in_progress','dismissed'],in_progress:['done','dismissed'],done:[],dismissed:[]};
+    if(!transitions[item.status].includes(b.status))
+      throw problem(409,'Этот переход статуса запрещён');
+    const update=await db.query(
+      'UPDATE industry.guest_actions SET status=$1,version=version+1,updated_at=now() WHERE tenant_id=$2 AND pilot_id=$3 AND id=$4 RETURNING id,code,status,assigned_to,created_by,due_on::text AS "dueDate",version,created_at,updated_at',
+      [b.status,s.tenant_id,pilot.id,id]
+    );
+    await record(db,s,'action.'+b.status,id,{pilotId:pilot.id});
+    return {item:update.rows[0]};
+  }));
+
   app.patch(P+'/pilots/:id/readiness',req=>forTenant(req,MANAGE,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion','readiness'],'Готовность пилота');
     const version=versionOf(b),checked=parseReadiness(b.readiness);
