@@ -61,6 +61,8 @@ async function safely(task){
 function showAuth(){
   $('loginPanel').hidden=false;$('workPanel').hidden=true;
   $('password').value='';
+  $('newInvite').hidden=true;$('inviteToken').value='';
+  $('staffPanel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -68,6 +70,10 @@ function showWorkspace(){
   $('accountLabel').textContent=model.me.account.email+' · роль: '+model.me.role;
   $('requestForm').querySelector('button[type=submit]').disabled=!write();
   $('pilotForm').querySelector('button[type=submit]').disabled=!manage();
+  $('staffPanel').hidden=!manage();
+  const managerRole=$('inviteRole').querySelector('option[value=manager]');
+  managerRole.hidden=model.me.role!=='owner';
+  if(model.me.role!=='owner' && $('inviteRole').value==='manager')$('inviteRole').value='viewer';
 }
 async function loadMe(){
   const data=await api('/auth/me');
@@ -78,6 +84,7 @@ async function refresh(){
   const [requests,pilots]=await Promise.all([api('/guest/requests'),api('/guest/pilots')]);
   model.requests=requests.items;model.pilots=pilots.items;
   drawRequests();drawPilots();
+  if(manage())await loadStaff();
   if(model.selected?.item)await openPilot(model.selected.item.id);
 }
 function appendText(parent,tag,text,css){
@@ -91,6 +98,32 @@ function actionButton(label,onClick,secondary=false){
   button.textContent=label;
   button.addEventListener('click',()=>safely(()=>onClick()));
   return button;
+}
+async function loadStaff(){
+  const data=await api('/staff');
+  const list=$('staffList');list.replaceChildren();
+  if(!data.members.length && !data.invitations.length)
+    appendText(list,'li','Сотрудников и приглашений пока нет.','small');
+  for(const member of data.members){
+    const row=document.createElement('li');
+    appendText(row,'span',member.email+' · '+member.role);
+    list.append(row);
+  }
+  for(const inv of data.invitations){
+    const row=document.createElement('li'),detail=document.createElement('div');
+    const expired=Date.parse(inv.expires_at)<=Date.now();
+    const state=inv.accepted_at?'принято':inv.revoked_at?'отозвано':expired?'истекло':'ожидает принятия';
+    appendText(detail,'strong',inv.email);
+    appendText(detail,'span',inv.role+' · '+state,'small');row.append(detail);
+    if(!inv.accepted_at&&!inv.revoked_at&&!expired && (model.me.role==='owner'||inv.role!=='manager')){
+      row.append(actionButton('Отозвать приглашение',async()=>{
+        await api('/staff/invitations/'+inv.id+'/revoke',{method:'POST',body:{}});
+        await loadStaff();
+        setStatus('Приглашение отозвано; одноразовый токен больше не действителен.');
+      },true));
+    }
+    list.append(row);
+  }
 }
 function drawRequests(){
   const list=$('requestsList');
@@ -201,6 +234,27 @@ $('loginForm').addEventListener('submit',event=>{
     await loadMe();setStatus('Вход выполнен. Права определяются ролью сотрудника.');
   });
 });
+$('inviteForm').addEventListener('submit',event=>{
+  event.preventDefault();safely(async()=>{
+    if(!manage())throw Error('Недостаточно прав.');
+    const email=$('inviteEmail').value.trim().toLowerCase();
+    const role=$('inviteRole').value;
+    const data=await api('/staff/invitations',{method:'POST',body:{email,role}});
+    // This raw 256-bit token is returned by the server exactly once.
+    // Keep it in the current tab only, never in a URL or persistent storage.
+    $('inviteToken').value=data.token;
+    $('newInvite').hidden=false;
+    $('inviteEmail').value='';
+    await loadStaff();
+    setStatus('Приглашение создано. Передайте токен лично адресату и сообщите код компании отдельно.');
+  });
+});
+$('copyInvite').addEventListener('click',()=>safely(async()=>{
+  const token=$('inviteToken').value;
+  if(!/^[a-f0-9]{64}$/.test(token))throw Error('Токен уже очищен. Создайте новое приглашение.');
+  try{await navigator.clipboard.writeText(token);setStatus('Токен скопирован. Сохраните его только у адресата.');}
+  catch{$('inviteToken').focus();$('inviteToken').select();setStatus('Токен выделен для ручного копирования.');}
+}));
 $('logout').addEventListener('click',()=>safely(async()=>{
   await api('/auth/logout',{method:'POST',body:{}});
   model.me=null;model.selected=null;model.report=null;showAuth();setStatus('Сессия завершена.');
