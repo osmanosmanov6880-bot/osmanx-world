@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 
 export const STAGE_ORIGIN='http://127.0.0.1:3149';
-export const R10_SCHEMA='009_guest_action_history.sql';
+export const R10_SCHEMA='010_guest_launch_gate.sql';
 const PILOT='00000000-0000-4000-8000-000000000000';
 const API='/api/industry/v1';
 export const CHECKS=Object.freeze([
