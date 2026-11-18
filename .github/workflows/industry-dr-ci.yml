@@ -60,6 +60,12 @@ jobs:
           sh -n ops/runtime-check.sh
           # Keep environment placeholder-only, no credential material in repo.
           test -f ops/.env.example
+      - name: Verify Guest runtime source parity
+        run: |
+          cmp shared/experiment-model.js ../../assets/guest/experiment-model.js
+          cmp shared/pilot-model.js ../../assets/guest/pilot-model.js
+          node --check shared/experiment-model.js
+          node --check shared/pilot-model.js
       - name: Install migration runtime
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: Test operator SQL provisioning idempotence
@@ -127,5 +133,9 @@ jobs:
           docker compose --file compose.yml --profile setup --profile integrations config --quiet
           docker build --tag osmanx-industry-api:ci .
           test "$(docker run --rm --entrypoint id osmanx-industry-api:ci -u)" -eq 1000
+          # The R4 image built but couldn't resolve ../../../assets/guest;
+          # this smoke imports real modules INSIDE the isolated production image.
+          docker run --rm --entrypoint node osmanx-industry-api:ci --input-type=module -e \
+            "await import('./src/guest.mjs'); const {evaluate}=await import('./shared/pilot-model.js'); console.log('R5 Guest container runtime: loaded')"
           docker build --file ops/Dockerfile.backup --tag osmanx-industry-maintenance:ci .
           test "$(docker run --rm --entrypoint id osmanx-industry-maintenance:ci -u)" -ne 0
