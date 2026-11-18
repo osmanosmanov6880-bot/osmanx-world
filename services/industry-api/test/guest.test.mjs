@@ -22,6 +22,7 @@ const employees=[
   {email:'guest-operator-'+stamp+'@example.test',role:'operator',tenant:0}
 ];
 const plan={baselinePct:20,liftPp:10,margin:250,discount:10,fixed:200,fee:25000};
+const protocol={startDate:'2026-11-01',endDate:'2026-11-16',outcomeWindowDays:1,allocation:'random',source:'pos',primaryMetric:'repeat_visit'};
 const checks={repeatDefinition:true,sameWindow:true,independentGroups:true,marginVerified:true,
   contactConsent:true,ownerAgreed:true};
 const period1={date:'2026-11-02',control:400,controlReturn:80,offer:400,offerReturn:120};
@@ -119,13 +120,13 @@ test('R4 block 3: convert qualified request and create tenant-isolated draft pil
   assert.equal((await request('POST',G+'/pilots',viewer,{title:'Нельзя',plan})).statusCode,403);
   assert.equal((await request('POST',G+'/pilots',owner,{title:'Недопустимый план',plan:{...plan,email:'leak@example.test'}})).statusCode,400);
   assert.equal((await request('POST',G+'/pilots',owner,{title:'Недопустимая цель',plan:{...plan,liftPp:0}})).statusCode,400);
-  assert.equal((await request('POST',G+'/pilots',other,{title:'Чужая заявка',plan,requestId})).statusCode,404);
-  const created=bodyIs(await request('POST',G+'/pilots',owner,{title:'Guest pilot R4 — пилот кофейни',plan,requestId}),201);
+  assert.equal((await request('POST',G+'/pilots',other,{title:'Чужая заявка',plan,requestId,protocol})).statusCode,404);
+  const created=bodyIs(await request('POST',G+'/pilots',owner,{title:'Guest pilot R4 — пилот кофейни',plan,requestId,protocol}),201);
   pilotId=created.item.id;currentVersion=created.item.version;
   assert.equal(created.item.phase,'draft');
   assert.ok(created.item.targetPerGroup>200);
   assert.equal(getJson(await request('GET',G+'/requests',owner)).items[0].state,'converted');
-  assert.equal((await request('POST',G+'/pilots',owner,{title:'Повтор',plan,requestId})).statusCode,409);
+  assert.equal((await request('POST',G+'/pilots',owner,{title:'Повтор',plan,requestId,protocol})).statusCode,409);
   assert.equal((await request('GET',G+'/pilots/'+pilotId,other)).statusCode,404);
   assert.equal(getJson(await request('GET',G+'/pilots',other)).items.length,0);
   const direct=await withTenant(db,tenants[1].id,async conn=>
@@ -288,7 +289,7 @@ test('R4 block 5: report and CSV never claim payment; audit, outbox and tenant i
 
 test('R4 concurrency: duplicate observation key is single durable record',async()=>{
   const created=bodyIs(await request('POST',G+'/pilots',owner,{
-    title:'Конкурентный пилот',plan
+    title:'Конкурентный пилот',plan,protocol
   }),201).item;
   const ready=bodyIs(await request('PATCH',G+'/pilots/'+created.id+'/readiness',owner,{
     expectedVersion:created.version,readiness:checks

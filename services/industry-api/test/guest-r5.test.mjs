@@ -16,6 +16,7 @@ const tenant={slug:'r5-guest-'+tag,email:'r5-owner-'+tag+'@example.test'};
 const stranger={slug:'r5-other-'+tag,email:'r5-other-'+tag+'@example.test'};
 const invitedEmail='r5-manager-'+tag+'@example.test';
 const plan={baselinePct:20,liftPp:10,margin:350,discount:12,fixed:1000,fee:25000};
+const protocol={startDate:'2026-11-01',endDate:'2026-11-16',outcomeWindowDays:1,allocation:'random',source:'pos',primaryMetric:'repeat_visit'};
 const readiness={repeatDefinition:true,sameWindow:true,independentGroups:true,marginVerified:true,
   contactConsent:true,ownerAgreed:true};
 const period={date:'2026-11-09',control:900,controlReturn:180,offer:900,offerReturn:270};
@@ -91,7 +92,7 @@ test('R5 synthetic acceptance: secure second person, full pilot, proof and immut
   assert.equal((await call('PATCH',G+'/requests/'+lead.id,other,{state:'qualified'})).statusCode,404);
   assertCode(await call('PATCH',G+'/requests/'+lead.id,manager,{state:'qualified'}),200);
   let pilot=assertCode(await call('POST',G+'/pilots',owner,{
-    title:'R5 synthetic paid-pilot scenario — no real money',plan,requestId:lead.id
+    title:'R5 synthetic paid-pilot scenario — no real money',plan,requestId:lead.id,protocol
   }),201).item;
   const pilotId=pilot.id;
   assert.equal(pilot.phase,'draft');

@@ -44,7 +44,7 @@ jobs:
           node --check assets/guest/console.js
           node --check assets/guest/join.js
           node --check assets/guest/pilot-model.js
-          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs tests/guest-console-r5.test.mjs
+          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs tests/guest-console-r5.test.mjs tests/guest-console-r8.test.mjs
           test -s assets/sovereign/workspace.html
           test -s assets/industry/index.html
           test -s assets/industry/style.css

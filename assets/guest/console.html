@@ -29,7 +29,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 @media(max-width:700px){.grid,.triple,.checks{grid-template-columns:1fr}.actions button{flex:1 1 100%}nav{font-size:.82rem}header{align-items:flex-start}.items li{align-items:flex-start}}
 </style></head><body>
 <header><a href="/">OSMANX WORLD</a><nav><a href="./pilot.html">Лаборатория</a><a href="./offer.html">Предложение</a></nav></header>
-<main><section class="hero"><span class="eyebrow">Guest Intelligence / R4 / Закрытый кабинет</span>
+<main><section class="hero"><span class="eyebrow">Guest Intelligence / R8 / Защищённый кабинет</span>
 <h1>Результаты, которые можно проверить.</h1>
 <p>Заявки, проведение пилота, обезличенные наблюдения, проверка вторым сотрудником и отчёт для владельца. Авторизация — через существующий защищённый Industry API.</p>
 <div class="alert">Не демонстрация успешных продаж. Для входа требуется действующий аккаунт сотрудника и работающий сервер. Если API ещё не развёрнут, кабинет покажет недоступность и не сохранит введённые сведения.</div>
@@ -69,6 +69,20 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
   <ul id="staffList" class="items"></ul>
 </section>
 
+<section id="overviewPanel" class="panel" hidden aria-labelledby="overviewHeading">
+  <span class="eyebrow">Агрегированные данные</span>
+  <h2 id="overviewHeading">Контрольная панель руководителя</h2>
+  <p class="small">Только подтверждённые записи из базы своей компании. Нет персональных сведений гостей, обещаний причинной связи или финансового результата.</p>
+  <div class="triple">
+    <div><h3>Обращения за 365 дней</h3><p id="overviewRequests">—</p></div>
+    <div><h3>Пилоты по стадиям</h3><p id="overviewPilots">—</p></div>
+    <div><h3>Лимиты и загрузка</h3><p id="overviewQuotas">—</p></div>
+  </div>
+  <div class="actions"><button id="overviewRefresh" type="button" class="secondary">Обновить показатели</button>
+  <button id="retentionRun" type="button" class="danger">Очистить отклонённые заявки старше 90 дней</button></div>
+  <p class="small">Очистка удаляет свободный текст только у давно отклонённых заявок без пилота. История решений и аудит сохраняются.</p>
+</section>
+
 <div class="grid">
 <section class="panel"><h2>01 / Заявки</h2>
 <form id="requestForm"><label for="requestTitle">Краткое название задачи (без имён клиентов)</label>
@@ -86,12 +100,23 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 <div><label for="discount">Расход на предложение, ₽</label><input id="discount" type="number" min="0" step=".01" value="0" required></div>
 <div><label for="fixed">Другие расходы, ₽</label><input id="fixed" type="number" min="0" step=".01" value="0" required></div>
 <div><label for="fee">Стоимость услуги, ₽</label><input id="fee" type="number" min="0" step=".01" value="25000" required></div></div>
-<div class="actions"><button type="submit">Создать пилот</button></div></form></section></div>
+<h3>Заранее зафиксированный протокол</h3>
+<p class="small">После создания пилота даты, метод и метрика неизменяемы; результаты вне утверждённого периода будут отклонены. Если протокол создан после начала периода, отчёт честно укажет ретроспективный риск.</p>
+<div class="grid">
+<div><label for="studyStart">Начало исследования</label><input id="studyStart" type="date" required></div>
+<div><label for="studyEnd">Последний день наблюдения</label><input id="studyEnd" type="date" required></div>
+<div><label for="studyWindow">Окно проверки повторного визита, дней</label><input id="studyWindow" type="number" min="1" max="90" value="7" step="1" required></div>
+<div><label for="studyAllocation">Разделение групп</label><select id="studyAllocation"><option value="random">Случайное</option><option value="matched">Сопоставимые группы</option></select></div>
+<div><label for="studySource">Источник агрегатов</label><select id="studySource"><option value="pos">Кассовая система</option><option value="crm">CRM</option><option value="manual">Ручной подсчёт</option></select></div>
+</div>
+<p class="small">Главный показатель: повторный визит. Итоговый разбор возможен только после завершения окна возврата гостей.</p>
+<div class="actions"><button type="submit">Создать пилот и зафиксировать протокол</button></div></form></section></div>
 
 <section class="panel"><h2>03 / Пилоты компании</h2><ul id="pilotsList" class="items"></ul></section>
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
-<h2 id="pilotHeading">—</h2><p><span class="pill" id="phase">—</span> · версия <strong id="version">—</strong> · расчётная выборка <strong id="sample">—</strong> гостей на группу</p>
+<h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<p><span class="pill" id="phase">—</span> · версия <strong id="version">—</strong> · расчётная выборка <strong id="sample">—</strong> гостей на группу</p>
 <div class="grid">
 <section><h3>Условия запуска</h3>
 <div class="checks">
@@ -125,5 +150,5 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 </div>
 <pre id="reportBox" class="info">Результат появится после записи наблюдений.</pre>
 <p class="small">«Принять к обсуждению» не подтверждает причинную связь, поступившую оплату или обещанную прибыль. Клиентские данные и номера телефонов в эту систему не вносить.</p></section>
-</div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R4 · Без автоматических платежей и подписок</span></footer>
+</div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R8 · Без автоматических платежей и подписок</span></footer>
 <script type="module" src="./console.js"></script></body></html>

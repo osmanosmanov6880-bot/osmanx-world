@@ -94,6 +94,18 @@ def main():
                         state["accepted"].append(payload["token"])
                         state["invites"][0]["accepted_at"]="2026-11-18T01:00:00Z"
                         return respond(200,{"accepted":True})
+                    if path=="/guest/overview" and method=="GET":
+                        return respond(200,{
+                            "schema":"osmanx.guest.overview.v1",
+                            "requests":{"new":len([r for r in state["requests"] if r["state"]=="new"]),
+                                "qualified":len([r for r in state["requests"] if r["state"]=="qualified"]),
+                                "declined":0,"converted":0},
+                            "pilots":{"draft":len(state["pilots"]),"running":0,
+                                      "in_review":0,"returned":0,"reviewed":0,"archived":0},
+                            "quotas":{"requests":{"used":len(state["requests"]),"limit":250,"windowDays":365},
+                                      "activePilots":{"used":len(state["pilots"]),"limit":50}},
+                            "aggregate":{"periods":0,"control":0,"offered":0}
+                        })
                     if path=="/guest/requests" and method=="GET":
                         return respond(200,{"items":state["requests"]})
                     if path=="/guest/requests" and method=="POST":
@@ -110,9 +122,14 @@ def main():
                         return respond(200,{"items":state["pilots"]})
                     if path=="/guest/pilots" and method=="POST":
                         body=req.post_data_json
+                        assert body["protocol"]["primaryMetric"]=="repeat_visit"
+                        assert body["protocol"]["allocation"] in ("random","matched")
+                        assert body["protocol"]["startDate"]<=body["protocol"]["endDate"]
                         item={"id":pilot_id,"title":body["title"],"phase":"draft",
                               "requestId":body.get("requestId"),"version":1,"targetPerGroup":294,
-                              "plan":body["plan"],
+                              "plan":body["plan"],"protocol":body["protocol"],
+                              "protocolRegisteredAt":"2026-11-18T10:00:00.000Z",
+                              "prospectivelyRegistered":True,
                               "readiness":{k:False for k in ["repeatDefinition","sameWindow","independentGroups",
                                                             "marginVerified","contactConsent","ownerAgreed"]},
                               "submittedBy":None}
@@ -140,6 +157,8 @@ def main():
                 page.locator("#loginForm button[type=submit]").click()
                 page.locator("#workPanel").wait_for(state="visible")
                 assert "Учебная кофейня" in page.locator("#tenantLabel").inner_text()
+                assert page.locator("#overviewPanel").is_visible()
+                assert "Заявки" in page.locator("#overviewQuotas").inner_text()
                 assert page.locator("#staffPanel").is_visible()
                 page.locator("#inviteEmail").fill("manager@example.test")
                 page.locator("#inviteRole").select_option("manager")
@@ -173,6 +192,7 @@ def main():
                 page.locator("#detailPanel").wait_for(state="visible")
                 assert "Пилот по лояльности" in page.locator("#pilotHeading").inner_text()
                 assert "294" in page.locator("#sample").inner_text()
+                assert "Зафиксированный протокол" in page.locator("#protocolStatus").inner_text()
                 page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('Наблюдений пока нет')")
                 # Only same-origin requests; mutation requests must carry CSRF.
                 for method,path,headers in state["calls"]:
