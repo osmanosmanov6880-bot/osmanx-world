@@ -11,7 +11,8 @@ const checks=Object.freeze([
   {key:'staffJoin',path:'/assets/guest/join.html',expect:200,marker:'Приглашение сотрудника'},
   {key:'apiLive',path:'/api/industry/v1/health/live',expect:200,jsonField:'live'},
   {key:'apiReady',path:'/api/industry/v1/health/ready',expect:200,jsonField:'ready'},
-  {key:'privateBlocked',path:'/api/industry/v1/guest/pilots',expect:401,jsonError:true}
+  {key:'privateBlocked',path:'/api/industry/v1/guest/pilots',expect:401,jsonError:true},
+  {key:'r5EvidenceProtected',path:'/api/industry/v1/guest/pilots/00000000-0000-4000-8000-000000000000/evidence.json',expect:401,jsonError:true}
 ]);
 export async function inspect(base=PROD_BASE,fetcher=fetch){
   const url=new URL(base);
