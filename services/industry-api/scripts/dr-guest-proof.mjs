@@ -138,7 +138,7 @@ async function seed(db){
 }
 async function verify(db){
   const r=await db.query(
-    "SELECT p.*,t.slug FROM industry.guest_pilots p JOIN industry.tenants t ON t.id=p.tenant_id WHERE t.slug='dr-r7-proof'"
+    "SELECT p.*,t.slug FROM industry.guest_pilots p JOIN industry.tenants t ON t.id=p.tenant_id WHERE t.slug='dr-r7-proof' AND p.title='R7 synthetic archived proof'"
   );
   if(r.rowCount!==1)throw Error('Missing or duplicated archived proof pilot');
   const pilot=r.rows[0];
