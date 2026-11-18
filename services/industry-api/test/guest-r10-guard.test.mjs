@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {buildApp} from '../src/app.mjs';
 
 const safe=()=>({
-  migration_count:5,table_count:7,forced_rls:true,
+  migration_count:6,table_count:8,forced_rls:true,
   privileged_role:false,can_read_guests:true,can_modify_migrations:false
 });
 const preserve={node:process.env.NODE_ENV,origin:process.env.ALLOWED_ORIGIN,
@@ -47,7 +47,7 @@ test('R10 production mutation stays disabled when operator flag is absent or fal
 });
 test('R10 explicit writes flag never bypasses database migration, RLS or least privilege',async()=>{
   for(const corrupt of [
-    {migration_count:4},{table_count:6},{forced_rls:false},
+    {migration_count:5},{table_count:7},{forced_rls:false},
     {privileged_role:true},{can_read_guests:false},{can_modify_migrations:true}
   ]){
     const r=await tryMutation({...safe(),...corrupt});
