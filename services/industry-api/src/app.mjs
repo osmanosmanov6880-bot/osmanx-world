@@ -137,7 +137,7 @@ export async function buildApp(pool){
 
   app.get(PREFIX+'/auth/me',async req=>forTenant(req,null,async(db,session,role)=>{
     const r=await db.query('SELECT id,name,slug,vertical FROM industry.tenants WHERE id=$1',[session.tenant_id]);
-    return {account:{email:session.email},tenant:r.rows[0],role};
+    return {account:{id:session.account_id,email:session.email},tenant:r.rows[0],role};
   }));
   app.post(PREFIX+'/auth/logout',async(req,reply)=>{
     const session=await auth(req);
