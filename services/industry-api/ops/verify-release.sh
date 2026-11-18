@@ -16,8 +16,19 @@ test -f "$archive" && test -f "$archive.sha256" || {
   cd "$(dirname "$archive")"
   sha256sum -c -- "$name.sha256" >/dev/null
 )
+test "$(stat -c %s "$archive")" -le 10485760 || {
+  echo "Archive exceeds size limit" >&2; exit 3;
+}
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT HUP TERM INT
+tar -tzf "$archive" > "$tmp/members.txt"
+# Reject duplicate paths and special link/device types BEFORE extraction.
+if LC_ALL=C sort "$tmp/members.txt" | uniq -d | grep -q .; then
+  echo "Duplicate archive path" >&2;exit 3
+fi
+if tar -tzvf "$archive" | cut -c1 | grep -Eq '^[^d-]'; then
+  echo "Links and special tar entries are not permitted" >&2;exit 3
+fi
 while IFS= read -r path; do
   [[ "$path" == "industry-api" || "$path" == industry-api/* ]] || {
     echo "Archive has path outside industry-api/" >&2; exit 3;
@@ -26,12 +37,22 @@ while IFS= read -r path; do
      "$path" != *"//"* ]] || {
     echo "Unsafe archive path" >&2; exit 3;
   }
-done < <(tar -tzf "$archive")
+done < "$tmp/members.txt"
 tar -xzf "$archive" -C "$tmp" --no-same-owner --no-same-permissions
 root="$tmp/industry-api"
 test -d "$root" && test -f "$root/SHA256SUMS"
 test -f "$root/Dockerfile" && test -f "$root/compose.yml"
 test -f "$root/shared/pilot-model.js" && test -f "$root/src/guest.mjs"
+test -f "$root/ops/compose.staging.yml" && test -f "$root/ops/stage-launch.sh"
+test -f "$root/RELEASE.json"
+revision="${name#osmanx-industry-}"
+revision="${revision%.tar.gz}"
+grep -Fq "\"commit\":\"$revision\"" "$root/RELEASE.json" || {
+  echo "Release revision does not match archive" >&2;exit 3;
+}
+grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+  echo "Release lacks fail-closed write gate" >&2;exit 3;
+}
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
