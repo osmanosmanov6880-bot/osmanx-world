@@ -74,6 +74,11 @@ async function seed(db){
     const task=(await db.query(
       "INSERT INTO industry.guest_actions(tenant_id,pilot_id,code,status,assigned_to,created_by,due_on,version) VALUES($1,$2,'REVIEW_CONTROLLED_FOLLOWUP','done',$3,$4,'2026-11-16'::date,3) RETURNING id",
       [tenant,pilot,manager,owner])).rows[0].id;
+    // R11 synthetic event is an imported baseline, not a forged R9 transition log.
+    await db.query(
+      "INSERT INTO industry.guest_action_history(tenant_id,pilot_id,action_id,actor_id,event_type,to_status,next_assignee,next_due_on,action_version) VALUES($1,$2,$3,$4,'baseline','done',$5,'2026-11-16'::date,3)",
+      [tenant,pilot,task,owner,manager]
+    );
     const recoveredImportHash=batchDigest(pilot,3,observations);
     const imported=(await db.query(
       "INSERT INTO industry.guest_bulk_imports(tenant_id,pilot_id,idempotency_key,payload_digest,rows_imported,committed_version,created_by) VALUES($1,$2,'r9-dr-legacy-import',$3,2,4,$4) RETURNING id",
@@ -200,8 +205,8 @@ async function verify(db){
     throw Error('R10 reviewed-by-independent-manager evidence invalid');
   const policies=await db.query(
     "SELECT count(*)::int AS n FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='industry' AND c.relname=ANY($1::text[]) AND c.relrowsecurity AND c.relforcerowsecurity",
-    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports']]);
-  if(policies.rows[0].n!==7)throw Error('Row-level security was not restored');
+    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports','guest_action_history']]);
+  if(policies.rows[0].n!==8)throw Error('Row-level security was not restored');
   const task=await db.query(
     "SELECT code,status,assigned_to,created_by,version,due_on::text AS due_date FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2",
     [pilot.tenant_id,pilot.id]);
@@ -209,6 +214,13 @@ async function verify(db){
      task.rows[0].status!=='done'||task.rows[0].version!==3||
      task.rows[0].assigned_to!==pilot.reviewed_by||task.rows[0].due_date!=='2026-11-16')
     throw Error('R9 action ledger not independently recovered');
+  const history=await db.query(
+    "SELECT event_type,to_status,actor_id,action_version,next_due_on::text AS due_date FROM industry.guest_action_history WHERE tenant_id=$1 AND pilot_id=$2",
+    [pilot.tenant_id,pilot.id]);
+  if(history.rowCount!==1||history.rows[0].event_type!=='baseline'||
+     history.rows[0].to_status!=='done'||history.rows[0].actor_id!==pilot.created_by||
+     history.rows[0].action_version!==3||history.rows[0].due_date!=='2026-11-16')
+    throw Error('R11 append-only action baseline not restored');
   const importRow=await db.query(
     "SELECT payload_digest,rows_imported,committed_version FROM industry.guest_bulk_imports WHERE tenant_id=$1 AND pilot_id=$2",
     [pilot.tenant_id,pilot.id]);
@@ -221,12 +233,12 @@ async function verify(db){
     [pilot.tenant_id]);
   if(actionAudit.rows[0].n!==2)throw Error('R9 follow-up audit not recovered');
   const migration=await db.query(
-    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='008_guest_actions_and_imports.sql'"
+    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='009_guest_action_history.sql'"
   );
   if(migration.rows[0].n!==1)throw Error('Latest migration version not restored');
   return {ok:true,stage:'verify',observations:rows.rowCount,
     reviewedIndependently:true,proofSha256:digest,forcedRls:true,
-    actionRecovered:true,importRecovered:true,importSha256:expectedImportHash,
+    actionRecovered:true,actionHistoryRecovered:true,importRecovered:true,importSha256:expectedImportHash,
     v2ProofRecovered:true,proofSha256V2:v2Hash};
 }
 if(process.argv[1]?.endsWith('/dr-guest-proof.mjs')){
