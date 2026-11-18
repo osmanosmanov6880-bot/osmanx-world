@@ -48,6 +48,7 @@ jobs:
       - name: Verify JS syntax and dependency manifest
         run: |
           for file in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$file"; done
+          bash -n ops/r10-operator-gate.sh
           node --check ../../assets/industry/console.js
       - name: Verify self-contained Guest engine matches published browser models
         run: |
