@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import { recordChange } from './database.mjs';
 import { money, count } from '../shared/experiment-model.js';
-import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../../../assets/guest/pilot-model.js';
+import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
 const ROLES=['owner','manager','operator'];
 const MANAGE=['owner','manager'];
