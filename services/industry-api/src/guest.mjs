@@ -467,7 +467,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     if(old.version!==version)throw problem(409,'Задача изменилась, обновите список');
     if(!['open','in_progress'].includes(old.status))
       throw problem(409,'Завершённое или отклонённое действие нельзя переназначить');
-    if(old.assigned_to===assignee && String(old.due_on).slice(0,10)===due)
+    if(old.assigned_to===assignee && new Date(old.due_on).toISOString().slice(0,10)===due)
       throw problem(409,'Ответственный и срок не изменились');
     const update=await db.query(
       'UPDATE industry.guest_actions SET assigned_to=$1,due_on=$2::date,version=version+1,updated_at=now() WHERE tenant_id=$3 AND pilot_id=$4 AND id=$5 RETURNING *',
