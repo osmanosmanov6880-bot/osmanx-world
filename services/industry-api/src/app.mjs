@@ -57,6 +57,12 @@ export async function buildApp(pool){
     const origin=req.headers.origin;
     if(origin && origin!==opt.origin && ['POST','PATCH','PUT','DELETE'].includes(req.method))
       throw httpError(403,'Недопустимое происхождение запроса');
+    // R6: a healthy container is NOT authorization to collect real pilot data.
+    // Production writes remain fail-closed until an operator enables them after staging.
+    if(opt.secure && process.env.GUEST_WRITES_ENABLED!=='true' &&
+       ['POST','PATCH','PUT','DELETE'].includes(req.method) &&
+       (req.url===PREFIX+'/guest' || req.url.startsWith(PREFIX+'/guest/')))
+      throw httpError(503,'Сбор данных пилотов отключён до приёмки инфраструктуры');
   });
   app.setErrorHandler((error,req,reply)=>{
     const dbCode=error.code;
@@ -102,7 +108,8 @@ export async function buildApp(pool){
   app.get(PREFIX+'/health/live',async()=>({status:'live'}));
   app.get(PREFIX+'/health/ready',async()=>{
     await pool.query('SELECT id FROM industry.accounts LIMIT 0');
-    return {status:'ready',database:'ok'};
+    return {status:'ready',database:'ok',
+      guestWritesEnabled:!opt.secure||process.env.GUEST_WRITES_ENABLED==='true'};
   });
 
   app.post(PREFIX+'/auth/login',async(req,reply)=>{
