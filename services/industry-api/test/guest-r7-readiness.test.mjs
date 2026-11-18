@@ -5,16 +5,16 @@ import {makePool} from '../src/database.mjs';
 import {probeGuestDatabase,assertGuestDatabaseState,REQUIRED_MIGRATIONS} from '../src/readiness.mjs';
 import {buildApp} from '../src/app.mjs';
 
-const safe={migration_count:7,table_count:9,forced_rls:true,privileged_role:false,
+const safe={migration_count:8,table_count:11,forced_rls:true,privileged_role:false,
   can_read_guests:true,can_modify_migrations:false};
 test('R7 pure readiness gate fails closed for missing schemas, bypass roles and weak RLS',()=>{
   assert.equal(assertGuestDatabaseState(safe).leastPrivilege,true);
   for(const bad of [
-    {...safe,migration_count:6},{...safe,table_count:8},
+    {...safe,migration_count:7},{...safe,table_count:10},
     {...safe,forced_rls:false},{...safe,privileged_role:true},
     {...safe,can_modify_migrations:true},{...safe,can_read_guests:false},null
   ])assert.throws(()=>assertGuestDatabaseState(bad),{statusCode:503});
-  assert.ok(REQUIRED_MIGRATIONS.includes('010_guest_launch_gate.sql'));
+  assert.ok(REQUIRED_MIGRATIONS.includes('011_guest_pilot_safety.sql'));
 });
 test('R7 live application role must pass only after 006 migration and enforced RLS',async()=>{
   const pool=makePool(process.env.DATABASE_URL);
@@ -23,7 +23,7 @@ test('R7 live application role must pass only after 006 migration and enforced R
     const result=await probeGuestDatabase(pool);
     assert.equal(result.leastPrivilege,true);
     assert.equal(result.forcedRls,true);
-    assert.equal(result.schemaVersion,'010_guest_launch_gate.sql');
+    assert.equal(result.schemaVersion,'011_guest_pilot_safety.sql');
     const app=await buildApp(pool);
     try{
       const healthy=await app.inject({method:'GET',url:'/api/industry/v1/health/ready'});
@@ -35,7 +35,7 @@ test('R7 live application role must pass only after 006 migration and enforced R
     assert.equal(grant.rows[0].can_read,true);
     assert.equal(grant.rows[0].can_write,false);
     const migrations=await admin.query('SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name=ANY($1::text[])',[REQUIRED_MIGRATIONS]);
-    assert.equal(migrations.rows[0].n,7);
+    assert.equal(migrations.rows[0].n,8);
     await assert.rejects(probeGuestDatabase(admin),{statusCode:503},'Migration/superuser role must never be accepted as the runtime DB role');
   }finally{await pool.end();await admin.end()}
 });

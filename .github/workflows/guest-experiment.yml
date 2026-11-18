@@ -1,4 +1,4 @@
-name: OSMANX Guest Intelligence R12 UI QA
+name: OSMANX Guest Intelligence R13 UI QA
 on:
   pull_request:
     branches: [main]
@@ -12,6 +12,7 @@ on:
       - "tests/guest-console-r9.test.mjs"
       - "tests/guest-console-r11.test.mjs"
       - "tests/guest-console-r12.test.mjs"
+      - "tests/guest-console-r13.test.mjs"
       - "tests/guest_experiment_browser.py"
       - "tests/guest_pilot_r3_browser.py"
       - "tests/guest_console_r4_browser.py"
@@ -28,6 +29,7 @@ on:
       - "tests/guest-console-r9.test.mjs"
       - "tests/guest-console-r11.test.mjs"
       - "tests/guest-console-r12.test.mjs"
+      - "tests/guest-console-r13.test.mjs"
       - "tests/guest_experiment_browser.py"
       - "tests/guest_pilot_r3_browser.py"
       - "tests/guest_console_r4_browser.py"
@@ -57,7 +59,7 @@ jobs:
           test -s assets/guest/join.html
           test -s assets/guest/console.html
       - name: Unit, security and contract tests
-        run: node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs tests/guest-console-r5.test.mjs tests/guest-console-r8.test.mjs tests/guest-console-r9.test.mjs tests/guest-console-r11.test.mjs tests/guest-console-r12.test.mjs
+        run: node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs tests/guest-console-r5.test.mjs tests/guest-console-r8.test.mjs tests/guest-console-r9.test.mjs tests/guest-console-r11.test.mjs tests/guest-console-r12.test.mjs tests/guest-console-r13.test.mjs
 
   guest-browser:
     needs: guest-unit
@@ -88,7 +90,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: osmanx-guest-r12-chromium
+          name: osmanx-guest-r13-chromium
           path: |
             qa/guest/*.png
             qa/guest-r3/*.png

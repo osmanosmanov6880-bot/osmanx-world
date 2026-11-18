@@ -48,7 +48,7 @@ def main():
                 missing.screenshot(path=str(OUT/"offline.png"),full_page=True)
                 offline.close()
 
-                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[],"actions":[],"observations":[],"history":[],"launch_enrolled":False,"owner_signed":False,"manager_signed":False}
+                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[],"actions":[],"observations":[],"history":[],"launch_enrolled":False,"owner_signed":False,"manager_signed":False,"safety_held":False,"safety_history":[]}
                 pilot_id="4929420c-375c-4e64-8916-8d774e182c63"
                 owner_id="0a61dbcb-e23e-474a-a9df-9b3f1338b165"
                 response_profile={"account":{"id":owner_id,"email":"owner@example.test"},
@@ -193,6 +193,49 @@ def main():
                         return respond(200,{"format":"osmanx.guest.launch.export.v1",
                           "sha256":sha(snapshot),"snapshot":snapshot,
                           "disclaimer":"SHA-256 is not digital signature"})
+                    if path==f"/guest/pilots/{pilot_id}/safety" and method=="GET":
+                        pilot=state["pilots"][0]
+                        hold={"active":True,"reason_code":"source_integrity",
+                          "held_by":owner_id,"version":1} if state["safety_held"] else None
+                        summary={"schema":"osmanx.guest.quality.v1","pilotId":pilot_id,
+                          "assessedAt":"2026-11-18T12:00:00Z",
+                          "periods":len(state["observations"]),
+                          "totals":{"control":sum(x["control"] for x in state["observations"]),
+                            "offer":sum(x["offer"] for x in state["observations"])},
+                          "flags":[{"code":"NO_OBSERVATIONS","severity":"medium",
+                            "title":"Пока нет данных","detail":"Сбор ещё не начат.",
+                            "nextStep":"Проверьте источник."}] if not state["observations"] else [],
+                          "highestSeverity":"medium" if not state["observations"] else "none",
+                          "requiresHumanReview":not state["observations"],
+                          "blocksAutomatically":False,
+                          "disclaimer":"Правила не доказывают ошибку или причинную связь"}
+                        return respond(200,{"schema":"osmanx.guest.safety.v1",
+                          "pilotId":pilot_id,"version":pilot["version"],"phase":pilot["phase"],
+                          "hold":hold,"quality":summary,
+                          "guestCollectionPaused":state["safety_held"],
+                          "disclaimer":"Not production"})
+                    if path==f"/guest/pilots/{pilot_id}/safety/hold" and method=="POST":
+                        assert req.post_data_json["reasonCode"]=="source_integrity"
+                        assert state["pilots"][0]["phase"]=="running"
+                        assert not state["safety_held"]
+                        state["safety_held"]=True
+                        state["pilots"][0]["version"]+=1
+                        state["safety_history"].append({
+                          "id":"bc63e96e-dc11-4607-a219-333333333333",
+                          "hold_version":1,"event_type":"held","reason_code":"source_integrity",
+                          "actor_id":owner_id})
+                        return respond(200,{"item":state["pilots"][0],
+                          "hold":{"active":True,"held_by":owner_id,"version":1}})
+                    if path==f"/guest/pilots/{pilot_id}/safety/export.json" and method=="GET":
+                        compact=lambda obj:json.dumps(obj,separators=(",",":"),ensure_ascii=False).encode("utf-8")
+                        sha=lambda obj:hashlib.sha256(compact(obj)).hexdigest()
+                        snapshot={"schema":"osmanx.guest.safety.snapshot.v1",
+                          "pilotId":pilot_id,"version":state["pilots"][0]["version"],
+                          "holdEvents":state["safety_history"],
+                          "originalEvidenceSha256":"a"*64}
+                        return respond(200,{"format":"osmanx.guest.safety.export.v1",
+                          "sha256":sha(snapshot),"snapshot":snapshot,
+                          "disclaimer":"SHA-256 is not a signature"})
                     if path==f"/guest/pilots/{pilot_id}/diagnostics" and method=="GET":
                         return respond(200,{
                             "pilotId":pilot_id,"version":state["pilots"][0]["version"],
@@ -404,6 +447,19 @@ def main():
                 download=download_info.value
                 assert download.suggested_filename=="osmanx-guest-r11-operational-proof.json"
                 page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('500')")
+                # R13: emergency stop freezes browser form, bulk writes and review.
+                assert page.locator("#safetyPanel").is_visible()
+                assert "предупреждений" in page.locator("#safetyQualitySummary").inner_text()
+                page.locator("#safetyHold").click()
+                page.wait_for_function("() => document.querySelector('#safetyStatus').textContent.includes('СБОР ОСТАНОВЛЕН')")
+                assert state["safety_held"]
+                assert page.locator("#bulkPreview").is_disabled()
+                assert page.locator("#submitReview").is_disabled()
+                assert page.locator("#observationForm button[type=submit]").is_disabled()
+                assert page.locator("#safetyResume").is_hidden()
+                with page.expect_download() as safety_download:
+                    page.locator("#safetyExport").click()
+                assert safety_download.value.suggested_filename=="osmanx-guest-r13-safety.json"
                 # Only same-origin requests; mutation requests must carry CSRF.
                 for method,path,headers in state["calls"]:
                     if method in ("POST","PATCH","DELETE") and path not in ("/auth/login","/staff/invitations/accept"):

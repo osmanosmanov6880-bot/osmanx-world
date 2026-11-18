@@ -17,7 +17,7 @@ test('R12 accessible guided owner workflow is mounted and genuinely wired',()=>{
     assert.ok(html.includes('id="'+id+'"'),id);
     assert.ok(js.includes("$('"+id+"')")||id==='launchGatePanel'||id==='launchGateHeading',id);
   }
-  assert.match(html,/Guest Intelligence \/ R12 \/ Защищённый кабинет/);
+  assert.match(html,/Guest Intelligence \/ R13 \/ Защищённый кабинет/);
   assert.match(js,/updateLaunchButtons\(\)/);
   assert.match(js,/gate\?\.enrolled&&!gate\.canStartIsolatedPilot/);
   assert.match(js,/await Promise\.all\(\[loadDiagnostics\(\),loadActions\(\),loadLaunchGate\(\)\]\)/);
@@ -59,5 +59,5 @@ test('R12 PostgreSQL is immutable and RLS-protected without app grants for UPDAT
   assert.doesNotMatch(db,/GRANT\s+[^\n]*(?:UPDATE|DELETE|TRUNCATE) ON industry\.guest_launch_attestations/);
   assert.match(readiness,/'010_guest_launch_gate\.sql'/);
   assert.match(readiness,/'guest_launch_attestations'/);
-  assert.match(release,/"migration":"010_guest_launch_gate\.sql"/);
+  assert.match(release,/"migration":"011_guest_pilot_safety\.sql"/);
 });

@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 const flags=['repeatDefinition','sameWindow','independentGroups','marginVerified','contactConsent','ownerAgreed'];
 const currencies=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
 const model={me:null,requests:[],pilots:[],selected:null,report:null,
-  staffMembers:[],diagnostic:null,bulkPreview:null,operations:null,selectedAction:null,launchGate:null};
+  staffMembers:[],diagnostic:null,bulkPreview:null,operations:null,selectedAction:null,launchGate:null,safety:null};
 const manage=()=>['owner','manager'].includes(model.me?.role);
 const write=()=>['owner','manager','operator'].includes(model.me?.role);
 function setStatus(message,error=false){
@@ -67,7 +67,7 @@ function showAuth(){
   $('overviewPanel').hidden=true;$('operationsPanel').hidden=true;
   $('actionAssignmentForm').hidden=true;$('actionHistoryPanel').hidden=true;
   model.bulkPreview=null;model.diagnostic=null;model.operations=null;
-  model.selectedAction=null;model.launchGate=null;model.staffMembers=[];
+  model.selectedAction=null;model.launchGate=null;model.safety=null;model.staffMembers=[];
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -307,7 +307,7 @@ async function openPilot(id){
   const switched=model.selected?.item?.id!==id;
   const data=await api('/guest/pilots/'+id);
   model.selected=data;
-  if(switched){model.bulkPreview=null;model.selectedAction=null;model.launchGate=null;
+  if(switched){model.bulkPreview=null;model.selectedAction=null;model.launchGate=null;model.safety=null;
     $('bulkCommit').disabled=true;$('actionHistoryPanel').hidden=true;
     $('actionAssignmentForm').hidden=true;
     $('bulkResult').textContent='CSV ещё не проверен.';}
@@ -352,6 +352,7 @@ async function openPilot(id){
   enablePilotActions();
   await loadReport();
   await Promise.all([loadDiagnostics(),loadActions(),loadLaunchGate()]);
+  await loadSafety();
 }
 async function loadReport(){
   if(!model.selected)return;
@@ -387,6 +388,95 @@ function updateLaunchButtons(){
   $('launchGateExport').hidden=!isManage;
   $('launchGateExport').disabled=!isManage;
   $('start').disabled=!isManage||!draft||(gate?.enrolled&&!gate.canStartIsolatedPilot);
+}
+const SAFETY_CODES={
+  source_integrity:'Недостоверность источника',
+  consent_review:'Проверка согласий',
+  data_quality:'Качество данных',
+  operational_incident:'Операционный инцидент'
+};
+async function loadSafety(){
+  const pilot=currentPilot();
+  const data=await api('/guest/pilots/'+pilot.id+'/safety');
+  if(data.schema!=='osmanx.guest.safety.v1'||data.quality?.schema!=='osmanx.guest.quality.v1'||
+     !Array.isArray(data.quality.flags))
+    throw Error('Неверная версия безопасности R13. Новые записи заблокированы до обновления.');
+  model.safety=data;
+  const held=data.guestCollectionPaused;
+  $('safetyStatus').textContent=held
+    ?'СБОР ОСТАНОВЛЕН · причина: '+(SAFETY_CODES[data.hold.reason_code]||data.hold.reason_code)+
+      '. Новые наблюдения, CSV и отправка результатов заблокированы до независимого решения.'
+    :pilot.phase==='running'
+      ?'Пилот работает. При угрозе достоверности можно немедленно остановить сбор.'
+      :'Пилот не находится в стадии измерения; экстренная остановка недоступна.';
+  $('safetyQualitySummary').textContent='Агрегированных периодов: '+data.quality.periods+
+    ' · контроль: '+data.quality.totals.control+
+    ' · предложение: '+data.quality.totals.offer+
+    ' · предупреждений: '+data.quality.flags.length+'. '+data.quality.disclaimer;
+  const list=$('safetyQualityList');list.replaceChildren();
+  if(!data.quality.flags.length)
+    appendText(list,'li','Объективные правила не обнаружили предупреждений. Это не гарантирует правильность данных.','small');
+  for(const signal of data.quality.flags){
+    const li=document.createElement('li');
+    appendText(li,'strong',signal.title+' · '+signal.severity);
+    appendText(li,'p',signal.detail+' '+signal.nextStep,'small');
+    list.append(li);
+  }
+  const running=pilot.phase==='running';
+  $('safetyHold').hidden=!running||!write()||held;
+  $('safetyHold').disabled=!running||!write()||held;
+  const canResume=running&&held&&manage()&&data.hold.held_by!==model.me?.account?.id;
+  $('safetyResume').hidden=!canResume;
+  $('safetyResume').disabled=!canResume;
+  $('safetyExport').hidden=!manage();
+  $('safetyExport').disabled=!manage();
+  // These are UX hints. Every write is independently guarded in the API.
+  for(const input of $('observationForm').querySelectorAll('button,input,select,textarea'))
+    input.disabled=held||!write()||!running;
+  $('bulkPreview').disabled=held||!write()||!running;
+  $('bulkCommit').disabled=held||!model.bulkPreview||!running;
+  $('submitReview').disabled=held||!manage()||!running;
+  if(held){
+    model.bulkPreview=null;
+    $('bulkCommit').disabled=true;
+    $('bulkResult').textContent='Сбор приостановлен. Ранее проверенный CSV недействителен.';
+    for(const button of $('observationList').querySelectorAll('button'))
+      button.disabled=true;
+  }
+}
+async function downloadSafetyProof(){
+  if(!manage())throw Error('Журнал безопасности доступен только владельцу и управляющему.');
+  const pilot=currentPilot(),response=await fetch(
+    API+'/guest/pilots/'+pilot.id+'/safety/export.json',{
+      method:'GET',credentials:'same-origin',cache:'no-store',
+      headers:{Accept:'application/json'}
+    });
+  if(!(response.headers.get('content-type')||'').includes('application/json'))
+    throw Error('Сервер не вернул ожидаемый JSON журнала безопасности.');
+  if(!response.ok){
+    const error=await response.json();throw Error(error?.error||'Сбой выгрузки '+response.status);
+  }
+  if(Number(response.headers.get('content-length')||0)>2000000)
+    throw Error('Слишком большой отчёт безопасности.');
+  const packet=await response.json();
+  if(packet.format!=='osmanx.guest.safety.export.v1'||!packet.snapshot||
+     !/^[a-f0-9]{64}$/.test(packet.sha256)||
+     !/^[a-f0-9]{64}$/.test(packet.snapshot.originalEvidenceSha256))
+    throw Error('Неподтверждённый формат журнала R13.');
+  const bytes=new TextEncoder().encode(JSON.stringify(packet.snapshot));
+  if(bytes.byteLength>2000000)throw Error('Отчёт превышает допустимый размер.');
+  const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+    .map(n=>n.toString(16).padStart(2,'0')).join('');
+  if(digest!==packet.sha256)throw Error('SHA-256 журнала неверна; скачивание отменено.');
+  const url=URL.createObjectURL(new Blob([JSON.stringify(packet,null,2)],{
+    type:'application/json'
+  }));
+  try{
+    const a=document.createElement('a');a.href=url;
+    a.download='osmanx-guest-r13-safety.json';
+    document.body.append(a);a.click();a.remove();
+  }finally{setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  setStatus('Сохранён журнал R13 с проверенным SHA-256. Это не цифровая подпись.');
 }
 async function loadLaunchGate(){
   const pilot=currentPilot();
@@ -696,6 +786,33 @@ function defaultStudyDates(){
   $('actionDue').value=new Date(now.getTime()+7*86400000).toISOString().slice(0,10);
 }
 defaultStudyDates();
+$('safetyRefresh').addEventListener('click',()=>safely(async()=>{
+  await loadSafety();setStatus('Контроль качества и остановки пересчитан по серверным данным.');
+}));
+$('safetyHold').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot();
+  if(!write()||pilot.phase!=='running')throw Error('Нельзя остановить пилот в этом состоянии.');
+  if(!window.confirm('Экстренно остановить все новые агрегированные записи и отправку результатов по этому пилоту?'))return;
+  await api('/guest/pilots/'+pilot.id+'/safety/hold',{
+    method:'POST',body:{expectedVersion:pilot.version,reasonCode:$('safetyReason').value}
+  });
+  await refreshCurrent();
+  setStatus('Сбор остановлен. Для возобновления требуется ДРУГОЙ действующий руководитель.');
+}));
+$('safetyResume').addEventListener('click',()=>safely(async()=>{
+  const pilot=currentPilot();
+  if(!manage()||!model.safety?.guestCollectionPaused)
+    throw Error('Нет полномочий или активной остановки.');
+  if(model.safety.hold?.held_by===model.me?.account?.id)
+    throw Error('Независимую проверку должен провести другой сотрудник.');
+  if(!window.confirm('Подтверждаете независимую проверку причины остановки и разрешаете возобновление сбора?'))return;
+  await api('/guest/pilots/'+pilot.id+'/safety/resume',{
+    method:'POST',body:{expectedVersion:pilot.version,acknowledge:true}
+  });
+  await refreshCurrent();
+  setStatus('Сбор возобновлён другим руководителем, решение сохранено в неизменяемом журнале.');
+}));
+$('safetyExport').addEventListener('click',()=>safely(()=>downloadSafetyProof()));
 $('launchGateRefresh').addEventListener('click',()=>safely(async()=>{
   await loadLaunchGate();setStatus('Условия запуска пересчитаны на сервере.');
 }));

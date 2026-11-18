@@ -6,10 +6,10 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 
 export const PROD_BASE='https://osmanx.world';
-export const EXPECTED_SCHEMA='010_guest_launch_gate.sql';
+export const EXPECTED_SCHEMA='011_guest_pilot_safety.sql';
 const PILOT='00000000-0000-4000-8000-000000000000';
 export const CHECKS=Object.freeze([
-  {key:'staticConsole',path:'/assets/guest/console.html',expect:200,marker:'Guest Intelligence / R12 / Защищённый кабинет'},
+  {key:'staticConsole',path:'/assets/guest/console.html',expect:200,marker:'Guest Intelligence / R13 / Защищённый кабинет'},
   {key:'staffJoin',path:'/assets/guest/join.html',expect:200,marker:'Приглашение сотрудника'},
   {key:'apiLive',path:'/api/industry/v1/health/live',expect:200,kind:'live'},
   {key:'apiReady',path:'/api/industry/v1/health/ready',expect:200,kind:'ready'},
