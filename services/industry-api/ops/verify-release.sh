@@ -51,10 +51,10 @@ revision="${revision%.tar.gz}"
 grep -Fq "\"commit\":\"$revision\"" "$root/RELEASE.json" || {
   echo "Release revision does not match archive" >&2;exit 3;
 }
-grep -Fq '"schema":"osmanx.industry.r10.release.v1"' "$root/RELEASE.json" || {
+grep -Fq '"schema":"osmanx.industry.r11.release.v1"' "$root/RELEASE.json" || {
   echo "R10 release schema missing" >&2;exit 3;
 }
-grep -Fq '"migration":"008_guest_actions_and_imports.sql"' "$root/RELEASE.json" || {
+grep -Fq '"migration":"009_guest_action_history.sql"' "$root/RELEASE.json" || {
   echo "R9 database migration missing" >&2;exit 3;
 }
 grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {

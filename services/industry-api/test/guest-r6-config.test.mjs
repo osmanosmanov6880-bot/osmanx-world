@@ -66,7 +66,7 @@ test('R6 production mutation gate: live/GET allowed, POST disabled until explici
   process.env.ALLOWED_ORIGIN='https://osmanx.world';
   delete process.env.GUEST_WRITES_ENABLED;
   const fakePool={query:async()=>({rowCount:1,rows:[{
-    migration_count:5,table_count:7,forced_rls:true,privileged_role:false,
+    migration_count:6,table_count:8,forced_rls:true,privileged_role:false,
     can_read_guests:true,can_modify_migrations:false
   }]})};
   let app;

@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 const flags=['repeatDefinition','sameWindow','independentGroups','marginVerified','contactConsent','ownerAgreed'];
 const currencies=new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
 const model={me:null,requests:[],pilots:[],selected:null,report:null,
-  staffMembers:[],diagnostic:null,bulkPreview:null};
+  staffMembers:[],diagnostic:null,bulkPreview:null,operations:null,selectedAction:null};
 const manage=()=>['owner','manager'].includes(model.me?.role);
 const write=()=>['owner','manager','operator'].includes(model.me?.role);
 function setStatus(message,error=false){
@@ -64,8 +64,10 @@ function showAuth(){
   $('password').value='';
   $('newInvite').hidden=true;$('inviteToken').value='';
   $('staffPanel').hidden=true;
-  $('overviewPanel').hidden=true;
-  model.bulkPreview=null;model.diagnostic=null;model.staffMembers=[];
+  $('overviewPanel').hidden=true;$('operationsPanel').hidden=true;
+  $('actionAssignmentForm').hidden=true;$('actionHistoryPanel').hidden=true;
+  model.bulkPreview=null;model.diagnostic=null;model.operations=null;
+  model.selectedAction=null;model.staffMembers=[];
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -75,6 +77,7 @@ function showWorkspace(){
   $('pilotForm').querySelector('button[type=submit]').disabled=!manage();
   $('staffPanel').hidden=!manage();
   $('overviewPanel').hidden=!manage();
+  $('operationsPanel').hidden=!manage();
   $('retentionRun').hidden=model.me.role!=='owner';
   $('actionForm').hidden=!manage();
   const managerRole=$('inviteRole').querySelector('option[value=manager]');
@@ -93,6 +96,7 @@ async function refresh(){
   if(manage()){
     await loadStaff();
     await loadOverview();
+    await loadOperations();
   }
   if(model.selected?.item)await openPilot(model.selected.item.id);
 }
@@ -120,6 +124,88 @@ async function loadOverview(){
   $('overviewQuotas').textContent='Заявки: '+q.requests.used+' / '+q.requests.limit+
     ' за '+q.requests.windowDays+' дней. Активные пилоты: '+q.activePilots.used+
     ' / '+q.activePilots.limit+'.';
+}
+async function loadOperations(){
+  if(!manage())return;
+  const data=await api('/guest/operations');
+  if(data.schema!=='osmanx.guest.operations.v1'||!Array.isArray(data.items))
+    throw Error('Неожиданный формат операционной очереди.');
+  model.operations=data;
+  $('operationsSummary').textContent='Критичные: '+data.totals.atRisk+
+    ' · предупреждения: '+data.totals.warning+
+    ' · просроченных действий: '+data.totals.overdueActions+
+    ' · показано пилотов: '+data.returned+
+    (data.truncated?' (есть дополнительные записи)':'')+'. '+data.disclaimer;
+  const list=$('operationsList');list.replaceChildren();
+  if(!data.items.length)appendText(list,'li','Нет активных пилотов.','small');
+  for(const item of data.items){
+    const row=document.createElement('li'),detail=document.createElement('div');
+    appendText(detail,'strong',item.title+' · '+item.phase+
+      ' · приоритет '+(item.priority==='high'?'высокий':item.priority==='medium'?'средний':'обычный'));
+    appendText(detail,'p','Периодов: '+item.activePeriods+
+      ' · открытых действий: '+item.openActions+
+      ' · просроченных: '+item.overdueActions,'small');
+    for(const signal of item.alerts)
+      appendText(detail,'p',signal.reason+' '+signal.nextStep,'small');
+    row.append(detail);
+    row.append(actionButton('Открыть пилот',async()=>{
+      await openPilot(item.id);
+      $('detailPanel').scrollIntoView({behavior:'smooth',block:'start'});
+    },true));
+    list.append(row);
+  }
+}
+async function actionHistory(pilotId,actionId){
+  const result=await api('/guest/pilots/'+pilotId+'/actions/'+actionId+'/history');
+  if(result.schema!=='osmanx.guest.action.history.v1'||!Array.isArray(result.items))
+    throw Error('Неожиданный формат истории действий');
+  $('actionHistoryPanel').hidden=false;
+  $('actionHistory').textContent=result.items.length?result.items.map(e=>{
+    const staff=model.staffMembers.find(m=>m.account_id===e.actor_id);
+    return 'Версия '+e.action_version+' · '+e.event_type+' · '+
+      (e.from_status||'—')+' → '+e.to_status+
+      ' · срок '+(e.previousDueDate||'—')+' → '+e.nextDueDate+
+      ' · исполнил '+(staff?.email||'ID '+e.actor_id.slice(0,8))+
+      ' · '+new Date(e.recorded_at).toLocaleString('ru-RU');
+  }).join('\n'):'Событий нет; для исторических действий может существовать только миграционный baseline.';
+}
+async function downloadVerifiedOperations(){
+  const pilot=currentPilot();
+  if(!manage())throw Error('Экспорт доступен владельцу и управляющему.');
+  const res=await fetch(API+'/guest/pilots/'+pilot.id+'/operations/export.json',{
+    method:'GET',credentials:'same-origin',cache:'no-store',
+    headers:{Accept:'application/json'}
+  });
+  const type=res.headers.get('content-type')||'';
+  if(!type.includes('application/json'))throw Error('Неверный ответ сервера для экспорта.');
+  if(!res.ok){
+    const error=await res.json();
+    throw Error(error?.error||'Ошибка экспорта: '+res.status);
+  }
+  if(Number(res.headers.get('content-length')||'0')>2000000)
+    throw Error('Пакет слишком большой для браузерной проверки.');
+  const packet=await res.json();
+  if(packet.format!=='osmanx.guest.operations.export.v1'||
+     !/^[a-f0-9]{64}$/.test(packet.sha256)||!packet.snapshot||
+     !/^[a-f0-9]{64}$/.test(packet.snapshot.evidenceSha256))
+    throw Error('Неподтверждённый формат экспортируемого пакета.');
+  const digest=async value=>{
+    const data=new TextEncoder().encode(JSON.stringify(value));
+    if(data.byteLength>2000000)throw Error('Пакет превышает допустимый размер.');
+    const buffer=await crypto.subtle.digest('SHA-256',data);
+    return [...new Uint8Array(buffer)].map(n=>n.toString(16).padStart(2,'0')).join('');
+  };
+  if(await digest(packet.snapshot)!==packet.sha256||
+     await digest(packet.snapshot.evidence)!==packet.snapshot.evidenceSha256)
+    throw Error('Контрольная сумма пакета не совпадает с содержимым; файл не сохранён.');
+  const data=JSON.stringify(packet,null,2);
+  const objectUrl=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  try{
+    const a=document.createElement('a');a.href=objectUrl;
+    a.download='osmanx-guest-r11-operational-proof.json';
+    document.body.append(a);a.click();a.remove();
+  }finally{setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);}
+  setStatus('Экспорт сохранён: SHA-256 пакета и исходных агрегатов проверены в браузере.');
 }
 async function loadStaff(){
   const data=await api('/staff');
@@ -220,7 +306,9 @@ async function openPilot(id){
   const switched=model.selected?.item?.id!==id;
   const data=await api('/guest/pilots/'+id);
   model.selected=data;
-  if(switched){model.bulkPreview=null;$('bulkCommit').disabled=true;
+  if(switched){model.bulkPreview=null;model.selectedAction=null;
+    $('bulkCommit').disabled=true;$('actionHistoryPanel').hidden=true;
+    $('actionAssignmentForm').hidden=true;
     $('bulkResult').textContent='CSV ещё не проверен.';}
   $('detailPanel').hidden=false;
   const item=data.item;
@@ -313,6 +401,24 @@ async function loadActions(){
     appendText(info,'p','Статус: '+item.status+' · срок: '+item.dueDate+
       ' · ответственный: '+(staff?.email||'назначенный сотрудник'),'small');
     row.append(info);
+    const operatorControls=document.createElement('div');operatorControls.className='actions';
+    operatorControls.append(actionButton('История',async()=>{
+      await actionHistory(pilot.id,item.id);
+    },true));
+    if(manage()&&['open','in_progress'].includes(item.status)){
+      operatorControls.append(actionButton('Изменить ответственного',async()=>{
+        model.selectedAction={pilotId:pilot.id,id:item.id,version:item.version};
+        const select=$('assignmentAssignee');select.replaceChildren();
+        for(const member of model.staffMembers.filter(m=>m.role!=='viewer')){
+          const option=document.createElement('option');option.value=member.account_id;
+          option.textContent=member.email+' · '+member.role;select.append(option);
+        }
+        select.value=item.assigned_to;
+        $('assignmentDue').value=item.dueDate;
+        $('actionAssignmentForm').hidden=false;
+      },true));
+    }
+    row.append(operatorControls);
     const mayUpdate=manage()||(write()&&item.assigned_to===model.me?.account?.id);
     if(mayUpdate){
       const next=item.status==='open'?[['in_progress','Взять в работу'],['dismissed','Отклонить']]:
@@ -496,6 +602,30 @@ function defaultStudyDates(){
   $('actionDue').value=new Date(now.getTime()+7*86400000).toISOString().slice(0,10);
 }
 defaultStudyDates();
+$('operationsRefresh').addEventListener('click',()=>safely(async()=>{
+  await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
+}));
+$('assignmentCancel').addEventListener('click',()=>{
+  model.selectedAction=null;$('actionAssignmentForm').hidden=true;
+});
+$('actionAssignmentForm').addEventListener('submit',event=>{
+  event.preventDefault();safely(async()=>{
+    if(!manage())throw Error('Изменение ответственного доступно руководителю.');
+    const selected=model.selectedAction,pilot=currentPilot();
+    if(!selected||selected.pilotId!==pilot.id)throw Error('Сначала выберите задачу.');
+    await api('/guest/pilots/'+pilot.id+'/actions/'+selected.id+'/assignment',{
+      method:'PATCH',body:{
+        expectedVersion:selected.version,assigneeId:$('assignmentAssignee').value,
+        dueDate:$('assignmentDue').value
+      }
+    });
+    $('actionAssignmentForm').hidden=true;model.selectedAction=null;
+    await Promise.all([loadActions(),loadOperations()]);
+    await actionHistory(pilot.id,selected.id);
+    setStatus('Ответственный/срок обновлены с новой версией и записью в истории.');
+  });
+});
+$('downloadOperations').addEventListener('click',()=>safely(()=>downloadVerifiedOperations()));
 $('refreshDiagnostics').addEventListener('click',()=>safely(async()=>{
   await loadDiagnostics();await loadActions();
   setStatus('Диагностика обновлена по сохранённым данным.');

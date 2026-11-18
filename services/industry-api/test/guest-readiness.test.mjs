@@ -4,7 +4,7 @@ import {inspect,PROD_BASE,CHECKS,EXPECTED_SCHEMA,assertProbeOrigin} from '../scr
 
 const pilot='00000000-0000-4000-8000-000000000000';
 const paths={
-  '/assets/guest/console.html':{status:200,type:'text/html',body:'<title>Guest Intelligence / R9 / Защищённый кабинет</title>'},
+  '/assets/guest/console.html':{status:200,type:'text/html',body:'<title>Guest Intelligence / R11 / Защищённый кабинет</title>'},
   '/assets/guest/join.html':{status:200,type:'text/html',body:'<title>Приглашение сотрудника</title>'},
   '/api/industry/v1/health/live':{status:200,type:'application/json',data:{status:'live'}},
   '/api/industry/v1/health/ready':{status:200,type:'application/json',data:{

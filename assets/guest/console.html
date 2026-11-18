@@ -29,7 +29,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 @media(max-width:700px){.grid,.triple,.checks{grid-template-columns:1fr}.actions button{flex:1 1 100%}nav{font-size:.82rem}header{align-items:flex-start}.items li{align-items:flex-start}}
 </style></head><body>
 <header><a href="/">OSMANX WORLD</a><nav><a href="./pilot.html">Лаборатория</a><a href="./offer.html">Предложение</a></nav></header>
-<main><section class="hero"><span class="eyebrow">Guest Intelligence / R9 / Защищённый кабинет</span>
+<main><section class="hero"><span class="eyebrow">Guest Intelligence / R11 / Защищённый кабинет</span>
 <h1>Результаты, которые можно проверить.</h1>
 <p>Заявки, проведение пилота, обезличенные наблюдения, проверка вторым сотрудником и отчёт для владельца. Авторизация — через существующий защищённый Industry API.</p>
 <div class="alert">Не демонстрация успешных продаж. Для входа требуется действующий аккаунт сотрудника и работающий сервер. Если API ещё не развёрнут, кабинет покажет недоступность и не сохранит введённые сведения.</div>
@@ -81,6 +81,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
   <div class="actions"><button id="overviewRefresh" type="button" class="secondary">Обновить показатели</button>
   <button id="retentionRun" type="button" class="danger">Очистить отклонённые заявки старше 90 дней</button></div>
   <p class="small">Очистка удаляет свободный текст только у давно отклонённых заявок без пилота. История решений и аудит сохраняются.</p>
+</section>
+
+<section id="operationsPanel" class="panel" hidden aria-labelledby="operationsHeading">
+  <span class="eyebrow">R11 / Контроль исполнения</span>
+  <h2 id="operationsHeading">Операционная очередь руководителя</h2>
+  <p class="small">Действия с просроченными сроками, пилоты без наблюдений, зависшая независимая проверка и закрывшееся окно измерения. Показываются только агрегаты и названия собственной компании.</p>
+  <p id="operationsSummary" class="info" aria-live="polite">Обновите очередь после входа.</p>
+  <ul id="operationsList" class="items"></ul>
+  <div class="actions"><button type="button" class="secondary" id="operationsRefresh">Обновить очередь</button></div>
+  <p class="small">Приоритет — подсказка для управления работой, а не доказательство потери прибыли. При большом количестве активных пилотов очередь может быть ограничена.</p>
 </section>
 
 <div class="grid">
@@ -169,6 +179,20 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
   <div class="actions"><button type="submit">Назначить действие</button></div>
 </form>
 <ul id="actionList" class="items"></ul>
+<hr class="separator">
+<section id="actionHistoryPanel" hidden aria-label="История выбранного действия">
+  <h3>Неизменяемая история выбранного действия</h3>
+  <pre id="actionHistory" class="info" aria-live="polite">Выберите задачу для просмотра истории.</pre>
+</section>
+<form id="actionAssignmentForm" class="grid" hidden aria-label="Переназначить действие">
+  <div><label for="assignmentAssignee">Новый ответственный</label>
+    <select id="assignmentAssignee" required><option value="">Выберите действующего сотрудника</option></select></div>
+  <div><label for="assignmentDue">Новый срок (не более 180 дней)</label><input id="assignmentDue" type="date" required></div>
+  <div class="actions"><button type="submit">Сохранить передачу</button>
+    <button type="button" id="assignmentCancel" class="secondary">Отмена</button></div>
+</form>
+<div class="actions"><button type="button" id="downloadOperations" class="secondary">Скачать проверяемый пакет пилота — JSON + SHA-256</button></div>
+<p class="small">Пакет содержит протокол, агрегаты, журнал решений и историю назначений; SHA-256 позволяет обнаружить изменение файла, но не заменяет цифровую подпись или договор.</p>
 </section>
 <div id="archivePanel" hidden><hr class="separator">
 <h3>Закрыть проверенный пилот</h3>
@@ -179,5 +203,5 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 </div>
 <pre id="reportBox" class="info">Результат появится после записи наблюдений.</pre>
 <p class="small">«Принять к обсуждению» не подтверждает причинную связь, поступившую оплату или обещанную прибыль. Клиентские данные и номера телефонов в эту систему не вносить.</p></section>
-</div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R9 · Без автоматических платежей и подписок</span></footer>
+</div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R11 · Без автоматических платежей и подписок</span></footer>
 <script type="module" src="./console.js"></script></body></html>

@@ -4,6 +4,7 @@ by services/industry-api/test/guest.test.mjs against PostgreSQL 16.
 """
 import http.server
 import json
+import hashlib
 import os
 import socket
 import subprocess
@@ -47,7 +48,7 @@ def main():
                 missing.screenshot(path=str(OUT/"offline.png"),full_page=True)
                 offline.close()
 
-                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[],"actions":[],"observations":[]}
+                state={"authenticated":False,"requests":[],"pilots":[],"invites":[],"accepted":[],"calls":[],"actions":[],"observations":[],"history":[]}
                 pilot_id="4929420c-375c-4e64-8916-8d774e182c63"
                 owner_id="0a61dbcb-e23e-474a-a9df-9b3f1338b165"
                 response_profile={"account":{"id":owner_id,"email":"owner@example.test"},
@@ -106,6 +107,16 @@ def main():
                                       "activePilots":{"used":len(state["pilots"]),"limit":50}},
                             "aggregate":{"periods":0,"control":0,"offered":0}
                         })
+                    if path=="/guest/operations" and method=="GET":
+                        items=[{"id":p["id"],"title":p["title"],"phase":p["phase"],
+                                "version":p["version"],"activePeriods":len(state["observations"]),
+                                "openActions":len(state["actions"]),"overdueActions":0,
+                                "priority":"normal","alerts":[]}
+                               for p in state["pilots"]]
+                        return respond(200,{"schema":"osmanx.guest.operations.v1",
+                            "returned":len(items),"truncated":False,
+                            "totals":{"atRisk":0,"warning":0,"normal":len(items),"overdueActions":0},
+                            "items":items,"disclaimer":"Без заявлений о прибыли"})
                     if path=="/guest/requests" and method=="GET":
                         return respond(200,{"items":state["requests"]})
                     if path=="/guest/requests" and method=="POST":
@@ -163,13 +174,48 @@ def main():
                               "code":body["code"],"status":"open","assigned_to":owner_id,
                               "created_by":owner_id,"dueDate":body["dueDate"],"version":1}
                         state["actions"].append(item)
+                        state["history"].append({
+                          "id":"bc63e96e-dc11-4607-a219-000000000001",
+                          "action_id":item["id"],"event_type":"created",
+                          "from_status":None,"to_status":"open",
+                          "previousDueDate":None,"nextDueDate":item["dueDate"],
+                          "actor_id":owner_id,"action_version":1,
+                          "recorded_at":"2026-11-18T11:00:00Z"})
                         return respond(201,{"item":item})
+                    action_id="d7609b01-422d-49c1-82ce-444444444444"
+                    if path==f"/guest/pilots/{pilot_id}/actions/{action_id}/history" and method=="GET":
+                        return respond(200,{"schema":"osmanx.guest.action.history.v1",
+                            "pilotId":pilot_id,"actionId":action_id,"items":state["history"]})
+                    if path==f"/guest/pilots/{pilot_id}/actions/{action_id}/assignment" and method=="PATCH":
+                        body=req.post_data_json
+                        item=state["actions"][0]
+                        assert body["expectedVersion"]==item["version"]
+                        old_due=item["dueDate"]
+                        item["dueDate"]=body["dueDate"]
+                        item["assigned_to"]=body["assigneeId"]
+                        item["version"]+=1
+                        state["history"].append({
+                          "id":"bc63e96e-dc11-4607-a219-000000000002",
+                          "action_id":item["id"],"event_type":"assignment",
+                          "from_status":item["status"],"to_status":item["status"],
+                          "previousDueDate":old_due,"nextDueDate":item["dueDate"],
+                          "actor_id":owner_id,"action_version":item["version"],
+                          "recorded_at":"2026-11-18T11:05:00Z"})
+                        return respond(200,{"item":item})
                     if path.startswith(f"/guest/pilots/{pilot_id}/actions/") and method=="PATCH":
                         body=req.post_data_json
                         item=state["actions"][0]
                         assert body["expectedVersion"]==item["version"]
+                        old_status=item["status"]
                         item["status"]=body["status"]
                         item["version"]+=1
+                        state["history"].append({
+                          "id":"bc63e96e-dc11-4607-a219-000000000003",
+                          "action_id":item["id"],"event_type":"status",
+                          "from_status":old_status,"to_status":item["status"],
+                          "previousDueDate":item["dueDate"],"nextDueDate":item["dueDate"],
+                          "actor_id":owner_id,"action_version":item["version"],
+                          "recorded_at":"2026-11-18T11:10:00Z"})
                         return respond(200,{"item":item})
                     if path==f"/guest/pilots/{pilot_id}/observations/import/preview" and method=="POST":
                         body=req.post_data_json
@@ -190,6 +236,19 @@ def main():
                             "rowsImported":1,"version":state["pilots"][0]["version"],
                             "sha256":"f"*64})
 
+                    if path==f"/guest/pilots/{pilot_id}/operations/export.json" and method=="GET":
+                        compact=lambda obj:json.dumps(obj,separators=(",",":"),ensure_ascii=False).encode("utf-8")
+                        sha=lambda obj:hashlib.sha256(compact(obj)).hexdigest()
+                        evidence={"schema":"osmanx.guest.evidence.v2",
+                                  "plan":{"fee":25000},"observations":state["observations"]}
+                        payload={"schema":"osmanx.guest.operations.snapshot.v1",
+                                 "pilot":{"id":pilot_id,"phase":state["pilots"][0]["phase"]},
+                                 "evidence":evidence,"evidenceSha256":sha(evidence),
+                                 "actionHistory":state["history"],"actions":state["actions"],
+                                 "importLedger":[{"rows_imported":1}]}
+                        return respond(200,{"format":"osmanx.guest.operations.export.v1",
+                            "sha256":sha(payload),"snapshot":payload,
+                            "disclaimer":"SHA is not a digital signature"})
                     if path==f"/guest/pilots/{pilot_id}/report" and method=="GET":
                         return respond(200,{"item":state["pilots"][0],"report":None,"analysis":None,
                                             "evidenceDigest":"a"*64})
@@ -211,6 +270,7 @@ def main():
                 page.locator("#workPanel").wait_for(state="visible")
                 assert "Учебная кофейня" in page.locator("#tenantLabel").inner_text()
                 assert page.locator("#overviewPanel").is_visible()
+                assert page.locator("#operationsPanel").is_visible()
                 assert "Заявки" in page.locator("#overviewQuotas").inner_text()
                 assert page.locator("#staffPanel").is_visible()
                 page.locator("#inviteEmail").fill("manager@example.test")
@@ -252,6 +312,12 @@ def main():
                 page.locator("#actionAssignee").select_option(owner_id)
                 page.locator("#actionForm button[type=submit]").click()
                 page.wait_for_function("() => document.querySelector('#actionList').textContent.includes('Собрать обезличенные наблюдения')")
+                page.get_by_role("button",name="Изменить ответственного").click()
+                page.locator("#assignmentDue").fill("2026-11-25")
+                page.locator("#actionAssignmentForm button[type=submit]").click()
+                page.wait_for_function("() => document.querySelector('#actionAssignmentForm').hidden")
+                page.get_by_role("button",name="История").click()
+                page.wait_for_function("() => document.querySelector('#actionHistory').textContent.includes('assignment')")
                 page.get_by_role("button",name="Взять в работу").click()
                 page.wait_for_function("() => document.querySelector('#actionList').textContent.includes('in_progress')")
                 # Mocked plan transitions to running to verify the R9 preview/commit UI.
@@ -266,6 +332,12 @@ def main():
                 page.locator("#bulkCommit").click()
                 page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('500')")
                 assert len(state["observations"])==1
+                page.locator("#operationsRefresh").click()
+                page.wait_for_function("() => document.querySelector('#operationsList').textContent.includes('Пилот по лояльности')")
+                with page.expect_download() as download_info:
+                    page.locator("#downloadOperations").click()
+                download=download_info.value
+                assert download.suggested_filename=="osmanx-guest-r11-operational-proof.json"
                 page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('500')")
                 # Only same-origin requests; mutation requests must carry CSRF.
                 for method,path,headers in state["calls"]:

@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { recordChange } from './database.mjs';
 import {diagnoseAggregates,RECOMMENDATIONS} from './guest-diagnostics.mjs';
 import {parseAggregateCsv,validateBatchWindow,batchDigest,summarizeBatch} from './guest-bulk.mjs';
+import {createOperationsOverview,createOperationsExport} from './guest-operations.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -223,8 +224,45 @@ function validatedCsv(raw,pilot,version){
   const hash=batchDigest(pilot.id,version,rows);
   return {rows,hash,summary:summarizeBatch(rows)};
 }
+async function addActionHistory(db,session,pilot,action,{type,previous=null}){
+  const old=previous;
+  await db.query(
+    'INSERT INTO industry.guest_action_history(tenant_id,pilot_id,action_id,actor_id,event_type,from_status,to_status,previous_assignee,next_assignee,previous_due_on,next_due_on,action_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::date,$11::date,$12)',
+    [session.tenant_id,pilot.id,action.id,session.account_id,type,
+      old?.status||null,action.status,old?.assigned_to||null,action.assigned_to,
+      old?.due_on||null,action.due_on,action.version]
+  );
+}
+async function validateAssignee(db,session,id){
+  const assignee=uuid(id);
+  const member=await db.query(
+    "SELECT m.role FROM industry.memberships m JOIN industry.accounts a ON a.id=m.account_id WHERE m.tenant_id=$1 AND m.account_id=$2 AND NOT a.disabled",
+    [session.tenant_id,assignee]);
+  if(!member.rowCount||member.rows[0].role==='viewer')
+    throw problem(400,'Назначить можно только действующего сотрудника с правом работы');
+  return assignee;
+}
+function validDueWithin180(raw){
+  const dueDate=parseDate(raw),today=new Date().toISOString().slice(0,10);
+  const delta=(Date.parse(dueDate+'T00:00:00.000Z')-Date.parse(today+'T00:00:00.000Z'))/86400000;
+  if(delta<0||delta>180)throw problem(400,'Срок исполнения должен быть в пределах 180 дней');
+  return dueDate;
+}
 export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   const P=prefix+'/guest';
+
+  // R11 leadership queue: no guest contacts; bounded, tenant-scoped risk signals.
+  app.get(P+'/operations',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const result=await db.query(
+      "SELECT p.id,p.title,p.phase,p.version,p.updated_at,p.protocol,"+
+      " (SELECT count(*)::int FROM industry.guest_observations o WHERE o.tenant_id=$1 AND o.pilot_id=p.id AND o.voided_at IS NULL) AS period_count,"+
+      " (SELECT count(*)::int FROM industry.guest_actions a WHERE a.tenant_id=$1 AND a.pilot_id=p.id AND a.status IN ('open','in_progress')) AS open_actions,"+
+      " (SELECT count(*)::int FROM industry.guest_actions a WHERE a.tenant_id=$1 AND a.pilot_id=p.id AND a.status IN ('open','in_progress') AND a.due_on<CURRENT_DATE) AS overdue_actions"+
+      " FROM industry.guest_pilots p WHERE p.tenant_id=$1 AND p.phase<>'archived'"+
+      " ORDER BY p.updated_at ASC,p.id ASC LIMIT 101",
+      [s.tenant_id]);
+    return createOperationsOverview(result.rows,{limit:50});
+  }));
 
   // R8 BLOCK 3: owner dashboard. No guest names/contacts: only RLS-filtered aggregates.
   app.get(P+'/overview',req=>forTenant(req,MANAGE,async(db,s)=>{
@@ -368,25 +406,21 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     const b=bodyOf(req);requiredKeys(b,['expectedPilotVersion','code','assigneeId','dueDate'],'Решение по пилоту');
     if(typeof b.code!=='string'||!Object.hasOwn(RECOMMENDATIONS,b.code))
       throw problem(400,'Такого проверяемого диагностического решения нет');
-    const dueDate=parseDate(b.dueDate),today=new Date().toISOString().slice(0,10);
-    const delta=(Date.parse(dueDate+'T00:00:00.000Z')-Date.parse(today+'T00:00:00.000Z'))/86400000;
-    if(delta<0||delta>180)throw problem(400,'Срок исполнения должен быть в пределах 180 дней');
+    const dueDate=validDueWithin180(b.dueDate);
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
     verifyVersion(pilot,versionOf({expectedVersion:b.expectedPilotVersion}));
     const rows=await activeObservations(db,s.tenant_id,pilot.id);
     const recommendations=diagnoseAggregates({pilot,observations:rows}).recommendations;
     if(!recommendations.some(r=>r.code===b.code))
       throw problem(409,'Это действие уже не подтверждается текущей диагностикой');
-    const assignee=uuid(b.assigneeId);
-    const member=await db.query(
-      "SELECT m.role FROM industry.memberships m JOIN industry.accounts a ON a.id=m.account_id WHERE m.tenant_id=$1 AND m.account_id=$2 AND NOT a.disabled",
-      [s.tenant_id,assignee]);
-    if(!member.rowCount||member.rows[0].role==='viewer')
-      throw problem(400,'Назначить можно только действующего сотрудника с правом работы');
+    const assignee=await validateAssignee(db,s,b.assigneeId);
     const result=await db.query(
       "INSERT INTO industry.guest_actions(tenant_id,pilot_id,code,status,assigned_to,created_by,due_on) VALUES($1,$2,$3,'open',$4,$5,$6::date) RETURNING id,code,status,assigned_to,created_by,due_on::text AS \"dueDate\",version,created_at,updated_at",
       [s.tenant_id,pilot.id,b.code,assignee,s.account_id,dueDate]
     );
+    await addActionHistory(db,s,pilot,{
+      ...result.rows[0],due_on:dueDate
+    },{type:'created'});
     await record(db,s,'action.created',result.rows[0].id,{pilotId:pilot.id,code:b.code});
     reply.code(201);return {item:result.rows[0]};
   }));
@@ -411,8 +445,54 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       'UPDATE industry.guest_actions SET status=$1,version=version+1,updated_at=now() WHERE tenant_id=$2 AND pilot_id=$3 AND id=$4 RETURNING id,code,status,assigned_to,created_by,due_on::text AS "dueDate",version,created_at,updated_at',
       [b.status,s.tenant_id,pilot.id,id]
     );
+    await addActionHistory(db,s,pilot,{
+      ...update.rows[0],due_on:item.due_on
+    },{type:'status',previous:item});
     await record(db,s,'action.'+b.status,id,{pilotId:pilot.id});
     return {item:update.rows[0]};
+  }));
+
+  // R11 auditable reallocation: only active tasks, locked row, strict version and membership.
+  app.patch(P+'/pilots/:id/actions/:actionId/assignment',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const b=bodyOf(req);
+    requiredKeys(b,['expectedVersion','assigneeId','dueDate'],'Изменение ответственного');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const id=uuid(req.params.actionId),version=versionOf(b);
+    const due=validDueWithin180(b.dueDate),assignee=await validateAssignee(db,s,b.assigneeId);
+    const current=await db.query(
+      'SELECT * FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2 AND id=$3 FOR UPDATE',
+      [s.tenant_id,pilot.id,id]);
+    if(!current.rowCount)throw problem(404,'Задача не найдена');
+    const old=current.rows[0];
+    if(old.version!==version)throw problem(409,'Задача изменилась, обновите список');
+    if(!['open','in_progress'].includes(old.status))
+      throw problem(409,'Завершённое или отклонённое действие нельзя переназначить');
+    if(old.assigned_to===assignee && new Date(old.due_on).toISOString().slice(0,10)===due)
+      throw problem(409,'Ответственный и срок не изменились');
+    const update=await db.query(
+      'UPDATE industry.guest_actions SET assigned_to=$1,due_on=$2::date,version=version+1,updated_at=now() WHERE tenant_id=$3 AND pilot_id=$4 AND id=$5 RETURNING *',
+      [assignee,due,s.tenant_id,pilot.id,id]
+    );
+    await addActionHistory(db,s,pilot,update.rows[0],{type:'assignment',previous:old});
+    await record(db,s,'action.assignment_changed',id,{pilotId:pilot.id});
+    return {item:{id:update.rows[0].id,code:update.rows[0].code,status:update.rows[0].status,
+      assigned_to:update.rows[0].assigned_to,created_by:update.rows[0].created_by,
+      dueDate:due,version:update.rows[0].version,created_at:update.rows[0].created_at,
+      updated_at:update.rows[0].updated_at}};
+  }));
+
+  app.get(P+'/pilots/:id/actions/:actionId/history',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const id=uuid(req.params.actionId);
+    const found=await db.query(
+      'SELECT 1 FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2 AND id=$3',
+      [s.tenant_id,pilot.id,id]);
+    if(!found.rowCount)throw problem(404,'Задача не найдена');
+    const events=await db.query(
+      'SELECT id,event_type,from_status,to_status,previous_assignee,next_assignee,previous_due_on::text AS "previousDueDate",next_due_on::text AS "nextDueDate",actor_id,action_version,recorded_at FROM industry.guest_action_history WHERE tenant_id=$1 AND pilot_id=$2 AND action_id=$3 ORDER BY action_version ASC LIMIT 500',
+      [s.tenant_id,pilot.id,id]);
+    return {schema:'osmanx.guest.action.history.v1',pilotId:pilot.id,actionId:id,
+      items:events.rows};
   }));
 
   app.patch(P+'/pilots/:id/readiness',req=>forTenant(req,MANAGE,async(db,s)=>{
@@ -629,6 +709,38 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     reply.header('Content-Disposition','attachment; filename="osmanx-guest-evidence.json"');
     reply.header('Content-Type','application/json; charset=utf-8');
     return reply.send(envelope);
+  }));
+
+  // R11 complete bounded operations evidence; original Guest evidence SHA remains untouched.
+  app.get(P+'/pilots/:id/operations/export.json',(req,reply)=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const observations=await activeObservations(db,s.tenant_id,pilot.id);
+    if(!observations.length)throw problem(409,'Нет наблюдений для проверяемого экспорта');
+    const evidence=snapshot(pilot,observations),evidenceDigest=digest(evidence);
+    const review=(await db.query(
+      'SELECT decision,actor_id,evidence_digest,decided_at FROM industry.guest_reviews WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY decided_at DESC,id DESC LIMIT 1',
+      [s.tenant_id,pilot.id])).rows[0]||null;
+    if(['reviewed','archived'].includes(pilot.phase)&&
+       (review?.decision!=='accept_for_discussion'||review.evidence_digest!==evidenceDigest||
+        pilot.submitted_digest!==evidenceDigest))
+      throw problem(409,'Архив не совпадает с утверждённым доказательством');
+    const actions=await db.query(
+      'SELECT id,code,status,assigned_to,created_by,due_on::text AS "dueDate",version,created_at,updated_at FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY code,id LIMIT 100',
+      [s.tenant_id,pilot.id]);
+    const history=await db.query(
+      'SELECT h.id,h.action_id,h.event_type,h.from_status,h.to_status,h.previous_assignee,h.next_assignee,h.previous_due_on::text AS "previousDueDate",h.next_due_on::text AS "nextDueDate",h.actor_id,h.action_version,h.recorded_at FROM industry.guest_action_history h WHERE h.tenant_id=$1 AND h.pilot_id=$2 ORDER BY h.action_id,h.action_version LIMIT 501',
+      [s.tenant_id,pilot.id]);
+    const imports=await db.query(
+      'SELECT id,payload_digest,rows_imported,committed_version,created_at FROM industry.guest_bulk_imports WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY created_at,id LIMIT 501',
+      [s.tenant_id,pilot.id]);
+    if(history.rowCount>500||imports.rowCount>500)
+      throw problem(409,'История превышает максимальный размер пакета; требуется независимая выгрузка');
+    const packet=createOperationsExport({
+      pilot,evidence,evidenceDigest,review,actions:actions.rows,history:history.rows,imports:imports.rows
+    });
+    reply.header('Content-Disposition','attachment; filename="osmanx-guest-operational-proof.json"');
+    reply.header('Content-Type','application/json; charset=utf-8');
+    return reply.send(packet);
   }));
 
   // R5 block 3: only an OWNER may archive an independently approved pilot.
