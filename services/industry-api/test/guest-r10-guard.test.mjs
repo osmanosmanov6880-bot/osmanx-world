@@ -15,7 +15,7 @@ function env(write){
   else process.env.GUEST_WRITES_ENABLED=write;
 }
 async function tryMutation(row,writes='true'){
-  env(writes);
+  env(writes==='__unset__'?undefined:writes);
   let probed=0,unexpected=0;
   const pool={query:async sql=>{
     if(String(sql).includes('WITH migrations AS')){probed++;return {rows:[row],rowCount:1}}
@@ -38,7 +38,7 @@ test.after(()=>{
   }
 });
 test('R10 production mutation stays disabled when operator flag is absent or false',async()=>{
-  for(const setting of [undefined,'false']){
+  for(const setting of ['__unset__','false']){
     const r=await tryMutation(safe(),setting);
     assert.equal(r.status,503);
     assert.equal(r.probed,0);
