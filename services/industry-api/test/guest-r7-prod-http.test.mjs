@@ -112,8 +112,9 @@ test('R7 production-mode HTTP: 503 write gate, RLS, origin, auth and independent
   assert.notEqual(managerInfo.account.id,tenants[0].accountId);
   must(await call('PATCH','/guest/requests/'+lead.id,manager,{state:'qualified'}),200);
   const plan={baselinePct:20,liftPp:10,margin:250,discount:5,fixed:500,fee:25000};
+  const protocol={startDate:'2026-11-01',endDate:'2026-11-16',outcomeWindowDays:1,allocation:'random',source:'pos',primaryMetric:'repeat_visit'};
   let pilot=must(await call('POST','/guest/pilots',authA,{
-    title:'R7 production-mode HTTP acceptance',plan,requestId:lead.id
+    title:'R7 production-mode HTTP acceptance',plan,requestId:lead.id,protocol
   }),201).item;
   must(await call('GET','/guest/pilots/'+pilot.id,authB),404);
   const readiness=Object.fromEntries(['repeatDefinition','sameWindow',
