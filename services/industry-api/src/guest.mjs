@@ -93,7 +93,8 @@ const flatPilot=row=>({
   version:row.version,plan:row.plan,readiness:row.readiness,targetPerGroup:row.target_per_group,
   createdAt:row.created_at,updatedAt:row.updated_at,
   submittedDigest:row.submitted_digest,
-  submittedBy:row.submitted_by,reviewedBy:row.reviewed_by,reviewedAt:row.reviewed_at
+  submittedBy:row.submitted_by,reviewedBy:row.reviewed_by,reviewedAt:row.reviewed_at,
+  archivedAt:row.archived_at,archivedBy:row.archived_by,archiveReason:row.archive_reason
 });
 async function getPilot(db,tenant,id,lock=false){
   const result=await db.query(
@@ -108,12 +109,16 @@ async function activeObservations(db,tenant,pilotId){
     [tenant,pilotId]);
   return result.rows;
 }
-function proof(pilot,observations){
-  return digest({
+function snapshot(pilot,observations){
+  // Canonical property order is an established R4 evidence contract.
+  return {
     schema:'osmanx.guest.evidence.v1',
     plan:pilot.plan,readiness:pilot.readiness,targetPerGroup:pilot.target_per_group,
     observations:observations.map(({date,control,controlReturn,offer,offerReturn})=>({date,control,controlReturn,offer,offerReturn}))
-  });
+  };
+}
+function proof(pilot,observations){
+  return digest(snapshot(pilot,observations));
 }
 function calculate(pilot,observations){
   const clean=observations.map(({date,control,controlReturn,offer,offerReturn})=>({date,control,controlReturn,offer,offerReturn}));
@@ -330,6 +335,55 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     const observations=await activeObservations(db,s.tenant_id,pilot.id);
     const summary=calculate(pilot,observations);
     return {item:flatPilot(pilot),report:summary.report,analysis:summary.analysis,evidenceDigest:summary.evidenceDigest};
+  }));
+  // R5 block 3: an independently reproducible, tenant-scoped evidence envelope.
+  app.get(P+'/pilots/:id/evidence.json',(req,reply)=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const observations=await activeObservations(db,s.tenant_id,pilot.id);
+    if(!observations.length)throw problem(409,'Нет агрегированных доказательств для экспорта');
+    const evidence=snapshot(pilot,observations);
+    const sha256=digest(evidence);
+    const latest=(await db.query(
+      'SELECT decision,actor_id,evidence_digest,decided_at FROM industry.guest_reviews WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY decided_at DESC,id DESC LIMIT 1',
+      [s.tenant_id,pilot.id])).rows[0]||null;
+    if(['reviewed','archived'].includes(pilot.phase) &&
+       (latest?.decision!=='accept_for_discussion' || latest.evidence_digest!==sha256 ||
+        pilot.submitted_digest!==sha256)){
+      throw problem(409,'Зафиксированный отчёт не совпадает с архивом доказательств');
+    }
+    const envelope={
+      format:'osmanx.guest.evidence.export.v1',
+      pilotId:pilot.id,phase:pilot.phase,sha256,evidence,
+      review:latest,archivedAt:pilot.archived_at||null,
+      disclaimer:'Слепок агрегированных данных. Подтверждение менеджера не доказывает причинный эффект, прибыль или оплату.'
+    };
+    reply.header('Content-Disposition','attachment; filename="osmanx-guest-evidence.json"');
+    reply.header('Content-Type','application/json; charset=utf-8');
+    return reply.send(envelope);
+  }));
+
+  // R5 block 3: only an OWNER may archive an independently approved pilot.
+  // No deletes, no reopening: audit and review history remain intact.
+  app.post(P+'/pilots/:id/archive',req=>forTenant(req,['owner'],async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','reason'],'Архивация пилота');
+    const version=versionOf(b);
+    if(typeof b.reason!=='string'||b.reason.trim().length<6||
+       b.reason.trim().length>160||/[\u0000-\u001f\u007f]/.test(b.reason))
+      throw problem(400,'Причина архивации: от 6 до 160 символов без управляющих кодов');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    verifyVersion(pilot,version);expectPhase(pilot,['reviewed']);
+    const rows=await activeObservations(db,s.tenant_id,pilot.id);
+    const latest=(await db.query(
+      'SELECT decision,evidence_digest FROM industry.guest_reviews WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY decided_at DESC,id DESC LIMIT 1',
+      [s.tenant_id,pilot.id])).rows[0];
+    const sha=proof(pilot,rows);
+    if(!latest||latest.decision!=='accept_for_discussion'||latest.evidence_digest!==sha||
+       pilot.submitted_digest!==sha)throw problem(409,'Нельзя архивировать неподтверждённые доказательства');
+    const updated=await db.query(
+      "UPDATE industry.guest_pilots SET phase='archived',archived_at=now(),archived_by=$1,archive_reason=$2,version=version+1,updated_at=now() WHERE tenant_id=$3 AND id=$4 RETURNING *",
+      [s.account_id,b.reason.trim(),s.tenant_id,pilot.id]);
+    await record(db,s,'pilot.archived',pilot.id,{evidenceDigest:sha});
+    return {item:flatPilot(updated.rows[0]),sha256:sha};
   }));
   app.get(P+'/pilots/:id/report.csv',(req,reply)=>forTenant(req,null,async(db,s)=>{
     const pilot=await getPilot(db,s.tenant_id,req.params.id);
