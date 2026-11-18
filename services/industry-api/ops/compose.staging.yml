@@ -1,0 +1,95 @@
+# Guest R7 isolated STAGING ONLY, never production.
+# Dedicated Docker project, volume, network and loopback 3149. No worker/webhooks.
+name: osmanx-industry-r7-staging
+x-api: &api
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  image: osmanx-industry-api:r7-staging
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: industry_admin
+      POSTGRES_DB: industry_stage_r7
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Private staging database password required}
+    volumes: [stage_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U industry_admin -d industry_stage_r7"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks: [stage_private]
+    security_opt: ["no-new-privileges:true"]
+  provision:
+    image: postgres:16
+    profiles: [setup]
+    entrypoint: ["/bin/sh","/ops/provision-roles.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: industry_admin
+      PGDATABASE: industry_stage_r7
+      PGPASSWORD: ${POSTGRES_ADMIN_PASSWORD:?}
+      INDUSTRY_APP_PASSWORD: ${INDUSTRY_APP_PASSWORD:?}
+      INDUSTRY_WORKER_PASSWORD: ${INDUSTRY_WORKER_PASSWORD:?}
+    volumes: ["./provision-roles.sh:/ops/provision-roles.sh:ro"]
+    depends_on:
+      db: {condition: service_healthy}
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [stage_private]
+  migrate:
+    <<: *api
+    profiles: [setup]
+    command: ["node","scripts/migrate.mjs"]
+    environment:
+      MIGRATION_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/industry_stage_r7
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [stage_private]
+  bootstrap:
+    <<: *api
+    profiles: [setup]
+    command: ["node","scripts/bootstrap.mjs"]
+    environment:
+      MIGRATION_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/industry_stage_r7
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?}
+      BOOTSTRAP_TENANT_SLUG: ${BOOTSTRAP_TENANT_SLUG:?}
+      BOOTSTRAP_TENANT_NAME: ${BOOTSTRAP_TENANT_NAME:?}
+      BOOTSTRAP_VERTICAL: ${BOOTSTRAP_VERTICAL:?}
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [stage_private]
+  api:
+    <<: *api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      ALLOWED_ORIGIN: https://osmanx.world
+      BIND_HOST: 0.0.0.0
+      PORT: "3047"
+      GUEST_WRITES_ENABLED: "false"
+      DATABASE_URL: postgresql://industry_app:${INDUSTRY_APP_PASSWORD:?}@db:5432/industry_stage_r7
+    ports: ["127.0.0.1:3149:3047"]
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    networks: [stage_private]
+networks:
+  stage_private:
+    driver: bridge
+volumes:
+  stage_data:
