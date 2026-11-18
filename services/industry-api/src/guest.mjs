@@ -7,6 +7,7 @@ import {diagnoseAggregates,RECOMMENDATIONS} from './guest-diagnostics.mjs';
 import {parseAggregateCsv,validateBatchWindow,batchDigest,summarizeBatch} from './guest-bulk.mjs';
 import {createOperationsOverview,createOperationsExport} from './guest-operations.mjs';
 import {launchPreflight} from './guest-launch.mjs';
+import {assessGuestQuality,buildSafetyExport,REASONS} from './guest-safety.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -264,6 +265,22 @@ async function currentLaunchGate(db,tenant,pilot){
     [tenant,pilot.id]);
   return launchPreflight({pilot,members:members.rows,attestations:signed.rows});
 }
+async function getActiveHold(db,tenant,pilotId){
+  const found=await db.query(
+    'SELECT tenant_id,pilot_id,active,reason_code,held_by,held_at,resolved_by,resolved_at,version,updated_at'+
+    ' FROM industry.guest_pilot_holds WHERE tenant_id=$1 AND pilot_id=$2',
+    [tenant,pilotId]);
+  return found.rows[0]||null;
+}
+async function assertUnheld(db,tenant,pilotId){
+  const hold=await getActiveHold(db,tenant,pilotId);
+  if(hold?.active)throw problem(409,'R13: сбор и представление результатов остановлены. Требуется независимое возобновление управляющим.');
+}
+function safetyReason(code){
+  if(typeof code!=='string'||!REASONS.includes(code))
+    throw problem(400,'Выберите конкретную причину из справочника безопасности');
+  return code;
+}
 export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   const P=prefix+'/guest';
 
@@ -479,6 +496,90 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     return reply.send(packet);
   }));
 
+  // R13: operational read-only risk assessment and hard pause switch. Never collect PII.
+  app.get(P+'/pilots/:id/safety',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    const observations=await activeObservations(db,s.tenant_id,pilot.id);
+    return {
+      schema:'osmanx.guest.safety.v1',
+      pilotId:pilot.id,version:pilot.version,phase:pilot.phase,hold,
+      quality:assessGuestQuality(pilot,observations),
+      guestCollectionPaused:!!hold?.active,
+      disclaimer:'Остановка влияет только на этот пилот, не запускает production API и не заменяет согласия клиента.'
+    };
+  }));
+
+  app.post(P+'/pilots/:id/safety/hold',req=>forTenant(req,ROLES,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','reasonCode'],'Приостановка пилота');
+    const version=versionOf(b),reason=safetyReason(b.reasonCode);
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    verifyVersion(pilot,version);expectPhase(pilot,['running']);
+    if((await getActiveHold(db,s.tenant_id,pilot.id))?.active)
+      throw problem(409,'Сбор уже приостановлен');
+    const h=await db.query(
+      "INSERT INTO industry.guest_pilot_holds(tenant_id,pilot_id,active,reason_code,held_by,held_at,version)"+
+      " VALUES($1,$2,true,$3,$4,now(),1)"+
+      " ON CONFLICT(tenant_id,pilot_id) DO UPDATE"+
+      " SET active=true,reason_code=EXCLUDED.reason_code,held_by=EXCLUDED.held_by,"+
+      " held_at=now(),resolved_by=NULL,resolved_at=NULL,version=industry.guest_pilot_holds.version+1,updated_at=now()"+
+      " RETURNING *",
+      [s.tenant_id,pilot.id,reason,s.account_id]);
+    const hold=h.rows[0];
+    await db.query(
+      "INSERT INTO industry.guest_pilot_hold_events(tenant_id,pilot_id,actor_id,event_type,reason_code,hold_version) VALUES($1,$2,$3,'held',$4,$5)",
+      [s.tenant_id,pilot.id,s.account_id,reason,hold.version]);
+    const updated=await db.query(
+      'UPDATE industry.guest_pilots SET version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING *',
+      [s.tenant_id,pilot.id]);
+    await record(db,s,'safety.held',pilot.id,{reasonCode:reason,holdVersion:hold.version});
+    return {item:flatPilot(updated.rows[0]),hold};
+  }));
+
+  app.post(P+'/pilots/:id/safety/resume',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','acknowledge'],'Возобновление пилота');
+    if(b.acknowledge!==true)
+      throw problem(400,'Нужно подтвердить проверку причины и независимый контроль');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    verifyVersion(pilot,versionOf(b));expectPhase(pilot,['running']);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    if(!hold?.active)throw problem(409,'Сбор не приостановлен');
+    if(s.account_id===hold.held_by)
+      throw problem(403,'Возобновление должен подтвердить другой действующий сотрудник-руководитель');
+    const changed=await db.query(
+      'UPDATE industry.guest_pilot_holds SET active=false,resolved_by=$1,resolved_at=now(),'+
+      ' version=version+1,updated_at=now() WHERE tenant_id=$2 AND pilot_id=$3 RETURNING *',
+      [s.account_id,s.tenant_id,pilot.id]);
+    const current=changed.rows[0];
+    await db.query(
+      "INSERT INTO industry.guest_pilot_hold_events(tenant_id,pilot_id,actor_id,event_type,reason_code,hold_version) VALUES($1,$2,$3,'resumed',$4,$5)",
+      [s.tenant_id,pilot.id,s.account_id,current.reason_code,current.version]);
+    const updated=await db.query(
+      'UPDATE industry.guest_pilots SET version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING *',
+      [s.tenant_id,pilot.id]);
+    await record(db,s,'safety.resumed',pilot.id,{reasonCode:current.reason_code,holdVersion:current.version});
+    return {item:flatPilot(updated.rows[0]),hold:current};
+  }));
+
+  app.get(P+'/pilots/:id/safety/export.json',(req,reply)=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    const rows=await activeObservations(db,s.tenant_id,pilot.id);
+    const history=await db.query(
+      'SELECT id,pilot_id,actor_id,event_type,reason_code,hold_version,recorded_at'+
+      ' FROM industry.guest_pilot_hold_events WHERE tenant_id=$1 AND pilot_id=$2'+
+      ' ORDER BY hold_version ASC LIMIT 101',
+      [s.tenant_id,pilot.id]);
+    if(history.rowCount>100)throw problem(409,'Журнал превышает предел полного проверяемого пакета');
+    const packet=buildSafetyExport({
+      pilot,hold,events:history.rows,
+      quality:assessGuestQuality(pilot,rows),evidenceDigest:proof(pilot,rows)
+    });
+    reply.header('Content-Disposition','attachment; filename="osmanx-guest-r13-safety.json"');
+    reply.header('Content-Type','application/json; charset=utf-8');
+    return reply.send(packet);
+  }));
+
   // R9.1+2: authenticated, deterministic diagnosis from aggregate-only tenant data.
   app.get(P+'/pilots/:id/diagnostics',req=>forTenant(req,null,async(db,s)=>{
     const pilot=await getPilot(db,s.tenant_id,req.params.id);
@@ -626,6 +727,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     const b=bodyOf(req);requiredKeys(b,['expectedVersion','observation'],'Добавление наблюдения');
     const version=versionOf(b),ob=parseObservation(b.observation),key=keyOf(req),hash=digest(ob);
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    await assertUnheld(db,s.tenant_id,pilot.id);
     const existing=await db.query(
       'SELECT id,payload_digest,voided_at FROM industry.guest_observations WHERE tenant_id=$1 AND pilot_id=$2 AND idempotency_key=$3',
       [s.tenant_id,pilot.id,key]);
@@ -653,6 +755,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   app.post(P+'/pilots/:id/observations/import/preview',req=>forTenant(req,ROLES,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion','csv'],'Предварительная проверка CSV');
     const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    await assertUnheld(db,s.tenant_id,pilot.id);
     const version=versionOf(b);verifyVersion(pilot,version);expectPhase(pilot,['running']);
     const {rows,hash,summary}=validatedCsv(b.csv,pilot,version);
     const remaining=await checkBatchSlots(db,s.tenant_id,pilot,rows);
@@ -673,6 +776,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   app.post(P+'/pilots/:id/observations/import',(req,reply)=>forTenant(req,ROLES,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion','csv','sha256'],'Импорт агрегатов');
     const version=versionOf(b),key=keyOf(req),pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    await assertUnheld(db,s.tenant_id,pilot.id);
     const {rows,hash,summary}=validatedCsv(b.csv,pilot,version);
     if(typeof b.sha256!=='string'||b.sha256!==hash)
       throw problem(409,'CSV изменён после предварительной проверки. Запустите просмотр заново.');
@@ -713,6 +817,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   app.post(P+'/pilots/:id/observations/:observationId/void',req=>forTenant(req,MANAGE,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion'],'Отзыв наблюдения');
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    await assertUnheld(db,s.tenant_id,pilot.id);
     verifyVersion(pilot,versionOf(b));expectPhase(pilot,['running']);
     const id=uuid(req.params.observationId);
     const found=await db.query(
@@ -730,6 +835,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   app.post(P+'/pilots/:id/submit',req=>forTenant(req,MANAGE,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion'],'Представление результатов');
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    await assertUnheld(db,s.tenant_id,pilot.id);
     verifyVersion(pilot,versionOf(b));expectPhase(pilot,['running']);
     if(!pilot.protocol)throw problem(409,'Нет предварительно согласованного протокола');
     assertMatured(pilot);
