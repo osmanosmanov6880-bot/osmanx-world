@@ -63,6 +63,7 @@ function showAuth(){
   $('password').value='';
   $('newInvite').hidden=true;$('inviteToken').value='';
   $('staffPanel').hidden=true;
+  $('overviewPanel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -71,6 +72,8 @@ function showWorkspace(){
   $('requestForm').querySelector('button[type=submit]').disabled=!write();
   $('pilotForm').querySelector('button[type=submit]').disabled=!manage();
   $('staffPanel').hidden=!manage();
+  $('overviewPanel').hidden=!manage();
+  $('retentionRun').hidden=model.me.role!=='owner';
   const managerRole=$('inviteRole').querySelector('option[value=manager]');
   managerRole.hidden=model.me.role!=='owner';
   if(model.me.role!=='owner' && $('inviteRole').value==='manager')$('inviteRole').value='viewer';
@@ -84,7 +87,10 @@ async function refresh(){
   const [requests,pilots]=await Promise.all([api('/guest/requests'),api('/guest/pilots')]);
   model.requests=requests.items;model.pilots=pilots.items;
   drawRequests();drawPilots();
-  if(manage())await loadStaff();
+  if(manage()){
+    await loadStaff();
+    await loadOverview();
+  }
   if(model.selected?.item)await openPilot(model.selected.item.id);
 }
 function appendText(parent,tag,text,css){
@@ -98,6 +104,19 @@ function actionButton(label,onClick,secondary=false){
   button.textContent=label;
   button.addEventListener('click',()=>safely(()=>onClick()));
   return button;
+}
+async function loadOverview(){
+  const data=await api('/guest/overview');
+  const r=data.requests,p=data.pilots,q=data.quotas;
+  if(data.schema!=='osmanx.guest.overview.v1')throw Error('Неверная версия данных руководителя');
+  $('overviewRequests').textContent='Новые: '+r.new+' · квалифицированы: '+r.qualified+
+    ' · отклонены: '+r.declined+' · переведены в пилот: '+r.converted;
+  $('overviewPilots').textContent='Черновики: '+p.draft+' · идут: '+p.running+
+    ' · на разборе: '+p.in_review+' · возвращены: '+p.returned+
+    ' · рассмотрены: '+p.reviewed+' · архив: '+p.archived;
+  $('overviewQuotas').textContent='Заявки: '+q.requests.used+' / '+q.requests.limit+
+    ' за '+q.requests.windowDays+' дней. Активные пилоты: '+q.activePilots.used+
+    ' / '+q.activePilots.limit+'.';
 }
 async function loadStaff(){
   const data=await api('/staff');
@@ -188,6 +207,14 @@ async function openPilot(id){
   const item=data.item;
   $('pilotHeading').textContent=item.title;
   $('phase').textContent=item.phase;
+  const p=item.protocol;
+  $('protocolStatus').textContent=p
+    ?'Зафиксированный протокол: '+p.startDate+' — '+p.endDate+
+      '; повторный визит за '+p.outcomeWindowDays+' дней; группы: '+p.allocation+
+      '; источник: '+p.source+'. '+(item.prospectivelyRegistered===true
+        ?'Зарегистрирован до начала периода.'
+        :'Создан после начала периода — ретроспективный риск, не заявлять предрегистрацию.')
+    :'Архивный пилот предыдущей версии: подтверждённый протокол отсутствует.';
   $('version').textContent=String(item.version);
   $('sample').textContent=String(item.targetPerGroup);
   for(const k of flags)document.querySelector('[data-ready="'+k+'"]').checked=item.readiness[k]===true;
@@ -274,7 +301,13 @@ $('pilotForm').addEventListener('submit',event=>{
   event.preventDefault();safely(async()=>{
     const plan=Object.fromEntries(['baselinePct','liftPp','margin','discount','fixed','fee'].map(k=>[k,$(k).value]));
     const requestId=$('requestId').value||null;
-    const output=await api('/guest/pilots',{method:'POST',body:{title:$('pilotTitle').value.trim(),plan,requestId}});
+    const protocol={
+      startDate:$('studyStart').value,endDate:$('studyEnd').value,
+      outcomeWindowDays:Number($('studyWindow').value),
+      allocation:$('studyAllocation').value,source:$('studySource').value,
+      primaryMetric:'repeat_visit'
+    };
+    const output=await api('/guest/pilots',{method:'POST',body:{title:$('pilotTitle').value.trim(),plan,requestId,protocol}});
     await refresh();await openPilot(output.item.id);setStatus('Пилот создан. Согласуйте условия готовности до запуска.');
   });
 });
@@ -361,6 +394,24 @@ $('archivePilot').addEventListener('click',()=>safely(async()=>{
   await refreshCurrent();
   setStatus('Пилот заархивирован, исходные данные сохранены. SHA-256: '+response.sha256);
 }));
+$('overviewRefresh').addEventListener('click',()=>safely(()=>loadOverview()));
+$('retentionRun').addEventListener('click',()=>safely(async()=>{
+  if(model.me?.role!=='owner')throw Error('Требуются права владельца.');
+  if(!window.confirm('Очистить свободный текст отклонённых несвязанных заявок старше 90 дней? История решений останется.'))return;
+  const result=await api('/guest/requests/retention',{
+    method:'POST',body:{confirm:true}
+  });
+  await refresh();
+  setStatus('Очищено '+result.redacted+' старых заявок. Вся история аудита сохранена.');
+}));
+function defaultStudyDates(){
+  const now=new Date();
+  const plus=new Date(now.getTime()+13*86400000);
+  $('studyStart').value=now.toISOString().slice(0,10);
+  $('studyEnd').value=plus.toISOString().slice(0,10);
+  $('obsDate').max=now.toISOString().slice(0,10);
+}
+defaultStudyDates();
 $('loadReport').addEventListener('click',()=>safely(()=>loadReport()));
 $('downloadReport').addEventListener('click',()=>safely(async()=>{
   await downloadCsv('/guest/pilots/'+currentPilot().id+'/report.csv');
