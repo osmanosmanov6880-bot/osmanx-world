@@ -23,7 +23,7 @@ export function snapshotLaunch(pilot){
   const time=pilot.protocol_registered_at;
   return {
     schema:EVIDENCE_SCHEMA,
-    pilotId:pilot.id,
+    pilotId:pilot.id,pilotVersion:pilot.version,
     protocol:pilot.protocol||null,
     protocolRegisteredAt:time?(time instanceof Date?time.toISOString():new Date(time).toISOString()):null,
     targetPerGroup:Number(pilot.target_per_group),
