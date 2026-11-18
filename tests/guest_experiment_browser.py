@@ -40,6 +40,7 @@ def main():
                 page.goto(BASE + "/assets/guest/offer.html", wait_until="networkidle")
                 page.get_by_role("link", name="Перейти в лабораторию").click()
                 assert page.url.endswith("/assets/guest/experiment.html"), page.url
+                page.wait_for_function("() => document.querySelector('#numbers')?.textContent.includes('п.п.')")
                 assert "10 п.п." in page.locator("#numbers").inner_text()
                 assert "−" in page.locator("#net").inner_text() or "-" in page.locator("#net").inner_text()
                 assert page.locator("#downloadCsv").is_enabled()
