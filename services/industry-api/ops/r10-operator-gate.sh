@@ -11,6 +11,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 test "$1" = /* && test "$2" = /* || {
   echo "Absolute paths are mandatory" >&2;exit 2;
 }
+test ! -L "$1" && test ! -L "$2" || {
+  echo "NO-GO: links to credentials or release archives are forbidden" >&2; exit 2;
+}
 envfile="$(realpath -e "$1")"
 release="$(realpath -e "$2")"
 [[ "$envfile" != "$ROOT/"* ]] || {
