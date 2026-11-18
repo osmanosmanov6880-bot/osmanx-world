@@ -61,6 +61,8 @@ jobs:
           bash -n ops/staging-smoke.sh
           bash -n ops/build-release.sh
           bash -n ops/verify-release.sh
+          bash -n ops/stage-launch.sh
+          node --check scripts/dr-guest-proof.mjs
           node --check scripts/preflight.mjs
           node --check scripts/dr-guest-proof.mjs
           # Keep environment placeholder-only, no credential material in repo.
@@ -153,3 +155,41 @@ jobs:
           R6_STAGE_ALLOWED=CI_ONLY R6_STAGE_DB_URL=postgresql://industry_app:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb@127.0.0.1:5432/industry_ci bash ops/staging-smoke.sh
           docker build --file ops/Dockerfile.backup --tag osmanx-industry-maintenance:ci .
           test "$(docker run --rm --entrypoint id osmanx-industry-maintenance:ci -u)" -ne 0
+
+      - name: R7 guarded staging plan and full isolated Compose launch
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/r7-private"
+          mkdir -p "$dir"
+          pub1="$(grep '^# public key:' "$RUNNER_TEMP/key1.txt" | awk '{print $4}')"
+          pub2="$(grep '^# public key:' "$RUNNER_TEMP/key2.txt" | awk '{print $4}')"
+          {
+            printf 'POSTGRES_ADMIN_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+            printf 'INDUSTRY_APP_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+            printf 'INDUSTRY_WORKER_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+            printf 'WEBHOOK_HMAC_KEY=%s\n' "$(openssl rand -hex 32)"
+            printf 'BOOTSTRAP_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')"
+            printf 'BOOTSTRAP_EMAIL=r7-runner@ci.invalid\n'
+            printf 'BOOTSTRAP_TENANT_SLUG=r7-stage-synthetic\n'
+            printf 'BOOTSTRAP_TENANT_NAME=R7 CI Stage\n'
+            printf 'BOOTSTRAP_VERTICAL=cafe\n'
+            printf 'GUEST_WRITES_ENABLED=false\n'
+            printf 'AGE_RECIPIENT_1=%s\n' "$pub1"
+            printf 'AGE_RECIPIENT_2=%s\n' "$pub2"
+          } > "$dir/staging.env"
+          chmod 600 "$dir/staging.env"
+          bash ops/stage-launch.sh plan "$dir/staging.env"
+          # No operator acknowledgment means NO infrastructure mutations.
+          if bash ops/stage-launch.sh apply "$dir/staging.env"; then
+            echo "::error::Unacknowledged staging launch succeeded"; exit 1
+          fi
+          R7_STAGE_ACK=CONFIRM_ISOLATED_STAGE_ONLY bash ops/stage-launch.sh apply "$dir/staging.env"
+          curl --fail --silent --max-time 5 \
+            http://127.0.0.1:3149/api/industry/v1/health/ready |
+            grep -q '"leastPrivilege":true'
+          R7_STAGE_ACK=CONFIRM_ISOLATED_STAGE_ONLY bash ops/stage-launch.sh stop "$dir/staging.env"
+          if curl --fail --silent --max-time 3 \
+              http://127.0.0.1:3149/api/industry/v1/health/live; then
+            echo "::error::Staging API remained online after stop"; exit 1
+          fi
+          echo "R7 full staging acceptance PASS: isolated DB, setup, bootstrap, API and stop; no production changes."
