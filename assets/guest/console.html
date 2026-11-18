@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#09151c">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'self'; object-src 'none'; frame-ancestors 'none'">
+<title>OSMANX Guest Intelligence — рабочий кабинет компании</title>
+<meta name="description" content="Закрытый рабочий кабинет для сотрудников: заявки, пилоты, агрегированные наблюдения, подтверждение результатов. Требуется запущенный Industry API.">
+<style>
+:root{color-scheme:dark;--bg:#07131b;--surface:#11222c;--panel:#0b1b24;--line:#35505e;--text:#f0f5f5;--muted:#b7c9cf;--primary:#a1ddd6;--warning:#ffc780;font:16px/1.5 system-ui,sans-serif}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text)}header,main,footer{width:min(1100px,94%);margin:auto}header,footer{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:18px 0;border-bottom:1px solid var(--line)}
+header a{font-weight:750;letter-spacing:.09em;color:var(--text);text-decoration:none}footer{margin:30px auto 0;border-top:1px solid var(--line);border-bottom:0}nav a{margin-left:12px}a{color:var(--primary);text-underline-offset:.22em}
+main{padding:22px 0 40px}.hero{padding:25px 0 30px;max-width:800px}.eyebrow{color:var(--primary);letter-spacing:.1em;text-transform:uppercase;font-size:.82rem}
+h1{font-size:clamp(2.2rem,5vw,4.5rem);line-height:1.05;letter-spacing:-.05em;font-weight:590;margin:14px 0}h2{font-size:1.45rem;letter-spacing:-.025em;margin:0 0 10px}h3{font-size:1.08rem;margin:0 0 10px}
+p{color:var(--muted)}.panel{border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:clamp(18px,4vw,30px);margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.triple{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+label{display:block;font-size:.91rem;color:#d5e4e7;margin:10px 0 6px}input,select,textarea{width:100%;border:1px solid #68818c;border-radius:5px;background:#061219;color:#f1f8f8;padding:11px;font:inherit;min-height:44px}
+input[type=checkbox]{width:20px;min-height:20px;accent-color:var(--primary);vertical-align:middle;margin-right:12px}
+textarea{min-height:160px;resize:vertical}.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.check{border:1px solid var(--line);border-radius:6px;padding:13px;display:flex;align-items:flex-start;cursor:pointer}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 0}button,.button{background:var(--primary);color:#07151d;border:1px solid var(--primary);border-radius:5px;min-height:44px;padding:10px 16px;font:600 .96rem system-ui,sans-serif;cursor:pointer;text-decoration:none}
+button.secondary{background:transparent;color:var(--primary)}button:disabled{cursor:not-allowed;opacity:.5}button.danger{background:transparent;border-color:var(--warning);color:var(--warning)}
+:focus-visible{outline:3px solid var(--warning);outline-offset:3px}.pill{display:inline-block;background:#1e3e40;padding:4px 10px;border-radius:99px;font-size:.8rem;color:var(--primary);letter-spacing:.02em}
+[hidden]{display:none!important}.items{list-style:none;padding:0;margin:15px 0}.items li{border-bottom:1px solid var(--line);padding:11px 0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;justify-content:space-between}
+.items li:last-child{border-bottom:0}.small{font-size:.86rem;color:var(--muted)}.alert{border-left:3px solid var(--warning);background:#29251d;color:#f8dfc0;padding:12px 14px;margin:12px 0;border-radius:4px}
+.info{border-left:3px solid var(--primary);background:#102b31;padding:12px 14px;color:#d7eeee;margin:12px 0;border-radius:4px}
+#globalStatus{white-space:pre-wrap;min-height:1.5em}#globalStatus.error{color:var(--warning)}.separator{border:0;border-top:1px solid var(--line);margin:24px 0}.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}th{font-size:.85rem;color:var(--muted);font-weight:600}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-height:350px;overflow:auto}#reportBox{max-height:320px;overflow:auto}
+@media(max-width:700px){.grid,.triple,.checks{grid-template-columns:1fr}.actions button{flex:1 1 100%}nav{font-size:.82rem}header{align-items:flex-start}.items li{align-items:flex-start}}
+</style></head><body>
+<header><a href="/">OSMANX WORLD</a><nav><a href="./pilot.html">Лаборатория</a><a href="./offer.html">Предложение</a></nav></header>
+<main><section class="hero"><span class="eyebrow">Guest Intelligence / R4 / Закрытый кабинет</span>
+<h1>Результаты, которые можно проверить.</h1>
+<p>Заявки, проведение пилота, обезличенные наблюдения, проверка вторым сотрудником и отчёт для владельца. Авторизация — через существующий защищённый Industry API.</p>
+<div class="alert">Не демонстрация успешных продаж. Для входа требуется действующий аккаунт сотрудника и работающий сервер. Если API ещё не развёрнут, кабинет покажет недоступность и не сохранит введённые сведения.</div>
+</section>
+<p id="globalStatus" role="status" aria-live="polite"></p>
+
+<section id="loginPanel" class="panel" aria-labelledby="signInTitle">
+<h2 id="signInTitle">Вход сотрудника</h2>
+<form id="loginForm"><div class="grid">
+<div><label for="tenant">Код компании</label><input id="tenant" name="tenant" autocomplete="organization" placeholder="coffee-company" required minlength="2" maxlength="64" pattern="[a-z0-9][a-z0-9-]+"></div>
+<div><label for="email">Рабочий email</label><input id="email" name="email" type="email" autocomplete="username" required maxlength="254"></div>
+<div><label for="password">Пароль</label><input id="password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="200"></div></div>
+<div class="actions"><button type="submit">Войти</button></div></form>
+<p class="small">Публичной регистрации нет. Владелец компании добавляет сотрудников через приглашения. Пароль не записывается в хранилище браузера.</p></section>
+
+<div id="workPanel" hidden>
+<section class="panel"><div class="actions" style="justify-content:space-between;align-items:center;margin:0">
+<div><h2 id="tenantLabel">Организация</h2><p class="small" id="accountLabel">—</p></div>
+<div class="actions"><button id="refresh" class="secondary" type="button">Обновить</button><button id="logout" class="secondary" type="button">Выйти</button></div></div>
+<p class="small">Данные поступают из базы компании. Операции с изменением данных защищены проверкой ролей, CSRF и версий записей.</p></section>
+
+<div class="grid">
+<section class="panel"><h2>01 / Заявки</h2>
+<form id="requestForm"><label for="requestTitle">Краткое название задачи (без имён клиентов)</label>
+<input id="requestTitle" maxlength="120" minlength="3" required placeholder="Повторные визиты кофейни">
+<label for="requestSource">Источник</label><select id="requestSource"><option value="field">Полевое обращение</option><option value="referral">Рекомендация</option><option value="site">Сайт</option><option value="other">Другое</option></select>
+<div class="actions"><button type="submit">Создать заявку</button></div></form><ul id="requestsList" class="items"></ul></section>
+<section class="panel"><h2>02 / Новый пилот</h2>
+<form id="pilotForm"><label for="pilotTitle">Название пилота</label>
+<input id="pilotTitle" minlength="3" maxlength="120" value="Повторные визиты" required>
+<label for="requestId">Связанная заявка</label><select id="requestId"><option value="">Без заявки</option></select>
+<div class="grid">
+<div><label for="baselinePct">Базовый возврат, %</label><input id="baselinePct" type="number" min="1" max="98" step=".01" value="20" required></div>
+<div><label for="liftPp">Минимальный прирост, п.п.</label><input id="liftPp" type="number" min=".5" max="50" step=".01" value="10" required></div>
+<div><label for="margin">Маржа визита, ₽</label><input id="margin" type="number" min="0" step=".01" value="250" required></div>
+<div><label for="discount">Расход на предложение, ₽</label><input id="discount" type="number" min="0" step=".01" value="0" required></div>
+<div><label for="fixed">Другие расходы, ₽</label><input id="fixed" type="number" min="0" step=".01" value="0" required></div>
+<div><label for="fee">Стоимость услуги, ₽</label><input id="fee" type="number" min="0" step=".01" value="25000" required></div></div>
+<div class="actions"><button type="submit">Создать пилот</button></div></form></section></div>
+
+<section class="panel"><h2>03 / Пилоты компании</h2><ul id="pilotsList" class="items"></ul></section>
+
+<section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
+<h2 id="pilotHeading">—</h2><p><span class="pill" id="phase">—</span> · версия <strong id="version">—</strong> · расчётная выборка <strong id="sample">—</strong> гостей на группу</p>
+<div class="grid">
+<section><h3>Условия запуска</h3>
+<div class="checks">
+<label class="check"><input type="checkbox" data-ready="repeatDefinition"><span>Определён повторный визит</span></label>
+<label class="check"><input type="checkbox" data-ready="sameWindow"><span>Одинаковое окно измерения</span></label>
+<label class="check"><input type="checkbox" data-ready="independentGroups"><span>Независимые группы</span></label>
+<label class="check"><input type="checkbox" data-ready="marginVerified"><span>Проверена маржа</span></label>
+<label class="check"><input type="checkbox" data-ready="contactConsent"><span>Законность данных и согласия</span></label>
+<label class="check"><input type="checkbox" data-ready="ownerAgreed"><span>Владелец согласовал условия</span></label></div>
+<div class="actions"><button id="saveReady" type="button">Сохранить условия</button><button id="start" class="secondary" type="button">Начать пилот</button></div></section>
+<section><h3>Новое агрегированное наблюдение</h3>
+<form id="observationForm">
+<div class="grid"><div><label for="obsDate">Дата периода</label><input id="obsDate" type="date" required></div>
+<div><label for="control">Группа контроля</label><input id="control" type="number" step="1" min="1" required></div>
+<div><label for="controlReturn">Возвраты контроля</label><input id="controlReturn" type="number" step="1" min="0" required></div>
+<div><label for="offer">Группа с предложением</label><input id="offer" type="number" step="1" min="1" required></div>
+<div><label for="offerReturn">Возвраты предложения</label><input id="offerReturn" type="number" step="1" min="0" required></div></div>
+<div class="actions"><button type="submit">Записать период</button></div></form></section></div>
+<hr class="separator">
+<h3>Наблюдения (только активные)</h3><div class="scroll"><table><thead><tr><th>Дата</th><th>Контроль</th><th>Предложение</th><th>Действие</th></tr></thead><tbody id="observationList"></tbody></table></div>
+<div class="actions"><button id="submitReview" type="button">Отправить на проверку</button><button id="resume" class="secondary" type="button">Вернуть к наблюдению</button></div>
+<hr class="separator"><h3>Проверка результатов</h3><p>Приёмку выполняет другой владелец или управляющий, не тот, кто отправил результаты.</p>
+<div class="actions"><button id="accept" type="button">Принять к обсуждению</button><button id="return" class="secondary" type="button">Запросить исправления</button></div>
+<div class="actions"><button id="loadReport" class="secondary" type="button">Обновить отчёт</button><button id="downloadReport" class="secondary" type="button">Скачать CSV</button></div>
+<pre id="reportBox" class="info">Результат появится после записи наблюдений.</pre>
+<p class="small">«Принять к обсуждению» не подтверждает причинную связь, поступившую оплату или обещанную прибыль. Клиентские данные и номера телефонов в эту систему не вносить.</p></section>
+</div></main><footer><a href="/assets/catalog/index.html">OSMANX WORLD</a><span class="small">R4 · Без автоматических платежей и подписок</span></footer>
+<script type="module" src="./console.js"></script></body></html>

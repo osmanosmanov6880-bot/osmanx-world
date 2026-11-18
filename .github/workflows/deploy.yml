@@ -30,6 +30,8 @@ jobs:
           test -s assets/guest/offer.html
           test -s assets/guest/experiment.html
           test -s assets/guest/pilot.html
+          test -s assets/guest/console.html
+          test -s assets/guest/console.js
           test -s assets/guest/pilot.js
           test -s assets/guest/pilot-model.js
           test -s assets/guest/experiment-model.js
@@ -37,8 +39,9 @@ jobs:
           node --check assets/guest/experiment-model.js
           node --check assets/guest/experiment.js
           node --check assets/guest/pilot.js
+          node --check assets/guest/console.js
           node --check assets/guest/pilot-model.js
-          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs
+          node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs
           test -s assets/sovereign/workspace.html
           test -s assets/industry/index.html
           test -s assets/industry/style.css
@@ -96,7 +99,7 @@ jobs:
           actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/index.html' | cut -d ' ' -f1)"
           test "$expected" = "$actual"
           echo "VPS index.html SHA-256 matches the checked-out commit." >> "$GITHUB_STEP_SUMMARY"
-          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js; do
+          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js; do
             expected="$(sha256sum "$asset" | cut -d ' ' -f1)"
             actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "sha256sum /var/www/osmanx.world/$asset" | cut -d ' ' -f1)"
             test "$expected" = "$actual" || { echo "::error::VPS file mismatch: $asset"; exit 1; }
@@ -118,7 +121,7 @@ jobs:
       - name: Verify Guest Intelligence public HTTPS release and CDN transformations
         run: |
           set -euo pipefail
-          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js; do
+          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js; do
             case "$asset" in
               assets/guest/offer.html) marker="Перейти в лабораторию" ;;
               assets/guest/experiment.html) marker="Паспорт и воспроизводимость" ;;
@@ -127,6 +130,8 @@ jobs:
               assets/guest/pilot.html) marker="PILOT OPERATIONS R3" ;;
               assets/guest/pilot.js) marker="Сценарий восстановлен после строгой проверки полей" ;;
               assets/guest/pilot-model.js) marker="osmanx.guest.pilot.v1" ;;
+              assets/guest/console.html) marker="Закрытый кабинет" ;;
+              assets/guest/console.js) marker="Нет соединения с Industry API" ;;
             esac
             expected="$(sha256sum "$asset" | cut -d ' ' -f1)"
             observed=false
@@ -143,15 +148,15 @@ jobs:
               sleep 3
             done
             if test "$observed" != true; then
-              echo "::error::Public HTTPS does not serve R2 content: $asset"
+              echo "::error::Public HTTPS does not serve expected Guest content: $asset"
               exit 1
             fi
             actual="$(sha256sum /tmp/osmanx-guest-verify | cut -d ' ' -f1)"
             if test "$expected" = "$actual"; then
               echo "Public HTTPS SHA-256 exact: $asset" >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "::warning::Public content bytes differ despite R2 marker; VPS SHA-256 was verified. Check edge transformations/cache for $asset"
-              echo "Public R2 marker verified; bytes transformed upstream: $asset" >> "$GITHUB_STEP_SUMMARY"
+              echo "::warning::Public content bytes differ despite expected Guest marker; VPS SHA-256 was verified. Check edge transformations/cache for $asset"
+              echo "Public Guest marker verified; bytes transformed upstream: $asset" >> "$GITHUB_STEP_SUMMARY"
             fi
           done
 
