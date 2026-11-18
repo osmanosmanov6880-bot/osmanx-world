@@ -36,8 +36,11 @@ if [[ "$mode" == stop ]]; then
   echo "Stopped ONLY staging API; database and volume preserved."
   exit 0
 fi
-if [[ -n "$("${dc[@]}" ps -q)" ]]; then
-  echo "Staging project already exists. No automatic overwrite." >&2;exit 2
+if [[ -n "$("${dc[@]}" ps -aq)" ]]; then
+  echo "Staging containers already exist. No automatic overwrite." >&2;exit 2
+fi
+if [[ -n "$(docker volume ls --filter label=com.docker.compose.project=osmanx-industry-r7-staging --quiet)" ]]; then
+  echo "An existing staging volume was found. Refusing to reuse or erase data." >&2;exit 2
 fi
 if command -v ss >/dev/null && ss -ltn | grep -Eq '(^|:)3149[[:space:]]'; then
   echo "Loopback staging port 3149 occupied; refusing changes" >&2;exit 2
