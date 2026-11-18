@@ -3,7 +3,7 @@
 // Deliberately does NOT issue invoices, charge cards, email prospects or assert causal lift.
 import { createHash } from 'node:crypto';
 import { recordChange } from './database.mjs';
-import { money, count } from '../../../assets/guest/experiment-model.js';
+import { money, count } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../../../assets/guest/pilot-model.js';
 
 const ROLES=['owner','manager','operator'];
