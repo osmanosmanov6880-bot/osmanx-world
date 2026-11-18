@@ -260,23 +260,23 @@ async function verify(db){
      !launchProof.rows[0].launch_gate_enrolled_at)
     throw Error('R12 launch gate enrollment missing after recovery');
   const launchPilot=launchProof.rows[0];
-  const history=await db.query(
+  const launchHistory=await db.query(
     "SELECT role,actor_id,snapshot_digest,accepted_at,expires_at,pilot_version FROM industry.guest_launch_attestations WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY role",
     [pilot.tenant_id,launchPilot.id]);
-  if(history.rowCount!==2||history.rows[0].role!=='manager'||
-     history.rows[1].role!=='owner'||
-     history.rows[0].actor_id===history.rows[1].actor_id)
+  if(launchHistory.rowCount!==2||launchHistory.rows[0].role!=='manager'||
+     launchHistory.rows[1].role!=='owner'||
+     launchHistory.rows[0].actor_id===launchHistory.rows[1].actor_id)
     throw Error('Independent R12 human approvals were not restored');
   const digestR12=hash(snapshotLaunch(launchPilot));
   const expectedR12=process.env.R12_EXPECTED_DR_DIGEST;
   if(!/^[a-f0-9]{64}$/.test(String(expectedR12||''))||digestR12!==expectedR12||
-     history.rows.some(r=>r.snapshot_digest!==digestR12||r.pilot_version!==launchPilot.version))
+     launchHistory.rows.some(r=>r.snapshot_digest!==digestR12||r.pilot_version!==launchPilot.version))
     throw Error('R12 attestation SHA or original version differs after recovery');
   const gate=launchPreflight({
     pilot:launchPilot,members:[
-      {role:'owner',account_id:history.rows[1].actor_id,active:true},
-      {role:'manager',account_id:history.rows[0].actor_id,active:true}
-    ],attestations:history.rows
+      {role:'owner',account_id:launchHistory.rows[1].actor_id,active:true},
+      {role:'manager',account_id:launchHistory.rows[0].actor_id,active:true}
+    ],attestations:launchHistory.rows
   });
   if(!gate.canStartIsolatedPilot||gate.customerProductionAuthorized!==false)
     throw Error('R12 restored signoffs are invalid or claimed production authorization');
