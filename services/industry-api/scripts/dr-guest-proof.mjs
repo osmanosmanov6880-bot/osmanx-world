@@ -157,9 +157,23 @@ async function seed(db){
       "INSERT INTO industry.guest_launch_attestations(tenant_id,pilot_id,actor_id,role,snapshot_digest,pilot_version,idempotency_key) VALUES($1,$2,$3,$4,$5,$6,$7)",
       [tenant,launchPilot.id,actor,role,launchDigest,launchPilot.version,key]
     );
+    // R13: immutable held->resumed operational history on the archived v2 pilot.
+    // This never changes the original R10 evidence snapshot or its SHA.
+    await db.query(
+      "INSERT INTO industry.guest_pilot_holds(tenant_id,pilot_id,active,reason_code,held_by,held_at,resolved_by,resolved_at,version) VALUES($1,$2,false,'source_integrity',$3,now()-interval '1 day',$4,now(),2)",
+      [tenant,modern,owner,manager]);
+    await db.query(
+      "INSERT INTO industry.guest_pilot_hold_events(tenant_id,pilot_id,actor_id,event_type,reason_code,hold_version) VALUES"+
+      "($1,$2,$3,'held','source_integrity',1),($1,$2,$4,'resumed','source_integrity',2)",
+      [tenant,modern,owner,manager]);
+    const safetyRows=await db.query(
+      "SELECT actor_id,event_type,reason_code,hold_version FROM industry.guest_pilot_hold_events WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY hold_version",
+      [tenant,modern]);
+    const safetyDigest=hash(safetyRows.rows);
     await db.query('COMMIT');
     return {ok:true,stage:'seed',proofSha256:originalHash,
-      proofSha256V2:modernHash,proofSha256R12:launchDigest};
+      proofSha256V2:modernHash,proofSha256R12:launchDigest,
+      proofSha256R13:safetyDigest};
   }catch(e){await db.query('ROLLBACK');throw e}
 }
 async function verify(db){
@@ -226,8 +240,8 @@ async function verify(db){
     throw Error('R10 reviewed-by-independent-manager evidence invalid');
   const policies=await db.query(
     "SELECT count(*)::int AS n FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='industry' AND c.relname=ANY($1::text[]) AND c.relrowsecurity AND c.relforcerowsecurity",
-    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports','guest_action_history','guest_launch_attestations']]);
-  if(policies.rows[0].n!==9)throw Error('Row-level security was not restored');
+    [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports','guest_action_history','guest_launch_attestations','guest_pilot_holds','guest_pilot_hold_events']]);
+  if(policies.rows[0].n!==11)throw Error('Row-level security was not restored');
   const task=await db.query(
     "SELECT code,status,assigned_to,created_by,version,due_on::text AS due_date FROM industry.guest_actions WHERE tenant_id=$1 AND pilot_id=$2",
     [pilot.tenant_id,pilot.id]);
@@ -280,15 +294,40 @@ async function verify(db){
   });
   if(!gate.canStartIsolatedPilot||gate.customerProductionAuthorized!==false)
     throw Error('R12 restored signoffs are invalid or claimed production authorization');
+  const restoredSafety=await db.query(
+    'SELECT active,reason_code,held_by,resolved_by,version,held_at,resolved_at FROM industry.guest_pilot_holds WHERE tenant_id=$1 AND pilot_id=$2',
+    [pilot.tenant_id,modern.id]);
+  if(restoredSafety.rowCount!==1||restoredSafety.rows[0].active!==false||
+     restoredSafety.rows[0].reason_code!=='source_integrity'||
+     restoredSafety.rows[0].held_by!==pilot.created_by||
+     restoredSafety.rows[0].resolved_by!==pilot.reviewed_by||
+     restoredSafety.rows[0].version!==2||
+     !restoredSafety.rows[0].held_at||!restoredSafety.rows[0].resolved_at)
+    throw Error('R13 restored safety hold state invalid');
+  const safetyEvents=await db.query(
+    'SELECT actor_id,event_type,reason_code,hold_version FROM industry.guest_pilot_hold_events WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY hold_version',
+    [pilot.tenant_id,modern.id]);
+  const originalSafety=process.env.R13_EXPECTED_DR_DIGEST;
+  const safetyDigest=hash(safetyEvents.rows);
+  if(safetyEvents.rowCount!==2||safetyEvents.rows[0].event_type!=='held'||
+     safetyEvents.rows[1].event_type!=='resumed'||safetyEvents.rows[0].hold_version!==1||
+     safetyEvents.rows[1].hold_version!==2||
+     !/^[a-f0-9]{64}$/.test(String(originalSafety||''))||safetyDigest!==originalSafety)
+    throw Error('R13 hold event history or original SHA did not survive restore');
+  const mutationTrigger=await db.query(
+    "SELECT count(*)::int AS n FROM pg_trigger WHERE tgrelid='industry.guest_pilot_hold_events'::regclass AND tgname='guest_pilot_hold_events_append_only' AND NOT tgisinternal"
+  );
+  if(mutationTrigger.rows[0].n!==1)throw Error('R13 append-only trigger missing after restore');
   const migration=await db.query(
-    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='010_guest_launch_gate.sql'"
+    "SELECT count(*)::int AS n FROM industry.schema_migrations WHERE name='011_guest_pilot_safety.sql'"
   );
   if(migration.rows[0].n!==1)throw Error('Latest migration version not restored');
   return {ok:true,stage:'verify',observations:rows.rowCount,
     reviewedIndependently:true,proofSha256:digest,forcedRls:true,
     actionRecovered:true,actionHistoryRecovered:true,importRecovered:true,importSha256:expectedImportHash,
     v2ProofRecovered:true,proofSha256V2:v2Hash,
-    launchProofRecovered:true,proofSha256R12:digestR12};
+    launchProofRecovered:true,proofSha256R12:digestR12,
+    safetyProofRecovered:true,proofSha256R13:safetyDigest};
 }
 if(process.argv[1]?.endsWith('/dr-guest-proof.mjs')){
   const [mode]=process.argv.slice(2),url=process.env.R7_DR_DB_URL;
