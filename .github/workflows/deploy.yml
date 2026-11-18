@@ -102,7 +102,7 @@ jobs:
           actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'sha256sum /var/www/osmanx.world/index.html' | cut -d ' ' -f1)"
           test "$expected" = "$actual"
           echo "VPS index.html SHA-256 matches the checked-out commit." >> "$GITHUB_STEP_SUMMARY"
-          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js assets/guest/join.html assets/guest/join.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js; do
+          for asset in assets/guest/offer.html assets/guest/experiment.html assets/guest/experiment.js assets/guest/experiment-model.js assets/guest/pilot.html assets/guest/pilot.js assets/guest/pilot-model.js assets/guest/console.html assets/guest/console.js assets/guest/join.html assets/guest/join.js; do
             expected="$(sha256sum "$asset" | cut -d ' ' -f1)"
             actual="$(ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "sha256sum /var/www/osmanx.world/$asset" | cut -d ' ' -f1)"
             test "$expected" = "$actual" || { echo "::error::VPS file mismatch: $asset"; exit 1; }
@@ -133,7 +133,7 @@ jobs:
               assets/guest/pilot.html) marker="PILOT OPERATIONS R3" ;;
               assets/guest/pilot.js) marker="Сценарий восстановлен после строгой проверки полей" ;;
               assets/guest/pilot-model.js) marker="osmanx.guest.pilot.v1" ;;
-              assets/guest/console.html) marker="Закрытый кабинет" ;;
+              assets/guest/console.html) marker="Guest Intelligence / R8 / Защищённый кабинет" ;;
               assets/guest/console.js) marker="Нет соединения с Industry API" ;;
               assets/guest/join.html) marker="Приглашение сотрудника" ;;
               assets/guest/join.js) marker="/staff/invitations/accept" ;;
