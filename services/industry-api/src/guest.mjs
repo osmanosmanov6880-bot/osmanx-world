@@ -207,6 +207,22 @@ function calculate(pilot,observations){
 async function record(db,session,action,targetId,data){
   await recordChange(db,session.tenant_id,session.account_id,'guest.'+action,targetId,data);
 }
+async function checkBatchSlots(db,tenant,pilot,rows){
+  const active=await db.query(
+    'SELECT observed_on::text AS date FROM industry.guest_observations WHERE tenant_id=$1 AND pilot_id=$2 AND voided_at IS NULL',
+    [tenant,pilot.id]);
+  const occupied=new Set(active.rows.map(row=>row.date));
+  for(const row of rows)if(occupied.has(row.date))
+    throw problem(409,'CSV содержит дату, уже занятую активным наблюдением: '+row.date);
+  if(active.rowCount+rows.length>12)
+    throw problem(409,'Максимум 12 активных непересекающихся периодов на пилот');
+  return 12-active.rowCount;
+}
+function validatedCsv(raw,pilot,version){
+  const rows=guard(()=>validateBatchWindow(parseAggregateCsv(raw),pilot.protocol));
+  const hash=batchDigest(pilot.id,version,rows);
+  return {rows,hash,summary:summarizeBatch(rows)};
+}
 export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
   const P=prefix+'/guest';
 
@@ -452,6 +468,67 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     reply.code(201);
     return {observationId:inserted.rows[0].id,version:changed.rows[0].version};
   }));
+  // R9.4: isolated, strict dry-run. Preview NEVER writes any observation/import row.
+  app.post(P+'/pilots/:id/observations/import/preview',req=>forTenant(req,ROLES,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','csv'],'Предварительная проверка CSV');
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const version=versionOf(b);verifyVersion(pilot,version);expectPhase(pilot,['running']);
+    const {rows,hash,summary}=validatedCsv(b.csv,pilot,version);
+    const remaining=await checkBatchSlots(db,s.tenant_id,pilot,rows);
+    return {schema:'osmanx.guest.csv.preview.v1',pilotId:pilot.id,
+      expectedVersion:version,sha256:hash,remainingSlots:remaining,summary,
+      disclaimer:'Предварительная проверка без сохранения. Подтверждение не доказывает корректность источника или независимость групп.'};
+  }));
+
+  app.get(P+'/pilots/:id/observations/imports',req=>forTenant(req,null,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const rows=await db.query(
+      'SELECT id,rows_imported,committed_version,created_at,created_by FROM industry.guest_bulk_imports WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY created_at DESC LIMIT 40',
+      [s.tenant_id,pilot.id]);
+    return {items:rows.rows};
+  }));
+
+  // Commit is atomic within withTenant's BEGIN/COMMIT and serialized by the pilot FOR UPDATE.
+  app.post(P+'/pilots/:id/observations/import',(req,reply)=>forTenant(req,ROLES,async(db,s)=>{
+    const b=bodyOf(req);requiredKeys(b,['expectedVersion','csv','sha256'],'Импорт агрегатов');
+    const version=versionOf(b),key=keyOf(req),pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    const {rows,hash,summary}=validatedCsv(b.csv,pilot,version);
+    if(typeof b.sha256!=='string'||b.sha256!==hash)
+      throw problem(409,'CSV изменён после предварительной проверки. Запустите просмотр заново.');
+    const old=await db.query(
+      'SELECT id,payload_digest,rows_imported,committed_version FROM industry.guest_bulk_imports WHERE tenant_id=$1 AND pilot_id=$2 AND idempotency_key=$3',
+      [s.tenant_id,pilot.id,key]);
+    if(old.rowCount){
+      if(old.rows[0].payload_digest!==hash)
+        throw problem(409,'Idempotency-Key уже использован для другого пакета');
+      return {duplicate:true,importId:old.rows[0].id,
+        rowsImported:old.rows[0].rows_imported,version:old.rows[0].committed_version,sha256:hash};
+    }
+    verifyVersion(pilot,version);expectPhase(pilot,['running']);
+    await checkBatchSlots(db,s.tenant_id,pilot,rows);
+    for(let i=0;i<rows.length;i++){
+      const r=rows[i];
+      // Exact row fingerprint is retained, raw CSV text and personal data are NOT stored.
+      const perRowKey='bulk:'+digest({batchKey:key,rowIndex:i});
+      await db.query(
+        'INSERT INTO industry.guest_observations(tenant_id,pilot_id,observed_on,control_count,control_return,offer_count,offer_return,created_by,idempotency_key,payload_digest) VALUES($1,$2,$3::date,$4,$5,$6,$7,$8,$9,$10)',
+        [s.tenant_id,pilot.id,r.date,r.control,r.controlReturn,r.offer,r.offerReturn,s.account_id,perRowKey,digest(r)]
+      );
+    }
+    const changed=await db.query(
+      'UPDATE industry.guest_pilots SET version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING version',
+      [s.tenant_id,pilot.id]);
+    const imported=await db.query(
+      'INSERT INTO industry.guest_bulk_imports(tenant_id,pilot_id,idempotency_key,payload_digest,rows_imported,committed_version,created_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',
+      [s.tenant_id,pilot.id,key,hash,rows.length,changed.rows[0].version,s.account_id]);
+    await record(db,s,'observations.batch_imported',pilot.id,{
+      batchId:imported.rows[0].id,rowCount:rows.length,sha256:hash
+    });
+    reply.code(201);
+    return {importId:imported.rows[0].id,rowsImported:rows.length,
+      version:changed.rows[0].version,sha256:hash,summary};
+  }));
+
   app.post(P+'/pilots/:id/observations/:observationId/void',req=>forTenant(req,MANAGE,async(db,s)=>{
     const b=bodyOf(req);requiredKeys(b,['expectedVersion'],'Отзыв наблюдения');
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
