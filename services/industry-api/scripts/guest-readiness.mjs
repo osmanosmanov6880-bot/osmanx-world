@@ -9,7 +9,7 @@ export const PROD_BASE='https://osmanx.world';
 export const EXPECTED_SCHEMA='009_guest_action_history.sql';
 const PILOT='00000000-0000-4000-8000-000000000000';
 export const CHECKS=Object.freeze([
-  {key:'staticConsole',path:'/assets/guest/console.html',expect:200,marker:'Guest Intelligence / R9 / Защищённый кабинет'},
+  {key:'staticConsole',path:'/assets/guest/console.html',expect:200,marker:'Guest Intelligence / R11 / Защищённый кабинет'},
   {key:'staffJoin',path:'/assets/guest/join.html',expect:200,marker:'Приглашение сотрудника'},
   {key:'apiLive',path:'/api/industry/v1/health/live',expect:200,kind:'live'},
   {key:'apiReady',path:'/api/industry/v1/health/ready',expect:200,kind:'ready'},
