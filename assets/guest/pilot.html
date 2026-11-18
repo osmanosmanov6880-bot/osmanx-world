@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#091316">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="OSMANX Guest Intelligence: проверка готовности кофейни, расчёт выборки, помесячный эксперимент, оценка экономики и отчёт владельцу без передачи данных.">
+<title>Управление пилотом · OSMANX Guest Intelligence</title>
+<style>
+:root{color-scheme:dark;--bg:#091316;--panel:#102025;--line:#365359;--ink:#eff5f5;--muted:#b8c8cc;--accent:#9ce1de;--warn:#edc48c;font:16px/1.55 system-ui,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink)}
+header,main,footer{width:min(1100px,94%);margin:auto}header,footer{display:flex;gap:14px;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
+header .brand{font-weight:700;letter-spacing:.12em;color:var(--ink);text-decoration:none}main{padding:36px 0 20px}
+a{color:var(--accent);text-underline-offset:.25em}a:hover{text-decoration-thickness:2px}h1{font-size:clamp(2.2rem,5vw,4.2rem);line-height:1.06;letter-spacing:-.04em;max-width:18ch;margin:.5em 0}h2{font-size:clamp(1.45rem,2.8vw,2rem);margin:0 0 10px;letter-spacing:-.025em}h3{font-size:1.1rem}
+p{max-width:76ch;margin:10px 0 16px;color:var(--muted)}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.77rem;color:var(--accent)}
+.lead{font-size:1.1rem;max-width:66ch}.intro{padding:22px 0 24px}
+.panel{border:1px solid var(--line);background:var(--panel);padding:clamp(18px,3.7vw,34px);border-radius:10px;margin:22px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}.readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.check{display:flex;align-items:flex-start;gap:12px;border:1px solid #345058;border-radius:7px;padding:14px;min-height:76px;color:#d6e6e9;cursor:pointer}.check:has(input:checked){border-color:#9ce1de;background:#173338}.check input{flex:0 0 auto;accent-color:var(--accent);margin-top:5px;width:19px;height:19px}
+label.field{display:block;font-weight:600;font-size:.92rem;margin-bottom:8px}input[type=number],input[type=date],select,textarea{display:block;width:100%;min-height:44px;background:#081619;border:1px solid #68828a;border-radius:5px;color:var(--ink);font:inherit;padding:10px}
+textarea{resize:vertical;min-height:250px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;align-items:center}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;text-align:center;min-height:44px;background:var(--accent);color:#081619;border:1px solid var(--accent);font:600 1rem system-ui,sans-serif;text-decoration:none;border-radius:5px;padding:9px 16px;cursor:pointer}
+button.secondary,.btn.secondary{color:var(--accent);background:transparent}button.danger{color:#f5c2bf;border-color:#ab7777;background:transparent}button:hover,.btn:hover{filter:brightness(1.07)}button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--warn);outline-offset:4px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{text-align:left;border-bottom:1px solid #355059;padding:9px 11px}th{font-size:.84rem;color:var(--muted)}td{color:#e6f0f0}
+.table-wrap{overflow:auto;width:100%;border:1px solid #345058;border-radius:6px}
+.week{border:1px solid #355059;border-radius:7px;padding:14px;margin:12px 0}.week h3{margin:0 0 12px}.week .grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.week label{font-size:.79rem;line-height:1.3;color:#bed0d3;display:block;margin-bottom:6px}.week input{width:100%;min-width:0}
+.week .remove{font-size:.82rem;margin-top:10px}
+.measure{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}.metric{border:1px solid #365359;background:#0a1a1e;padding:14px;border-radius:6px}.metric strong{display:block;color:var(--accent);font-size:clamp(1.2rem,3vw,2rem);font-weight:600}.metric span{display:block;color:var(--muted);font-size:.83rem}
+.warning{background:#28231b;border-left:3px solid var(--warn);padding:13px 16px;color:#f0ddc2;border-radius:4px}
+#errors{color:#ffd39c;font-weight:600;min-height:1.2em}
+#risks{padding-left:24px}#risks li{margin:7px 0;color:#d9cdb8}
+.status{font-weight:650;color:var(--accent)}.muted{font-size:.9rem;color:var(--muted)}.summary{font-size:1.05rem;color:#e6f1f1}
+hr{border:0;border-top:1px solid var(--line);margin:22px 0}footer{margin-top:30px;border-top:1px solid var(--line);border-bottom:0}
+#upload{max-width:100%;width:100%;padding:12px;border:1px dashed #6e929a;border-radius:7px}
+@media(max-width:800px){.week .grid{grid-template-columns:repeat(2,minmax(0,1fr))}.measure{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.grid,.readiness,.measure,.week .grid{grid-template-columns:1fr}header,footer{font-size:.9rem}.panel{margin:14px 0}.actions button,.actions .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head><body>
+<header><a class="brand" href="/">OSMANX WORLD</a><nav><a href="./experiment.html">Лаборатория R2</a> · <a href="./offer.html">Условия</a></nav></header>
+<main>
+<div class="intro"><span class="eyebrow">GUEST INTELLIGENCE / PILOT OPERATIONS R3</span>
+<h1>От гипотезы до решения владельца.</h1>
+<p class="lead">Проверьте готовность бизнеса, оцените необходимую выборку, внесите агрегированные результаты по периодам и сформируйте осторожный отчёт. Никаких личных данных гостей и автосписаний.</p>
+<p class="warning"><strong>Демо.</strong> При открытии показаны условные цифры двух периодов. Они не относятся к реальным кофейням и не подтверждают прибыль. При вводе реальных сведений используйте только законно полученные агрегированные данные.</p>
+</div>
+<section class="panel" aria-labelledby="ready-title"><span class="eyebrow">01 / ДО ЗАПУСКА</span>
+<h2 id="ready-title">Проверка готовности к пилоту</h2>
+<p>Отметьте только уже согласованные пункты. Отсутствие хотя бы одного условия отобразится как препятствие, а не скроется за красивым процентом.</p>
+<div class="readiness">
+<label class="check"><input type="checkbox" data-ready="repeatDefinition"><span>Согласовано точное определение повторного визита.</span></label>
+<label class="check"><input type="checkbox" data-ready="sameWindow"><span>Для обеих групп одинаковое окно наблюдения.</span></label>
+<label class="check"><input type="checkbox" data-ready="independentGroups"><span>Группы независимы; пересечения гостей учтены.</span></label>
+<label class="check"><input type="checkbox" data-ready="marginVerified"><span>Маржа и стоимость предложения подтверждены.</span></label>
+<label class="check"><input type="checkbox" data-ready="contactConsent"><span>Проверена правовая основа обработки данных и согласия на сообщения.</span></label>
+<label class="check"><input type="checkbox" data-ready="ownerAgreed"><span>Владелец согласовал сроки, ответственного и критерий завершения.</span></label>
+</div><p id="readinessStatus" class="status" aria-live="polite">—</p>
+</section>
+<section class="panel" aria-labelledby="plan-title"><span class="eyebrow">02 / ПЛАНИРОВАНИЕ</span>
+<h2 id="plan-title">Насколько большая выборка нужна?</h2>
+<p>Ориентировочный расчёт при 5% уровне ошибки и 80% мощности для двух независимых групп. Это не обязательный стандарт: метод и дизайн исследования нужно согласовать отдельно.</p>
+<div class="grid">
+<div><label class="field" for="baselinePct">Обычная доля возвратов, %</label><input id="baselinePct" type="number" min="1" max="98" step=".01" value="20"></div>
+<div><label class="field" for="liftPp">Минимальная разница, которую хотите заметить, п.п.</label><input id="liftPp" type="number" min=".5" max="50" step=".01" value="10"></div>
+<div><label class="field" for="margin">Маржа с дополнительного визита, ₽</label><input id="margin" type="number" min="0" step=".01" value="250"></div>
+<div><label class="field" for="discount">Стоимость предложения на участника, ₽</label><input id="discount" type="number" min="0" step=".01" value="0"></div>
+<div><label class="field" for="fixed">Прочие затраты, ₽</label><input id="fixed" type="number" min="0" step=".01" value="0"></div>
+<div><label class="field" for="fee">Стоимость услуги, ₽</label><input id="fee" type="number" min="0" step=".01" value="25000"></div></div>
+<div class="actions"><button type="button" id="pilotPreset" class="secondary">Пилот 25 000 ₽</button><button type="button" id="monthlyPreset" class="secondary">Сопровождение 15 000 ₽/мес.</button></div>
+<p id="sampleSize" class="summary">—</p><p class="muted">Стоимость — гипотеза до согласования договора и налогов. Изменение полей не создаёт платёж.</p>
+</section>
+<section class="panel" aria-labelledby="week-title"><span class="eyebrow">03 / НАБЛЮДЕНИЕ</span>
+<h2 id="week-title">Периоды и возвраты</h2>
+<p>Вносите непересекающиеся когорты. Одна строка — один период. Суммарная доля считается по общим численностям, а не как среднее процентных долей.</p>
+<div id="weeks" aria-label="Периоды наблюдения"></div>
+<div class="actions"><button type="button" id="addWeek" class="secondary">Добавить период</button><button type="button" id="loadDemo" class="secondary">Вернуть учебный пример</button></div>
+<label class="check" style="margin-top:16px"><input id="finalized" type="checkbox"><span>Все данные периода собраны; промежуточное наблюдение завершено. Это <strong>не подтверждает</strong> достоверность источников и результат сделки.</span></label>
+</section>
+<section class="panel" aria-labelledby="result-title"><span class="eyebrow">04 / РЕШЕНИЕ</span>
+<h2 id="result-title">Что на самом деле видно из данных</h2>
+<p id="errors" role="alert" aria-live="polite"></p>
+<div class="measure"><div class="metric"><strong id="controlRate">—</strong><span>Повторный визит · контроль</span></div>
+<div class="metric"><strong id="offerRate">—</strong><span>Повторный визит · предложение</span></div>
+<div class="metric"><strong id="difference">—</strong><span>Разница · процентных пунктов</span></div></div>
+<p id="confidence" class="summary">—</p><p id="finance" class="summary">—</p><p id="outcome" class="status">—</p>
+<h3>Разбивка по периодам</h3><div class="table-wrap"><table><thead><tr><th>Период</th><th>Контроль</th><th>Предложение</th><th>Разница</th></tr></thead><tbody id="weekTable"></tbody></table></div>
+<h3>Ограничения и следующие проверки</h3><ul id="risks"></ul>
+<p class="warning">Положительная разница и даже интервал без нуля не доказывают причинный эффект. Нельзя подтверждать оплату, рост реальной выручки или готовность клиента по кликам на этой странице.</p>
+</section>
+<section class="panel" aria-labelledby="report-title"><span class="eyebrow">05 / ОТЧЁТ И ВОСПРОИЗВОДИМОСТЬ</span>
+<h2 id="report-title">Документ для обсуждения с владельцем</h2>
+<p>Отчёт формируется из исходных чисел и фиксирует ограничения. Файлы создаются локально. Никаких автоматических сообщений или данных в облаке.</p>
+<label class="field" for="report">Предпросмотр отчёта</label><textarea id="report" readonly></textarea>
+<div class="actions">
+<button type="button" id="copyReport" disabled>Копировать отчёт</button>
+<button type="button" id="downloadCSV" class="secondary" disabled>CSV результатов</button>
+<button type="button" id="downloadJSON" class="secondary" disabled>JSON для восстановления</button>
+<a class="btn" href="./order.html?plan=pilot">Запросить условия пилота</a></div>
+<label class="field" for="upload" style="margin-top:18px">Восстановить агрегированный сценарий из JSON (до 32 КБ)</label>
+<input type="file" id="upload" accept="application/json,.json">
+<p id="operationStatus" role="status" aria-live="polite"></p><p class="muted">Импорт проверяет точный набор полей и не принимает контактные данные, имена или телефоны. Сценарий не сохраняется в localStorage и не отправляется на сервер.</p>
+</section>
+</main><footer><a href="/assets/catalog/index.html">Каталог проектов</a><a href="mailto:hello@osmanx.world">Контакты</a></footer>
+<script type="module" src="./pilot.js"></script></body></html>

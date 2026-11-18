@@ -1,18 +1,22 @@
-name: OSMANX Guest Intelligence R2 QA
+name: OSMANX Guest Intelligence R3 QA
 on:
   pull_request:
     branches: [main]
     paths:
       - "assets/guest/**"
       - "tests/guest-experiment.test.mjs"
+      - "tests/guest-pilot-r3.test.mjs"
       - "tests/guest_experiment_browser.py"
+      - "tests/guest_pilot_r3_browser.py"
       - ".github/workflows/guest-experiment.yml"
   push:
     branches: [main]
     paths:
       - "assets/guest/**"
       - "tests/guest-experiment.test.mjs"
+      - "tests/guest-pilot-r3.test.mjs"
       - "tests/guest_experiment_browser.py"
+      - "tests/guest_pilot_r3_browser.py"
       - ".github/workflows/guest-experiment.yml"
   workflow_dispatch:
 
@@ -32,8 +36,10 @@ jobs:
         run: |
           node --check assets/guest/experiment-model.js
           node --check assets/guest/experiment.js
+          node --check assets/guest/pilot-model.js
+          node --check assets/guest/pilot.js
       - name: Unit, security and contract tests
-        run: node --test tests/guest-experiment.test.mjs
+        run: node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs
 
   guest-browser:
     needs: guest-unit
@@ -44,16 +50,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pinned Playwright Chromium
+      - name: Install Playwright and select Chromium
         run: |
+          set -euo pipefail
           python -m pip install playwright==1.56.0
-          python -m playwright install --with-deps chromium
+          BROWSER_BIN="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if test -n "$BROWSER_BIN"; then
+            echo "OSMANX_CHROMIUM_BIN=$BROWSER_BIN" >> "$GITHUB_ENV"
+            "$BROWSER_BIN" --version
+          else
+            python -m playwright install --with-deps chromium
+          fi
       - name: Desktop and mobile end-to-end + download/privacy QA
-        run: python tests/guest_experiment_browser.py
+        run: |
+          python tests/guest_experiment_browser.py
+          python tests/guest_pilot_r3_browser.py
       - name: Archive Chromium proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: osmanx-guest-r2-chromium
-          path: qa/guest/*.png
+          name: osmanx-guest-r3-chromium
+          path: |
+            qa/guest/*.png
+            qa/guest-r3/*.png
           if-no-files-found: ignore
