@@ -17,7 +17,7 @@ test('R12 accessible guided owner workflow is mounted and genuinely wired',()=>{
     assert.ok(html.includes('id="'+id+'"'),id);
     assert.ok(js.includes("$('"+id+"')")||id==='launchGatePanel'||id==='launchGateHeading',id);
   }
-  assert.match(html,/Guest Intelligence \/ R12 \/ Защищённый кабинет/);
+  assert.match(html,/Guest Intelligence \/ R13 \/ Защищённый кабинет/);
   assert.match(js,/updateLaunchButtons\(\)/);
   assert.match(js,/gate\?\.enrolled&&!gate\.canStartIsolatedPilot/);
   assert.match(js,/await Promise\.all\(\[loadDiagnostics\(\),loadActions\(\),loadLaunchGate\(\)\]\)/);
