@@ -7,6 +7,7 @@ import { registerStaffRoutes } from './staff.mjs';
 import { registerScheduleRoutes, lockResource, assertBookable } from './schedule.mjs';
 import { registerIntegrationRoutes } from './integrations.mjs';
 import { registerGuestRoutes } from './guest.mjs';
+import { probeGuestDatabase } from './readiness.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -107,8 +108,8 @@ export async function buildApp(pool){
   }
   app.get(PREFIX+'/health/live',async()=>({status:'live'}));
   app.get(PREFIX+'/health/ready',async()=>{
-    await pool.query('SELECT id FROM industry.accounts LIMIT 0');
-    return {status:'ready',database:'ok',
+    const integrity=await probeGuestDatabase(pool);
+    return {status:'ready',database:'ok',...integrity,
       guestWritesEnabled:!opt.secure||process.env.GUEST_WRITES_ENABLED==='true'};
   });
 
