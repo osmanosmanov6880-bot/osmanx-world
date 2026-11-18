@@ -1,0 +1,95 @@
+# R14 isolated, operator-only canary. NO public port, NO worker, NO live guest writes.
+# A separate compose project, private network and named volume preserve existing R13.
+name: osmanx-guest-r14-canary
+x-api: &api
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  image: osmanx-guest-api:r14-canary
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: industry_admin
+      POSTGRES_DB: guest_r14_canary
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Private password required}
+    volumes: [guest_r14_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U industry_admin -d guest_r14_canary"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    security_opt: ["no-new-privileges:true"]
+    networks: [r14_private]
+  provision:
+    image: postgres:16
+    profiles: [setup]
+    entrypoint: ["/bin/sh", "/ops/provision-roles.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: industry_admin
+      PGDATABASE: guest_r14_canary
+      PGPASSWORD: ${POSTGRES_ADMIN_PASSWORD:?}
+      INDUSTRY_APP_PASSWORD: ${INDUSTRY_APP_PASSWORD:?}
+      INDUSTRY_WORKER_PASSWORD: ${INDUSTRY_WORKER_PASSWORD:?}
+    volumes: ["./provision-roles.sh:/ops/provision-roles.sh:ro"]
+    depends_on:
+      db: {condition: service_healthy}
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [r14_private]
+  migrate:
+    <<: *api
+    profiles: [setup]
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      MIGRATION_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/guest_r14_canary
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [r14_private]
+  bootstrap:
+    <<: *api
+    profiles: [setup]
+    command: ["node", "scripts/bootstrap.mjs"]
+    environment:
+      MIGRATION_DB_URL: postgresql://industry_admin:${POSTGRES_ADMIN_PASSWORD:?}@db:5432/guest_r14_canary
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?}
+      BOOTSTRAP_TENANT_SLUG: ${BOOTSTRAP_TENANT_SLUG:?}
+      BOOTSTRAP_TENANT_NAME: ${BOOTSTRAP_TENANT_NAME:?}
+      BOOTSTRAP_VERTICAL: ${BOOTSTRAP_VERTICAL:?}
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [r14_private]
+  api:
+    <<: *api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      BIND_HOST: 0.0.0.0
+      PORT: "3047"
+      ALLOWED_ORIGIN: https://osmanx.world
+      GUEST_WRITES_ENABLED: "false"
+      DATABASE_URL: postgresql://industry_app:${INDUSTRY_APP_PASSWORD:?}@db:5432/guest_r14_canary
+    ports: ["127.0.0.1:3150:3047"]
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    networks: [r14_private]
+networks:
+  r14_private:
+    driver: bridge
+volumes:
+  guest_r14_data:
