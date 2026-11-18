@@ -58,6 +58,10 @@ jobs:
           sh -n ops/backup-encrypted.sh
           sh -n ops/restore-dr.sh
           sh -n ops/runtime-check.sh
+          bash -n ops/staging-smoke.sh
+          bash -n ops/build-release.sh
+          bash -n ops/verify-release.sh
+          node --check scripts/preflight.mjs
           # Keep environment placeholder-only, no credential material in repo.
           test -f ops/.env.example
       - name: Verify Guest runtime source parity
@@ -137,5 +141,7 @@ jobs:
           # this smoke imports real modules INSIDE the isolated production image.
           docker run --rm --entrypoint node osmanx-industry-api:ci --input-type=module -e \
             "await import('./src/guest.mjs'); const {evaluate}=await import('./shared/pilot-model.js'); console.log('R5 Guest container runtime: loaded')"
+          docker tag osmanx-industry-api:ci osmanx-industry-api:r6-ci
+          R6_STAGE_ALLOWED=CI_ONLY R6_STAGE_DB_URL=postgresql://industry_app:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb@127.0.0.1:5432/industry_ci bash ops/staging-smoke.sh
           docker build --file ops/Dockerfile.backup --tag osmanx-industry-maintenance:ci .
           test "$(docker run --rm --entrypoint id osmanx-industry-maintenance:ci -u)" -ne 0
