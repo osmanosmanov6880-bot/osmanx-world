@@ -44,7 +44,7 @@ export async function inspect(base=PROD_BASE,fetcher=fetch){
     }
   }
   const staticReady=observations.staticConsole.ok&&observations.staffJoin.ok;
-  const apiReady=observations.apiLive.ok&&observations.apiReady.ok&&observations.privateBlocked.ok;
+  const apiReady=observations.apiLive.ok&&observations.apiReady.ok&&observations.privateBlocked.ok&&observations.r5EvidenceProtected.ok;
   return {schema:'osmanx.guest.r5.readiness.v1',base:url.origin,
     staticReady,apiReady,observations,
     interpretation:apiReady?'Публичный API доступен и закрытые данные требуют входа. Двухсотрудниковый пилот ещё нужно проверить отдельно.':
