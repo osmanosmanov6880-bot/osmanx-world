@@ -60,10 +60,16 @@ export async function buildApp(pool){
       throw httpError(403,'Недопустимое происхождение запроса');
     // R6: a healthy container is NOT authorization to collect real pilot data.
     // Production writes remain fail-closed until an operator enables them after staging.
-    if(opt.secure && process.env.GUEST_WRITES_ENABLED!=='true' &&
-       ['POST','PATCH','PUT','DELETE'].includes(req.method) &&
-       (req.url===PREFIX+'/guest' || req.url.startsWith(PREFIX+'/guest/')))
-      throw httpError(503,'Сбор данных пилотов отключён до приёмки инфраструктуры');
+    const guestMutation=opt.secure &&
+      ['POST','PATCH','PUT','DELETE'].includes(req.method) &&
+      (req.url===PREFIX+'/guest' || req.url.startsWith(PREFIX+'/guest/'));
+    if(guestMutation){
+      if(process.env.GUEST_WRITES_ENABLED!=='true')
+        throw httpError(503,'Сбор данных пилотов отключён до приёмки инфраструктуры');
+      // R10: even an operator enabling writes cannot bypass migration/RLS/least-privilege checks.
+      // Fail closed before parsing or mutating any protected Guest records.
+      await probeGuestDatabase(pool);
+    }
   });
   app.setErrorHandler((error,req,reply)=>{
     const dbCode=error.code;
