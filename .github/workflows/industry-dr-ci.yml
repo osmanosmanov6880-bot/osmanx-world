@@ -96,9 +96,11 @@ jobs:
           node -e "const x=require(process.argv[1]); if(!/^[a-f0-9]{64}$/.test(x.proofSha256))process.exit(1);process.stdout.write(x.proofSha256)" "$RUNNER_TEMP/r7-guest-seed.json" > "$RUNNER_TEMP/r7-expected-digest.txt"
           node -e "const x=require(process.argv[1]); if(!/^[a-f0-9]{64}$/.test(x.proofSha256V2))process.exit(1);process.stdout.write(x.proofSha256V2)" "$RUNNER_TEMP/r7-guest-seed.json" > "$RUNNER_TEMP/r10-expected-v2.txt"
           node -e "const x=require(process.argv[1]); if(!/^[a-f0-9]{64}$/.test(x.proofSha256R12))process.exit(1);process.stdout.write(x.proofSha256R12)" "$RUNNER_TEMP/r7-guest-seed.json" > "$RUNNER_TEMP/r12-expected-launch.txt"
+          node -e "const x=require(process.argv[1]); if(!/^[a-f0-9]{64}$/.test(x.proofSha256R13))process.exit(1);process.stdout.write(x.proofSha256R13)" "$RUNNER_TEMP/r7-guest-seed.json" > "$RUNNER_TEMP/r13-expected-safety.txt"
           test "$(wc -c < "$RUNNER_TEMP/r7-expected-digest.txt")" -eq 64
           test "$(wc -c < "$RUNNER_TEMP/r10-expected-v2.txt")" -eq 64
           test "$(wc -c < "$RUNNER_TEMP/r12-expected-launch.txt")" -eq 64
+          test "$(wc -c < "$RUNNER_TEMP/r13-expected-safety.txt")" -eq 64
           test "$(cat "$RUNNER_TEMP/r7-expected-digest.txt")" != "$(cat "$RUNNER_TEMP/r10-expected-v2.txt")"
       - name: Encrypt backup to two independent age recipients
         run: |
@@ -122,7 +124,7 @@ jobs:
           for database in industry_dr_first_key industry_dr_second_key; do
             count="$(PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d "$database" -Atc "SELECT count(*) FROM industry.services WHERE name='DR synthetic service'")"
             test "$count" -eq 1
-            R7_DR_DB_URL="postgresql://postgres:postgres@127.0.0.1:5432/$database" R7_EXPECTED_DR_DIGEST="$(cat "$RUNNER_TEMP/r7-expected-digest.txt")" R10_EXPECTED_DR_DIGEST_V2="$(cat "$RUNNER_TEMP/r10-expected-v2.txt")" R12_EXPECTED_DR_DIGEST="$(cat "$RUNNER_TEMP/r12-expected-launch.txt")" node scripts/dr-guest-proof.mjs verify
+            R7_DR_DB_URL="postgresql://postgres:postgres@127.0.0.1:5432/$database" R7_EXPECTED_DR_DIGEST="$(cat "$RUNNER_TEMP/r7-expected-digest.txt")" R10_EXPECTED_DR_DIGEST_V2="$(cat "$RUNNER_TEMP/r10-expected-v2.txt")" R12_EXPECTED_DR_DIGEST="$(cat "$RUNNER_TEMP/r12-expected-launch.txt")" R13_EXPECTED_DR_DIGEST="$(cat "$RUNNER_TEMP/r13-expected-safety.txt")" node scripts/dr-guest-proof.mjs verify
           done
       - name: Refuse production target and corrupted archives
         run: |
