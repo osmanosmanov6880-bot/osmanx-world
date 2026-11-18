@@ -30,7 +30,8 @@ for name in src shared migrations scripts; do
 done
 # Explicit allowlist; never copy .env, credentials, backups, archives, identity files.
 for name in .env.example Dockerfile.backup nginx-industry.conf provision-roles.sh \
-  backup-encrypted.sh restore-dr.sh runtime-check.sh build-release.sh verify-release.sh; do
+  backup-encrypted.sh restore-dr.sh runtime-check.sh build-release.sh verify-release.sh \
+  compose.staging.yml stage-launch.sh; do
   cp -- "$ROOT/ops/$name" "$dst/ops/$name"
 done
 
@@ -42,6 +43,8 @@ if find "$dst" -type f \( -name '.env' -o -name '*.key' -o -name '*.pem' -o -nam
   echo "Refusing potential credential material in release" >&2; exit 3
 fi
 
+# Machine-readable, non-secret release contract; pinned to this exact Git tree.
+printf '{"schema":"osmanx.industry.r7.release.v1","commit":"%s","migration":"006_guest_readiness_permissions.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
 # Only the output artifact name references a commit SHA. No data from the live environment.
 (
   cd "$dst"
