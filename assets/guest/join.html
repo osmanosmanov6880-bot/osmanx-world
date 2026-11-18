@@ -1,0 +1,30 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08151d">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Приглашение сотрудника · OSMANX Guest Intelligence</title>
+<style>:root{color-scheme:dark;font:16px/1.55 system-ui,sans-serif;--bg:#08151d;--surface:#12252e;--line:#395765;--text:#ecf5f3;--muted:#b9c8cc;--accent:#a1dfd4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}header,main,footer{width:min(760px,94%);margin:auto;padding:22px 0}header,footer{border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}footer{margin-top:35px;border-top:1px solid var(--line);border-bottom:0}a{color:var(--accent);text-underline-offset:.25em}
+.brand{font-weight:750;text-decoration:none;letter-spacing:.12em;color:var(--text)}main{padding-top:42px}h1{font-size:clamp(2.2rem,6vw,4rem);line-height:1.08;letter-spacing:-.04em;font-weight:600;margin:12px 0 22px}
+p{color:var(--muted)}.panel{background:var(--surface);border:1px solid var(--line);padding:clamp(20px,4vw,34px);border-radius:9px;margin:24px 0}
+label{display:block;font-weight:600;margin:15px 0 6px}input{display:block;width:100%;min-height:46px;background:#08151d;color:var(--text);border:1px solid #65818c;border-radius:5px;padding:11px;font:inherit}
+button{background:var(--accent);color:#08151d;font:650 1rem system-ui,sans-serif;border:0;min-height:46px;padding:10px 20px;border-radius:5px;cursor:pointer;margin-top:22px}
+button:disabled{opacity:.5;cursor:not-allowed}:focus-visible{outline:3px solid #f5ca87;outline-offset:3px}
+.warning{background:#29271e;border-left:3px solid #ecc68d;padding:13px 16px;color:#eed4ae}
+#status{white-space:pre-wrap;color:var(--accent);min-height:1.5em}#status.error{color:#ffd4a0}.eyebrow{font-size:.82rem;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+</style></head><body>
+<header><a class="brand" href="/">OSMANX WORLD</a><a href="./console.html">К входу</a></header>
+<main><span class="eyebrow">GUEST INTELLIGENCE / R5 / JOIN</span><h1>Подключиться к команде.</h1>
+<p>Принятие одноразового приглашения для сотрудника компании. Токен передаёт ответственный по защищённому каналу. Действителен не более 48 часов, после принятия повторно не работает.</p>
+<div class="warning">Не вставляйте токен в адресную строку, публичный чат или поисковую систему. Не публикуйте пароль. Для уже существующего аккаунта введите его текущий пароль.</div>
+<section class="panel"><h2>Одноразовая активация</h2>
+<form id="joinForm">
+<label for="token">Токен приглашения (64 символа)</label><input id="token" type="password" autocomplete="off" spellcheck="false" required minlength="64" maxlength="64" pattern="[a-fA-F0-9]{64}">
+<label for="password">Пароль (12–200 символов)</label><input id="password" type="password" autocomplete="new-password" required minlength="12" maxlength="200">
+<label for="repeat">Повторите пароль</label><input id="repeat" type="password" autocomplete="new-password" required minlength="12" maxlength="200">
+<button id="submit" type="submit">Принять приглашение</button></form>
+<p id="status" role="status" aria-live="polite"></p>
+<p id="success" hidden>Приглашение принято. Откройте <a href="./console.html">кабинет</a> и войдите под своей почтой и кодом компании, который сообщит пригласивший сотрудник.</p>
+</section></main>
+<footer><span>OSMANX Guest Intelligence</span><a href="./offer.html">Описание услуги</a></footer>
+<script type="module" src="./join.js"></script></body></html>
