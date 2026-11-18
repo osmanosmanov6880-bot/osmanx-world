@@ -3,7 +3,7 @@
 // Deliberately does NOT issue invoices, charge cards, email prospects or assert causal lift.
 import { createHash } from 'node:crypto';
 import { recordChange } from './database.mjs';
-import { money, count } from '../shared/experiment-model.js';
+import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
 const ROLES=['owner','manager','operator'];
@@ -12,6 +12,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 const TOKEN=/^[A-Za-z0-9._:-]{8,80}$/;
 const PLAN_KEYS=['baselinePct','liftPp','margin','discount','fixed','fee'];
 const PERIOD_KEYS=['date','control','controlReturn','offer','offerReturn'];
+const PROTOCOL_KEYS=['startDate','endDate','outcomeWindowDays','allocation','source','primaryMetric'];
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function problem(status,message){const e=new Error(message);e.statusCode=status;return e;}
 function exact(value,allowed,what){
@@ -58,6 +59,57 @@ function parsePlan(raw){
     },target:sizing.perGroup};
   });
 }
+function parseStudyProtocol(raw){
+  requiredKeys(raw,PROTOCOL_KEYS,'Предварительный протокол');
+  if(raw.primaryMetric!=='repeat_visit')throw problem(400,'Первичная метрика должна быть repeat_visit');
+  if(!['pos','crm','manual'].includes(raw.source))
+    throw problem(400,'Источник данных: pos, crm или manual');
+  const p=guard(()=>validateStudyProtocol({
+    startDate:raw.startDate,endDate:raw.endDate,
+    allocation:raw.allocation,outcomeWindowDays:raw.outcomeWindowDays
+  }));
+  if(p.allocation==='unknown')throw problem(400,'Метод разделения на группы должен быть определён');
+  return {startDate:p.startDate,endDate:p.endDate,
+    outcomeWindowDays:p.outcomeWindowDays,allocation:p.allocation,
+    source:raw.source,primaryMetric:'repeat_visit'};
+}
+function utcDate(){
+  return new Date().toISOString().slice(0,10);
+}
+function checkPeriodInProtocol(pilot,date){
+  if(!pilot.protocol)return; // archived R4/R7 legacy records only
+  const p=pilot.protocol;
+  if(date<p.startDate||date>p.endDate)
+    throw problem(409,'Дата наблюдения не входит в заранее зафиксированный протокол');
+  if(date>utcDate())throw problem(409,'Нельзя вводить наблюдение из будущего');
+}
+function assertMatured(pilot){
+  if(!pilot.protocol)return;
+  const {endDate,outcomeWindowDays}=pilot.protocol;
+  const dayMs=86400000;
+  const complete=Date.parse(endDate+'T00:00:00.000Z')+outcomeWindowDays*dayMs;
+  if(Date.now()<complete)throw problem(409,'Окно наблюдения ещё не завершилось');
+}
+function prospective(pilot){
+  if(!pilot.protocol)return null;
+  // This is a fact about registration TIME, not proof of randomized assignment.
+  return new Date(pilot.protocol_registered_at).getTime()<=
+    Date.parse(pilot.protocol.startDate+'T00:00:00.000Z');
+}
+async function quota(db,tenant,type){
+  // Transaction-scoped advisory lock serializes concurrent creations per tenant.
+  await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1::text,8028))',[tenant]);
+  const r=await db.query(
+    'SELECT annual_request_limit,active_pilot_limit FROM industry.guest_quotas WHERE tenant_id=$1',[tenant]);
+  const limits=r.rows[0]||{annual_request_limit:250,active_pilot_limit:50};
+  const column=type==='request'?'annual_request_limit':'active_pilot_limit';
+  const sql=type==='request'?
+    "SELECT count(*)::int AS n FROM industry.guest_requests WHERE tenant_id=$1 AND created_at>=now()-interval '365 days'":
+    "SELECT count(*)::int AS n FROM industry.guest_pilots WHERE tenant_id=$1 AND phase!='archived'";
+  const usage=(await db.query(sql,[tenant])).rows[0].n;
+  if(usage>=limits[column])throw problem(429,'Квота компании исчерпана; обратитесь к администратору');
+  return {used:usage,limit:limits[column]};
+}
 function parseReadiness(raw){
   requiredKeys(raw,READINESS_KEYS,'Готовность');
   return guard(()=>readiness(raw));
@@ -91,6 +143,8 @@ function expectPhase(pilot,allowed){
 const flatPilot=row=>({
   id:row.id,title:row.title,phase:row.phase,requestId:row.request_id,
   version:row.version,plan:row.plan,readiness:row.readiness,targetPerGroup:row.target_per_group,
+  protocol:row.protocol||null,protocolRegisteredAt:row.protocol_registered_at||null,
+  prospectivelyRegistered:prospective(row),
   createdAt:row.created_at,updatedAt:row.updated_at,
   submittedDigest:row.submitted_digest,
   submittedBy:row.submitted_by,reviewedBy:row.reviewed_by,reviewedAt:row.reviewed_at,
@@ -110,12 +164,17 @@ async function activeObservations(db,tenant,pilotId){
   return result.rows;
 }
 function snapshot(pilot,observations){
-  // Canonical property order is an established R4 evidence contract.
-  return {
-    schema:'osmanx.guest.evidence.v1',
-    plan:pilot.plan,readiness:pilot.readiness,targetPerGroup:pilot.target_per_group,
-    observations:observations.map(({date,control,controlReturn,offer,offerReturn})=>({date,control,controlReturn,offer,offerReturn}))
+  // Legacy archived R4/R7 proof must remain BYTE-COMPATIBLE for disaster recovery.
+  const evidence={
+    schema:pilot.protocol?'osmanx.guest.evidence.v2':'osmanx.guest.evidence.v1',
+    plan:pilot.plan,readiness:pilot.readiness,targetPerGroup:pilot.target_per_group
   };
+  if(pilot.protocol){
+    evidence.protocol=pilot.protocol;
+    evidence.protocolRegisteredAt=pilot.protocol_registered_at;
+  }
+  evidence.observations=observations.map(({date,control,controlReturn,offer,offerReturn})=>({date,control,controlReturn,offer,offerReturn}));
+  return evidence;
 }
 function proof(pilot,observations){
   return digest(snapshot(pilot,observations));
@@ -127,12 +186,16 @@ function calculate(pilot,observations){
   if(clean.length===0)return {status:'NO_OBSERVATIONS',report:null,analysis:null,evidenceDigest:proof(pilot,clean)};
   // All inputs originate in strict database constraints; R3 model is the source of math.
   const analysis=evaluate(basis);
-  return {status:pilot.phase,report:analysis.report,analysis:{
+  const protocolNotice=pilot.protocol?'\nПротокол: '+pilot.protocol.startDate+' — '+pilot.protocol.endDate+
+    '; окно '+pilot.protocol.outcomeWindowDays+' дней; метод '+pilot.protocol.allocation+
+    '; источник '+pilot.protocol.source+'; '+(prospective(pilot)?'зарегистрирован до начала периода.':'зарегистрирован после начала периода: РЕТРОСПЕКТИВНЫЙ РИСК.'):'';
+  return {status:pilot.phase,report:analysis.report+protocolNotice,analysis:{
     aggregate:analysis.ledger.aggregate,range:analysis.ledger.c.range,
     difference:analysis.ledger.c.difference,requiredPerGroup:analysis.sample.perGroup,
     ready:analysis.readinessResult.ready,enough:analysis.assessment.enough,
     financial:analysis.assessment.financial,risks:analysis.assessment.warnings,
-    disposition:analysis.assessment.status,associationOnly:true
+    disposition:analysis.assessment.status,associationOnly:true,
+    prospectivelyRegistered:prospective(pilot),protocol:pilot.protocol||null
   },evidenceDigest:proof(pilot,clean),_evaluation:analysis};
 }
 async function record(db,session,action,targetId,data){
