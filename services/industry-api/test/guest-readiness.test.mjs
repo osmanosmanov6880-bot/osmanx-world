@@ -7,7 +7,8 @@ const paths={
   '/assets/guest/join.html':{status:200,type:'text/html',body:'<title>Приглашение сотрудника</title>'},
   '/api/industry/v1/health/live':{status:200,type:'application/json',data:{status:'live'}},
   '/api/industry/v1/health/ready':{status:200,type:'application/json',data:{status:'ready'}},
-  '/api/industry/v1/guest/pilots':{status:401,type:'application/json',data:{error:'Требуется вход'}}
+  '/api/industry/v1/guest/pilots':{status:401,type:'application/json',data:{error:'Требуется вход'}},
+  '/api/industry/v1/guest/pilots/00000000-0000-4000-8000-000000000000/evidence.json':{status:401,type:'application/json',data:{error:'Требуется вход'}}
 };
 function fake(data=paths){
   return async (url,config)=>{
