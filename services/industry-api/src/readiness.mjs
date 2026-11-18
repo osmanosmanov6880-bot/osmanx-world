@@ -39,8 +39,8 @@ export async function probeGuestDatabase(pool){
     ' COALESCE((SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname=current_user),true) AS privileged_role,',
     " (has_table_privilege(current_user,'industry.guest_pilots','SELECT') AND",
     " has_table_privilege(current_user,'industry.guest_observations','SELECT') AND",
-    " has_table_privilege(current_user,'industry.guest_reviews','SELECT') AND
-    has_table_privilege(current_user,'industry.guest_quotas','SELECT')) AS can_read_guests,",
+    " has_table_privilege(current_user,'industry.guest_reviews','SELECT') AND",
+    " has_table_privilege(current_user,'industry.guest_quotas','SELECT')) AS can_read_guests,",
     " has_table_privilege(current_user,'industry.schema_migrations','UPDATE') AS can_modify_migrations"
   ].join('\n');
   try{
