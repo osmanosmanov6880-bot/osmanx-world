@@ -130,7 +130,7 @@ def main():
                 page.locator("#detailPanel").wait_for(state="visible")
                 assert "Пилот по лояльности" in page.locator("#pilotHeading").inner_text()
                 assert "294" in page.locator("#sample").inner_text()
-                assert "Нет наблюдений" in page.locator("#observationList").inner_text()
+                page.wait_for_function("() => document.querySelector('#observationList').textContent.includes('Наблюдений пока нет')")
                 # Only same-origin requests; mutation requests must carry CSRF.
                 for method,path,headers in state["calls"]:
                     if method in ("POST","PATCH","DELETE") and path!="/auth/login":
