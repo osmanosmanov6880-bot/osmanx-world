@@ -32,7 +32,11 @@ function uuid(raw){
 function label(raw){
   if(typeof raw!=='string'||raw.trim().length<3||raw.trim().length>120||/[\u0000-\u001f\u007f]/.test(raw))
     throw problem(400,'Название пилота: от 3 до 120 символов, без управляющих кодов');
-  return raw.trim();
+  const clean=raw.trim();
+  if(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/.test(clean)||
+     /(?:\+?\d[\s().-]?){9,}/.test(clean))
+    throw problem(400,'Названия не должны содержать email и телефоны');
+  return clean;
 }
 function keyOf(req){
   const key=req.headers['idempotency-key'];
@@ -221,6 +225,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       if(existing.rows[0].payload_digest!==hash)throw problem(409,'Ключ заявки уже использован для других данных');
       return {duplicate:true,item:{id:existing.rows[0].id,state:existing.rows[0].state}};
     }
+    await quota(db,s.tenant_id,'request');
     const result=await db.query(
       'INSERT INTO industry.guest_requests(tenant_id,created_by,title,source,idempotency_key,payload_digest) VALUES($1,$2,$3,$4,$5,$6) RETURNING id,title,source,state,created_at',
       [s.tenant_id,s.account_id,title,source,key,hash]);
@@ -247,9 +252,9 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     return {items:r.rows};
   }));
   app.post(P+'/pilots',(req,reply)=>forTenant(req,MANAGE,async(db,s)=>{
-    const b=bodyOf(req);exact(b,['title','plan','requestId'],'Пилот');
-    if(!Object.hasOwn(b,'title')||!Object.hasOwn(b,'plan'))throw problem(400,'Укажите название и план');
-    const title=label(b.title),{plan,target}=parsePlan(b.plan);
+    const b=bodyOf(req);exact(b,['title','plan','requestId','protocol'],'Пилот');
+    if(!Object.hasOwn(b,'title')||!Object.hasOwn(b,'plan')||!Object.hasOwn(b,'protocol'))throw problem(400,'Укажите название, план и предварительный протокол');
+    const title=label(b.title),{plan,target}=parsePlan(b.plan),study=parseStudyProtocol(b.protocol);
     let requestId=null;
     if(b.requestId!==undefined&&b.requestId!==null){
       requestId=uuid(b.requestId);
@@ -257,10 +262,11 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       if(!request.rowCount)throw problem(404,'Заявка не найдена');
       if(request.rows[0].state!=='qualified')throw problem(409,'Заявка ещё не квалифицирована или уже обработана');
     }
+    await quota(db,s.tenant_id,'pilot');
     const empty=Object.fromEntries(READINESS_KEYS.map(k=>[k,false]));
     const r=await db.query(
-      'INSERT INTO industry.guest_pilots(tenant_id,request_id,created_by,title,plan,readiness,target_per_group) VALUES($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7) RETURNING *',
-      [s.tenant_id,requestId,s.account_id,title,JSON.stringify(plan),JSON.stringify(empty),target]);
+      'INSERT INTO industry.guest_pilots(tenant_id,request_id,created_by,title,plan,readiness,target_per_group,protocol,protocol_registered_at) VALUES($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8::jsonb,now()) RETURNING *',
+      [s.tenant_id,requestId,s.account_id,title,JSON.stringify(plan),JSON.stringify(empty),target,JSON.stringify(study)]);
     if(requestId)await db.query(
       "UPDATE industry.guest_requests SET state='converted',updated_at=now() WHERE tenant_id=$1 AND id=$2",[s.tenant_id,requestId]);
     await record(db,s,'pilot.created',r.rows[0].id,{requestId});
@@ -290,6 +296,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     const version=versionOf(b);
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
     verifyVersion(pilot,version);expectPhase(pilot,['draft']);
+    if(!pilot.protocol)throw problem(409,'Исторический пилот без зарегистрированного протокола: запуск запрещён');
     if(!parseReadiness(pilot.readiness).ready)throw problem(409,'Не закрыты условия готовности');
     const r=await db.query(
       "UPDATE industry.guest_pilots SET phase='running',version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING *",
@@ -311,6 +318,7 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       return {duplicate:true,observationId:existing.rows[0].id,voided:!!existing.rows[0].voided_at,version:pilot.version};
     }
     verifyVersion(pilot,version);expectPhase(pilot,['running']);
+    checkPeriodInProtocol(pilot,ob.date);
     const previous=await db.query(
       'SELECT count(*)::int AS n FROM industry.guest_observations WHERE tenant_id=$1 AND pilot_id=$2 AND voided_at IS NULL',
       [s.tenant_id,pilot.id]);
@@ -346,6 +354,8 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     const b=bodyOf(req);requiredKeys(b,['expectedVersion'],'Представление результатов');
     const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
     verifyVersion(pilot,versionOf(b));expectPhase(pilot,['running']);
+    if(!pilot.protocol)throw problem(409,'Нет предварительно согласованного протокола');
+    assertMatured(pilot);
     if(!parseReadiness(pilot.readiness).ready)throw problem(409,'Условия готовности не закрыты');
     const rows=await activeObservations(db,s.tenant_id,pilot.id);
     if(!rows.length)throw problem(409,'Нет агрегированных наблюдений');
