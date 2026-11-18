@@ -90,13 +90,55 @@ async function seed(db){
     await db.query(
       "INSERT INTO industry.outbox(tenant_id,kind,payload) VALUES($1,'guest.pilot.archived',$2::jsonb)",
       [tenant,JSON.stringify({event:'guest.pilot.archived',entityId:pilot})]);
+    // R10: a second, protocol-bound v2 archive demonstrates that future restores
+    // retain both historic v1 and new immutable protocol-based evidence.
+    const modernProtocol={
+      startDate:'2026-11-01',endDate:'2026-11-16',outcomeWindowDays:1,
+      allocation:'random',source:'pos',primaryMetric:'repeat_visit'
+    };
+    const modernObservations=[
+      {date:'2026-11-10',control:900,controlReturn:180,offer:900,offerReturn:270},
+      {date:'2026-11-11',control:900,controlReturn:180,offer:900,offerReturn:270}
+    ];
+    const modern=(await db.query(
+      "INSERT INTO industry.guest_pilots(tenant_id,created_by,title,phase,plan,readiness,target_per_group,protocol,protocol_registered_at,version,submitted_by,reviewed_by,reviewed_at,archived_at,archived_by,archive_reason) VALUES($1,$2,'R10 synthetic v2 proof','archived',$3::jsonb,$4::jsonb,700,$5::jsonb,'2026-11-12T00:00:00.000Z'::timestamptz,5,$2,$6,now(),now(),$2,'R10 DR v2 evidence verification') RETURNING id",
+      [tenant,owner,JSON.stringify(plan),JSON.stringify(readiness),
+        JSON.stringify(modernProtocol),manager]
+    )).rows[0].id;
+    for(const row of modernObservations){
+      await db.query(
+        "INSERT INTO industry.guest_observations(tenant_id,pilot_id,observed_on,control_count,control_return,offer_count,offer_return,idempotency_key,payload_digest,created_by) VALUES($1,$2,$3::date,$4,$5,$6,$7,$8,$9,$10)",
+        [tenant,modern,row.date,row.control,row.controlReturn,row.offer,row.offerReturn,
+          'r10-v2-'+row.date,hash(row),owner]
+      );
+    }
+    const modernSaved=(await db.query(
+      "SELECT plan,readiness,target_per_group,protocol,protocol_registered_at FROM industry.guest_pilots WHERE id=$1",
+      [modern])).rows[0];
+    const modernHash=hash({
+      schema:'osmanx.guest.evidence.v2',plan:modernSaved.plan,
+      readiness:modernSaved.readiness,targetPerGroup:modernSaved.target_per_group,
+      protocol:modernSaved.protocol,protocolRegisteredAt:modernSaved.protocol_registered_at,
+      observations:modernObservations
+    });
+    await db.query('UPDATE industry.guest_pilots SET submitted_digest=$1 WHERE id=$2',
+      [modernHash,modern]);
+    await db.query(
+      "INSERT INTO industry.guest_reviews(tenant_id,pilot_id,actor_id,decision,evidence_digest) VALUES($1,$2,$3,'accept_for_discussion',$4)",
+      [tenant,modern,manager,modernHash]);
+    await db.query(
+      "INSERT INTO industry.audit_events(tenant_id,actor_id,action,target_id) VALUES($1,$2,'guest.pilot.archived',$3)",
+      [tenant,owner,modern]);
+    await db.query(
+      "INSERT INTO industry.outbox(tenant_id,kind,payload) VALUES($1,'guest.pilot.archived',$2::jsonb)",
+      [tenant,JSON.stringify({event:'guest.pilot.archived',entityId:modern})]);
     await db.query('COMMIT');
-    return {ok:true,stage:'seed',proofSha256:originalHash};
+    return {ok:true,stage:'seed',proofSha256:originalHash,proofSha256V2:modernHash};
   }catch(e){await db.query('ROLLBACK');throw e}
 }
 async function verify(db){
   const r=await db.query(
-    "SELECT p.*,t.slug FROM industry.guest_pilots p JOIN industry.tenants t ON t.id=p.tenant_id WHERE t.slug='dr-r7-proof'"
+    "SELECT p.*,t.slug FROM industry.guest_pilots p JOIN industry.tenants t ON t.id=p.tenant_id WHERE t.slug='dr-r7-proof' AND p.title='R7 synthetic archived proof'"
   );
   if(r.rowCount!==1)throw Error('Missing or duplicated archived proof pilot');
   const pilot=r.rows[0];
@@ -124,9 +166,38 @@ async function verify(db){
     "SELECT count(*)::int AS n FROM industry.audit_events WHERE tenant_id=$1 AND target_id=$2 AND action='guest.pilot.archived'",
     [pilot.tenant_id,pilot.id]);
   const events=await db.query(
-    "SELECT count(*)::int AS n FROM industry.outbox WHERE tenant_id=$1 AND kind='guest.pilot.archived'",
-    [pilot.tenant_id]);
+    "SELECT count(*)::int AS n FROM industry.outbox WHERE tenant_id=$1 AND kind='guest.pilot.archived' AND payload->>'entityId'=$2",
+    [pilot.tenant_id,pilot.id]);
   if(audits.rows[0].n!==1||events.rows[0].n!==1)throw Error('Audit or outbox missing');
+  const modernResult=await db.query(
+    "SELECT * FROM industry.guest_pilots WHERE tenant_id=$1 AND title='R10 synthetic v2 proof'",
+    [pilot.tenant_id]);
+  if(modernResult.rowCount!==1)throw Error('Missing or duplicated R10 v2 proof');
+  const modern=modernResult.rows[0];
+  if(modern.phase!=='archived'||!modern.protocol||!modern.protocol_registered_at||
+     modern.submitted_by===modern.reviewed_by||!modern.archived_at)
+    throw Error('R10 v2 independent archive or immutable protocol not restored');
+  const modernRows=await db.query(
+    "SELECT observed_on::text AS date,control_count AS control,control_return AS \"controlReturn\",offer_count AS offer,offer_return AS \"offerReturn\" FROM industry.guest_observations WHERE tenant_id=$1 AND pilot_id=$2 AND voided_at IS NULL ORDER BY observed_on,id",
+    [pilot.tenant_id,modern.id]);
+  if(modernRows.rowCount!==2)throw Error('R10 v2 observation history missing');
+  const v2Hash=hash({
+    schema:'osmanx.guest.evidence.v2',plan:modern.plan,
+    readiness:modern.readiness,targetPerGroup:modern.target_per_group,
+    protocol:modern.protocol,protocolRegisteredAt:modern.protocol_registered_at,
+    observations:modernRows.rows
+  });
+  const expectedV2=process.env.R10_EXPECTED_DR_DIGEST_V2;
+  if(!/^[a-f0-9]{64}$/.test(String(expectedV2||''))||
+     v2Hash!==expectedV2||modern.submitted_digest!==v2Hash)
+    throw Error('R10 restored v2 digest differs from source or original proof');
+  const modernReview=await db.query(
+    "SELECT actor_id,decision,evidence_digest FROM industry.guest_reviews WHERE tenant_id=$1 AND pilot_id=$2",
+    [pilot.tenant_id,modern.id]);
+  if(modernReview.rowCount!==1||modernReview.rows[0].actor_id!==modern.reviewed_by||
+     modernReview.rows[0].decision!=='accept_for_discussion'||
+     modernReview.rows[0].evidence_digest!==v2Hash)
+    throw Error('R10 reviewed-by-independent-manager evidence invalid');
   const policies=await db.query(
     "SELECT count(*)::int AS n FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='industry' AND c.relname=ANY($1::text[]) AND c.relrowsecurity AND c.relforcerowsecurity",
     [['guest_requests','guest_pilots','guest_observations','guest_reviews','guest_quotas','guest_actions','guest_bulk_imports']]);
@@ -155,7 +226,8 @@ async function verify(db){
   if(migration.rows[0].n!==1)throw Error('Latest migration version not restored');
   return {ok:true,stage:'verify',observations:rows.rowCount,
     reviewedIndependently:true,proofSha256:digest,forcedRls:true,
-    actionRecovered:true,importRecovered:true,importSha256:expectedImportHash};
+    actionRecovered:true,importRecovered:true,importSha256:expectedImportHash,
+    v2ProofRecovered:true,proofSha256V2:v2Hash};
 }
 if(process.argv[1]?.endsWith('/dr-guest-proof.mjs')){
   const [mode]=process.argv.slice(2),url=process.env.R7_DR_DB_URL;

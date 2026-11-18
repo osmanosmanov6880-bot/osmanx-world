@@ -44,11 +44,18 @@ test -d "$root" && test -f "$root/SHA256SUMS"
 test -f "$root/Dockerfile" && test -f "$root/compose.yml"
 test -f "$root/shared/pilot-model.js" && test -f "$root/src/guest.mjs"
 test -f "$root/ops/compose.staging.yml" && test -f "$root/ops/stage-launch.sh"
+test -f "$root/ops/r10-operator-gate.sh" && test -f "$root/scripts/r10-stage-gate.mjs"
 test -f "$root/RELEASE.json"
 revision="${name#osmanx-industry-}"
 revision="${revision%.tar.gz}"
 grep -Fq "\"commit\":\"$revision\"" "$root/RELEASE.json" || {
   echo "Release revision does not match archive" >&2;exit 3;
+}
+grep -Fq '"schema":"osmanx.industry.r10.release.v1"' "$root/RELEASE.json" || {
+  echo "R10 release schema missing" >&2;exit 3;
+}
+grep -Fq '"migration":"008_guest_actions_and_imports.sql"' "$root/RELEASE.json" || {
+  echo "R9 database migration missing" >&2;exit 3;
 }
 grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
   echo "Release lacks fail-closed write gate" >&2;exit 3;

@@ -32,8 +32,12 @@ jobs:
           set -euo pipefail
           bash -n ops/build-release.sh
           bash -n ops/verify-release.sh
+          bash -n ops/r10-operator-gate.sh
+          node --check scripts/r10-stage-gate.mjs
+          node --check scripts/guest-readiness.mjs
           node --check scripts/preflight.mjs
           node --check src/app.mjs
+          node --check src/server.mjs
       - name: Rebuild twice and require byte-for-byte reproducibility
         run: |
           set -euo pipefail
