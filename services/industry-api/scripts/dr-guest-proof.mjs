@@ -14,7 +14,7 @@ const expected={
   schema:'osmanx.guest.evidence.v1',
   plan,readiness,targetPerGroup:700,observations
 };
-export const EXPECTED_DIGEST=hash(expected);
+// The authoritative hash is computed from PostgreSQL's JSONB serialization at seed time.
 export function assertTarget(value,mode){
   if(!['seed','verify'].includes(mode))throw Error('Use seed or verify');
   const u=new URL(value);
@@ -53,8 +53,8 @@ async function seed(db){
       "INSERT INTO industry.memberships(tenant_id,account_id,role) VALUES($1,$2,'owner'),($1,$3,'manager')",
       [tenant,owner,manager]);
     const pilot=(await db.query(
-      "INSERT INTO industry.guest_pilots(tenant_id,created_by,title,phase,plan,readiness,target_per_group,version,submitted_by,reviewed_by,submitted_digest,reviewed_at,archived_at,archived_by,archive_reason) VALUES($1,$2,'R7 synthetic archived proof','archived',$3::jsonb,$4::jsonb,700,5,$2,$5,$6,now(),now(),$2,'DR evidence verification') RETURNING id",
-      [tenant,owner,JSON.stringify(plan),JSON.stringify(readiness),manager,EXPECTED_DIGEST]
+      "INSERT INTO industry.guest_pilots(tenant_id,created_by,title,phase,plan,readiness,target_per_group,version,submitted_by,reviewed_by,reviewed_at,archived_at,archived_by,archive_reason) VALUES($1,$2,'R7 synthetic archived proof','archived',$3::jsonb,$4::jsonb,700,5,$2,$5,now(),now(),$2,'DR evidence verification') RETURNING id",
+      [tenant,owner,JSON.stringify(plan),JSON.stringify(readiness),manager]
     )).rows[0].id;
     for(const row of observations){
       await db.query(
@@ -62,9 +62,13 @@ async function seed(db){
         [tenant,pilot,row.date,row.control,row.controlReturn,row.offer,row.offerReturn,
           'dr-r7-'+row.date,hash(row),owner]);
     }
+    const saved=(await db.query('SELECT plan,readiness,target_per_group FROM industry.guest_pilots WHERE id=$1',[pilot])).rows[0];
+    const originalHash=hash({schema:'osmanx.guest.evidence.v1',plan:saved.plan,
+      readiness:saved.readiness,targetPerGroup:saved.target_per_group,observations});
+    await db.query('UPDATE industry.guest_pilots SET submitted_digest=$1 WHERE id=$2',[originalHash,pilot]);
     await db.query(
       "INSERT INTO industry.guest_reviews(tenant_id,pilot_id,actor_id,decision,evidence_digest) VALUES($1,$2,$3,'accept_for_discussion',$4)",
-      [tenant,pilot,manager,EXPECTED_DIGEST]);
+      [tenant,pilot,manager,originalHash]);
     await db.query(
       "INSERT INTO industry.audit_events(tenant_id,actor_id,action,target_id) VALUES($1,$2,'guest.pilot.archived',$3)",
       [tenant,owner,pilot]);
@@ -72,7 +76,7 @@ async function seed(db){
       "INSERT INTO industry.outbox(tenant_id,kind,payload) VALUES($1,'guest.pilot.archived',$2::jsonb)",
       [tenant,JSON.stringify({event:'guest.pilot.archived',entityId:pilot})]);
     await db.query('COMMIT');
-    return {ok:true,stage:'seed',proofSha256:EXPECTED_DIGEST};
+    return {ok:true,stage:'seed',proofSha256:originalHash};
   }catch(e){await db.query('ROLLBACK');throw e}
 }
 async function verify(db){
@@ -91,7 +95,9 @@ async function verify(db){
   const evidence={schema:'osmanx.guest.evidence.v1',plan:pilot.plan,
     readiness:pilot.readiness,targetPerGroup:pilot.target_per_group,observations:rows.rows};
   const digest=hash(evidence);
-  if(digest!==EXPECTED_DIGEST||pilot.submitted_digest!==digest)
+  const expectedDigest=process.env.R7_EXPECTED_DR_DIGEST;
+  if(!/^[a-f0-9]{64}$/.test(String(expectedDigest||'')))throw Error('Expected original DR digest is required');
+  if(digest!==expectedDigest||pilot.submitted_digest!==digest)
     throw Error('Recovery evidence digest differs from original');
   const review=await db.query(
     "SELECT actor_id,decision,evidence_digest FROM industry.guest_reviews WHERE tenant_id=$1 AND pilot_id=$2",
