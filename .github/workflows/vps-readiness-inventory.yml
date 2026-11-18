@@ -77,6 +77,7 @@ jobs:
           join="$(curl -sS -L -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 12 https://osmanx.world/assets/guest/join.html || true)"
           api="$(curl -sS -L -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 12 https://osmanx.world/api/industry/v1/health/live || true)"
           protected="$(curl -sS -L -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 12 https://osmanx.world/api/industry/v1/guest/pilots || true)"
+          evidence="$(curl -sS -L -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 12 https://osmanx.world/api/industry/v1/guest/pilots/00000000-0000-4000-8000-000000000000/evidence.json || true)"
           echo "## R5 public services — non-secret, read-only probes" >> "$GITHUB_STEP_SUMMARY"
           echo "| Probe | HTTP status |" >> "$GITHUB_STEP_SUMMARY"
           echo "|:--|:--|" >> "$GITHUB_STEP_SUMMARY"
@@ -84,7 +85,8 @@ jobs:
           echo "| Invitation page | $join |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Public API live | $api |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Protected API without cookie (expected 401) | $protected |" >> "$GITHUB_STEP_SUMMARY"
-          if test "$api" != "200" || test "$protected" != "401"; then
+          echo "| R5 evidence endpoint without cookie (expected 401) | $evidence |" >> "$GITHUB_STEP_SUMMARY"
+          if test "$api" != "200" || test "$protected" != "401" || test "$evidence" != "401"; then
             echo "::warning::Production API not independently confirmed; do not onboard clients yet."
             echo "**Backend status: NOT VERIFIED — do not start real client pilot.**" >> "$GITHUB_STEP_SUMMARY"
           fi
