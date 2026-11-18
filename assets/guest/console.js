@@ -176,6 +176,9 @@ function enablePilotActions(){
   $('resume').disabled=!isManage||phase!=='returned';
   $('accept').disabled=!isManage||phase!=='in_review'||item.submittedBy===model.me.account.id;
   $('return').disabled=!isManage||phase!=='in_review'||item.submittedBy===model.me.account.id;
+  $('archivePanel').hidden=!(model.me.role==='owner'&&phase==='reviewed');
+  $('archivePilot').disabled=model.me.role!=='owner'||phase!=='reviewed';
+  $('downloadEvidence').disabled=!(model.selected.observations?.length);
   for(const checkbox of document.querySelectorAll('[data-ready]'))checkbox.disabled=!isManage||phase!=='draft';
 }
 async function openPilot(id){
@@ -322,6 +325,42 @@ for(const [id,decision] of [['accept','accept_for_discussion'],['return','reques
     await refreshCurrent();setStatus(data.disclaimer);
   }));
 }
+async function saveEvidence(){
+  const pilot=currentPilot();
+  const response=await fetch(API+'/guest/pilots/'+pilot.id+'/evidence.json',{
+    method:'GET',credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}
+  });
+  const type=response.headers.get('content-type')||'';
+  if(!type.includes('application/json'))throw Error('Сервер вернул неверный формат доказательств.');
+  const data=await response.json();
+  if(!response.ok)throw Error(data?.error||'Не удалось скачать доказательства');
+  if(data.format!=='osmanx.guest.evidence.export.v1'||!data.evidence||
+     !/^[a-f0-9]{64}$/.test(String(data.sha256)))
+    throw Error('Неверная структура доказательств');
+  const encoded=new TextEncoder().encode(JSON.stringify(data.evidence));
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoded)))
+    .map(x=>x.toString(16).padStart(2,'0')).join('');
+  if(hash!==data.sha256)throw Error('Контрольная сумма JSON не совпала с SHA-256 сервера.');
+  const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json;charset=utf-8'});
+  if(blob.size>1000000)throw Error('Слишком большой архив доказательств.');
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='osmanx-guest-evidence.json';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  setStatus('Проверенный экспорт JSON сохранён. SHA-256: '+data.sha256);
+}
+$('downloadEvidence').addEventListener('click',()=>safely(saveEvidence));
+$('archivePilot').addEventListener('click',()=>safely(async()=>{
+  if(model.me?.role!=='owner')throw Error('Архивация доступна только владельцу компании.');
+  const pilot=currentPilot(),reason=$('archiveReason').value.trim();
+  if(reason.length<6||reason.length>160)throw Error('Укажите причину от 6 до 160 символов.');
+  if(!window.confirm('Заархивировать проверенный пилот? Вернуть его в работу через кабинет будет нельзя.'))return;
+  const response=await api('/guest/pilots/'+pilot.id+'/archive',{
+    method:'POST',body:{expectedVersion:pilot.version,reason}
+  });
+  $('archiveReason').value='';
+  await refreshCurrent();
+  setStatus('Пилот заархивирован, исходные данные сохранены. SHA-256: '+response.sha256);
+}));
 $('loadReport').addEventListener('click',()=>safely(()=>loadReport()));
 $('downloadReport').addEventListener('click',()=>safely(async()=>{
   await downloadCsv('/guest/pilots/'+currentPilot().id+'/report.csv');
