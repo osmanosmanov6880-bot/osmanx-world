@@ -1,4 +1,4 @@
-name: OSMANX Guest Intelligence R3 QA
+name: OSMANX Guest Intelligence R4 UI QA
 on:
   pull_request:
     branches: [main]
@@ -6,8 +6,10 @@ on:
       - "assets/guest/**"
       - "tests/guest-experiment.test.mjs"
       - "tests/guest-pilot-r3.test.mjs"
+      - "tests/guest-console-r4.test.mjs"
       - "tests/guest_experiment_browser.py"
       - "tests/guest_pilot_r3_browser.py"
+      - "tests/guest_console_r4_browser.py"
       - ".github/workflows/guest-experiment.yml"
   push:
     branches: [main]
@@ -15,8 +17,10 @@ on:
       - "assets/guest/**"
       - "tests/guest-experiment.test.mjs"
       - "tests/guest-pilot-r3.test.mjs"
+      - "tests/guest-console-r4.test.mjs"
       - "tests/guest_experiment_browser.py"
       - "tests/guest_pilot_r3_browser.py"
+      - "tests/guest_console_r4_browser.py"
       - ".github/workflows/guest-experiment.yml"
   workflow_dispatch:
 
@@ -38,8 +42,10 @@ jobs:
           node --check assets/guest/experiment.js
           node --check assets/guest/pilot-model.js
           node --check assets/guest/pilot.js
+          node --check assets/guest/console.js
+          test -s assets/guest/console.html
       - name: Unit, security and contract tests
-        run: node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs
+        run: node --test tests/guest-experiment.test.mjs tests/guest-pilot-r3.test.mjs tests/guest-console-r4.test.mjs
 
   guest-browser:
     needs: guest-unit
@@ -65,12 +71,14 @@ jobs:
         run: |
           python tests/guest_experiment_browser.py
           python tests/guest_pilot_r3_browser.py
+          python tests/guest_console_r4_browser.py
       - name: Archive Chromium proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: osmanx-guest-r3-chromium
+          name: osmanx-guest-r4-chromium
           path: |
             qa/guest/*.png
             qa/guest-r3/*.png
+            qa/guest-r4/*.png
           if-no-files-found: ignore
