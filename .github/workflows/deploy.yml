@@ -68,6 +68,16 @@ jobs:
           test ! -e assets/labs/index.html
           grep -Fq 'osmanx-core-five-live-v1' assets/sovereign/site.js
 
+      - name: Validate cinematic media before publishing
+        run: |
+          set -euo pipefail
+          test -s assets/stories/cinema.html
+          test -s assets/stories/cinema.css
+          test -s assets/stories/cinema.js
+          test -s assets/stories/media/00-osmanx-film.mp4
+          node --check assets/stories/cinema.js
+          node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs
+
       - name: Configure SSH
         env:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
@@ -120,6 +130,19 @@ jobs:
             exit 1
           fi
           echo "Public HTTPS served the expected deployment marker." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify OSMANX CINEMA public HTTPS release
+        run: |
+          set -euo pipefail
+          for asset in assets/stories/cinema.html assets/stories/cinema.css assets/stories/cinema.js assets/stories/slides/scene-1.webp assets/stories/media/00-osmanx-film.mp4; do
+            curl -fIsSL --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 40 "https://osmanx.world/$asset?release=$GITHUB_SHA" > /dev/null
+          done
+          for asset in assets/stories/media/*.mp4; do
+            curl -fIsSL --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 40 "https://osmanx.world/$asset?release=$GITHUB_SHA" > /dev/null
+          done
+          curl -fsSL --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/stories/cinema.html?release=$GITHUB_SHA" -o /tmp/osmanx-cinema-live.html
+          grep -Fq 'osmanx-cinema-experience-r1' /tmp/osmanx-cinema-live.html
+          echo 'Cinema page and all 13 MP4 files available on public HTTPS.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify Guest Intelligence public HTTPS release and CDN transformations
         run: |

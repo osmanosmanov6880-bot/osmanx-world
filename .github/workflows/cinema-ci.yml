@@ -1,0 +1,57 @@
+name: OSMANX Cinema media QA
+
+on:
+  pull_request:
+    paths:
+      - "assets/stories/**"
+      - "tests/cinema-media.test.mjs"
+      - "tests/stories-gallery.test.mjs"
+      - "index.html"
+      - "assets/catalog/index.html"
+      - "assets/guest/offer.html"
+      - ".github/workflows/cinema-ci.yml"
+  push:
+    branches:
+      - feature/osmanx-video-stories-20261119
+      - main
+    paths:
+      - "assets/stories/**"
+      - "tests/cinema-media.test.mjs"
+      - "tests/stories-gallery.test.mjs"
+      - ".github/workflows/cinema-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cinema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout project and media
+        uses: actions/checkout@v4
+      - name: Check scripts
+        run: |
+          node --check assets/stories/cinema.js
+          node --check assets/sovereign/site.js
+      - name: Confirm all media, page links and SHA-256
+        run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs
+      - name: Check playable MP4 containers
+        run: |
+          set -euo pipefail
+          if ! command -v ffprobe >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y ffmpeg
+          fi
+          command -v ffprobe
+          for file in assets/stories/media/*.mp4; do
+            ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 "$file" > /dev/null
+            video_codec="$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "$file")"
+            test "$video_codec" = "h264"
+          done
+          film_audio="$(ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 assets/stories/media/00-osmanx-film.mp4)"
+          test "$film_audio" = "aac"
+      - name: Verify no short-lived Runway links in public site
+        run: |
+          set -euo pipefail
+          ! grep -R -E '(_jwt=|dnznrvs05pmza\.cloudfront\.net)' assets/stories --include='*.html' --include='*.js' --include='*.css'

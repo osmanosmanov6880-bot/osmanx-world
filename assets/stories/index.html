@@ -1,0 +1,236 @@
+<!doctype html>
+<!-- osmanx-stories-staging-v1 -->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080c12">
+<meta name="description" content="OSMANX STORIES — 12 коротких кинематографических историй о незаметных потерях клиентов и возможностях цифровой диагностики бизнеса.">
+<meta property="og:title" content="OSMANX STORIES — Цена невидимых потерь">
+<meta property="og:description" content="Короткие истории о том, как клиенты уходят, а возможности остаются невидимыми.">
+<title>OSMANX STORIES — Цена невидимых потерь</title>
+<link rel="icon" href="/assets/sovereign/icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#080c12;--surface:#101924;--line:#303b48;--text:#f1f1ef;--muted:#9fa9b6;--gold:#c8ab76;--gold-light:#e3c78e;--cyan:#8bd9e0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--text);background:radial-gradient(ellipse at 72% -20%,#193047 0,transparent 35%),var(--bg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+a{color:inherit;text-decoration:none}button{font:inherit}button:disabled{cursor:not-allowed}a:focus-visible,button:focus-visible,video:focus-visible{outline:3px solid var(--cyan);outline-offset:4px}
+.skip{position:absolute;top:-100px;left:20px;padding:10px;background:#fff;color:#000;z-index:30}.skip:focus{top:20px}
+.wrap{width:min(1180px,calc(100% - 40px));margin-inline:auto}
+header{border-bottom:1px solid #29313b;background:#080c12a6}header .wrap{display:flex;gap:20px;align-items:center;justify-content:space-between;padding-block:18px}.brand{display:flex;align-items:baseline;gap:8px;font-size:19px;letter-spacing:.12em;font-weight:760}.brand i{color:var(--gold);font-style:normal}.brand small{color:var(--muted);font-size:10px;letter-spacing:.22em;font-weight:400}nav{display:flex;gap:22px;flex-wrap:wrap}nav a{color:#bac3c9;font-size:13px}nav a[aria-current=page],nav a:hover{color:var(--gold-light)}
+.hero{padding:clamp(54px,9vw,120px) 0 54px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}.hero:after{content:"";position:absolute;right:-15%;top:0;width:60%;height:110%;background:radial-gradient(circle,#7e6b451b,transparent 65%);pointer-events:none}.intro-tag,.eyebrow{color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase}.hero h1{font-size:clamp(48px,8.4vw,110px);font-weight:530;line-height:.93;max-width:12ch;letter-spacing:-.065em;margin:20px 0 28px}.hero h1 em{font-style:normal;color:var(--gold-light)}.lead{max-width:740px;color:#b9c0c7;font-size:clamp(16px,2vw,20px);line-height:1.55}.hero-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:30px 0 0}.primary,.secondary{min-height:46px;padding:11px 19px;display:inline-flex;align-items:center;justify-content:center;letter-spacing:.02em;border:1px solid #ad946c;font-weight:650}.primary{background:var(--gold-light);color:#141518}.secondary{background:transparent;color:var(--gold-light)}.primary:hover,.secondary:hover{filter:brightness(1.1)}.meta{margin:24px 0 0;font-size:13px;color:#8d9da6}
+.gallery{padding:55px 0 95px}.section-head{display:flex;gap:16px;align-items:end;justify-content:space-between;margin-bottom:24px}.section-head h2{font-weight:520;letter-spacing:-.04em;font-size:clamp(27px,4vw,41px);margin:7px 0 0}.count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 25px}.filters button{padding:10px 13px;border:1px solid #334050;color:#bdc7cb;background:#101822;cursor:pointer;font-size:13px}.filters button[aria-pressed=true]{background:#272417;border-color:var(--gold);color:var(--gold-light)}.filters button:hover{border-color:#788796}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}.story{background:#0e151d;border:1px solid #273342;min-width:0;display:flex;flex-direction:column;transition:border-color .2s}.story:hover{border-color:#786e57}.story[hidden]{display:none}.frame{aspect-ratio:9/11;position:relative;overflow:hidden;background:radial-gradient(ellipse at 30% 33%,#34424a 0,transparent 50%),linear-gradient(145deg,#172531,#070b13 70%);display:flex;align-items:center;justify-content:center}.frame-retail{background:radial-gradient(circle at 80% 30%,#54432f,transparent 55%),linear-gradient(120deg,#1d1b20,#090d15)}.frame-health{background:radial-gradient(circle at 20% 40%,#2e4e55,transparent 60%),linear-gradient(145deg,#192a37,#080c16)}.frame-service{background:radial-gradient(circle at 70% 20%,#544028,transparent 45%),linear-gradient(150deg,#13202b,#050a12)}.frame-education{background:radial-gradient(circle at 50% 20%,#313f59,transparent 60%),linear-gradient(150deg,#13202a,#07080e)}.frame:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#080d17cc,transparent 45%);pointer-events:none}.frame .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.frame-index{position:absolute;top:14px;left:15px;color:#dcd4c8;font-size:11px;letter-spacing:.15em;z-index:1}.frame-symbol{z-index:1;font-size:27px;font-weight:700;letter-spacing:.22em;color:#c2bbad61;text-align:center;line-height:1.1}.frame-symbol span{display:block;font-size:10px;letter-spacing:.56em;margin-top:10px}.play{position:absolute;left:16px;right:16px;bottom:16px;display:flex;justify-content:center;align-items:center;gap:9px;padding:13px 11px;background:#0b141ae0;border:1px solid #94815b;color:#dbc493;z-index:2;cursor:pointer;font-weight:620}.play:disabled{border-color:#46525c;color:#a5afb7}.play:not(:disabled):hover{background:#ad9567;color:#0d141c}
+.story-copy{padding:22px;display:flex;flex-direction:column;flex:1;gap:8px}.story h2{font-size:clamp(19px,2vw,24px);font-weight:570;line-height:1.15;letter-spacing:-.025em;margin:6px 0}.story p{font-size:14px;color:#aab8c1;margin:0;line-height:1.55;flex:1}.story-footer{display:flex;flex-direction:column;gap:13px;margin-top:24px}.state{color:#a1a6aa;font-size:12px}.state.ready{color:#9ed9bd}.story-footer a{color:var(--gold-light);font-size:13px;border-bottom:1px solid #716447;align-self:flex-start;padding-bottom:2px}
+.note{margin:37px 0 0;padding:17px 20px;color:#b8b9b7;background:#111924;border-left:2px solid var(--gold);font-size:13px;max-width:80ch}
+.business{border-top:1px solid #303a44;border-bottom:1px solid #303a44;background:#101823;padding:62px 0}.business .wrap{display:grid;grid-template-columns:1fr auto;gap:25px;align-items:center}.business h2{font-size:clamp(29px,4vw,50px);font-weight:520;letter-spacing:-.04em;margin:11px 0}.business p{max-width:66ch;color:#b0bdc4}
+footer{display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap;padding:27px 0;color:#99a8b1;font-size:13px}
+dialog{border:1px solid #5c5660;background:#090e15;color:var(--text);padding:0;width:min(510px,calc(100% - 20px));max-height:95dvh;box-shadow:0 40px 130px #000c}dialog::backdrop{background:#000c;backdrop-filter:blur(8px)}.modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 18px}.modal-top h2{font-size:17px;margin:0;font-weight:600}.close{border:1px solid #59636c;background:#1b242f;color:#fff;width:39px;height:39px;cursor:pointer;font-size:20px}.modal-video{display:block;width:100%;max-height:70dvh;aspect-ratio:9/16;background:#06080e;object-fit:contain}.modal-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:15px 18px}.modal-bottom a{color:#ddbf89;font-size:13px;text-decoration:underline;text-underline-offset:4px}
+@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.business .wrap{grid-template-columns:1fr}}
+@media(max-width:650px){.wrap{width:min(100% - 28px,1180px)}header .wrap{align-items:start}nav{gap:12px;justify-content:flex-end}nav a{font-size:12px}.grid{grid-template-columns:1fr;gap:17px}.frame{aspect-ratio:9/10}.hero{padding:58px 0 40px}.section-head{align-items:start;flex-direction:column}.story-copy{padding:20px}.business{padding:42px 0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.story{transition:none}}
+</style></head>
+<body>
+<a class="skip" href="#stories">Перейти к историям</a>
+<header><div class="wrap"><a class="brand" href="/">OSMAN<i>X</i> <small>WORLD</small></a><nav aria-label="Основная навигация"><a href="/">Главная</a><a href="/assets/catalog/index.html">Проекты</a><a href="/assets/stories/index.html" aria-current="page">Истории</a><a href="/assets/industry/index.html">Для бизнеса</a></nav></div></header>
+<main>
+<section class="hero" aria-labelledby="page-title"><div class="wrap"><span class="intro-tag">OSMANX / ORIGINAL VIDEO STORIES</span><h1 id="page-title">Цена <em>невидимых</em> потерь.</h1><p class="lead">Короткие истории о клиентах, которые не дождались ответа, не вернулись или не совершили покупку. Сюжеты помогают увидеть проблему — дальше нужны данные, проверка причин и решения.</p><div class="hero-actions"><a href="/assets/stories/cinema.html" class="primary">Смотреть фильм ↗</a><a href="#stories" class="secondary">Все 12 историй ↓</a><a class="secondary" href="/assets/guest/offer.html">Диагностика для бизнеса ↗</a></div><p class="meta">12 сюжетов · 9:16 · 15 секунд каждый · Постановочные сцены, созданные с помощью ИИ</p></div></section>
+<section class="gallery wrap" id="stories" aria-labelledby="gallery-heading">
+<div class="section-head"><div><span class="intro-tag">ВИДЕОБИБЛИОТЕКА</span><h2 id="gallery-heading">Истории по отраслям</h2></div><span class="count" id="count" aria-live="polite">12 историй</span></div>
+<div class="filters" role="group" aria-label="Фильтр по отраслям">
+<button type="button" data-filter="all" aria-pressed="true">Все</button><button type="button" data-filter="hospitality" aria-pressed="false">Рестораны и кофейни</button><button type="button" data-filter="retail" aria-pressed="false">Ритейл</button><button type="button" data-filter="health" aria-pressed="false">Клиники</button><button type="button" data-filter="service" aria-pressed="false">Сервис</button><button type="button" data-filter="education" aria-pressed="false">Образование</button>
+</div>
+<div class="grid" id="story-grid">
+<article class="story" data-group="hospitality" data-id="01-restaurant">
+  <div class="frame frame-hospitality">
+    <span class="frame-index">01 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/01-restaurant.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="01-restaurant" aria-label="Смотреть: Клиент ушёл навсегда" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">РЕСТОРАНЫ</span><h2>Клиент ушёл навсегда</h2><p>Один незамеченный визит может оказаться последним. Что владелец знает о причинах невозврата?</p>
+    <div class="story-footer"><span class="state" data-state="01-restaurant">Видео ожидает размещения</span><a href="/assets/guest/offer.html">Разобрать повторные визиты <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="retail" data-id="02-fashion">
+  <div class="frame frame-retail">
+    <span class="frame-index">02 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/02-fashion.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="02-fashion" aria-label="Смотреть: Не было моего размера" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">МАГАЗИНЫ ОДЕЖДЫ</span><h2>Не было моего размера</h2><p>Покупатель хотел приобрести вещь, но нужного размера не нашлось. В отчёте этот спрос исчезает.</p>
+    <div class="story-footer"><span class="state" data-state="02-fashion">Видео ожидает размещения</span><a href="/assets/sovereign/workspace.html?app=retail">Изучить Retail Intelligence <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="health" data-id="03-dentistry">
+  <div class="frame frame-health">
+    <span class="frame-index">03 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/03-dentistry.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="03-dentistry" aria-label="Смотреть: Пустое кресло" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">СТОМАТОЛОГИИ</span><h2>Пустое кресло</h2><p>Свободное время специалиста не превращается в запись само по себе. Где теряется путь пациента?</p>
+    <div class="story-footer"><span class="state" data-state="03-dentistry">Видео ожидает размещения</span><a href="/assets/industry/index.html">Посмотреть отраслевые решения <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="service" data-id="04-auto">
+  <div class="frame frame-service">
+    <span class="frame-index">04 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/04-auto.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="04-auto" aria-label="Смотреть: Пропущенный клиент" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">АВТОСЕРВИСЫ</span><h2>Пропущенный клиент</h2><p>У сервиса есть оборудование и специалисты, но ответ на запрос приходит слишком поздно.</p>
+    <div class="story-footer"><span class="state" data-state="04-auto">Видео ожидает размещения</span><a href="/assets/industry/index.html">Посмотреть отраслевые решения <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="service" data-id="05-fitness">
+  <div class="frame frame-service">
+    <span class="frame-index">05 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/05-fitness.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="05-fitness" aria-label="Смотреть: Почему абонемент не продлили" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">ФИТНЕС</span><h2>Почему абонемент не продлили</h2><p>Новый участник пришёл один раз — и исчез. Причина не всегда в стоимости абонемента.</p>
+    <div class="story-footer"><span class="state" data-state="05-fitness">Видео ожидает размещения</span><a href="/assets/industry/index.html">Посмотреть отраслевые решения <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="education" data-id="06-education">
+  <div class="frame frame-education">
+    <span class="frame-index">06 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/06-education.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="06-education" aria-label="Смотреть: Курс остался незавершённым" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">ОБРАЗОВАНИЕ</span><h2>Курс остался незавершённым</h2><p>Сложный старт, отсутствие поддержки и потеря мотивации могут обрывать обучение.</p>
+    <div class="story-footer"><span class="state" data-state="06-education">Видео ожидает размещения</span><a href="/assets/catalog/index.html">Открыть проекты <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="hospitality" data-id="07-coffee">
+  <div class="frame frame-hospitality">
+    <span class="frame-index">07 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/07-coffee.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="07-coffee" aria-label="Смотреть: Заказ, которого не было" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">КОФЕЙНИ</span><h2>Заказ, которого не было</h2><p>Очередь в час пик может скрывать тех, кто так и не сделал заказ. Предзаказ — одна из проверяемых гипотез.</p>
+    <div class="story-footer"><span class="state" data-state="07-coffee">Видео ожидает размещения</span><a href="/assets/guest/offer.html">Проверить гипотезу <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="hospitality" data-id="08-return">
+  <div class="frame frame-hospitality">
+    <span class="frame-index">08 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/08-return.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="08-return" aria-label="Смотреть: Гости не возвращаются" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">РЕСТОРАНЫ</span><h2>Гости не возвращаются</h2><p>Первый вечер прошёл отлично. Но что побудит гостя вернуться и как измерить эффект?</p>
+    <div class="story-footer"><span class="state" data-state="08-return">Видео ожидает размещения</span><a href="/assets/guest/offer.html">Разобрать возвраты <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="health" data-id="09-appointment">
+  <div class="frame frame-health">
+    <span class="frame-index">09 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/09-appointment.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="09-appointment" aria-label="Смотреть: Пациент не пришёл" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">КЛИНИКИ</span><h2>Пациент не пришёл</h2><p>Пустой слот в расписании — сигнал проверить напоминания, запись и подтверждение визита.</p>
+    <div class="story-footer"><span class="state" data-state="09-appointment">Видео ожидает размещения</span><a href="/assets/industry/index.html">Посмотреть систему записи <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="service" data-id="10-construction">
+  <div class="frame frame-service">
+    <span class="frame-index">10 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/10-construction.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="10-construction" aria-label="Смотреть: Потерянная заявка" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">РЕМОНТ И СТРОИТЕЛЬСТВО</span><h2>Потерянная заявка</h2><p>Запрос на дорогой проект может исчезнуть между первым касанием и ответом менеджера.</p>
+    <div class="story-footer"><span class="state" data-state="10-construction">Видео ожидает размещения</span><a href="/assets/industry/index.html">Посмотреть отраслевые решения <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="service" data-id="11-logistics">
+  <div class="frame frame-service">
+    <span class="frame-index">11 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/11-logistics.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="11-logistics" aria-label="Смотреть: Доставка ушла конкуренту" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">ЛОГИСТИКА</span><h2>Доставка ушла конкуренту</h2><p>Если клиент не знает статус и не получает ответ, обещанная скорость теряет значение.</p>
+    <div class="story-footer"><span class="state" data-state="11-logistics">Видео ожидает размещения</span><a href="/assets/industry/index.html">Посмотреть отраслевые решения <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+<article class="story" data-group="retail" data-id="12-shoes">
+  <div class="frame frame-retail">
+    <span class="frame-index">12 / 12</span>
+    <img class="poster" alt="" loading="lazy" data-poster="/assets/stories/posters/12-shoes.webp" hidden>
+    <div class="frame-symbol" aria-hidden="true">OSMANX<span>STORIES</span></div>
+    <button class="play" type="button" data-play="12-shoes" aria-label="Смотреть: Продажа без нужного размера" disabled><span aria-hidden="true">▶</span> <span class="play-label">Видео готовится</span></button>
+  </div>
+  <div class="story-copy"><span class="eyebrow">МАГАЗИНЫ ОБУВИ</span><h2>Продажа без нужного размера</h2><p>Складские остатки видны. Неудовлетворённый спрос — гораздо хуже. Его нужно измерять отдельно.</p>
+    <div class="story-footer"><span class="state" data-state="12-shoes">Видео ожидает размещения</span><a href="/assets/sovereign/workspace.html?app=retail">Изучить Retail Intelligence <span aria-hidden="true">↗</span></a></div>
+  </div>
+</article>
+</div>
+<p class="note"><strong>О видеосценах:</strong> это постановочные иллюстрации типичных бизнес-ситуаций, а не съёмки реальных клиентов или доказанные результаты внедрения OSMANX. Оценка причин и эффективности возможна только после проверки данных конкретной компании.</p>
+</section>
+<section class="business"><div class="wrap"><div><span class="intro-tag">НЕ ТОЛЬКО КРАСИВЫЕ КАДРЫ</span><h2>Найдите причину. Проверьте решение.</h2><p>Для кофеен доступен пример эксперимента с повторными визитами, для магазинов — рабочее демо Retail Intelligence. Посмотрите механизмы до обсуждения внедрения.</p></div><a class="primary" href="/assets/catalog/index.html">Выбрать продукт ↗</a></div></section>
+</main>
+<footer class="wrap"><span>© OSMANX WORLD · Идеи превращаются в решения</span><span><a href="mailto:hello@osmanx.world">hello@osmanx.world</a></span></footer>
+<dialog id="player-dialog" aria-labelledby="dialog-title"><div class="modal-top"><h2 id="dialog-title">OSMANX STORIES</h2><button type="button" class="close" id="close-player" aria-label="Закрыть">×</button></div><video id="player-video" class="modal-video" controls playsinline preload="none" aria-label="Видео OSMANX"></video><div class="modal-bottom"><a id="download-video" download href="#">Скачать MP4</a><a id="dialog-link" href="/assets/catalog/index.html">Узнать о решении ↗</a></div></dialog>
+<script>
+"use strict";
+const stories=[...document.querySelectorAll(".story")];
+const filters=[...document.querySelectorAll("[data-filter]")];
+const dialog=document.getElementById("player-dialog");
+const video=document.getElementById("player-video");
+const title=document.getElementById("dialog-title");
+const download=document.getElementById("download-video");
+const detail=document.getElementById("dialog-link");
+let lastTrigger=null;
+function updateFilter(value){
+  let visible=0;
+  for(const card of stories){card.hidden=value!=="all"&&card.dataset.group!==value;if(!card.hidden)visible++;}
+  for(const button of filters)button.setAttribute("aria-pressed",String(button.dataset.filter===value));
+  document.getElementById("count").textContent=visible+" "+(visible===1?"история":visible>1&&visible<5?"истории":"историй");
+}
+for(const button of filters)button.addEventListener("click",()=>updateFilter(button.dataset.filter));
+async function loadPoster(card){
+  const img=card.querySelector(".poster");
+  const url=img.dataset.poster;
+  const test=new Image();
+  test.onload=()=>{img.src=url;img.hidden=false;};
+  test.src=url;
+}
+async function checkVideo(card){
+  const id=card.dataset.id;const src="/assets/stories/media/"+id+".mp4";
+  const play=card.querySelector("[data-play]");
+  try{
+    const response=await fetch(src,{method:"HEAD",cache:"no-store"});
+    const length=Number(response.headers.get("content-length")||"0");
+    const type=response.headers.get("content-type")||"";
+    if(!response.ok||length<100000||!type.includes("video"))return;
+    play.disabled=false;play.querySelector(".play-label").textContent="Смотреть 15 секунд";
+    const state=card.querySelector(".state");state.textContent="Видео доступно";state.classList.add("ready");
+    play.addEventListener("click",()=>openVideo(card,src,play));
+    loadPoster(card);
+  }catch(e){/* Keep the honest unavailable state until a verified local MP4 exists. */}
+}
+function openVideo(card,src,trigger){
+  if(!dialog.showModal)return;
+  lastTrigger=trigger;
+  title.textContent=card.querySelector("h2").textContent;
+  video.src=src;video.load();
+  download.href=src;download.download=card.dataset.id+".mp4";
+  detail.href=card.querySelector(".story-footer a").href;
+  detail.textContent=card.querySelector(".story-footer a").textContent;
+  dialog.showModal();
+}
+function cleanup(){video.pause();video.removeAttribute("src");video.load();if(lastTrigger)lastTrigger.focus();}
+document.getElementById("close-player").addEventListener("click",()=>dialog.close());
+dialog.addEventListener("close",cleanup);
+dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
+for(const card of stories)checkVideo(card);
+</script></body></html>
