@@ -75,6 +75,7 @@ function showAuth(){
   $('r22Panel').hidden=true;
   $('r23Panel').hidden=true;
   $('r24Panel').hidden=true;
+  $('r25Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -420,6 +421,7 @@ async function openPilot(id){
   await loadR22LaunchReview();
   await loadR23Handoff();
   await loadR24Intelligence();
+  await loadR25Insights();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -715,6 +717,88 @@ async function loadR24Intelligence(){
     $('r24ControlRate').textContent='—';$('r24OfferRate').textContent='—';
     $('r24Difference').textContent='—';$('r24Interval').textContent='';
     $('r24Economics').textContent='';
+  }
+}
+const R25_BARRIER_LABELS={
+  wait:'Ожидание',stockout:'Нет нужной позиции',
+  ordering:'Сложность заказа',price:'Неясная цена',
+  service:'Обслуживание',unknown:'Нет подтверждённого признака'
+};
+const R25_SHIFT_LABELS={morning:'утро',afternoon:'день',evening:'вечер'};
+const R25_BLOCKER_LABELS={
+  NO_PRIOR_OPERATIONAL_SIGNALS:'Мало анонимных наблюдений',
+  SAMPLE_TARGET_UNAVAILABLE:'Не задан целевой объём',
+  RETURN_WINDOW_UNAVAILABLE:'Нет окна повторного визита',
+  EMERGENCY_HOLD_REQUIRES_REVIEW:'Сбор остановлен',
+  DATA_QUALITY_REVIEW_REQUIRED:'Ошибки качества первичных агрегатов',
+  EXISTING_PILOT_NOT_FINALIZED:'Текущий пилот ещё не завершён'
+};
+async function loadR25Insights(){
+  const panel=$('r25Panel'),status=$('r25Status'),categories=$('r25Categories'),
+    periods=$('r25Comparison'),hypotheses=$('r25Hypotheses');
+  panel.hidden=!manage();
+  categories.replaceChildren();periods.replaceChildren();hypotheses.replaceChildren();
+  $('r25EntryFieldset').disabled=true;
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const report=await api('/guest/pilots/'+model.selected.item.id+'/r25/insights');
+    if(report.schema!=='osmanx.guest.r25.operational-brief.v1'||
+       report.customerGo!==false||report.productionAuthorized!==false||
+       report.causalExplanationProven!==false||
+       report.individualGuestsLinked!==false||report.signed!==false||
+       report.profile?.schema!=='osmanx.guest.r25.operational-profile.v1'||
+       !report.board||!report.nextExperiment)
+      throw Error('Недостоверная версия операционного отчёта');
+    const p=report.profile,comparison=p.periodComparison;
+    status.className=report.emergencyStopActive?'alert':'info';
+    status.textContent=report.emergencyStopActive?
+      'Аварийная остановка активна. Разрешён только просмотр уже собранных агрегатов.':
+      'Сводки относятся к наблюдаемым препятствиям, а не к доказанным причинам ухода.';
+    $('r25Sampled').textContent=String(p.totalSampled);
+    $('r25Shifts').textContent=String(p.recordedShifts);
+    $('r25Leader').textContent=p.dominantObservedBarrier?
+      R25_BARRIER_LABELS[p.dominantObservedBarrier.code]:'Недостаточно данных';
+    for(const [code,label] of Object.entries(R25_BARRIER_LABELS)){
+      const item=p.categoryShares[code];
+      const li=appendText(categories,'li',label+': '+percent(item.sharePct)+
+        ' (агрегат '+item.observed+')','small');
+      if(typeof item.sharePct==='number'){
+        const meter=document.createElement('meter');
+        meter.min=0;meter.max=100;meter.value=item.sharePct;
+        meter.setAttribute('aria-label',label+' '+percent(item.sharePct));
+        li.append(meter);
+      }
+    }
+    if(comparison.comparable){
+      for(const [code,label] of Object.entries(R25_BARRIER_LABELS)){
+        const item=comparison.changes[code];
+        appendText(periods,'li',label+': раньше '+percent(item.earlyPct)+
+          ', позже '+percent(item.latePct)+
+          '; изменение '+(item.changePp??0).toLocaleString('ru-RU')+
+          ' п.п. (не причинная оценка)','small');
+      }
+    }else appendText(periods,'li',
+      'Недостаточно разных дат и наблюдений, чтобы сравнить ранний и поздний периоды.','small');
+    for(const idea of report.board.hypotheses.filter(x=>x.signalAvailable).slice(0,5)){
+      appendText(hypotheses,'li',idea.title+': '+percent(idea.sharePct)+
+        '. Проверка: '+idea.test+
+        ' Независимое доказательство: '+idea.verification,'small');
+    }
+    if(!hypotheses.childNodes.length)
+      appendText(hypotheses,'li','Подтверждённых данных для ранжирования гипотез пока недостаточно.','small');
+    const draft=report.nextExperiment;
+    $('r25NextTest').textContent=draft.eligibleForHumanDesignReview?
+      'Черновик нового эксперимента: '+draft.selectedHypothesis.title+
+      '. Период '+draft.protocolDraft.exposureStart+' — '+
+      draft.protocolDraft.exposureEnd+
+      '. Нужны предрегистрация, независимая контрольная группа, правовой допуск и проверка выборки.':
+      'Начинать новый эксперимент нельзя: '+draft.blockers.map(x=>R25_BLOCKER_LABELS[x]||x).join('; ')+'.';
+    $('r25EntryFieldset').disabled=report.recordingAvailable!==true;
+  }catch{
+    status.className='alert';
+    status.textContent='Операционная диагностика R25 недоступна; выводы и ввод запрещены.';
+    $('r25Sampled').textContent='—';$('r25Shifts').textContent='—';
+    $('r25Leader').textContent='—';$('r25NextTest').textContent='';
   }
 }
 async function loadReport(){
@@ -1209,6 +1293,44 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r25Refresh').addEventListener('click',()=>safely(()=>loadR25Insights()));
+$('r25Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r25/report.csv',
+    'osmanx-guest-r25-barriers.csv');
+  setStatus('Экспортирован анонимный отчёт R25 без персональных данных.');
+}));
+$('r25EntryForm').addEventListener('submit',event=>{
+  event.preventDefault();safely(async()=>{
+    if(!manage()||$('r25EntryFieldset').disabled)
+      throw Error('Ввод R25 разрешается только после отдельного допуска.');
+    const integer=id=>{
+      const raw=$(id).value;
+      if(!/^(0|[1-9][0-9]*)$/.test(raw))throw Error('Только целые неотрицательные числа.');
+      return Number(raw);
+    };
+    const sampled=integer('r25Sample');
+    const counts={
+      wait:integer('r25Wait'),stockout:integer('r25Stockout'),
+      ordering:integer('r25Ordering'),price:integer('r25Price'),
+      service:integer('r25Service'),unknown:integer('r25Unknown')
+    };
+    if(Object.values(counts).reduce((a,b)=>a+b,0)!==sampled)
+      throw Error('Сумма шести категорий должна равняться числу наблюдений.');
+    const pilot=currentPilot();
+    const saved=await api('/guest/pilots/'+pilot.id+'/operational-signals',{
+      method:'POST',headers:{'Idempotency-Key':idempotency()},
+      body:{expectedVersion:pilot.version,tally:{
+        date:$('r25Date').value,shift:$('r25Shift').value,
+        source:$('r25Source').value,sampled,counts
+      }}
+    });
+    if(!saved.signalId&&!saved.duplicate)throw Error('Сводка не подтверждена сервером.');
+    await refreshCurrent();
+    setStatus(saved.duplicate?'Анонимная сводка уже была сохранена.':
+      'Новая анонимная сводка сохранена. Обновлена аналитика R25.');
+  });
+});
 $('r24Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот руководителя.');
   await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r24/brief.csv',
