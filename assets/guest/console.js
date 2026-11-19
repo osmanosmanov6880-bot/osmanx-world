@@ -73,6 +73,7 @@ function showAuth(){
   $('r20Panel').hidden=true;
   $('r21Panel').hidden=true;
   $('r22Panel').hidden=true;
+  $('r23Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -416,6 +417,7 @@ async function openPilot(id){
   await loadR20Inspection();
   await loadR21Posture();
   await loadR22LaunchReview();
+  await loadR23Handoff();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -595,6 +597,57 @@ async function loadR22LaunchReview(){
     output.className='alert';
     output.textContent='R22: проверка недоступна. Это NO-GO.';
     $('r22Budget').textContent='';
+  }
+}
+const R23_CHECKS={
+  membershipScopedPilot:'Проверяется только собственная компания',
+  noEmergencyStop:'Аварийная остановка не активна',
+  frozenProtocol:'Протокол зафиксирован',
+  independentSignedPilot:'Сфера допуска подписана для этого пилота',
+  r12LaunchEnrolled:'Два ответственных сотрудника подтвердили запуск',
+  r13ToR19Technical:'Сохранены предварительные технические допуски',
+  securityMigrationsAndRls:'Применены миграции и принудительный RLS',
+  noElevatedRuntimeRole:'Рабочая роль не имеет привилегий администратора',
+  immutableLedgerInSync:'Аудит операций совпадает с квотой',
+  retentionNeedsNoAction:'Не выявлены просроченные записи',
+  orderedPrMergesVerified:'Независимое слияние девяти PR',
+  realVpsCanaryVerified:'Тест реального VPS и публичного HTTPS',
+  twoTenantRlsWitnessVerified:'Реальная проверка двух компаний в PostgreSQL',
+  independentOffsiteDrVerified:'Независимое восстановление с внешнего хранилища',
+  signedLegalDocumentsVerified:'Правовое основание и договоры проверены',
+  authorizedChangeWindowVerified:'Подписано окно выпуска двумя операторами'
+};
+const R23_STEPS={
+  review_r14_to_r22_ordered_pr_merges:'Независимо проверить и слить релизы R14–R22 по порядку',
+  verify_final_main_ci_and_protected_branch:'Проверить итоговый main, актуальный CI и правила ветки',
+  inspect_real_vps_https_and_loopback:'На VPS проверить loopback API и публичный HTTPS',
+  run_two_tenant_rls_rehearsal:'На тестовой среде подтвердить RLS двух компаний',
+  verify_independent_offsite_age_dr:'Восстановить две независимые внешние AGE-копии',
+  verify_client_contract_consent_and_retention:'Проверить договор, законные основания и сроки хранения',
+  independent_change_window_signoff:'Оформить независимые подписи и разрешённое окно изменения'
+};
+async function loadR23Handoff(){
+  const panel=$('r23Panel'),status=$('r23Status'),checks=$('r23Checks'),
+    steps=$('r23Steps');
+  panel.hidden=!manage();checks.replaceChildren();steps.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const report=await api('/guest/pilots/'+model.selected.item.id+'/r23/handoff');
+    if(report.schema!=='osmanx.guest.r23.first-customer-handoff.v1'||
+      report.customerGo!==false||report.productionAuthorized!==false||
+      !Array.isArray(report.pending)||!Array.isArray(report.operatorSequence))
+      throw Error('Некорректный ответ R23');
+    status.className='alert';
+    status.textContent=report.localTechnicalPossible?
+      'Внутренний контроль доступен. Публикация и сбор данных пока заблокированы до независимых проверок.':
+      'Есть неподтверждённые технические условия. Запуск клиента запрещён.';
+    for(const [code,label] of Object.entries(R23_CHECKS))
+      appendText(checks,'li',(report.checks[code]===true?'Проверено: ':'Ожидается: ')+label,'small');
+    for(const code of report.operatorSequence)
+      if(R23_STEPS[code])appendText(steps,'li',R23_STEPS[code],'small');
+  }catch{
+    status.className='alert';
+    status.textContent='R23 недоступен. Решение — NO-GO.';
   }
 }
 async function loadReport(){
@@ -1087,6 +1140,7 @@ $('r19Refresh').addEventListener('click',()=>safely(()=>loadR19Preflight()));
 $('r20Refresh').addEventListener('click',()=>safely(()=>loadR20Inspection()));
 $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
+$('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('operationsRefresh').addEventListener('click',()=>safely(async()=>{
   await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
 }));
