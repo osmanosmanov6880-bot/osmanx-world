@@ -23,6 +23,8 @@ import {buildR24Playbook} from './guest-r24-playbook.mjs';
 import {createR24Brief,r24BriefCsv} from './guest-r24-brief.mjs';
 import {parseR25Tally,R25_CODES} from './guest-r25-signals.mjs';
 import {makeR25Brief,r25BriefCsv} from './guest-r25-brief.mjs';
+import {parseR26ReviewRequest} from './guest-r26-review.mjs';
+import {makeR26Brief,r26BriefCsv} from './guest-r26-brief.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -925,6 +927,129 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
         'attachment; filename="osmanx-guest-r25-barriers.csv"');
       reply.header('Cache-Control','no-store');
       return reply.send(r25BriefCsv(report));
+    }));
+
+  // R26: two-role declarations of source reconciliation. No guest PII,
+  // independent cryptographic signatures, permission to activate collection,
+  // or equivalence with external audit.
+  async function loadR26Rows(db,tenantId,pilotId){
+    const raw=await db.query(
+      'SELECT observed_on::text AS date,shift,source_kind AS source,sampled,'+
+      'wait_count AS wait,stockout_count AS stockout,'+
+      'ordering_count AS ordering,price_count AS price,'+
+      'service_count AS service,unknown_count AS unknown'+
+      ' FROM industry.guest_r25_operational_tallies'+
+      ' WHERE tenant_id=$1 AND pilot_id=$2'+
+      ' ORDER BY observed_on ASC,shift ASC LIMIT 37',
+      [tenantId,pilotId]
+    );
+    if(raw.rowCount>36)throw problem(409,'R26: too many operational tallies');
+    return raw.rows.map(row=>({
+      date:row.date,shift:row.shift,source:row.source,
+      sampled:row.sampled,
+      counts:Object.fromEntries(R25_CODES.map(code=>[code,row[code]]))
+    }));
+  }
+  async function r26CanReview(pilot,tenantId,hold,signals){
+    if(process.env.GUEST_R26_SOURCE_REVIEW_ENABLED!=='true'||
+       hold?.active===true||
+       !['in_review','reviewed','returned'].includes(pilot.phase)||
+       signals.profile.recordedShifts===0)return false;
+    if(process.env.NODE_ENV!=='production')return true;
+    if(process.env.GUEST_WRITES_ENABLED!=='true'||!r19Configured(process.env))
+      return false;
+    try{
+      const scope=await loadR19Scope(process.env);
+      return scope.valid===true&&scope.tenantId===tenantId&&
+        scope.pilotId===pilot.id;
+    }catch{return false;}
+  }
+  async function r26Intelligence(db,s,pilotId){
+    const pilot=await getPilot(db,s.tenant_id,pilotId);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    const signals=await r25Intelligence(db,s,pilot.id);
+    const rows=await loadR26Rows(db,s.tenant_id,pilot.id);
+    const history=await db.query(
+      'SELECT pilot_version AS "pilotVersion",'+
+      'tally_source_sha AS "sourceSha",'+
+      'r24_evidence_sha AS "r24EvidenceSha",'+
+      'tally_rows AS "tallyRows",actor_id AS "actorId",'+
+      'actor_role AS role,method,verdict,evidence_sha AS "evidenceSha"'+
+      ' FROM industry.guest_r26_source_reviews'+
+      ' WHERE tenant_id=$1 AND pilot_id=$2 ORDER BY reviewed_at DESC,id DESC LIMIT 101',
+      [s.tenant_id,pilot.id]
+    );
+    if(history.rowCount>100)throw problem(409,'R26 review history requires audit');
+    return makeR26Brief({pilot,r25:signals,rows,
+      reviews:history.rows,stopActive:hold?.active===true,
+      reviewEnabled:await r26CanReview(pilot,s.tenant_id,hold,signals)});
+  }
+  app.get(P+'/pilots/:id/r26/reliability',req=>forTenant(req,MANAGE,
+    async(db,s)=>r26Intelligence(db,s,req.params.id)));
+  app.get(P+'/pilots/:id/r26/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r26Intelligence(db,s,req.params.id);
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r26-reliability.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r26BriefCsv(report));
+    }));
+  app.post(P+'/pilots/:id/r26/source-review',(req,reply)=>
+    forTenant(req,MANAGE,async(db,s,role)=>{
+      if(process.env.GUEST_R26_SOURCE_REVIEW_ENABLED!=='true')
+        throw problem(503,'R26: внутренние проверки источников выключены');
+      const b=guard(()=>parseR26ReviewRequest(bodyOf(req)));
+      const key=keyOf(req);
+      const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+      await assertUnheld(db,s.tenant_id,pilot.id);
+      verifyVersion(pilot,b.expectedVersion);
+      const signals=await r25Intelligence(db,s,pilot.id);
+      const can=await r26CanReview(pilot,s.tenant_id,null,signals);
+      if(!can)throw problem(409,'R26: проверка источника пока запрещена');
+      if(b.sourceSha!==signals.tallySourceSha||
+         b.r24EvidenceSha!==signals.r24EvidenceSha)
+        throw problem(409,'R26: контрольные суммы изменились');
+      const fp=digest({version:b.expectedVersion,sourceSha:b.sourceSha,
+        r24EvidenceSha:b.r24EvidenceSha,evidenceSha:b.evidenceSha,
+        method:b.method,verdict:b.verdict,role});
+      const sameKey=await db.query(
+        'SELECT id,actor_id,payload_digest FROM industry.guest_r26_source_reviews'+
+        ' WHERE tenant_id=$1 AND pilot_id=$2 AND idempotency_key=$3',
+        [s.tenant_id,pilot.id,key]
+      );
+      if(sameKey.rowCount){
+        if(sameKey.rows[0].actor_id!==s.account_id||
+           sameKey.rows[0].payload_digest!==fp)
+          throw problem(409,'R26: идемпотентный ключ уже занят');
+        return {duplicate:true,reviewId:sameKey.rows[0].id,
+          pilotVersion:pilot.version,sourceSha:signals.tallySourceSha,
+          customerGo:false};
+      }
+      const existing=await db.query(
+        'SELECT id FROM industry.guest_r26_source_reviews'+
+        ' WHERE tenant_id=$1 AND pilot_id=$2 AND pilot_version=$3'+
+        ' AND tally_source_sha=$4 AND actor_role=$5',
+        [s.tenant_id,pilot.id,pilot.version,signals.tallySourceSha,role]
+      );
+      if(existing.rowCount)
+        throw problem(409,'R26: решение этой роли уже неизменяемо зафиксировано');
+      const inserted=await db.query(
+        'INSERT INTO industry.guest_r26_source_reviews'+
+        '(tenant_id,pilot_id,pilot_version,tally_source_sha,r24_evidence_sha,'+
+        'tally_rows,actor_id,actor_role,method,verdict,evidence_sha,'+
+        'idempotency_key,payload_digest)'+
+        ' VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id',
+        [s.tenant_id,pilot.id,pilot.version,signals.tallySourceSha,
+          signals.r24EvidenceSha,signals.profile.recordedShifts,
+          s.account_id,role,b.method,b.verdict,b.evidenceSha,key,fp]
+      );
+      await record(db,s,'r26.source.reviewed',inserted.rows[0].id,{
+        pilotId:pilot.id,verdict:b.verdict,role
+      });
+      reply.code(201);
+      return {reviewId:inserted.rows[0].id,pilotVersion:pilot.version,
+        sourceSha:signals.tallySourceSha,customerGo:false};
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
