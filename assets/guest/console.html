@@ -133,6 +133,25 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r31Panel" hidden aria-labelledby="r31Heading">
+  <hr class="separator">
+  <span class="eyebrow">R31 / Independent Staging Witness</span>
+  <h3 id="r31Heading">Приёмка 17 PR и независимых свидетельств</h3>
+  <p id="r31Status" class="alert" role="status" aria-live="polite">NO-GO — независимые проверки не завершены.</p>
+  <div class="triple" aria-label="R31: состояние готовности">
+    <div><strong>Исходные PR</strong><p id="r31Sources">0 / 17</p></div>
+    <div><strong>Подписанные роли</strong><p id="r31Witnesses">0 / 4</p></div>
+    <div><strong>Отчёт действителен до</strong><p id="r31Expiry">—</p></div>
+  </div>
+  <h4>Что ещё требуется для публикации</h4>
+  <ul id="r31Blockers" class="items"></ul>
+  <p class="small">Доступен отдельный CLI для одобренных оператором staging GET-проверок. Работающий сайт и production не затрагиваются; данный кабинет не запускает сетевых проверок и не принимает доказательств с неизвестных ключей.</p>
+  <div class="actions">
+    <button id="r31Refresh" type="button" class="secondary">Проверить R31</button>
+    <button id="r31Download" type="button" class="secondary">Экспорт R31 CSV</button>
+  </div>
+  <p class="small">Результаты тестов и подписи не означают законного основания, проверенного offsite backup, человеческого code review или разрешения на продакшен.</p>
+</section>
 <section id="r30Panel" hidden aria-labelledby="r30Heading">
   <hr class="separator">
   <span class="eyebrow">R30 / Независимые доказательства</span>

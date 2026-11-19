@@ -295,6 +295,20 @@ if grep -Fq '"independentEvidenceReviewSupportedR30":true' "$root/RELEASE.json";
     }
   done
 fi
+# R31 adds explicit operator-only tools, never a production activation path.
+if grep -Fq '"manualStagingOperatorSupportedR31":true' "$root/RELEASE.json"; then
+  grep -Fq '"independentEvidenceReviewSupportedR30":true' "$root/RELEASE.json" || {
+    echo "R31 needs R30 provenance" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R31 must not enable customer collection" >&2; exit 3;
+  }
+  for f in src/guest-r31-chain.mjs src/guest-r31-dr-review.mjs \
+    src/guest-r31-evidence-bundle.mjs src/guest-r31-report.mjs \
+    scripts/r31-approved-staging.mjs scripts/r31-review-github.mjs; do
+    test -f "$root/$f" || { echo "Missing R31 review module $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
