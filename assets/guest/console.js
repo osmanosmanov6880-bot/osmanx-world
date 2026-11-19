@@ -78,6 +78,7 @@ function showAuth(){
   $('r25Panel').hidden=true;
   $('r26Panel').hidden=true;
   $('r27Panel').hidden=true;
+  $('r28Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -426,6 +427,7 @@ async function openPilot(id){
   await loadR25Insights();
   await loadR26Reliability();
   await loadR27Readiness();
+  await loadR28OperatorStatus();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -980,6 +982,73 @@ async function loadR27Readiness(){
     $('r27Evidence').textContent='';
   }
 }
+const R28_STAGES={
+  STOP:'Аварийная остановка',
+  SOURCE_CHAIN_UNVERIFIED:'Цепочка исходных PR ещё не удостоверена',
+  MANUAL_MERGE_PENDING:'Требуются ручные слияния',
+  MAIN_CI_PENDING:'CI на итоговом main не проверен',
+  EXTERNAL_RECEIPTS_PENDING:'Внешние подписи ещё не подтверждены',
+  EXTERNAL_HOST_LEGAL_AND_ROLLBACK_PENDING:'Требуются внешний аудит, правовое основание и откат'
+};
+const R28_BLOCKER_LABELS={
+  R28_SOURCE_CI_NOT_INDEPENDENTLY_REVIEWED:'Не выполнена независимая проверка исходных 14 PR',
+  R28_MANUAL_MERGES_OUTSTANDING:'Не проведены ручные последовательные слияния',
+  R28_MAIN_MERGED_TREE_CI_NOT_RUN:'Нет новой приёмки на итоговом main',
+  R28_FOUR_INDEPENDENT_RECEIPTS_MISSING:'Нет четырёх проверенных подписанных квитанций',
+  R28_EMERGENCY_STOP_ACTIVE:'Действует аварийная остановка',
+  R28_PILOT_EVIDENCE_CONFLICT:'Снимки данных пилота противоречат друг другу',
+  R28_LIVE_VPS_NOT_INDEPENDENTLY_VERIFIED:'Настоящий VPS не проверен независимым оператором',
+  R28_OFFSITE_DR_NOT_INDEPENDENTLY_VERIFIED:'Внешние восстановленные архивы не подтверждены',
+  R28_LAWFUL_BASIS_NOT_VERIFIED:'Не подтверждено законное основание обработки',
+  R28_MANUAL_CHANGE_WINDOW_AND_ROLLBACK_NOT_APPROVED:'Не утверждены окно изменений и репетиция отката'
+};
+async function loadR28OperatorStatus(){
+  const panel=$('r28Panel'),status=$('r28Status'),
+    tasks=$('r28Tasks'),issues=$('r28Blockers');
+  panel.hidden=!manage();tasks.replaceChildren();issues.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const packet=await api('/guest/pilots/'+model.selected.item.id+'/r28/readiness');
+    if(packet.schema!=='osmanx.guest.r28.manual-operator-packet.v1'||
+       packet.pilotId!==model.selected.item.id||
+       packet.customerGo!==false||
+       packet.productionAuthorized!==false||
+       packet.automaticMergeAllowed!==false||
+       packet.actualProductionInspected!==false||
+       packet.cryptographicPublisherSignature!==false||
+       packet.generatedAsHumanReviewOnly!==true||
+       !Array.isArray(packet.operatorSteps)||
+       packet.operatorSteps.length!==7||
+       !Array.isArray(packet.blockers)||
+       !packet.blockers.includes('R28_LIVE_VPS_NOT_INDEPENDENTLY_VERIFIED'))
+      throw Error('R28 requires complete signed-evidence gap report');
+    status.className='alert';
+    status.textContent='NO-GO — автоматический запуск и сбор данных запрещены. '+
+      'Выпуск возможен только после независимой внешней приёмки.';
+    $('r28Stage').textContent=R28_STAGES[packet.stage]||
+      'Требуется ручная проверка';
+    $('r28Verified').textContent=String(packet.verifiedSourcePrs)+' / 14';
+    $('r28Expiry').textContent=new Date(packet.expiresAt).toLocaleString('ru-RU',{
+      year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit'
+    });
+    for(const item of packet.operatorSteps)
+      appendText(tasks,'li',item.label+
+        '. Доказательство: '+item.proofRequired+
+        '. Статус: не выполнено в этой системе.','small');
+    for(const code of packet.blockers)
+      appendText(issues,'li',R28_BLOCKER_LABELS[code]||code,'small');
+    $('r28Next').textContent='Первое действие: проверить цепочку GitHub из 14 PR '+
+      'и получить независимый review. Обработка настоящих гостей не разрешена.';
+  }catch{
+    status.className='alert';
+    status.textContent='R28 недоступен. Нельзя принимать решение о запуске.';
+    $('r28Stage').textContent='NO-GO';
+    $('r28Verified').textContent='—';
+    $('r28Expiry').textContent='—';
+    $('r28Next').textContent='Проверка не выполнена.';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1472,6 +1541,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r28Refresh').addEventListener('click',()=>safely(()=>loadR28OperatorStatus()));
+$('r28Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r28/handoff.csv',
+    'osmanx-guest-r28-manual-review.csv');
+  setStatus('Экспортирован R28 CSV для ручной проверки. Разрешение на запуск не выдавалось.');
+}));
 $('r27Refresh').addEventListener('click',()=>safely(()=>loadR27Readiness()));
 $('r27Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот руководителя.');
