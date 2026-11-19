@@ -12,6 +12,8 @@ import {loadTenantPermit,assertTenantPermission} from './guest-tenant-authorizat
 import {r16Configured,loadR16Registry,assertR16Tenant,inspectR16Tenant} from './guest-r16-registry.mjs';
 import {r17Configured,loadR17Witness} from './guest-r17-witness.mjs';
 import {assertR17Fence,inspectR17Fence} from './guest-r17-fence.mjs';
+import {r18Configured,loadR18Anchor} from './guest-r18-anchor.mjs';
+import {assertR18Fence,inspectR18Fence} from './guest-r18-fence.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -81,6 +83,8 @@ export async function buildApp(pool){
         // R16 opt-in never silently falls back to R15 if a signed registry is absent.
         if(r17Configured(process.env)&&!r16Configured(process.env))
           throw Error('R17 requires R16');
+        if(r18Configured(process.env)&&!r17Configured(process.env))
+          throw Error('R18 requires R17');
         if(r16Configured(process.env))req.guestRegistry=await loadR16Registry(process.env);
         else req.guestAdmission=await loadTenantPermit(process.env);
         if(r17Configured(process.env)){
@@ -88,6 +92,8 @@ export async function buildApp(pool){
           if(req.guestRegistry.digest!==req.r17Witness.registryDigest)
             throw Error('Registry changed during admission');
         }
+        if(r18Configured(process.env))
+          req.r18Anchor=await loadR18Anchor(process.env,req.r17Witness);
       }catch{
         throw httpError(503,'Нужен актуальный подписанный допуск компании R15/R16');
       }
@@ -122,7 +128,7 @@ export async function buildApp(pool){
     const session=await auth(request);
     const guestMutation=opt.secure && ['POST','PATCH','PUT','DELETE'].includes(request.method) &&
       (request.url===PREFIX+'/guest'||request.url.startsWith(PREFIX+'/guest/'));
-    let witness=null;
+    let witness=null,externalAnchor=null;
     if(guestMutation){
       if(r16Configured(process.env)){
         // Tenant always comes from the authenticated session, not a request body.
@@ -134,6 +140,14 @@ export async function buildApp(pool){
                witness.checkpointDigest!==request.r17Witness?.checkpointDigest)
               throw Error('Checkpoint changed during authorization');
           }catch{throw httpError(503,'R17: независимое подтверждение не прошло');}
+          if(r18Configured(process.env)){
+            try{
+              externalAnchor=await loadR18Anchor(process.env,witness);
+              if(externalAnchor.anchorDigest!==request.r18Anchor?.anchorDigest||
+                 externalAnchor.checkpointDigest!==witness.checkpointDigest)
+                throw Error('External anchor changed during authorization');
+            }catch{throw httpError(503,'R18: внешний контрольный якорь не подтверждён');}
+          }
         }
       }else assertTenantPermission(request.guestAdmission,session.tenant_id);
     }
@@ -141,6 +155,7 @@ export async function buildApp(pool){
       const role=await requireMembership(db,session.tenant_id,session.account_id,roles);
       // The fence advances inside this exact transaction, not before it.
       if(witness)await assertR17Fence(db,witness);
+      if(externalAnchor)await assertR18Fence(db,externalAnchor);
       const response=await fn(db,session,role);
       if(witness){
         // Late stop/revocation/checkpoint change aborts the entire transaction.
@@ -151,6 +166,14 @@ export async function buildApp(pool){
         if(latest.checkpointDigest!==witness.checkpointDigest)
           throw httpError(503,'R17: требуется повторить операцию после обновления допуска');
         await assertR17Fence(db,latest);
+        if(externalAnchor){
+          let latestAnchor;
+          try{latestAnchor=await loadR18Anchor(process.env,latest);}
+          catch{throw httpError(503,'R18: внешний контрольный якорь изменился');}
+          if(latestAnchor.anchorDigest!==externalAnchor.anchorDigest)
+            throw httpError(503,'R18: повторите операцию с новым подтверждением');
+          await assertR18Fence(db,latestAnchor);
+        }
       }
       return response;
     });
@@ -173,6 +196,7 @@ export async function buildApp(pool){
     if(r16Configured(process.env)){
       const status=await inspectR16Tenant(session.tenant_id,process.env);
       let witnessVerified=null,witnessSequence=null,witnessFenceReady=null;
+      let externalAnchorVerified=null,externalAnchorFenceReady=null,externalAnchorSequence=null;
       if(r17Configured(process.env)){
         witnessVerified=false;witnessFenceReady=false;
         try{
@@ -180,14 +204,28 @@ export async function buildApp(pool){
           const fence=await inspectR17Fence(db,witness);
           witnessVerified=true;witnessSequence=witness.sequence;
           witnessFenceReady=fence.fenceReady;
+          if(r18Configured(process.env)){
+            externalAnchorVerified=false;externalAnchorFenceReady=false;
+            const anchor=await loadR18Anchor(process.env,witness);
+            const anchorFence=await inspectR18Fence(db,anchor);
+            externalAnchorVerified=true;externalAnchorSequence=anchor.sequence;
+            externalAnchorFenceReady=anchorFence.fenceReady;
+          }
         }catch{/* No filenames or private documents in the status response. */}
       }
-      const allowed=status.permitValid&&witnessVerified!==false&&witnessFenceReady!==false;
+      if(r18Configured(process.env)&&externalAnchorVerified===null){
+        externalAnchorVerified=false;externalAnchorFenceReady=false;
+      }
+      const allowed=status.permitValid&&witnessVerified!==false&&witnessFenceReady!==false&&
+        externalAnchorVerified!==false&&externalAnchorFenceReady!==false;
       return {schema:'osmanx.guest.r16.self-status.v1',mode:'multi',
         permitValid:allowed,
-        reason:status.permitValid&&!allowed?'r17_witness_or_fence_unavailable':status.reason,
+        reason:status.permitValid&&!allowed?
+          (externalAnchorVerified===false||externalAnchorFenceReady===false?
+            'r18_anchor_or_fence_unavailable':'r17_witness_or_fence_unavailable'):status.reason,
         registryRevision:status.registryRevision,validUntil:status.validUntil,
         witnessVerified,witnessSequence,witnessFenceReady,
+        externalAnchorVerified,externalAnchorFenceReady,externalAnchorSequence,
         writesChanged:false};
     }
     try{
