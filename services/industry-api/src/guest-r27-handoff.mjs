@@ -19,20 +19,29 @@ const exact=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&
   Object.keys(x).sort().join('|')===[...keys].sort().join('|');
 export function makeR27Handoff({r24,r25,r26,audit,rehearsal,
   now=new Date()}={}){
-  if(!verifyR24Brief(r24).valid||!verifyR25Brief(r25).valid||
-     !verifyR26Brief(r26).valid||audit?.schema!==R27_AUDIT_SCHEMA||
-     rehearsal?.schema!==R27_REHEARSAL_SCHEMA||
-     !UUID.test(r24.pilotId||'')||
-     !(now instanceof Date)||!Number.isFinite(now.getTime())||
-     audit.pilotId!==r24.pilotId||audit.version!==r24.version||
-     audit.r24EvidenceSha!==r24.evidenceDigest||
-     audit.r25SourceSha!==r25.tallySourceSha||
-     audit.r26BriefSha!==r26.sha256||
-     !SHA.test(rehearsal.sha256||'')||
-     !Array.isArray(rehearsal.cases)||rehearsal.cases.length!==7||
-     !Array.isArray(audit.blockers)||audit.blockers.length>45||
-     !audit.blockers.every(code))
-    throw new TypeError('R27 requires exact cross-layer source evidence');
+  const missing=[];
+  const require=(invalid,key)=>{if(invalid)missing.push(key);};
+  require(!verifyR24Brief(r24).valid,'R24_ENVELOPE');
+  require(!verifyR25Brief(r25).valid,'R25_ENVELOPE');
+  require(!verifyR26Brief(r26).valid,'R26_ENVELOPE');
+  require(audit?.schema!==R27_AUDIT_SCHEMA,'AUDIT_SCHEMA');
+  require(rehearsal?.schema!==R27_REHEARSAL_SCHEMA,'REHEARSAL_SCHEMA');
+  require(!UUID.test(r24?.pilotId||''),'PILOT_UUID');
+  require(!(now instanceof Date)||!Number.isFinite(now.getTime()),'CLOCK');
+  require(audit?.pilotId!==r24?.pilotId,'PILOT_LINK');
+  require(audit?.version!==r24?.version,'VERSION_LINK');
+  require(audit?.r24EvidenceSha!==r24?.evidenceDigest,'R24_SHA_LINK');
+  require(audit?.r25SourceSha!==r25?.tallySourceSha,'R25_SHA_LINK');
+  require(audit?.r26BriefSha!==r26?.sha256,'R26_SHA_LINK');
+  require(!SHA.test(rehearsal?.sha256||''),'CASE_DIGEST');
+  require(!Array.isArray(rehearsal?.cases)||rehearsal.cases.length!==7,
+    'CASE_COUNT');
+  require(!Array.isArray(audit?.blockers)||audit.blockers.length>45,
+    'BLOCKER_COUNT');
+  require(!Array.isArray(audit?.blockers)||!audit.blockers.every(code),
+    'BLOCKER_CODES');
+  if(missing.length)
+    throw new TypeError('R27 invalid evidence: '+missing.join(','));
   const {sha256,...rehearsalWithoutHash}=rehearsal;
   if(digest(rehearsalWithoutHash)!==sha256)
     throw new TypeError('Synthetic case digest mismatch');
