@@ -11,6 +11,7 @@ import {makePool} from '../src/database.mjs';
 import {buildApp} from '../src/app.mjs';
 import {syntheticR19} from './r19-synthetic-fixture.mjs';
 import {stopR19} from '../scripts/r19-operator.mjs';
+import {rehearseR23TenantIsolation} from '../scripts/r23-tenant-isolation.mjs';
 
 const API='/api/industry/v1',ORIGIN='https://osmanx.world';
 const tag=randomUUID().slice(0,8);
@@ -196,6 +197,17 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(r22.customerGo,false);
   assert.equal(r22.productionAuthorized,false);
   assert.equal(JSON.stringify(r22).includes('PRIVATE KEY'),false);
+  const handoffPath='/guest/pilots/'+pilotRow.id+'/r23/handoff';
+  assert.equal((await call('GET',handoffPath,tenants[1].auth)).status,404);
+  assert.equal((await call('GET',handoffPath)).status,401);
+  const handoff=expect(await call('GET',handoffPath,own),200);
+  assert.equal(handoff.schema,'osmanx.guest.r23.first-customer-handoff.v1');
+  assert.equal(handoff.checks.independentSignedPilot,true);
+  assert.equal(handoff.checks.orderedPrMergesVerified,false);
+  assert.equal(handoff.checks.independentOffsiteDrVerified,false);
+  assert.equal(handoff.customerGo,false);
+  assert.equal(handoff.productionAuthorized,false);
+  assert.equal(JSON.stringify(handoff).includes('PRIVATE KEY'),false);
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
@@ -270,6 +282,10 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(afterStopR22.checks.signedPilotScope,false);
   assert.equal(afterStopR22.localTechnicalReviewPossible,false);
   assert.equal(afterStopR22.customerGo,false);
+  const afterStopR23=expect(await call('GET',handoffPath,own),200);
+  assert.equal(afterStopR23.checks.independentSignedPilot,false);
+  assert.equal(afterStopR23.localTechnicalPossible,false);
+  assert.equal(afterStopR23.customerGo,false);
   const grants=(await admin.query(
     "SELECT has_table_privilege('industry_app','industry.guest_r19_collection_events','DELETE') AS del,"+
     "has_table_privilege('industry_app','industry.guest_r19_collection_events','UPDATE') AS upd"
@@ -284,4 +300,28 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   );
   assert.equal(unsafe.rows[0].relrowsecurity,true);
   assert.equal(unsafe.rows[0].relforcerowsecurity,true);
+});
+
+test('R23 SQL rehearsal: two real synthetic company pilots never cross RLS',async()=>{
+  // Test-only secondary pilot is inserted by the disposable CI admin account;
+  // both visibility checks themselves use the real non-BYPASSRLS app pool.
+  const second=(await admin.query(
+    "INSERT INTO industry.guest_pilots"+
+    " (tenant_id,created_by,title,plan,readiness,target_per_group)"+
+    " VALUES($1,$2,'R23 isolated control','{}'::jsonb,'{}'::jsonb,10) RETURNING id",
+    [tenants[1].tenantId,tenants[1].accountId]
+  )).rows[0];
+  const report=await rehearseR23TenantIsolation(pool,{
+    tenantA:tenants[0].tenantId,pilotA:pilotRow.id,
+    tenantB:tenants[1].tenantId,pilotB:second.id
+  });
+  assert.equal(report.schema,'osmanx.guest.r23.read-only-rls-rehearsal.v1');
+  assert.equal(report.technicalIsolationPass,true,JSON.stringify(report.blockers));
+  assert.equal(report.firstOwnVisible,true);
+  assert.equal(report.firstForeignHidden,true);
+  assert.equal(report.secondOwnVisible,true);
+  assert.equal(report.secondForeignHidden,true);
+  assert.equal(report.transactionRolledBack,true);
+  assert.equal(report.customerGo,false);
+  assert.equal(report.customerDataReturned,false);
 });
