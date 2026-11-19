@@ -116,7 +116,8 @@ jobs:
           bash ops/verify-release.sh "$archive"
           test "$(sha256sum "$archive" | awk '{print $1}')" = \
             "$(sha256sum "$RUNNER_TEMP/r16-b/$(basename "$archive")" | awk '{print $1}')"
-          tar -tzf "$archive" | grep -Fq 'industry-api/src/guest-r16-registry.mjs'
-          tar -tzf "$archive" | grep -Fq 'industry-api/scripts/r16-operator.mjs'
-          tar -tzf "$archive" | grep -Fq 'industry-api/scripts/r16-signer.mjs'
+          tar -tzf "$archive" > "$RUNNER_TEMP/r16-file-list.txt"
+          grep -Fq 'industry-api/src/guest-r16-registry.mjs' "$RUNNER_TEMP/r16-file-list.txt"
+          grep -Fq 'industry-api/scripts/r16-operator.mjs' "$RUNNER_TEMP/r16-file-list.txt"
+          grep -Fq 'industry-api/scripts/r16-signer.mjs' "$RUNNER_TEMP/r16-file-list.txt"
           echo "R16 source release verified; no production deploy."
