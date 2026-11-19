@@ -34,7 +34,7 @@ export async function assertR19Pilot(db,tenantId,pilotId,scope){
 }
 export async function consumeR19Budget(db,{tenantId,pilotId,kind,scope}){
   if(!UUID.test(tenantId||'')||!UUID.test(pilotId||'')||
-     !['start','observations','observations/import'].includes(kind)||
+     !['start','observations','observations/import','operational-signals'].includes(kind)||
      scope?.valid!==true||scope.tenantId!==tenantId||
      scope.pilotId!==pilotId)throw CLOSED();
   try{
