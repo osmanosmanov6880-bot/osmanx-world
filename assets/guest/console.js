@@ -87,6 +87,7 @@ function showAuth(){
   $('r34Panel').hidden=true;
   $('r35Panel').hidden=true;
   $('r36Panel').hidden=true;
+  $('r37Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -444,6 +445,7 @@ async function openPilot(id){
   await loadR34Acceptance();
   await loadR35Acceptance();
   await loadR36Acceptance();
+  await loadR37Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1413,6 +1415,55 @@ async function loadR36Acceptance(){
     $('r36Recovery').textContent='—';$('r36Expiry').textContent='Отчёт до: —';
   }
 }
+const R37_GAPS={
+  R37_TWENTY_THREE_SOURCE_PRS_NOT_REVIEWED_AND_MERGED:'23 PR должны пройти ручное ревью и последовательный merge',
+  R37_PR47_INDEPENDENT_HUMAN_APPROVAL_MISSING:'PR #47 ещё требует независимого одобрения',
+  R37_MAIN_REQUIRES_FRESH_POSTMERGE_CI_AND_TREE:'Нужно проверить итоговое дерево и CI после merge в main',
+  R37_CANARY_PRIVATE_FILE_AND_LOOPBACK_POLICY_REQUIRES_OPERATOR:'Не выполнен операторский preflight canary',
+  R37_DOCKER_CONTAINER_SOURCE_IMAGE_IDENTITY_NOT_WITNESSED:'Не подтверждена связь Docker-контейнера с релизом',
+  R37_LOCAL_DR_POSTGRES_EMPTY_AND_RESTORED_STATE_NOT_ATTESTED:'Не проверена реальная база до и после AGE restore',
+  R37_REMOTE_STAGING_TLS_AND_DEPLOYED_IDENTITY_NOT_ATTESTED:'Нет подтверждения удалённого staging и TLS',
+  R37_OFFSITE_RESTORE_AND_ROLLBACK_NOT_INDEPENDENTLY_WITNESSED:'Нет независимой репетиции offsite и отката',
+  R37_CONTRACT_LEGAL_AUTHORITY_AND_CHANGE_WINDOW_MISSING:'Нет независимого правового допуска и окна изменений'
+};
+async function loadR37Acceptance(){
+  const panel=$('r37Panel'),list=$('r37Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r37/readiness');
+    if(x.schema!=='osmanx.guest.r37.independent-release-barriers.v1'||
+      x.pilotId!==model.selected.item.id||
+      x.source?.requiredPrs!==23||
+      x.source?.mergedPrsVerifiedInApi!==0||
+      x.canary?.dockerCallsFromWebApi!==0||
+      x.image?.liveContainerInspectionsFromWebApi!==0||
+      x.disasterRecovery?.localRestoreCallsFromWebApi!==0||
+      x.productionAuthorized!==false||x.customerGo!==false||
+      x.guestWritesEnabled!==false||x.stopLifted!==false||
+      !Array.isArray(x.blockers)||
+      !x.blockers.includes('R37_MAIN_REQUIRES_FRESH_POSTMERGE_CI_AND_TREE'))
+      throw Error('R37 unexpected or unsafe release response');
+    $('r37Status').textContent='NO-GO — внешние независимые проверки необходимы';
+    $('r37Pr').textContent='0 / 23 подтверждено в API';
+    $('r37Image').textContent='Не засвидетельствовано';
+    $('r37Dr').textContent='Не проверено в API';
+    $('r37Expiry').textContent='Отчёт до: '+
+      new Date(x.expiresAt).toLocaleString('ru-RU',{
+        year:'numeric',month:'2-digit',day:'2-digit',
+        hour:'2-digit',minute:'2-digit'
+      });
+    for(const code of x.blockers)
+      appendText(list,'li',R37_GAPS[code]||R36_GAPS[code]||
+        R35_GAPS[code]||R34_GAPS[code]||R33_GAPS[code]||
+        R32_GAPS[code]||R31_GAPS[code]||R30_GAPS[code]||
+        R29_GAPS[code]||code,'small');
+  }catch{
+    $('r37Status').textContent='NO-GO — R37 не подтверждён';
+    $('r37Pr').textContent='—';$('r37Image').textContent='—';
+    $('r37Dr').textContent='—';$('r37Expiry').textContent='Отчёт до: —';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1905,6 +1956,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r37Refresh').addEventListener('click',()=>safely(()=>loadR37Acceptance()));
+$('r37Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r37/report.csv',
+    'osmanx-guest-r37-operator-audit.csv');
+  setStatus('R37: NO-GO отчёт сохранён. Production и записи гостей запрещены.');
+}));
 $('r36Refresh').addEventListener('click',()=>safely(()=>loadR36Acceptance()));
 $('r36Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');

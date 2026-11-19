@@ -133,6 +133,26 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r37Panel" hidden aria-labelledby="r37Heading">
+  <hr class="separator">
+  <span class="eyebrow">R37 / Publication Safety</span>
+  <h3 id="r37Heading">23 PR, canary, контейнер и восстановление</h3>
+  <p id="r37Status" class="alert" role="status" aria-live="polite">NO-GO — публикация требует независимых действий.</p>
+  <div class="triple" aria-label="R37 эксплуатационные блокировки">
+    <div><strong>23 PR</strong><p id="r37Pr">Ручные одобрения не подтверждены</p></div>
+    <div><strong>Образ Docker</strong><p id="r37Image">Идентичность не засвидетельствована</p></div>
+    <div><strong>AGE / PostgreSQL</strong><p id="r37Dr">Восстановление не подтверждено</p></div>
+  </div>
+  <p class="small">R37 устраняет конкретные технические риски: права доступа к секретам canary, пустоту локальной БД до restore, проверку реального запущенного образа и свежий CI итогового main. Инструменты запускаются отдельно оператором, не из браузера.</p>
+  <h4>Что ещё препятствует публикации</h4>
+  <ul id="r37Blockers" class="items"></ul>
+  <div class="actions">
+    <button id="r37Refresh" type="button" class="secondary">Проверить статус R37</button>
+    <button id="r37Download" type="button" class="secondary">Скачать NO-GO отчёт</button>
+  </div>
+  <p id="r37Expiry" class="small">Срок действия отчёта: —</p>
+  <p class="small">Бинарные метки Docker и подписанные хеши не заменяют независимое свидетельство реального VPS, восстановление offsite и законные разрешения клиента.</p>
+</section>
 <section id="r36Panel" hidden aria-labelledby="r36Heading">
   <hr class="separator">
   <span class="eyebrow">R36 / Operational Acceptance</span>

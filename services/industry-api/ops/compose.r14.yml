@@ -5,6 +5,8 @@ x-api: &api
   build:
     context: ..
     dockerfile: Dockerfile
+    args:
+      OSMANX_SOURCE_SHA: ${OSMANX_SOURCE_SHA:-}
   image: osmanx-guest-api:r14-canary
 services:
   db:

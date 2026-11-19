@@ -11,6 +11,11 @@ usage(){ echo "Usage: bash ops/r14-canary.sh plan|apply|health|stop /absolute/pr
 test -f "$envfile" && test ! -L "$envfile" || { echo "Refusing symlink or missing private env";exit 2; }
 envfile="$(realpath -e "$envfile")"
 [[ "$envfile" != "$ROOT/"* ]] || { echo "Secrets inside checkout forbidden";exit 2; }
+# R37: verify operator ownership/chmod, source checkout isolation and loopback
+# compose topology BEFORE reaching any Docker API. No env bytes are logged.
+node "$ROOT/scripts/r37-canary-preflight.mjs" "$envfile" "$ROOT/ops/compose.r14.yml" >/dev/null || {
+  echo "R37 canary private-file/topology preflight refused" >&2; exit 2;
+}
 [[ -z "${DOCKER_HOST:-}" && -z "${DOCKER_CONTEXT:-}" ]] || { echo "Refusing remote Docker contexts";exit 2; }
 for cmd in docker node curl; do command -v "$cmd" >/dev/null || { echo "Missing dependency $cmd";exit 2; };done
 [[ "$(docker context show)" == default ]] || { echo "Only local Docker allowed";exit 2; }
