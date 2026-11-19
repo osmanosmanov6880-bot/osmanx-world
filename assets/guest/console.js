@@ -69,6 +69,7 @@ function showAuth(){
   model.bulkPreview=null;model.diagnostic=null;model.operations=null;
   model.selectedAction=null;model.launchGate=null;model.safety=null;model.staffMembers=[];
   model.admission=null;$('admissionPanel').hidden=true;
+  $('r19Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -148,8 +149,13 @@ async function loadAdmission(){
           'независимый хранитель и PostgreSQL проверены':'внешняя проверка не пройдена')+
         (Number.isSafeInteger(value.externalAnchorSequence)?
           ', событие №'+value.externalAnchorSequence:'');
+    const r19=value.pilotCollection===null||value.pilotCollection===undefined?
+      ' · R19 не включён':
+      value.pilotCollection.valid===true?
+        ' · R19: один пилот подтверждён до '+new Date(value.pilotCollection.expiresAt).toLocaleString('ru-RU'):
+        ' · R19: допуск первого пилота недоступен или остановлен';
     output.textContent='Режим: '+(value.mode==='multi'?'несколько компаний':value.mode==='single'?'одна компания':'отключён')+
-      ' · '+(authorized?'Допуск действителен':'Запись недоступна')+' · '+reason+r17+r18+'.';
+      ' · '+(authorized?'Допуск действителен':'Запись недоступна')+' · '+reason+r17+r18+r19+'.';
     output.className=authorized?'info':'alert';
     expiry.textContent=authorized&&value.validUntil?
       'Срок действия до '+new Date(value.validUntil).toLocaleString('ru-RU')+
@@ -403,6 +409,54 @@ async function openPilot(id){
   await loadReport();
   await Promise.all([loadDiagnostics(),loadActions(),loadLaunchGate()]);
   await loadSafety();
+  await loadR19Preflight();
+}
+const R19_LABELS={
+  signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
+  exactRegisteredProtocol:'SHA-256 протокола совпадает с подписанным планом',
+  launchTwoHumans:'Действующие подтверждения владельца и управляющего',
+  correctLifecycle:'Разрешённая стадия пилота',
+  noSafetyHold:'Нет аварийной остановки R13',
+  withinDailyLimit:'Остались доступные операции за текущие сутки UTC'
+};
+async function loadR19Preflight(){
+  const panel=$('r19Panel'),out=$('r19Status'),list=$('r19Checklist');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  const pilotId=model.selected.item.id;
+  try{
+    const data=await api('/guest/pilots/'+pilotId+'/r19/preflight');
+    if(data.schema!=='osmanx.guest.r19.first-pilot-preflight.v1'||
+       !data.checks||typeof data.checks!=='object')
+      throw Error('Неверный ответ контроля R19');
+    const ready=data.technicalCollectionPreflight===true;
+    out.className=ready?'info':'alert';
+    out.textContent=ready?
+      'Проверки R19 пройдены. Использовано сегодня '+data.usedToday+
+      ' из '+data.maxDailyWrites+' операций. Допуск до '+new Date(data.scopeExpiresAt).toLocaleString('ru-RU')+'.':
+      'Сбор для первого пилота пока не разрешён. Проверьте причины ниже.';
+    for(const [code,title] of Object.entries(R19_LABELS)){
+      appendText(list,'li',(data.checks[code]===true?'Пройдено: ':'Заблокировано: ')+title,'small');
+    }
+    $('r19ProtocolHash').textContent='SHA-256 зафиксированного протокола: '+
+      (data.protocolDigest||'протокол отсутствует')+
+      '. Сверяйте его с подписанным разрешением вне сайта.';
+    if(model.admission?.pilotCollection!==null&&
+       model.admission?.pilotCollection!==undefined&&!ready){
+      $('start').disabled=true;
+      $('observationForm').querySelector('button[type=submit]').disabled=true;
+      $('bulkCommit').disabled=true;
+    }
+  }catch{
+    out.className='alert';
+    out.textContent='R19: серверная проверка недоступна. Не считайте сбор разрешённым.';
+    $('r19ProtocolHash').textContent='';
+    if(model.admission?.pilotCollection!==null&&model.admission?.pilotCollection!==undefined){
+      $('start').disabled=true;
+      $('observationForm').querySelector('button[type=submit]').disabled=true;
+      $('bulkCommit').disabled=true;
+    }
+  }
 }
 async function loadReport(){
   if(!model.selected)return;
@@ -890,6 +944,7 @@ $('launchGateAttest').addEventListener('click',()=>safely(async()=>{
   setStatus('Ваше подтверждение сохранено в неизменяемом журнале на 14 дней.');
 }));
 $('launchGateExport').addEventListener('click',()=>safely(()=>downloadLaunchGateProof()));
+$('r19Refresh').addEventListener('click',()=>safely(()=>loadR19Preflight()));
 $('operationsRefresh').addEventListener('click',()=>safely(async()=>{
   await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
 }));

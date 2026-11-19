@@ -113,7 +113,7 @@ after(async()=>{
   if(app)await app.close();
   if(pool)await pool.end();
   if(isolatedAdmin)await isolatedAdmin.end();
-  if(isolatedName)await admin.query('DROP DATABASE "'+isolatedName+'" WITH (FORCE)');
+  if(isolatedName)await admin.query('DROP DATABASE "'+isolatedName+'"');
   await admin.end();
   if(fx)await fx.cleanup();
   for(const [name,v] of Object.entries(beforeEnv))

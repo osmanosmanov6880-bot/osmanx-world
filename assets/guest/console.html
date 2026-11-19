@@ -133,6 +133,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r19Panel" hidden aria-labelledby="r19Heading">
+  <hr class="separator">
+  <span class="eyebrow">R19 / Контролируемый первый пилот</span>
+  <h3 id="r19Heading">Допуск, сроки и дневной лимит</h3>
+  <p id="r19Status" class="info" role="status" aria-live="polite">Проверка R19 ещё не загружена.</p>
+  <ul id="r19Checklist" class="items"></ul>
+  <p id="r19ProtocolHash" class="small"></p>
+  <div class="actions"><button type="button" id="r19Refresh" class="secondary">Проверить первый пилот</button></div>
+  <p class="small">Ни подпись оператора, ни проверка хэшей не заменяют договор, согласие на обработку данных или юридическую экспертизу. Здесь нельзя включить производство, снять аварийную остановку или изменить лимит.</p>
+</section>
 <p><span class="pill" id="phase">—</span> · версия <strong id="version">—</strong> · расчётная выборка <strong id="sample">—</strong> гостей на группу</p>
 <section id="safetyPanel" aria-labelledby="safetyHeading">
   <hr class="separator">

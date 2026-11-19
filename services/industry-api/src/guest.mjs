@@ -8,6 +8,8 @@ import {parseAggregateCsv,validateBatchWindow,batchDigest,summarizeBatch} from '
 import {createOperationsOverview,createOperationsExport} from './guest-operations.mjs';
 import {launchPreflight} from './guest-launch.mjs';
 import {assessGuestQuality,buildSafetyExport,REASONS} from './guest-safety.mjs';
+import {r19Configured,loadR19Scope,protocolDigest} from './guest-r19-scope.mjs';
+import {inspectR19Budget} from './guest-r19-usage.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -416,6 +418,55 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       [s.tenant_id,pilot.id]);
     return {item:flatPilot(pilot),observations:obs,reviews:reviews.rows};
   }));
+  // R19: read-only first-customer activation preflight. No client details, no
+  // consent documents and no action to enable writes or lift STOP is exposed.
+  app.get(P+'/pilots/:id/r19/preflight',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const gate=await currentLaunchGate(db,s.tenant_id,pilot);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    let scope=null,reason=null;
+    if(r19Configured(process.env)){
+      try{scope=await loadR19Scope(process.env);}
+      catch{reason='signed_scope_or_external_receipt_unavailable';}
+    }else reason='r19_not_configured';
+    let fingerprint=null;
+    try{fingerprint=protocolDigest(pilot);}
+    catch{/* Historical pilot without a locked protocol cannot be activated. */}
+    const ownScope=!!scope&&scope.tenantId===s.tenant_id&&scope.pilotId===pilot.id;
+    const budget=ownScope?
+      await inspectR19Budget(db,s.tenant_id,pilot.id,scope):
+      {available:false,used:null,maxDaily:null};
+    const signedPeople=gate.checks.ownerSigned&&gate.checks.managerSigned&&
+      gate.checks.independent;
+    // R12 checks independent human approvals at draft -> running transition.
+    // Later observation version increments must not retroactively invalidate
+    // the legitimate start; R19 still rechecks protocol and R13 hold per write.
+    const approvedAtLaunch=pilot.phase==='running'&&!!pilot.launch_gate_enrolled_at;
+    const checks={
+      signedTenantAndPilot:ownScope,
+      exactRegisteredProtocol:ownScope&&scope.record.protocolDigest===fingerprint,
+      launchTwoHumans:approvedAtLaunch||
+        (signedPeople&&!!pilot.launch_gate_enrolled_at),
+      correctLifecycle:pilot.phase==='draft'?
+        gate.canStartIsolatedPilot:pilot.phase==='running',
+      noSafetyHold:hold?.active!==true,
+      withinDailyLimit:budget.available
+    };
+    const blockers=Object.entries(checks).filter(([,pass])=>!pass)
+      .map(([code])=>code);
+    if(reason)blockers.push(reason);
+    return {
+      schema:'osmanx.guest.r19.first-pilot-preflight.v1',
+      pilotId:pilot.id,phase:pilot.phase,checks,
+      blockers,technicalCollectionPreflight:ownScope&&blockers.length===0,
+      scopeExpiresAt:ownScope?scope.expiresAt:null,
+      maxDailyWrites:budget.maxDaily,usedToday:budget.used,
+      protocolDigest:fingerprint,
+      customerGo:false,legalApprovalNotVerified:true,
+      productionChanged:false
+    };
+  }));
+
   // R12 human pilot gate. Optional enrollment is irreversible; legacy pilots stay compatible.
   app.get(P+'/pilots/:id/launch/gate',req=>forTenant(req,null,async(db,s)=>{
     const pilot=await getPilot(db,s.tenant_id,req.params.id);
