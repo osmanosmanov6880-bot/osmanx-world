@@ -67,7 +67,8 @@ grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
 # archives remain verifiable, but they are NOT R18 production acceptance.
 if grep -Fq '"externalAnchorRequiredForR18":true' "$root/RELEASE.json"; then
   if grep -Fq '"singlePilotScopeSupportedR19":true' "$root/RELEASE.json"; then
-    grep -Fq '"latestMigration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json" || {
+    (grep -Fq '"latestMigration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json" ||
+      grep -Fq '"r19Migration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json") || {
       echo "Missing R19 schema declaration" >&2;exit 3;
     }
   else
@@ -105,7 +106,8 @@ fi
 # R20 source delivery is non-activating. Require all read-only operator
 # modules and the explicitly disabled-by-default collection policy.
 if grep -Fq '"releaseReviewSupportedR20":true' "$root/RELEASE.json"; then
-  grep -Fq '"latestMigration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json" || {
+  (grep -Fq '"latestMigration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json" ||
+      grep -Fq '"r19Migration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json") || {
     echo "R20 release requires the R19 schema" >&2;exit 3;
   }
   grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
@@ -201,6 +203,26 @@ if grep -Fq '"operationalHypothesesSupportedR25":true' "$root/RELEASE.json"; the
     src/guest-r25-experiment.mjs src/guest-r25-brief.mjs; do
     test -f "$root/$f" || {
       echo "R25 operational module missing $f" >&2;exit 3;
+    }
+  done
+fi
+# R26 metadata never authorizes production; require verified migration and
+# source-reliability components, while retaining old R19 schema proof.
+if grep -Fq '"sourceReliabilitySupportedR26":true' "$root/RELEASE.json"; then
+  grep -Fq '"operationalHypothesesSupportedR25":true' "$root/RELEASE.json" || {
+    echo "R26 requires anonymous R25 evidence" >&2;exit 3;
+  }
+  grep -Fq '"latestMigration":"016_guest_r26_source_reviews.sql"' "$root/RELEASE.json" || {
+    echo "R26 migration must be current" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R26 cannot enable Guest production collection" >&2;exit 3;
+  }
+  for f in migrations/016_guest_r26_source_reviews.sql \
+    src/guest-r26-bias.mjs src/guest-r26-review.mjs \
+    src/guest-r26-decision.mjs src/guest-r26-brief.mjs; do
+    test -f "$root/$f" || {
+      echo "R26 component missing $f" >&2;exit 3;
     }
   done
 fi
