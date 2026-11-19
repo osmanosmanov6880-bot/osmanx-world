@@ -3,7 +3,7 @@
  * Signature verification confirms only that trusted role keys signed the plan.
  * It does not authorize CLI execution, deployment or customer collection.
  */
-import {createPublicKey,verify} from 'node:crypto';
+import {createPublicKey,KeyObject,verify} from 'node:crypto';
 import {R31_PIN} from './guest-r32-source.mjs';
 export const R32_WINDOW_SCHEMA='osmanx.guest.r32.staging-change-window.v1';
 export const R32_SIGN_SCHEMA='osmanx.guest.r32.window-signature.v1';
@@ -35,7 +35,7 @@ function validPlan(p,now){
     !(now instanceof Date)||!Number.isFinite(now.getTime()))return false;
   const s=Date.parse(p.startAt),e=Date.parse(p.endAt),
     c=Date.parse(p.createdAt),n=now.getTime();
-  return c<=n&&n<=e&&s<=e&&e-s>0&&e-s<=30*60000&&
+  return c<=n&&s<=n&&n<=e&&s<=e&&e-s>0&&e-s<=30*60000&&
     c<=s&&s-c<=24*3600000&&e-c<=24*3600000;
 }
 export function r32WindowSigningBytes(p,r){
@@ -78,7 +78,9 @@ export function verifyR32ChangeWindow({plan,signatures,publicKeys={},
       const trusted=publicKeys?.[r.role];
       if(!exact(trusted,['keyId','publicKey'])||
         trusted.keyId!==r.keyId)throw Error('UNTRUSTED_APPROVER');
-      const key=createPublicKey(trusted.publicKey);
+      const key=trusted.publicKey instanceof KeyObject&&
+        trusted.publicKey.type==='public'?trusted.publicKey:
+        createPublicKey(trusted.publicKey);
       if(key.asymmetricKeyType!=='ed25519'||key.type!=='public')
         throw Error('WRONG_KEY_TYPE');
       const fingerprint=key.export({type:'spki',format:'der'}).toString('hex');
