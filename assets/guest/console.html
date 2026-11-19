@@ -133,6 +133,26 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r34Panel" hidden aria-labelledby="r34Heading">
+  <hr class="separator">
+  <span class="eyebrow">R34 / Operational Release Gate</span>
+  <h3 id="r34Heading">Путь к публикации: 20 PR и реальная приёмка</h3>
+  <p id="r34Status" class="alert" role="status" aria-live="polite">NO-GO — финальные независимые доказательства отсутствуют.</p>
+  <div class="triple" aria-label="R34: статус внешних проверок">
+    <div><strong>Проверено PR</strong><p id="r34PrCount">0 / 20</p></div>
+    <div><strong>Реальный staging</strong><p id="r34Staging">Не подтверждён</p></div>
+    <div><strong>Восстановление и договор</strong><p id="r34External">Не подтверждены</p></div>
+  </div>
+  <p class="small">R34 предоставляет отдельный операторский инструмент для реального staging GET с проверкой DNS/TLS и фиксацией двух наблюдений. Из браузера проверки не запускаются: никаких credentials, uploads или доступа к production.</p>
+  <h4>Что блокирует запуск</h4>
+  <ul id="r34Blockers" class="items"></ul>
+  <div class="actions">
+    <button id="r34Refresh" type="button" class="secondary">Обновить статус R34</button>
+    <button id="r34Download" type="button" class="secondary">Скачать NO-GO отчёт</button>
+  </div>
+  <p id="r34Expiry" class="small">Срок отчёта: —</p>
+  <p class="small">Техническое подтверждение или подписи метаданных не разрешают деплой, включение гостевых записей или снятие STOP.</p>
+</section>
 <section id="r33Panel" hidden aria-labelledby="r33Heading">
   <hr class="separator">
   <span class="eyebrow">R33 / Independent Review Bundle</span>

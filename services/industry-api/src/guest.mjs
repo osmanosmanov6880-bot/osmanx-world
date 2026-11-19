@@ -36,6 +36,7 @@ import {makeR30Report,r30ReportCsv} from './guest-r30-report.mjs';
 import {makeR31OperatorReport,r31OperatorCsv} from './guest-r31-report.mjs';
 import {makeR32Readiness,r32ReadinessCsv} from './guest-r32-report.mjs';
 import {makeR33Readiness,r33ReadinessCsv} from './guest-r33-report.mjs';
+import {makeR34Readiness,r34ReadinessCsv} from './guest-r34-report.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1242,6 +1243,28 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       reply.header('Content-Disposition',
         'attachment; filename="osmanx-guest-r33-independent-review.csv"');
       return reply.send(r33ReadinessCsv(report,{now:new Date()}));
+    }));
+
+  // R34: authenticated tenant-scoped NO-GO report only. No external keys,
+  // staging probes, offsite restore or legal documents enter this web API.
+  async function r34Readiness(db,s,pilotId){
+    const r33=await r33Readiness(db,s,pilotId);
+    return makeR34Readiness({r33,now:new Date()});
+  }
+  app.get(P+'/pilots/:id/r34/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r34Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return report;
+    }));
+  app.get(P+'/pilots/:id/r34/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r34Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r34-operator-handoff.csv"');
+      return reply.send(r34ReadinessCsv(report,{now:new Date()}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.

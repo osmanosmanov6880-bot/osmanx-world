@@ -84,6 +84,7 @@ function showAuth(){
   $('r31Panel').hidden=true;
   $('r32Panel').hidden=true;
   $('r33Panel').hidden=true;
+  $('r34Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -438,6 +439,7 @@ async function openPilot(id){
   await loadR31Acceptance();
   await loadR32Acceptance();
   await loadR33Acceptance();
+  await loadR34Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1262,6 +1264,56 @@ async function loadR33Acceptance(){
     $('r33Privacy').textContent='—';$('r33Expiry').textContent='Срок отчёта: —';
   }
 }
+const R34_GAPS={
+  R34_TWENTY_PRS_REQUIRE_HUMAN_REVIEW:'Требуется независимое ревью и последовательное объединение 20 PR',
+  R34_POST_MERGE_MAIN_CI_REQUIRED:'Требуются тесты окончательного main после объединения',
+  R34_APPROVED_STAGING_NETWORK_OBSERVATION_PENDING:'Нет утверждённого оператора и фактического staging GET',
+  R34_INDEPENDENT_HOST_WITNESS_REQUIRED:'Не подтверждены независимым свидетелем TLS, DNS и принадлежность VPS',
+  R34_REAL_OFFSITE_CUSTODY_AND_RESTORE_PENDING:'Не засвидетельствованы две внешние копии и восстановление',
+  R34_ACTUAL_ROLLBACK_DRILL_NOT_PERFORMED:'Не выполнена реальная безопасная репетиция отката',
+  R34_CLIENT_AND_LEGAL_AUTHORITY_NOT_VERIFIED:'Не проверены договоры, полномочия и законное основание',
+  R34_OPERATOR_CHANGE_WINDOW_NOT_APPROVED:'Не утверждено окно изменения'
+};
+async function loadR34Acceptance(){
+  const panel=$('r34Panel'),list=$('r34Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r34/readiness');
+    if(x.schema!=='osmanx.guest.r34.operator-release-review.v1'||
+      x.pilotId!==model.selected.item.id||
+      x.source?.requiredPrs!==20||
+      x.source?.verifiedInWebApi!==0||
+      x.staging?.realHttpsRequestsMadeByWebApi!==0||
+      x.staging?.liveHostIndependentlyVerified!==false||
+      x.disasterRecovery?.actualExternalRestoresVerified!==false||
+      x.clientScope?.authorityVerified!==false||
+      x.productionAuthorized!==false||x.customerGo!==false||
+      x.guestWritesEnabled!==false||x.stopLifted!==false||
+      !Array.isArray(x.blockers)||
+      !x.blockers.includes('R34_POST_MERGE_MAIN_CI_REQUIRED'))
+      throw Error('R34 status failed closed');
+    $('r34Status').textContent='NO-GO — требуется внешняя ручная приёмка';
+    $('r34PrCount').textContent='0 / 20';
+    $('r34Staging').textContent='Не подтверждён';
+    $('r34External').textContent='Не подтверждены';
+    $('r34Expiry').textContent='Срок отчёта: '+
+      new Date(x.expiresAt).toLocaleString('ru-RU',{
+        year:'numeric',month:'2-digit',day:'2-digit',
+        hour:'2-digit',minute:'2-digit'
+      });
+    for(const code of x.blockers)
+      appendText(list,'li',R34_GAPS[code]||R33_GAPS[code]||
+        R32_GAPS[code]||R31_GAPS[code]||R30_GAPS[code]||
+        R29_GAPS[code]||code,'small');
+  }catch{
+    $('r34Status').textContent='NO-GO — статус R34 не подтверждён';
+    $('r34PrCount').textContent='—';
+    $('r34Staging').textContent='—';
+    $('r34External').textContent='—';
+    $('r34Expiry').textContent='Срок отчёта: —';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1754,6 +1806,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r34Refresh').addEventListener('click',()=>safely(()=>loadR34Acceptance()));
+$('r34Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r34/report.csv',
+    'osmanx-guest-r34-operator-handoff.csv');
+  setStatus('R34: NO-GO отчёт сохранён. Эксплуатационный запуск не разрешён.');
+}));
 $('r33Refresh').addEventListener('click',()=>safely(()=>loadR33Acceptance()));
 $('r33Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
