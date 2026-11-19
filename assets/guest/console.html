@@ -133,6 +133,28 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r29Panel" hidden aria-labelledby="r29Heading">
+  <hr class="separator">
+  <span class="eyebrow">R29 / Готовность staging и порядок слияния</span>
+  <h3 id="r29Heading">Пятнадцать PR и техническая приёмка без деплоя</h3>
+  <p id="r29Status" class="alert" role="status" aria-live="polite">Публикация заблокирована: нет независимой приёмки конечного main и реального VPS.</p>
+  <div class="triple" aria-label="Готовность R29">
+    <div><strong>Проверено PR независимым инструментом</strong><p id="r29Reviewed">—</p></div>
+    <div><strong>Первый PR для ревью</strong><p id="r29FirstPr">—</p></div>
+    <div><strong>Пакет действителен до</strong><p id="r29Expiry">—</p></div>
+  </div>
+  <h4>Пять необходимых инженерных этапов</h4>
+  <ol id="r29Tasks" class="items"></ol>
+  <h4>Неисполненные требования для коммерческого запуска</h4>
+  <ul id="r29Blockers" class="items"></ul>
+  <p id="r29Next" class="info">Первое действие — независимое рассмотрение PR #47. Разрешение на запуск не выдавалось.</p>
+  <div class="actions">
+    <button id="r29Refresh" type="button" class="secondary">Проверить текущий пилот</button>
+    <button id="r29Download" type="button" class="secondary">Скачать безопасный CSV</button>
+  </div>
+  <p class="small">Внешний GitHub-аудит и виртуальное merge-tree выполняются отдельно в GitHub Actions, SQL-откат — только в одноразовой PostgreSQL-базе. Этот экран не подставляет их результаты автоматически и не выдаёт их за реальный VPS-аудит. Нет кнопок merge, деплоя, снятия STOP или включения сборов.</p>
+</section>
+
 <section id="r28Panel" hidden aria-labelledby="r28Heading">
   <hr class="separator">
   <span class="eyebrow">R28 / Защищённая подготовка первого запуска</span>
