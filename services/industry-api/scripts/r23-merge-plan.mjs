@@ -6,6 +6,8 @@
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {evaluateR22Chain,fetchR22Chain,R21_PR} from './r22-release-chain.mjs';
+import {RELEASE_CHAIN} from './r20-release-chain.mjs';
+import {R20_PR} from './r21-release-chain.mjs';
 export const R22_PR=Object.freeze({
   number:56,head:'feat/guest-r22-independent-readiness-20261119',
   base:'feat/guest-r21-production-readiness-evidence-20261119',
@@ -44,14 +46,16 @@ export function evaluateR23MergePlan({
   if(!ancestry)blockers.push('r22_parent_commit_changed');
   if(!mergeable&&!merged)blockers.push('r22_mergeability_not_confirmed');
   if(!mainPinned)blockers.push('main_tip_or_ancestry_unknown');
+  if(r22?.draft===true&&!merged)blockers.push('r22_draft_requires_independent_review');
   if(!merged)blockers.push('r22_not_merged');
   const dependencies=[...earlier.dependencies,{
     pr:x.number,headPinned:identity,ciPassed:ci,
     parentCommitAncestor:ancestry,merged,requiredJobCount:x.requiredJobs.length
   }];
+  const exactSources=[...RELEASE_CHAIN.map(p=>p.sha),
+    R20_PR.sha,R21_PR.sha,R22_PR.sha];
   const sequence=dependencies.map((dep,index)=>({
-    order:index+1,pr:dep.pr,sourceSha:index===dependencies.length-1?
-      x.sha:null, // earlier exact SHAs are already in R22 verifier; never synthesize
+    order:index+1,pr:dep.pr,sourceSha:exactSources[index],
     checksPassed:dep.ciPassed,headPinned:dep.headPinned,
     parentCommitAncestor:dep.parentCommitAncestor,alreadyMerged:dep.merged,
     action:'human_review_then_sequential_merge_only',
