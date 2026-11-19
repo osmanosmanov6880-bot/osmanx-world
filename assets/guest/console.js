@@ -77,6 +77,7 @@ function showAuth(){
   $('r24Panel').hidden=true;
   $('r25Panel').hidden=true;
   $('r26Panel').hidden=true;
+  $('r27Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -424,6 +425,7 @@ async function openPilot(id){
   await loadR24Intelligence();
   await loadR25Insights();
   await loadR26Reliability();
+  await loadR27Readiness();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -884,6 +886,98 @@ async function loadR26Reliability(){
     $('r26Rows').textContent='—';$('r26StaffShare').textContent='—';
     $('r26ShiftDrift').textContent='—';$('r26NextAction').textContent='';
     $('r26EvidenceRequired').textContent='';
+  }
+}
+const R27_CASE_LABELS={
+  normal:'Нормальный обезличенный сценарий',
+  emergency_stop:'Аварийная остановка',
+  no_operational_signals:'Нет операционных сигналов',
+  rejected_internal_review:'Сотрудник отклонил первичный источник',
+  source_mix_shift:'Сменился способ подсчёта',
+  stale_version_reviews:'Подтверждения устарели после изменения версии',
+  negative_observed_difference:'Отрицательная наблюдаемая разница'
+};
+const R27_STAGE_LABELS={
+  INTEGRITY_CONFLICT:'Конфликт версий данных',
+  SAFETY_HOLD:'Аварийная остановка',
+  DATA_BLOCKED:'Недостоверные агрегаты',
+  SOURCE_REVIEW_PENDING:'Внутренние сверки не завершены',
+  SHIFT_BIAS_REVIEW:'Возможны искажения состава смен',
+  MORE_EVIDENCE_REQUIRED:'Нужны дополнительные наблюдения',
+  EXTERNAL_REVIEW_REQUIRED:'Ожидается независимый аудит'
+};
+const R27_BLOCKERS={
+  R27_CROSS_LAYER_SNAPSHOT_CONFLICT:'Разные версии или SHA-256 сводок',
+  R27_EXTERNAL_SOURCE_AUDIT_REQUIRED:'Независимая проверка источников не проведена',
+  R27_LEGAL_AND_PRODUCTION_APPROVAL_REQUIRED:'Нет отдельного юридического и эксплуатационного допуска',
+  R27_REAL_CLIENT_CONTRACT_AND_LAWFUL_BASIS_REQUIRED:'Договор и законное основание обработки не подтверждены',
+  R27_INDEPENDENT_VPS_AND_DR_REVIEW_REQUIRED:'Физический VPS и внешнее восстановление не прошли приёмку',
+  R27_HUMAN_MERGE_AND_CHANGE_TICKET_REQUIRED:'Не выполнены ручные слияния PR и change-ticket',
+  R27_TECHNICAL_OR_MODEL_REVIEW_REQUIRED:'Не все технические сценарии завершились успешно'
+};
+const R27_NEXT_ACTIONS={
+  SAFETY_STOP:'Проверить аварийную остановку',
+  COLLECT_EVIDENCE:'Проверить достаточность анонимных данных',
+  SOURCE_AUDIT:'Получить две независимые внутренние сверки',
+  EXTERNAL_AUDIT:'Организовать внешний аудит источников',
+  SHIFT_REBALANCE:'Проверить смещение смен и способов подсчёта',
+  EXPLORATORY_REVIEW:'Проверить рабочую гипотезу',
+  PROTOCOL_DESIGN:'Подготовить новый предрегистрированный эксперимент'
+};
+async function loadR27Readiness(){
+  const panel=$('r27Panel'),status=$('r27Status'),
+    cases=$('r27Cases'),blockers=$('r27Blockers');
+  panel.hidden=!manage();cases.replaceChildren();blockers.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const id=model.selected.item.id;
+    const [packet,rehearsal]=await Promise.all([
+      api('/guest/pilots/'+id+'/r27/readiness'),
+      api('/guest/pilots/'+id+'/r27/rehearsal')
+    ]);
+    if(packet.schema!=='osmanx.guest.r27.operator-handoff.v1'||
+       packet.pilotId!==id||
+       packet.customerGo!==false||packet.productionAuthorized!==false||
+       packet.externalAuditVerified!==false||
+       packet.authorizedOperatorSignature!==false||
+       packet.productionDeploymentExecuted!==false||
+       packet.rehearsal?.allSynthetic!==true||
+       packet.rehearsal?.sha256!==rehearsal.sha256||
+       rehearsal.schema!=='osmanx.guest.r27.synthetic-first-client-rehearsal.v1'||
+       rehearsal.realCustomerDataUsed!==false||
+       rehearsal.runtimeExternalCalls!==0||
+       !Array.isArray(rehearsal.cases)||rehearsal.cases.length!==7||
+       !Array.isArray(packet.blockers))
+      throw Error('Не удалось доказать подлинность структуры технического отчёта');
+    $('r27Passed').textContent=String(rehearsal.passedCases)+' / '+
+      String(rehearsal.totalCases);
+    $('r27Stage').textContent=R27_STAGE_LABELS[packet.decision.stage]||
+      'Нужен независимый разбор';
+    $('r27Expiry').textContent=new Date(packet.expiresAt).toLocaleString('ru-RU',{
+      year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit'
+    });
+    status.className='alert';
+    status.textContent='NO-GO · '+(rehearsal.allPassed?
+      'Синтетический сквозной прогон завершён. Коммерческая приёмка ещё не пройдена.':
+      'Часть синтетических проверок завершилась ошибкой. Реальный запуск запрещён.');
+    for(const item of rehearsal.cases)
+      appendText(cases,'li',(item.passed?'ПРОЙДЕНО · ':'НЕ ПРОЙДЕНО · ')+
+        (R27_CASE_LABELS[item.caseId]||'Технический сценарий'),'small');
+    for(const code of packet.blockers)
+      appendText(blockers,'li',R27_BLOCKERS[code]||
+        'Требуется дополнительная проверка: '+code,'small');
+    $('r27NextAction').textContent=R27_NEXT_ACTIONS[packet.decision.firstActionCode]||
+      'Независимая оценка первичных доказательств';
+    $('r27Evidence').textContent='Нужны независимая проверка источников, '+
+      'юридическое основание, восстановление на VPS и отдельное решение оператора. '+
+      'В пакете нет цифровой подписи или разрешения на production.';
+  }catch{
+    status.className='alert';
+    status.textContent='R27 недоступен. Не принимать решения по непроверенным данным.';
+    $('r27Passed').textContent='—';$('r27Stage').textContent='—';
+    $('r27Expiry').textContent='—';$('r27NextAction').textContent='';
+    $('r27Evidence').textContent='';
   }
 }
 async function loadReport(){
@@ -1378,6 +1472,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r27Refresh').addEventListener('click',()=>safely(()=>loadR27Readiness()));
+$('r27Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот руководителя.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r27/handoff.csv',
+    'osmanx-guest-r27-operator-handoff.csv');
+  setStatus('Сохранён ограниченный по сроку R27 CSV. Реальный запуск не разрешён.');
+}));
 $('r26Refresh').addEventListener('click',()=>safely(()=>loadR26Reliability()));
 $('r26Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');

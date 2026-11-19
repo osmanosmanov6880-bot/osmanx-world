@@ -226,6 +226,26 @@ if grep -Fq '"sourceReliabilitySupportedR26":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R27 is a read-only rehearsal and protected human handoff.
+# It adds zero new production writes, migrations or deployment actions.
+if grep -Fq '"firstClientRehearsalSupportedR27":true' "$root/RELEASE.json"; then
+  grep -Fq '"sourceReliabilitySupportedR26":true' "$root/RELEASE.json" || {
+    echo "R27 must include source-verification ancestry R26" >&2;exit 3;
+  }
+  grep -Fq '"latestMigration":"016_guest_r26_source_reviews.sql"' "$root/RELEASE.json" || {
+    echo "R27 requires migration 016 in its ancestry" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R27 cannot enable real guest collection" >&2;exit 3;
+  }
+  for f in src/guest-r27-decision-audit.mjs \
+    src/guest-r27-rehearsal.mjs src/guest-r27-handoff.mjs \
+    scripts/r27-release-plan.mjs; do
+    test -f "$root/$f" || {
+      echo "R27 mandatory module missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

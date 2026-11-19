@@ -25,6 +25,9 @@ import {parseR25Tally,R25_CODES} from './guest-r25-signals.mjs';
 import {makeR25Brief,r25BriefCsv} from './guest-r25-brief.mjs';
 import {parseR26ReviewRequest} from './guest-r26-review.mjs';
 import {makeR26Brief,r26BriefCsv} from './guest-r26-brief.mjs';
+import {auditR27Decision} from './guest-r27-decision-audit.mjs';
+import {runR27FirstClientRehearsal} from './guest-r27-rehearsal.mjs';
+import {makeR27Handoff,r27HandoffCsv} from './guest-r27-handoff.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1050,6 +1053,42 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       reply.code(201);
       return {reviewId:inserted.rows[0].id,pilotVersion:pilot.version,
         sourceSha:signals.tallySourceSha,customerGo:false};
+    }));
+
+  // R27: three STRICTLY read-only manager routes.
+  // Live pilot records are only read under authenticated tenant RLS.
+  // The E2E canary is a pure synthetic fixed fixture, no API writes.
+  async function r27Readiness(db,s,pilotId){
+    const pilot=await getPilot(db,s.tenant_id,pilotId);
+    const r24=await r24Intelligence(db,s,pilot.id);
+    const r25=await r25Intelligence(db,s,pilot.id);
+    const r26=await r26Intelligence(db,s,pilot.id);
+    const audit=auditR27Decision({r24,r25,r26});
+    const rehearsal=runR27FirstClientRehearsal();
+    return makeR27Handoff({r24,r25,r26,audit,rehearsal});
+  }
+  app.get(P+'/pilots/:id/r27/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const packet=await r27Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return packet;
+    }));
+  app.get(P+'/pilots/:id/r27/rehearsal',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      await getPilot(db,s.tenant_id,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return runR27FirstClientRehearsal();
+    }));
+  app.get(P+'/pilots/:id/r27/handoff.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const packet=await r27Readiness(db,s,req.params.id);
+      // Verify after issuance, never before the handoff timestamp.
+      const now=new Date();
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r27-operator-handoff.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r27HandoffCsv(packet,{now}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
