@@ -133,6 +133,30 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r27Panel" hidden aria-labelledby="r27Heading">
+  <hr class="separator">
+  <span class="eyebrow">R27 / Первый клиент · техническая репетиция</span>
+  <h3 id="r27Heading">Готовность доказательств и следующий шаг</h3>
+  <p id="r27Status" class="alert" role="status" aria-live="polite">Коммерческий запуск запрещён до независимой приёмки.</p>
+  <div class="triple" aria-label="Сводка технической репетиции R27">
+    <div><strong>Синтетические сценарии</strong><p id="r27Passed">—</p></div>
+    <div><strong>Состояние данных</strong><p id="r27Stage">—</p></div>
+    <div><strong>Срок действия пакета</strong><p id="r27Expiry">—</p></div>
+  </div>
+  <h4>Проверенные пути без клиентских данных</h4>
+  <ol id="r27Cases" class="items"></ol>
+  <h4>Что ещё не позволяет начать работу с реальным клиентом</h4>
+  <ul id="r27Blockers" class="items"></ul>
+  <h4>Первое рекомендуемое управленческое действие</h4>
+  <p id="r27NextAction" class="info"></p>
+  <p id="r27Evidence" class="small"></p>
+  <div class="actions">
+    <button id="r27Refresh" type="button" class="secondary">Перепроверить R27</button>
+    <button id="r27Download" type="button" class="secondary">Экспорт CSV для оператора</button>
+  </div>
+  <p class="small">Симулятор использует вымышленные агрегаты, а оценка готовности — только текущий пилот вашей компании. Отпечатки SHA-256 не заменяют цифровые подписи. Ни кнопки слияния PR, ни включения production, ни запуска нового пилота здесь нет.</p>
+</section>
+
 <section id="r26Panel" hidden aria-labelledby="r26Heading">
   <hr class="separator">
   <span class="eyebrow">R26 / Надёжность источников</span>
