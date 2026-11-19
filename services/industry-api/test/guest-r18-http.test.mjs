@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import pg from 'pg';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {hashPassword} from '../src/password.mjs';
 import {makePool,withTenant} from '../src/database.mjs';
 import {buildApp} from '../src/app.mjs';
@@ -32,8 +34,7 @@ const names=['NODE_ENV','ALLOWED_ORIGIN','GUEST_WRITES_ENABLED','GUEST_RELEASE_C
  'GUEST_R18_MIN_SEQUENCE'];
 const beforeEnv=Object.fromEntries(names.map(name=>[name,process.env[name]]));
 const admin=new pg.Pool({connectionString:process.env.MIGRATION_DB_URL});
-const pool=makePool();
-let fx,app,url,originalAnchor;
+let isolatedAdmin,pool,isolatedName,fx,app,url,originalAnchor;
 async function request(method,path,auth,data,headers={}){
   const r=await fetch(url+API+path,{
     method,redirect:'error',cache:'no-store',
@@ -58,8 +59,8 @@ function cookieJar(response){
 }
 async function fence(){
   const [row,items]=await Promise.all([
-    admin.query('SELECT max_revision,max_sequence,checkpoint_sha,anchor_sha FROM industry.guest_external_anchor_fence WHERE id=1'),
-    admin.query('SELECT count(*)::int AS n FROM industry.guest_external_anchor_receipts')
+    isolatedAdmin.query('SELECT max_revision,max_sequence,checkpoint_sha,anchor_sha FROM industry.guest_external_anchor_fence WHERE id=1'),
+    isolatedAdmin.query('SELECT count(*)::int AS n FROM industry.guest_external_anchor_receipts')
   ]);
   return {...row.rows[0],revision:Number(row.rows[0].max_revision),
     sequence:Number(row.rows[0].max_sequence),history:Number(items.rows[0].n)};
@@ -71,15 +72,28 @@ before(async()=>{
     runtime.hostname!=='127.0.0.1'||migrate.pathname!=='/industry_ci'||
     runtime.pathname!=='/industry_ci')
     throw Error('R18 HTTP must only use synthetic loopback industry_ci');
+  // R17 tests have already advanced the durable fence. R18 must never reset
+  // an existing fence; create its OWN disposable database and migrate cleanly.
+  isolatedName='industry_r18_'+randomUUID().replaceAll('-','').slice(0,12);
+  await admin.query('CREATE DATABASE "'+isolatedName+'"');
+  migrate.pathname='/'+isolatedName;
+  runtime.pathname='/'+isolatedName;
+  isolatedAdmin=new pg.Pool({connectionString:migrate.toString()});
+  pool=makePool(runtime.toString());
+  execFileSync(process.execPath,['scripts/migrate.mjs'],{
+    cwd:fileURLToPath(new URL('../',import.meta.url)),
+    env:{...process.env,MIGRATION_DB_URL:migrate.toString()},
+    stdio:'pipe'
+  });
   for(const org of orgs){
-    org.tenantId=(await admin.query(
+    org.tenantId=(await isolatedAdmin.query(
       "INSERT INTO industry.tenants(slug,name,vertical) VALUES($1,$2,'cafe') RETURNING id",
       [org.slug,org.slug])).rows[0].id;
-    const user=await admin.query(
+    const user=await isolatedAdmin.query(
       'INSERT INTO industry.accounts(email,password_hash) VALUES($1,$2) RETURNING id',
       [org.email,await hashPassword(password)]);
     org.accountId=user.rows[0].id;
-    await admin.query(
+    await isolatedAdmin.query(
       "INSERT INTO industry.memberships(tenant_id,account_id,role) VALUES($1,$2,'owner')",
       [org.tenantId,org.accountId]);
   }
@@ -97,7 +111,10 @@ before(async()=>{
 });
 after(async()=>{
   if(app)await app.close();
-  await pool.end();await admin.end();
+  if(pool)await pool.end();
+  if(isolatedAdmin)await isolatedAdmin.end();
+  if(isolatedName)await admin.query('DROP DATABASE "'+isolatedName+'" WITH (FORCE)');
+  await admin.end();
   if(fx)await fx.cleanup();
   for(const [name,v] of Object.entries(beforeEnv))
     if(v===undefined)delete process.env[name];
@@ -153,16 +170,16 @@ test('R18 two live companies: external anchors, transactional history, fail-clos
     {title:'Denied stale signed receipt',source:'field'},
     {'Idempotency-Key':'r18-old-'+random})).status,503);
   await fx.publishAnchor(fx.now);
-  const refused=await admin.query(
+  const refused=await isolatedAdmin.query(
     'UPDATE industry.guest_external_anchor_fence SET max_sequence=1 WHERE id=1'
   ).then(()=>null,error=>error);
   assert.equal(refused?.code,'23514');
-  const role=(await admin.query(
+  const role=(await isolatedAdmin.query(
     "SELECT has_table_privilege('industry_app','industry.guest_external_anchor_receipts','UPDATE') AS upd,"+
     "has_table_privilege('industry_app','industry.guest_external_anchor_receipts','DELETE') AS del"
   )).rows[0];
   assert.equal(role.upd,false);assert.equal(role.del,false);
-  const metadata=(await admin.query(
+  const metadata=(await isolatedAdmin.query(
     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='industry.guest_external_anchor_receipts'::regclass"
   )).rows[0];
   assert.equal(metadata.relrowsecurity,true);
