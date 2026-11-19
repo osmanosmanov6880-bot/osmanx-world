@@ -102,6 +102,22 @@ if grep -Fq '"singlePilotScopeSupportedR19":true' "$root/RELEASE.json"; then
     echo "R19 must ship with collection disabled" >&2;exit 3;
   }
 fi
+# R20 source delivery is non-activating. Require all read-only operator
+# modules and the explicitly disabled-by-default collection policy.
+if grep -Fq '"releaseReviewSupportedR20":true' "$root/RELEASE.json"; then
+  grep -Fq '"latestMigration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json" || {
+    echo "R20 release requires the R19 schema" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R20 must not activate writes" >&2;exit 3;
+  }
+  for f in scripts/r20-release-chain.mjs scripts/r20-change-ticket.mjs \
+    scripts/r20-restore-crosscheck.mjs src/guest-r20-inspection.mjs; do
+    test -f "$root/$f" || {
+      echo "Missing R20 operator release module $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
