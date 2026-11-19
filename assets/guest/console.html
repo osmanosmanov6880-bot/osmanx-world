@@ -133,6 +133,58 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r26Panel" hidden aria-labelledby="r26Heading">
+  <hr class="separator">
+  <span class="eyebrow">R26 / Надёжность источников</span>
+  <h3 id="r26Heading">Можно ли доверять операционным сигналам?</h3>
+  <p id="r26Status" class="alert" role="status" aria-live="polite">Необходимы проверки и независимое подтверждение.</p>
+  <div class="triple" aria-label="Сводка надёжности R26">
+    <div><strong>Смен с данными</strong><p id="r26Rows">—</p></div>
+    <div><strong>Оценки персонала</strong><p id="r26StaffShare">—</p></div>
+    <div><strong>Сдвиг состава смен</strong><p id="r26ShiftDrift">—</p></div>
+  </div>
+  <h4>Возможные искажения</h4>
+  <ul id="r26BiasWarnings" class="items"></ul>
+  <h4>Внутренняя сверка исходных агрегатов</h4>
+  <p class="small">Два сотрудника с разными ролями проверяют разные контрольные документы. Их отметки и SHA-256 — не криптографические подписи, не внешний аудит и не доказательство причин ухода клиентов.</p>
+  <ul id="r26ReviewList" class="items"></ul>
+  <form id="r26ReviewForm">
+    <fieldset id="r26ReviewFieldset" class="grid" disabled>
+      <legend>Зафиксировать свою проверку источника</legend>
+      <div>
+        <label for="r26Method">Что проверено</label>
+        <select id="r26Method" required>
+          <option value="staff_shift_crosscheck">Сверка сменных оценок сотрудников</option>
+          <option value="anonymous_counter_audit">Проверка анонимного счётчика</option>
+          <option value="independent_aggregate_recount">Независимый пересчёт агрегатов</option>
+        </select>
+      </div>
+      <div>
+        <label for="r26Verdict">Результат</label>
+        <select id="r26Verdict" required>
+          <option value="rejected">Источник нуждается в исправлении</option>
+          <option value="reconciled">Агрегаты сверены по проверочному документу</option>
+        </select>
+      </div>
+      <div>
+        <label for="r26EvidenceSha">SHA-256 отдельного проверочного документа (64 символа)</label>
+        <input id="r26EvidenceSha" type="text" minlength="64" maxlength="64"
+          pattern="[a-f0-9]{64}" autocomplete="off" spellcheck="false"
+          placeholder="64 символа SHA-256" required>
+      </div>
+      <button id="r26ReviewSubmit" type="submit">Неизменяемо записать результат</button>
+    </fieldset>
+  </form>
+  <h4>Следующее управленческое действие</h4>
+  <p id="r26NextAction" class="info"></p>
+  <p id="r26EvidenceRequired" class="small"></p>
+  <div class="actions">
+    <button id="r26Refresh" type="button" class="secondary">Повторить проверку R26</button>
+    <button id="r26Download" type="button" class="secondary">Экспорт CSV без персональных данных</button>
+  </div>
+  <p class="small">Результат не создаёт задач, не снимает STOP, не запускает эксперимент и не включает коммерческий сбор. При новых наблюдениях предыдущие внутренние сверки устаревают.</p>
+</section>
+
 <section id="r25Panel" hidden aria-labelledby="r25Heading">
   <hr class="separator">
   <span class="eyebrow">R25 / Операционные гипотезы</span>
