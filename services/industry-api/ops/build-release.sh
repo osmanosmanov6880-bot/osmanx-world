@@ -13,11 +13,13 @@ test -d "$ROOT/src" && test -d "$ROOT/shared" && test -d "$ROOT/migrations"
 
 if command -v git >/dev/null 2>&1 && git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   VERSION="$(git -C "$REPO" rev-parse --short=12 HEAD)"
+  FULL_SHA="$(git -C "$REPO" rev-parse HEAD)"
 else
   echo "Refusing unversioned source bundle: git commit is required" >&2
   exit 2
 fi
 [[ "$VERSION" =~ ^[0-9a-f]{12}$ ]] || { echo "Invalid commit revision" >&2; exit 2; }
+[[ "$FULL_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "R18 full commit SHA required" >&2; exit 2; }
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT INT HUP TERM
 dst="$tmp/industry-api"
@@ -45,7 +47,7 @@ if find "$dst" -type f \( -name '.env' -o -name '*.key' -o -name '*.pem' -o -nam
 fi
 
 # Machine-readable, non-secret release contract; pinned to this exact Git tree.
-printf '{"schema":"osmanx.industry.r14.release.v1","commit":"%s","migration":"011_guest_pilot_safety.sql","guestWritesDefault":false}\n' "$VERSION" > "$dst/RELEASE.json"
+printf '{"schema":"osmanx.industry.r14.release.v1","commit":"%s","fullCommit":"%s","migration":"011_guest_pilot_safety.sql","latestMigration":"013_guest_external_anchor_fence.sql","externalAnchorRequiredForR18":true,"guestWritesDefault":false}\n' "$VERSION" "$FULL_SHA" > "$dst/RELEASE.json"
 # Only the output artifact name references a commit SHA. No data from the live environment.
 (
   cd "$dst"
