@@ -54,7 +54,7 @@ jobs:
           test -s ../../docs/GUEST_INTELLIGENCE_R26.md
           test -s ../../docs/GUEST_INTELLIGENCE_R27.md
           test -s ../../docs/GUEST_INTELLIGENCE_R28.md
-          for f in src/guest-r28-attestations.mjs src/guest-r28-stage-gate.mjs src/guest-r28-operator-packet.mjs scripts/r28-release-plan.mjs; do node --check "$f"; done
+          for f in src/guest-r28-attestations.mjs src/guest-r28-stage-gate.mjs src/guest-r28-operator-packet.mjs scripts/r28-release-plan.mjs scripts/r28-verify-evidence.mjs; do node --check "$f"; done
           grep -Fq 'independentReleaseReviewSupportedR28' ops/build-release.sh
           grep -Fq "app.get(P+'/pilots/:id/r28/readiness'" src/guest.mjs
           for f in src/guest-r27-decision-audit.mjs src/guest-r27-rehearsal.mjs src/guest-r27-handoff.mjs scripts/r27-release-plan.mjs; do node --check "$f"; done
@@ -81,7 +81,7 @@ jobs:
       - name: Install runtime dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: R28 four independent Ed25519 roles, no-GO cutover, 15min packet and fourteen PRs
-        run: node --test test/guest-r28-protocol.test.mjs test/guest-r28-integration.test.mjs
+        run: node --test test/guest-r28-protocol.test.mjs test/guest-r28-integration.test.mjs test/guest-r28-cli.test.mjs
       - name: R27 full seven-case synthetic pilot chain, SHA/TTL packet and thirteen PRs
         run: node --test test/guest-r27-rehearsal.test.mjs test/guest-r27-release.test.mjs
       - name: R26 source audit, shift bias, two roles, decision engine and twelve pinned PRs
@@ -301,7 +301,8 @@ jobs:
             src/guest-r27-decision-audit.mjs src/guest-r27-rehearsal.mjs \
             src/guest-r27-handoff.mjs scripts/r27-release-plan.mjs \
             src/guest-r28-attestations.mjs src/guest-r28-stage-gate.mjs \
-            src/guest-r28-operator-packet.mjs scripts/r28-release-plan.mjs; do
+            src/guest-r28-operator-packet.mjs scripts/r28-release-plan.mjs \
+            scripts/r28-verify-evidence.mjs; do
             grep -Fxq "industry-api/$entry" "$RUNNER_TEMP/r19-list.txt"
           done
           echo "R28 reproducible release PASS. No production deploy."
