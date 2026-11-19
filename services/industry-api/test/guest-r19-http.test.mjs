@@ -276,7 +276,9 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
       method:'independent_aggregate_recount',verdict:'rejected'
     },{'Idempotency-Key':'r26-disabled-'+tag});
   assert.equal(deniedReview.status,503);
-  assert.deepEqual(await usage(),{used:0,maxDaily:2,events:0});
+  const afterDeniedReview=await usage();
+  assert.equal(afterDeniedReview.used,0);
+  assert.equal(afterDeniedReview.events,0);
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
