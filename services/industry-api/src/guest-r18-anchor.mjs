@@ -135,8 +135,9 @@ export async function loadR18Anchor(env=process.env,witness=null,now=new Date())
     env.GUEST_R17_JOURNAL_FILE,env.GUEST_R16_REGISTRY_FILE
   ];
   if(independent.some(path=>typeof path!=='string'||
-    dirname(resolve(path))===dirname(anchorPath)))
-    throw Error('Anchor cannot share custody directory with R14-R17 evidence');
+    dirname(resolve(path))===dirname(anchorPath))||
+    dirname(resolve(env.GUEST_R18_CUSTODIAN_PUBLIC_KEY))===dirname(anchorPath))
+    throw Error('Anchor cannot share directory with trusted keys or R14-R17 evidence');
   const [record,custodian,owner,manager,ownerRecord,managerRecord]=await Promise.all([
     readOutsideCheckout(anchorPath,{privateFile:true}),
     readOutsideCheckout(env.GUEST_R18_CUSTODIAN_PUBLIC_KEY),
