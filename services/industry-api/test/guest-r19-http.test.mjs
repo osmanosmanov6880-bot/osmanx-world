@@ -172,6 +172,18 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(inspection.productionAuthorized,false);
   assert.equal(inspection.legalGo,false);
   assert.equal(JSON.stringify(inspection).includes('PRIVATE KEY'),false);
+  const securityPath='/guest/pilots/'+pilotRow.id+'/r21/posture';
+  assert.equal((await call('GET',securityPath,tenants[1].auth)).status,404);
+  assert.equal((await call('GET',securityPath)).status,401);
+  const posture=expect(await call('GET',securityPath,own),200);
+  assert.equal(posture.schema,'osmanx.guest.r21.database-posture.v1');
+  assert.equal(posture.signedScopeCurrent,true);
+  assert.equal(posture.auditEventCount,0);
+  assert.equal(posture.customerGo,false);
+  assert.equal(posture.productionAuthorized,false);
+  assert.equal(posture.independentHostAuditVerified,false);
+  assert.equal(JSON.stringify(posture).includes('PRIVATE KEY'),false);
+  assert.equal(JSON.stringify(posture).includes('r19-first-'+tag+'@'),false);
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
@@ -237,6 +249,11 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
     expectedVersion:3,observation:{date:thirdDate,control:80,controlReturn:10,offer:80,offerReturn:20}},
     {'Idempotency-Key':'r19-after-stop-'+tag})).status,503);
   assert.deepEqual(await usage(),{used:2,maxDaily:2,events:2});
+  const afterStopPosture=expect(await call('GET',securityPath,own),200);
+  assert.equal(afterStopPosture.signedScopeCurrent,false);
+  assert.equal(afterStopPosture.technicalPostureReady,false);
+  assert.equal(afterStopPosture.auditEventCount,2);
+  assert.equal(afterStopPosture.customerGo,false);
   const grants=(await admin.query(
     "SELECT has_table_privilege('industry_app','industry.guest_r19_collection_events','DELETE') AS del,"+
     "has_table_privilege('industry_app','industry.guest_r19_collection_events','UPDATE') AS upd"
