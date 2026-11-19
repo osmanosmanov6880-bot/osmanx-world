@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {assessR23Canary} from '../scripts/r23-http-canary.mjs';
 export const R29_STAGING_SCHEMA='osmanx.guest.r29.synthetic-staging-rehearsal.v1';
 const sha=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
-const LOCAL='http://127.0.0.1:8787';
+const LOCAL='http://127.0.0.1:3150';
 const PUBLIC='https://osmanx.world';
 const probes=['live','ready','pilotsPrivate','safetyPrivate','incidentPrivate'];
 function monitor(target,{fault=null}={}){
