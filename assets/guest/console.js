@@ -76,6 +76,7 @@ function showAuth(){
   $('r23Panel').hidden=true;
   $('r24Panel').hidden=true;
   $('r25Panel').hidden=true;
+  $('r26Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -422,6 +423,7 @@ async function openPilot(id){
   await loadR23Handoff();
   await loadR24Intelligence();
   await loadR25Insights();
+  await loadR26Reliability();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -799,6 +801,89 @@ async function loadR25Insights(){
     status.textContent='Операционная диагностика R25 недоступна; выводы и ввод запрещены.';
     $('r25Sampled').textContent='—';$('r25Shifts').textContent='—';
     $('r25Leader').textContent='—';$('r25NextTest').textContent='';
+  }
+}
+const R26_BIAS_LABELS={
+  LIMITED_ANONYMOUS_SAMPLE:'Малая выборка анонимных агрегатов',
+  SHIFT_COVERAGE_LIMITED:'Недостаточно разных смен',
+  ONE_SHIFT_DOMINATES_SAMPLE:'Одна смена преобладает над остальными',
+  STAFF_ESTIMATE_DOMINATES_SOURCE:'Большинство сигналов — оценки персонала',
+  UNKNOWN_CATEGORY_TOO_LARGE:'Много наблюдений без подтверждённого признака',
+  SHIFT_COMPOSITION_CHANGED:'В раннем и позднем периодах разный состав смен',
+  SOURCE_COMPOSITION_CHANGED:'Сменился способ подсчёта',
+  LEADER_UNSTABLE_LEAVE_ONE_DAY_OUT:'Лидер категорий меняется при исключении одного дня',
+  POSSIBLE_AGGREGATE_TREND_REVERSAL:'Есть риск противоречия общей и посменной тенденции',
+  NO_ANONYMOUS_TALLIES:'Данные ещё не собраны'
+};
+const R26_REVIEW_BLOCKERS={
+  NO_SIGNALS_TO_AUDIT:'Нет анонимных данных для сверки',
+  EMERGENCY_STOP_ACTIVE:'Активна аварийная остановка',
+  OWNER_REVIEW_MISSING_OR_DUPLICATE:'Нет актуального решения владельца',
+  MANAGER_REVIEW_MISSING_OR_DUPLICATE:'Нет актуального решения управляющего',
+  INTERNAL_REVIEW_REJECTED:'Одна из проверок отклонила источник',
+  REVIEW_ACTORS_NOT_SEPARATE:'Ответственные лица не разделены',
+  REVIEW_WORKPAPERS_NOT_DISTINCT:'Оба ответственных указали одинаковый документ'
+};
+const R26_METHOD_NAMES={
+  staff_shift_crosscheck:'Сверка сменных оценок',
+  anonymous_counter_audit:'Проверка счётчика',
+  independent_aggregate_recount:'Пересчёт агрегатов'
+};
+let currentR26=null;
+async function loadR26Reliability(){
+  const panel=$('r26Panel'),status=$('r26Status'),
+    notes=$('r26BiasWarnings'),reviews=$('r26ReviewList');
+  panel.hidden=!manage();notes.replaceChildren();reviews.replaceChildren();
+  currentR26=null;$('r26ReviewFieldset').disabled=true;
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const data=await api('/guest/pilots/'+model.selected.item.id+'/r26/reliability');
+    if(data.schema!=='osmanx.guest.r26.source-reliability-brief.v1'||
+      data.productionAuthorized!==false||data.customerGo!==false||
+      data.customerMotivesEstablished!==false||
+      data.externalAuditCompleted!==false||
+      data.review?.schema!=='osmanx.guest.r26.source-review-gate.v1'||
+      data.bias?.schema!=='osmanx.guest.r26.source-bias.v1'||
+      data.decision?.schema!=='osmanx.guest.r26.owner-decision.v1')
+      throw Error('Данные R26 не прошли проверку формата');
+    currentR26=data;
+    $('r26Rows').textContent=String(data.sourceRowCount);
+    $('r26StaffShare').textContent=percent(data.bias.sourceMix.staffPct);
+    $('r26ShiftDrift').textContent=percent(data.bias.earlyLateShiftDriftPct);
+    status.className=data.stopActive||data.review.blockers.length?'alert':'info';
+    status.textContent=data.stopActive?
+      'Экстренная остановка. Просмотр доступен, новые проверки запрещены.':
+      data.review.internalDeclarationsComplete?
+      'Внутренние сверки зафиксированы. Независимая внешняя проверка всё ещё необходима.':
+      'Внутренние сверки не завершены. Не делайте причинных выводов.';
+    if(data.bias.warnings.length===0)
+      appendText(notes,'li','Автоматических признаков искажений не найдено. Первичный источник всё ещё требует внешней проверки.','small');
+    for(const code of data.bias.warnings)
+      appendText(notes,'li',R26_BIAS_LABELS[code]||'Дополнительная проверка: '+code,'small');
+    for(const role of ['owner','manager']){
+      const record=data.review.current[role];
+      appendText(reviews,'li',
+        (role==='owner'?'Владелец':'Управляющий')+': '+
+        (!record.present?'ожидается независимая сверка':
+         (record.verdict==='reconciled'?'сверено':'отклонено')+
+         ' / '+(R26_METHOD_NAMES[record.method]||'проверка источника')),'small');
+    }
+    for(const code of data.review.blockers)
+      appendText(reviews,'li',R26_REVIEW_BLOCKERS[code]||code,'small');
+    const d=data.decision.firstAction;
+    $('r26NextAction').textContent=d.title+': '+d.task;
+    $('r26EvidenceRequired').textContent='Подтвердить: '+d.evidence+
+      '. Это рекомендация, а не автоматически запущенное действие.';
+    const role=model.me?.role;
+    $('r26ReviewFieldset').disabled=
+      data.reviewEnabled!==true||data.stopActive===true||
+      data.review.current?.[role]?.present!==false;
+  }catch{
+    status.className='alert';
+    status.textContent='R26 недоступен. Источники не подтверждены, новый ввод запрещён.';
+    $('r26Rows').textContent='—';$('r26StaffShare').textContent='—';
+    $('r26ShiftDrift').textContent='—';$('r26NextAction').textContent='';
+    $('r26EvidenceRequired').textContent='';
   }
 }
 async function loadReport(){
@@ -1293,6 +1378,38 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r26Refresh').addEventListener('click',()=>safely(()=>loadR26Reliability()));
+$('r26Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r26/report.csv',
+    'osmanx-guest-r26-reliability.csv');
+  setStatus('Отчёт R26 без персональных данных сохранён.');
+}));
+$('r26ReviewForm').addEventListener('submit',event=>{
+  event.preventDefault();safely(async()=>{
+    if(!manage()||$('r26ReviewFieldset').disabled||!currentR26)
+      throw Error('Подтверждение запрещено без действующей версии и разрешения.');
+    const sha=$('r26EvidenceSha').value.trim();
+    if(!/^[a-f0-9]{64}$/.test(sha)||
+       sha===currentR26.r25SourceSha||sha===currentR26.r24EvidenceSha)
+      throw Error('Укажите SHA-256 отдельного проверочного документа.');
+    const item=currentPilot();
+    if(item.version!==currentR26.version)
+      throw Error('Версия пилота изменилась. Обновите данные.');
+    const saved=await api('/guest/pilots/'+item.id+'/r26/source-review',{
+      method:'POST',headers:{'Idempotency-Key':idempotency()},
+      body:{expectedVersion:currentR26.version,
+        sourceSha:currentR26.r25SourceSha,
+        r24EvidenceSha:currentR26.r24EvidenceSha,
+        evidenceSha:sha,method:$('r26Method').value,
+        verdict:$('r26Verdict').value}
+    });
+    if(!saved.reviewId)throw Error('API не подтвердил запись сверки.');
+    $('r26EvidenceSha').value='';
+    await loadR26Reliability();
+    setStatus('Ваша внутренняя сверка зафиксирована неизменяемо. Это не внешний аудит.');
+  });
+});
 $('r25Refresh').addEventListener('click',()=>safely(()=>loadR25Insights()));
 $('r25Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
