@@ -50,6 +50,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 <div><h2 id="tenantLabel">Организация</h2><p class="small" id="accountLabel">—</p></div>
 <div class="actions"><button id="refresh" class="secondary" type="button">Обновить</button><button id="logout" class="secondary" type="button">Выйти</button></div></div>
 <p class="small">Данные поступают из базы компании. Операции с изменением данных защищены проверкой ролей, CSRF и версий записей.</p></section>
+<section id="admissionPanel" class="panel" hidden aria-labelledby="admissionHeading">
+  <span class="eyebrow">Guest Intelligence / R16 / Допуск организации</span>
+  <h2 id="admissionHeading">Проверка разрешения на работу</h2>
+  <p id="admissionStatus" class="info" role="status" aria-live="polite">Состояние допуска загружается.</p>
+  <p id="admissionExpiration" class="small"></p>
+  <p class="small">Здесь отображается только статус своей организации. Разрешение не заменяет согласия клиентов, договоры, независимую проверку и правила остановки пилота. Запуск сервера и выдача доступа из браузера невозможны.</p>
+</section>
 
 <section id="staffPanel" class="panel" hidden aria-labelledby="staffTitle">
   <span class="eyebrow">Доступы / Два сотрудника</span>
