@@ -263,6 +263,21 @@ if grep -Fq '"independentReleaseReviewSupportedR28":true' "$root/RELEASE.json"; 
     }
   done
 fi
+# R29 staging and merge review is read-only and cannot enable real collection.
+if grep -Fq '"stagingMergeReviewSupportedR29":true' "$root/RELEASE.json"; then
+  grep -Fq '"independentReleaseReviewSupportedR28":true' "$root/RELEASE.json" || {
+    echo "R29 requires R28 independent source audit" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R29 cannot enable real collection" >&2;exit 3;
+  }
+  for file in scripts/r29-source-tree.mjs src/guest-r29-staging.mjs \
+    src/guest-r29-rollback.mjs src/guest-r29-report.mjs; do
+    test -f "$root/$file" || {
+      echo "R29 source package incomplete: $file" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
