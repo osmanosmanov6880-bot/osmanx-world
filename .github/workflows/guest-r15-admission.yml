@@ -44,3 +44,50 @@ jobs:
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: Legacy production guard regression
         run: node --test test/guest-r10-guard.test.mjs
+
+  r15-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: industry_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d industry_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      ALLOWED_ORIGIN: http://localhost
+      MIGRATION_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+      DATABASE_URL: postgres://industry_app:industrypass@127.0.0.1:5432/industry_ci
+      WORKER_DB_URL: postgres://industry_worker:workerpass@127.0.0.1:5432/industry_ci
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Node syntax and packages
+        run: |
+          set -euo pipefail
+          for file in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$file"; done
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Independent least-privilege roles
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+      - name: Migrate and repeat without rewriting prior evidence
+        run: |
+          npm run migrate
+          npm run migrate
+      - name: All PostgreSQL Fastify R7-R15 regression tests
+        run: npm test
