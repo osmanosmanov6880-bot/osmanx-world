@@ -133,6 +133,27 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r36Panel" hidden aria-labelledby="r36Heading">
+  <hr class="separator">
+  <span class="eyebrow">R36 / Operational Acceptance</span>
+  <h3 id="r36Heading">22 PR — очередь ревью, staging и восстановление</h3>
+  <p id="r36Status" class="alert" role="status" aria-live="polite">NO-GO — выпуск требует независимой проверки.</p>
+  <div class="triple" aria-label="R36 независимая эксплуатационная приёмка">
+    <div><strong>22 PR</strong><p id="r36Source">Ручной merge не подтверждён</p></div>
+    <div><strong>Staging</strong><p id="r36Staging">Семантическая проверка не проведена</p></div>
+    <div><strong>AGE восстановление</strong><p id="r36Recovery">Оператор не подтвердил</p></div>
+  </div>
+  <p class="small">Первое препятствие по последней внешней проверке — PR #47: нужен code review и выход из Draft, если изменения действительно готовы. Актуальный статус проверяется отдельно через GitHub, не веб-кабинетом.</p>
+  <p class="small">R36 даёт оператору два самостоятельных инструмента: строгую проверку содержимого health-ответов при закреплённом IP/TLS и контролируемый AGE restore только в отдельную локальную БД. Эти действия не запускаются из браузера.</p>
+  <h4>Блокировки коммерческой публикации</h4>
+  <ul id="r36Blockers" class="items"></ul>
+  <div class="actions">
+    <button id="r36Refresh" type="button" class="secondary">Обновить NO-GO R36</button>
+    <button id="r36Download" type="button" class="secondary">Скачать CSV-допуск</button>
+  </div>
+  <p id="r36Expiry" class="small">Срок отчёта: —</p>
+  <p class="small">CI не заменяет независимое одобрение GitHub, реальную offsite-копию, юридические документы и заключительный тест main.</p>
+</section>
 <section id="r35Panel" hidden aria-labelledby="r35Heading">
   <hr class="separator">
   <span class="eyebrow">R35 / Evidence Driven Release Review</span>
