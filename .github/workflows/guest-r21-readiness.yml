@@ -1,0 +1,245 @@
+name: OSMANX Guest R21 host, PostgreSQL and seven-stage evidence acceptance
+on:
+  pull_request:
+    branches: [main, feat/guest-r20-release-control-dr-20261119]
+    paths:
+      - "services/industry-api/**"
+      - "assets/guest/console.js"
+      - "assets/guest/console.html"
+      - "tests/guest-console-r19.test.mjs"
+      - "tests/guest-console-r20.test.mjs"
+      - "tests/guest-console-r21.test.mjs"
+      - ".github/workflows/guest-r21-readiness.yml"
+  push:
+    branches: [main]
+    paths: ["services/industry-api/**", ".github/workflows/guest-r21-readiness.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  r21-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: R19 code integrity and disabled-by-default contract
+        run: |
+          set -euo pipefail
+          for f in src/guest-r19-scope.mjs src/guest-r19-usage.mjs \
+            scripts/r19-operator.mjs scripts/r19-first-client-rehearsal.mjs \
+            test/guest-r19.test.mjs test/guest-r19-http.test.mjs \
+            test/guest-r19-rehearsal.test.mjs test/r19-synthetic-fixture.mjs; do
+            node --check "$f"
+          done
+          node --check ../../assets/guest/console.js
+          test -s ../../docs/GUEST_INTELLIGENCE_R19.md
+          grep -Fq 'await assertR19Pilot(db,session.tenant_id,collection.pilotId,scopedPilot)' src/app.mjs
+          grep -Fq 'await consumeR19Budget(db' src/app.mjs
+          grep -Fq 'FORCE ROW LEVEL SECURITY' migrations/014_guest_single_pilot_rollout.sql
+          grep -Fq 'GUEST_WRITES_ENABLED: "false"' ops/compose.r14.yml
+          if find . -type f \( -name '*.pem' -o -name '*.key' -o -name 'identity.txt' \) -print -quit | grep -q .; then
+            echo "::error::Unexpected signing secret in repo"
+            exit 1
+          fi
+      - name: Install runtime dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: R21 seven-PR genealogy, host exposure, PostgreSQL grants and portable evidence
+        run: node --test test/guest-r21-release-chain.test.mjs test/guest-r21-host.test.mjs test/guest-r21-db.test.mjs test/guest-r21-evidence.test.mjs
+      - name: R20 release-chain, two-person change ticket and read-only DR unit tests
+        run: node --test test/guest-r20-release-chain.test.mjs test/guest-r20-ticket.test.mjs test/guest-r20-restore.test.mjs test/guest-r20-inspection.test.mjs
+      - name: R19 signature, STOP, consent fingerprints and protocol binding
+        run: node --test test/guest-r19.test.mjs test/guest-r19-rehearsal.test.mjs
+      - name: R18 external custodian regression
+        run: node --test test/guest-r18.test.mjs
+      - name: Russian UI, role-bound preflight and no secret disclosure
+        run: node --test ../../tests/guest-console-r18.test.mjs ../../tests/guest-console-r19.test.mjs ../../tests/guest-console-r20.test.mjs ../../tests/guest-console-r21.test.mjs
+
+  r21-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: industry_ci}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d industry_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      ALLOWED_ORIGIN: http://localhost
+      MIGRATION_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+      DATABASE_URL: postgres://industry_app:industrypass@127.0.0.1:5432/industry_ci
+      WORKER_DB_URL: postgres://industry_worker:workerpass@127.0.0.1:5432/industry_ci
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Node syntax and reproducible dependency installation
+        run: |
+          set -euo pipefail
+          for f in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$f"; done
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Create least-privilege PostgreSQL roles
+        run: |
+          PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d industry_ci -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
+          PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d industry_ci -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+      - name: Apply migrations through 014 twice without rewriting history
+        run: |
+          npm run migrate
+          npm run migrate
+      - name: Full R7-R21 Fastify, PostgreSQL, tenant safety and retention acceptance
+        run: npm test
+
+  r21-encrypted-dr:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: industry_ci}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d industry_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      MIGRATION_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+      BACKUP_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL client, AGE and migration packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client age
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Bootstrap least-privilege roles and migrate
+        run: |
+          PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d industry_ci -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
+          PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d industry_ci -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+          npm run migrate
+      - name: Seed one synthetic collection ledger and event
+        run: |
+          set -euo pipefail
+          export PGPASSWORD=postgres
+          psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO industry.tenants(slug,name,vertical) VALUES('r19-dr-test','R19 synthetic','cafe');
+          INSERT INTO industry.accounts(email,password_hash) VALUES('r19-dr@example.test','synthetic-not-a-real-password');
+          INSERT INTO industry.guest_pilots(tenant_id,created_by,title,plan,readiness,target_per_group)
+            SELECT t.id,a.id,'R19 temporary DR pilot','{}'::jsonb,'{}'::jsonb,10
+            FROM industry.tenants t CROSS JOIN industry.accounts a
+            WHERE t.slug='r19-dr-test' AND a.email='r19-dr@example.test';
+          INSERT INTO industry.guest_r19_daily_usage(tenant_id,pilot_id,utc_day,used_count,max_daily,last_scope_sha)
+            SELECT tenant_id,id,(now() AT TIME ZONE 'UTC')::date,1,2,repeat('a',64)
+            FROM industry.guest_pilots WHERE title='R19 temporary DR pilot';
+          INSERT INTO industry.guest_r19_collection_events(tenant_id,pilot_id,kind,utc_day,scope_sha)
+            SELECT tenant_id,id,'observations',(now() AT TIME ZONE 'UTC')::date,repeat('a',64)
+            FROM industry.guest_pilots WHERE title='R19 temporary DR pilot';
+          SQL
+      - name: Encrypt to two completely independent AGE recipients
+        run: |
+          set -euo pipefail
+          age-keygen -o "$RUNNER_TEMP/r19-first.key"
+          age-keygen -o "$RUNNER_TEMP/r19-second.key"
+          pub1="$(grep '^# public key:' "$RUNNER_TEMP/r19-first.key" | awk '{print $4}')"
+          pub2="$(grep '^# public key:' "$RUNNER_TEMP/r19-second.key" | awk '{print $4}')"
+          test "$pub1" != "$pub2"
+          AGE_RECIPIENT_1="$pub1" AGE_RECIPIENT_2="$pub2" sh ops/backup-encrypted.sh "$RUNNER_TEMP/r19-archives"
+      - name: Restore both independent copies of R19 usage and event history
+        run: |
+          set -euo pipefail
+          export PGPASSWORD=postgres
+          archive="$(find "$RUNNER_TEMP/r19-archives" -name '*.age' -print -quit)"
+          for target in first second; do
+            createdb -h 127.0.0.1 -U postgres "industry_dr_r19_$target"
+            key="$RUNNER_TEMP/r19-first.key"
+            if [ "$target" = second ]; then key="$RUNNER_TEMP/r19-second.key"; fi
+            DR_RESTORE_DB_URL="postgresql://postgres:postgres@127.0.0.1:5432/industry_dr_r19_$target" AGE_IDENTITY_FILE="$key" sh ops/restore-dr.sh "$archive"
+            totals="$(psql -h 127.0.0.1 -U postgres -d "industry_dr_r19_$target" -Atc "SELECT (SELECT sum(used_count) FROM industry.guest_r19_daily_usage)::text || ':' || (SELECT count(*) FROM industry.guest_r19_collection_events)::text")"
+            test "$totals" = '1:1'
+          done
+      - name: Refuse live DB target and damaged ciphertext
+        run: |
+          set -euo pipefail
+          archive="$(find "$RUNNER_TEMP/r19-archives" -name '*.age' -print -quit)"
+          if DR_RESTORE_DB_URL="postgresql://postgres:postgres@127.0.0.1:5432/industry_ci" AGE_IDENTITY_FILE="$RUNNER_TEMP/r19-first.key" sh ops/restore-dr.sh "$archive"; then
+            echo "::error::Live DB accepted by DR restore";exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/r19-tampered"
+          cp "$archive" "$archive.sha256" "$RUNNER_TEMP/r19-tampered/"
+          printf 'tamper' >> "$RUNNER_TEMP/r19-tampered/$(basename "$archive")"
+          if DR_RESTORE_DB_URL="postgresql://postgres:postgres@127.0.0.1:5432/industry_dr_r19_first" AGE_IDENTITY_FILE="$RUNNER_TEMP/r19-first.key" sh ops/restore-dr.sh "$RUNNER_TEMP/r19-tampered/$(basename "$archive")"; then
+            echo "::error::Damaged ciphertext accepted";exit 1
+          fi
+
+  r21-reproducible:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify full SHA, migration 014 and reproducible R19 source release
+        run: |
+          set -euo pipefail
+          bash ops/build-release.sh "$RUNNER_TEMP/r19-a"
+          bash ops/build-release.sh "$RUNNER_TEMP/r19-b"
+          archive="$(find "$RUNNER_TEMP/r19-a" -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          test -f "$archive"
+          bash ops/verify-release.sh "$archive"
+          cmp "$archive" "$RUNNER_TEMP/r19-b/$(basename "$archive")"
+          tar -tzf "$archive" > "$RUNNER_TEMP/r19-list.txt"
+          for entry in migrations/014_guest_single_pilot_rollout.sql \
+            src/guest-r19-scope.mjs src/guest-r19-usage.mjs \
+            scripts/r19-operator.mjs scripts/r19-first-client-rehearsal.mjs \
+            scripts/r20-release-chain.mjs scripts/r20-change-ticket.mjs \
+            scripts/r20-restore-crosscheck.mjs src/guest-r20-inspection.mjs \
+            scripts/r21-release-chain.mjs scripts/r21-host-posture.mjs \
+            scripts/r21-db-audit.mjs scripts/r21-evidence-bundle.mjs \
+            scripts/r21-assemble.mjs src/guest-r21-db-audit.mjs; do
+            grep -Fxq "industry-api/$entry" "$RUNNER_TEMP/r19-list.txt"
+          done
+          echo "R21 reproducible release PASS. No production deploy."
+
+  r21-release-graph:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      pull-requests: read
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read actual pinned PRs, CI job names and immutable ancestry (no GitHub mutations)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node scripts/r21-release-chain.mjs --github > "$RUNNER_TEMP/r21-chain.json"
+          node --input-type=module -e "import fs from 'node:fs';const a=JSON.parse(fs.readFileSync(process.argv[1]));if(a.schema!=='osmanx.guest.r21.seven-stage-release.v1'||a.dependencies?.length!==7||a.automaticCustomerGo!==false||a.automaticProductionApproval!==false||a.changedProduction!==false)process.exit(1);console.log('Reviewed seven immutable staged PRs; production and customer collection remain disabled.')" "$RUNNER_TEMP/r21-chain.json"

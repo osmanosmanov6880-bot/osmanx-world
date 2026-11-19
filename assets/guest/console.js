@@ -71,6 +71,7 @@ function showAuth(){
   model.admission=null;$('admissionPanel').hidden=true;
   $('r19Panel').hidden=true;
   $('r20Panel').hidden=true;
+  $('r21Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -412,6 +413,7 @@ async function openPilot(id){
   await loadSafety();
   await loadR19Preflight();
   await loadR20Inspection();
+  await loadR21Posture();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -503,6 +505,48 @@ async function loadR20Inspection(){
     output.className='alert';
     output.textContent='Проверка R20 недоступна. Это означает NO-GO, а не разрешение на работу.';
     $('r20Budget').textContent='';
+  }
+}
+const R21_LABELS={
+  allMigrationsPresent:'Миграции безопасности до версии 014 применены',
+  allSecurityTablesForcedRls:'Все служебные таблицы имеют принудительный RLS',
+  runtimeRoleUnprivileged:'Сервисная роль не суперпользователь и не BYPASSRLS',
+  immutableHistoryNotWritable:'Журналы не допускают UPDATE/DELETE от API',
+  dailyBudgetDoesNotAllowDelete:'Счётчик дневного лимита нельзя удалить через API',
+  checkpointsConsistent:'Контрольные точки R17 и R18 согласованы',
+  auditMatchesQuota:'Журнал операций совпадает с расходом лимита',
+  noOverRetentionDrift:'Нет просроченных дней журнала по подписанному сроку'
+};
+async function loadR21Posture(){
+  const panel=$('r21Panel'),out=$('r21Status'),list=$('r21Checks');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const report=await api('/guest/pilots/'+model.selected.item.id+'/r21/posture');
+    if(report.schema!=='osmanx.guest.r21.database-posture.v1'||
+       !report.checks||!Array.isArray(report.blockers))
+      throw Error('Неверный ответ диагностики R21');
+    out.className='alert';
+    out.textContent=report.technicalPostureReady?
+      'База и подписанный пилот проходят локальный аудит. До независимой проверки VPS и документов клиентский запуск остаётся NO-GO.':
+      'Контроль R21 обнаружил '+report.blockers.length+
+        ' блокирующих причин. Сбор реальных данных не разрешён.';
+    for(const [key,label] of Object.entries(R21_LABELS))
+      appendText(list,'li',(report.checks[key]===true?'Проверено: ':'Не подтверждено: ')+label,'small');
+    for(const label of [
+      'Независимый аудит реального VPS',
+      'Подтверждение слияния всей цепочки R14–R20',
+      'Действующий договор, юридические основания и внешнее WORM-хранилище'
+    ])appendText(list,'li','Требует независимой проверки: '+label,'small');
+    $('r21Summary').textContent=
+      'Записей дневного журнала: '+(Number.isSafeInteger(report.auditEventCount)?
+        report.auditEventCount:'неизвестно')+
+      '. Проверяемый срок истории: '+(report.retainedDays||'нет')+
+      ' суток. Отчёт не включает ключи, чужие компании или персональные данные.';
+  }catch{
+    out.className='alert';
+    out.textContent='Невозможно проверить состояние R21. Решение — NO-GO.';
+    $('r21Summary').textContent='';
   }
 }
 async function loadReport(){
@@ -993,6 +1037,7 @@ $('launchGateAttest').addEventListener('click',()=>safely(async()=>{
 $('launchGateExport').addEventListener('click',()=>safely(()=>downloadLaunchGateProof()));
 $('r19Refresh').addEventListener('click',()=>safely(()=>loadR19Preflight()));
 $('r20Refresh').addEventListener('click',()=>safely(()=>loadR20Inspection()));
+$('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('operationsRefresh').addEventListener('click',()=>safely(async()=>{
   await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
 }));

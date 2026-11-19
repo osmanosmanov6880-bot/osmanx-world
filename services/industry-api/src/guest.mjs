@@ -14,6 +14,7 @@ import {inspectR16Tenant} from './guest-r16-registry.mjs';
 import {loadR17Witness} from './guest-r17-witness.mjs';
 import {loadR18Anchor} from './guest-r18-anchor.mjs';
 import {inspectR20Pilot} from './guest-r20-inspection.mjs';
+import {auditR21Database} from './guest-r21-db-audit.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -496,6 +497,35 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     // No raw consent evidence, key material, signer identities, other-tenant
     // URLs or PII-containing source documents leave this server.
     return report;
+  }));
+
+  // R21 database security/retention report. This request is strictly READ-ONLY,
+  // tenant- and membership-bound; it never returns DB names, credentials,
+  // key paths, raw customer records or independent operator documents.
+  app.get(P+'/pilots/:id/r21/posture',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    let scope=null;
+    try{scope=await loadR19Scope(process.env);}
+    catch{/* Invalid/expired scope is NO-GO, not an HTTP 500. */}
+    const scopeMatches=scope?.valid===true&&
+      scope.tenantId===s.tenant_id&&scope.pilotId===pilot.id;
+    const days=scopeMatches?scope.record.policy.retentionDays:30;
+    const audit=await auditR21Database(db,{
+      tenantId:s.tenant_id,pilotId:pilot.id,retentionDays:days
+    });
+    return {
+      ...audit,
+      signedScopeCurrent:scopeMatches,
+      technicalPostureReady:audit.technicalPostureReady&&scopeMatches,
+      blockers:scopeMatches?audit.blockers:
+        [...audit.blockers,'signed_r19_scope_missing_or_wrong_pilot'],
+      independentHostAuditVerified:false,
+      signedReleaseChainVerified:false,
+      legalEvidenceReviewed:false,
+      externalWormRetentionVerified:false,
+      productionAuthorized:false,
+      legalGo:false,customerGo:false,productionChanged:false
+    };
   }));
 
   // R12 human pilot gate. Optional enrollment is irreversible; legacy pilots stay compatible.
