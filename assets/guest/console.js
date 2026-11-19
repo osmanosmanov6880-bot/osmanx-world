@@ -85,6 +85,7 @@ function showAuth(){
   $('r32Panel').hidden=true;
   $('r33Panel').hidden=true;
   $('r34Panel').hidden=true;
+  $('r35Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -440,6 +441,7 @@ async function openPilot(id){
   await loadR32Acceptance();
   await loadR33Acceptance();
   await loadR34Acceptance();
+  await loadR35Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1314,6 +1316,53 @@ async function loadR34Acceptance(){
     $('r34Expiry').textContent='Срок отчёта: —';
   }
 }
+const R35_GAPS={
+  R35_TWENTY_ONE_PRS_AWAIT_HUMAN_MERGE:'21 PR требуют последовательного ручного ревью и merge',
+  R35_FIRST_PR_REVIEW_AND_APPROVAL_REQUIRED:'Первый ожидающий PR должен получить независимое одобрение',
+  R35_STAGING_FIXED_IP_CERT_CANARY_NOT_WITNESSED:'Нет независимо засвидетельствованного staging по PIN IP/TLS',
+  R35_LOCAL_AGE_ARCHIVE_BYTE_HASHES_NOT_IMPORTED:'Не сверены реальные байты AGE-архивов с подписанными SHA',
+  R35_LOCAL_CLIENT_CONTRACT_HASHES_NOT_IMPORTED:'Не сверены реальные файлы 5 юридических документов',
+  R35_REAL_OFFSITE_RESTORE_AND_ROLLBACK_NOT_DONE:'Нет подтверждённого offsite восстановления и отката',
+  R35_INDEPENDENT_LEGAL_REVIEW_REQUIRED:'Не завершена независимая проверка документов и полномочий',
+  R35_POST_MERGE_MAIN_CI_REQUIRED:'Нет окончательного CI после объединения в main'
+};
+async function loadR35Acceptance(){
+  const panel=$('r35Panel'),list=$('r35Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r35/readiness');
+    if(x.schema!=='osmanx.guest.r35.operator-evidence-readiness.v1'||
+      x.pilotId!==model.selected.item.id||
+      x.source?.requiredPrs!==21||
+      x.source?.headReviewsVerifiedInApi!==0||
+      x.staging?.networkCallsMadeByApi!==0||
+      x.archive?.localFilesReadByApi!==0||
+      x.documents?.localFilesReadByApi!==0||
+      x.productionAuthorized!==false||x.customerGo!==false||
+      x.stopLifted!==false||x.guestWritesEnabled!==false||
+      !Array.isArray(x.blockers)||
+      !x.blockers.includes('R35_POST_MERGE_MAIN_CI_REQUIRED'))
+      throw Error('R35 unsafe or incomplete response');
+    $('r35Status').textContent='NO-GO — проверка независимым оператором не завершена';
+    $('r35Source').textContent='0 / 21 подтверждено в API';
+    $('r35Stage').textContent='Требуется свидетель';
+    $('r35Files').textContent='Требуется сверка файлов';
+    $('r35Expiry').textContent='Срок отчёта: '+
+      new Date(x.expiresAt).toLocaleString('ru-RU',{
+        year:'numeric',month:'2-digit',day:'2-digit',
+        hour:'2-digit',minute:'2-digit'
+      });
+    for(const code of x.blockers)
+      appendText(list,'li',R35_GAPS[code]||R34_GAPS[code]||
+        R33_GAPS[code]||R32_GAPS[code]||R31_GAPS[code]||
+        R30_GAPS[code]||R29_GAPS[code]||code,'small');
+  }catch{
+    $('r35Status').textContent='NO-GO — статус R35 не подтверждён';
+    $('r35Source').textContent='—';$('r35Stage').textContent='—';
+    $('r35Files').textContent='—';$('r35Expiry').textContent='Срок отчёта: —';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1806,6 +1855,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r35Refresh').addEventListener('click',()=>safely(()=>loadR35Acceptance()));
+$('r35Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r35/report.csv',
+    'osmanx-guest-r35-independent-check.csv');
+  setStatus('R35: NO-GO отчёт сохранён. Гостевые записи запрещены.');
+}));
 $('r34Refresh').addEventListener('click',()=>safely(()=>loadR34Acceptance()));
 $('r34Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');

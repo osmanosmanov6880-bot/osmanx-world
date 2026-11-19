@@ -359,6 +359,22 @@ if grep -Fq '"operatorReleaseReviewSupportedR34":true' "$root/RELEASE.json"; the
     test -f "$root/$f" || { echo "Missing R34 file $f" >&2; exit 3; }
   done
 fi
+# R35 byte checks and human review are operator-only; never auto-GO.
+if grep -Fq '"byteEvidenceAndHumanReviewSupportedR35":true' "$root/RELEASE.json"; then
+  grep -Fq '"operatorReleaseReviewSupportedR34":true' "$root/RELEASE.json" || {
+    echo "R35 requires R34 source" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R35 may not enable customer writes" >&2; exit 3;
+  }
+  for f in src/guest-r35-source.mjs src/guest-r35-staging.mjs \
+    src/guest-r35-byte-proof.mjs src/guest-r35-archive-bytes.mjs \
+    src/guest-r35-document-bytes.mjs src/guest-r35-handoff.mjs \
+    src/guest-r35-report.mjs scripts/r35-review-github.mjs \
+    scripts/r35-staging-canary.mjs scripts/r35-operator-audit.mjs; do
+    test -f "$root/$f" || { echo "Missing R35 file $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

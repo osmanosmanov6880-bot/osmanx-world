@@ -133,6 +133,26 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r35Panel" hidden aria-labelledby="r35Heading">
+  <hr class="separator">
+  <span class="eyebrow">R35 / Evidence Driven Release Review</span>
+  <h3 id="r35Heading">Реальный контроль готовности — 21 PR</h3>
+  <p id="r35Status" class="alert" role="status" aria-live="polite">NO-GO — ручные одобрения и внешняя приёмка отсутствуют.</p>
+  <div class="triple" aria-label="R35 проверка источников и свидетельств">
+    <div><strong>Объединённые PR</strong><p id="r35Source">0 / 21 подтверждено в API</p></div>
+    <div><strong>Staging</strong><p id="r35Stage">Требуется свидетель</p></div>
+    <div><strong>Архивы и документы</strong><p id="r35Files">Нужна проверка оригиналов</p></div>
+  </div>
+  <p class="small">Новая офлайн-проверка обнаруживает первый PR без ревью, сверяет разрешённые IP/TLS staging и пересчитывает SHA-256 двух AGE-архивов и пяти клиентских документов. Реальный сетевой запрос выполняет только отдельно утверждённый оператор, не браузер.</p>
+  <h4>Что ещё необходимо сделать</h4>
+  <ul id="r35Blockers" class="items"></ul>
+  <div class="actions">
+    <button id="r35Refresh" type="button" class="secondary">Обновить R35</button>
+    <button id="r35Download" type="button" class="secondary">Скачать NO-GO CSV</button>
+  </div>
+  <p id="r35Expiry" class="small">Срок отчёта: —</p>
+  <p class="small">Хеши исходных файлов не подтверждают юридическую действительность договора, а статусы HTTPS сами по себе не доказывают версию развёрнутого кода. Вывод: NO-GO до независимой приёмки.</p>
+</section>
 <section id="r34Panel" hidden aria-labelledby="r34Heading">
   <hr class="separator">
   <span class="eyebrow">R34 / Operational Release Gate</span>
