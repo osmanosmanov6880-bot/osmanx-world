@@ -309,6 +309,24 @@ if grep -Fq '"manualStagingOperatorSupportedR31":true' "$root/RELEASE.json"; the
     test -f "$root/$f" || { echo "Missing R31 review module $f" >&2; exit 3; }
   done
 fi
+# R32 offline cutover evidence is an operator-review feature, not a GO flag.
+if grep -Fq '"humanCutoverPreflightSupportedR32":true' "$root/RELEASE.json"; then
+  grep -Fq '"manualStagingOperatorSupportedR31":true' "$root/RELEASE.json" || {
+    echo "R32 requires R31 complete" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R32 may not activate live collection" >&2; exit 3;
+  }
+  for p in src/guest-r32-source.mjs src/guest-r32-change-window.mjs \
+    src/guest-r32-staging-drift.mjs \
+    src/guest-r32-recovery-objectives.mjs \
+    src/guest-r32-preflight.mjs src/guest-r32-report.mjs \
+    scripts/r32-review-github.mjs scripts/r32-offline-preflight.mjs; do
+    test -f "$root/$p" || {
+      echo "Missing R32 review module $p" >&2; exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

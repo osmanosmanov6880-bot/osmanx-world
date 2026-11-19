@@ -34,6 +34,7 @@ import {makeR28OperatorPacket,r28OperatorCsv}
 import {makeR29Report,r29ReportCsv} from './guest-r29-report.mjs';
 import {makeR30Report,r30ReportCsv} from './guest-r30-report.mjs';
 import {makeR31OperatorReport,r31OperatorCsv} from './guest-r31-report.mjs';
+import {makeR32Readiness,r32ReadinessCsv} from './guest-r32-report.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1194,6 +1195,29 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       reply.header('Content-Disposition',
         'attachment; filename="osmanx-guest-r31-manual-handoff.csv"');
       return reply.send(r31OperatorCsv(report,{now:new Date()}));
+    }));
+
+  // R32: only local tenant-scoped READ. Offline witness files and keys are
+  // never accepted by, uploaded to, or fetched from the authenticated API.
+  async function r32Readiness(db,s,pilotId){
+    const r31=await r31Readiness(db,s,pilotId);
+    const now=new Date();
+    return makeR32Readiness({r31,now});
+  }
+  app.get(P+'/pilots/:id/r32/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r32Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return report;
+    }));
+  app.get(P+'/pilots/:id/r32/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r32Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r32-review.csv"');
+      return reply.send(r32ReadinessCsv(report,{now:new Date()}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.

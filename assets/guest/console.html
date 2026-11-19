@@ -133,6 +133,25 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r32Panel" hidden aria-labelledby="r32Heading">
+  <hr class="separator">
+  <span class="eyebrow">R32 / Human Cutover Preflight</span>
+  <h3 id="r32Heading">Окно изменений и независимая приёмка</h3>
+  <p id="r32Status" class="alert" role="status" aria-live="polite">NO-GO — эксплуатационная приёмка не подтверждена.</p>
+  <div class="triple" aria-label="R32: готовность к ручной приёмке">
+    <div><strong>Цепочка исходников</strong><p id="r32Sources">0 / 18 PR</p></div>
+    <div><strong>Staging-снимки</strong><p id="r32Snapshots">0 / 2</p></div>
+    <div><strong>Действителен до</strong><p id="r32Expiry">—</p></div>
+  </div>
+  <h4>Блокировки коммерческого запуска</h4>
+  <ul id="r32Blockers" class="items"></ul>
+  <p class="small">Проверка подписей двух ответственных, изменений HTTP-состояния между двумя снимками и RTO/RPO проводится отдельно в офлайн-инструменте. Кабинет не получает приватные ключи, не проводит staging-запросы, не объединяет PR и не выдаёт разрешение на запуск.</p>
+  <div class="actions">
+    <button id="r32Refresh" type="button" class="secondary">Обновить R32</button>
+    <button id="r32Download" type="button" class="secondary">Скачать R32 CSV</button>
+  </div>
+  <p class="small">Успех CI подтверждает только тесты и сборку; настоящая эксплуатационная готовность остаётся на независимой ручной приёмке.</p>
+</section>
 <section id="r31Panel" hidden aria-labelledby="r31Heading">
   <hr class="separator">
   <span class="eyebrow">R31 / Independent Staging Witness</span>
