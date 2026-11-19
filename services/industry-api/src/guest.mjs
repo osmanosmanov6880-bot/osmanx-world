@@ -37,6 +37,7 @@ import {makeR31OperatorReport,r31OperatorCsv} from './guest-r31-report.mjs';
 import {makeR32Readiness,r32ReadinessCsv} from './guest-r32-report.mjs';
 import {makeR33Readiness,r33ReadinessCsv} from './guest-r33-report.mjs';
 import {makeR34Readiness,r34ReadinessCsv} from './guest-r34-report.mjs';
+import {makeR35Readiness,r35ReadinessCsv} from './guest-r35-report.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1265,6 +1266,28 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       reply.header('Content-Disposition',
         'attachment; filename="osmanx-guest-r34-operator-handoff.csv"');
       return reply.send(r34ReadinessCsv(report,{now:new Date()}));
+    }));
+
+  // R35 only reports operator obligations. Real network and file evidence never
+  // enters the tenant API; no GitHub actions or production permissions.
+  async function r35Readiness(db,s,pilotId){
+    const r34=await r34Readiness(db,s,pilotId);
+    return makeR35Readiness({r34,now:new Date()});
+  }
+  app.get(P+'/pilots/:id/r35/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r35Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return report;
+    }));
+  app.get(P+'/pilots/:id/r35/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r35Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r35-independent-check.csv"');
+      return reply.send(r35ReadinessCsv(report,{now:new Date()}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.

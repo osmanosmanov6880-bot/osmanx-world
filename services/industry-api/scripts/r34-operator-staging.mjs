@@ -10,7 +10,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {observeR34Staging} from '../src/guest-r34-host-evidence.mjs';
-function verifyTls({host,ip}){
+export function verifyTls({host,ip}){
   return new Promise((done,reject)=>{
     const socket=connect({host:ip,port:443,servername:host,
       rejectUnauthorized:true,timeout:5000},()=>{
@@ -27,7 +27,7 @@ function verifyTls({host,ip}){
     socket.once('timeout',()=>{socket.destroy(Error('TLS timeout'));});
   });
 }
-function statusOnly({host,ip,path,method}){
+export function statusOnly({host,ip,path,method}){
   return new Promise((done,reject)=>{
     if(method!=='GET'||!path.startsWith('/api/industry/v1/'))
       return reject(Error('Unapproved staging request'));
