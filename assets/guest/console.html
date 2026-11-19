@@ -133,6 +133,27 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r29Panel" hidden aria-labelledby="r29Heading">
+  <hr class="separator">
+  <span class="eyebrow">R29 / Staging &amp; Merge Acceptance</span>
+  <h3 id="r29Heading">Готовность к объединению и проверке staging</h3>
+  <p id="r29Status" class="alert" role="status" aria-live="polite">NO-GO: нет независимой эксплуатационной приёмки.</p>
+  <div class="triple">
+    <div><strong>Цепочка исходников</strong><p id="r29PrCount">15 PR · не проверены</p></div>
+    <div><strong>Синтетические проверки</strong><p id="r29Synthetic">—</p></div>
+    <div><strong>Пакет действителен до</strong><p id="r29Expires">—</p></div>
+  </div>
+  <h4>Что блокирует публикацию</h4>
+  <ul id="r29Blockers" class="items"></ul>
+  <h4>Что проверяет R29</h4>
+  <p class="small">Генеалогия Git-деревьев в независимом операторском скрипте; симуляция шести staging-маршрутов; раздельные роли и SHA при тестовом откате; подтверждение неизменного main после ручных PR. Сетевая проверка реального VPS и реальные операции восстановления не выполняются из кабинета.</p>
+  <div class="actions">
+    <button id="r29Refresh" type="button" class="secondary">Обновить проверки R29</button>
+    <button id="r29Download" type="button" class="secondary">Скачать отчёт R29</button>
+  </div>
+  <p class="small">NO-GO остаётся обязательным. Нет доступа к реальным клиентским данным, кнопок слияния, деплоя, восстановления production или снятия STOP.</p>
+</section>
+
 <section id="r28Panel" hidden aria-labelledby="r28Heading">
   <hr class="separator">
   <span class="eyebrow">R28 / Защищённая подготовка первого запуска</span>

@@ -279,6 +279,38 @@ test('R28 actual Fastify/PostgreSQL: manager-only no-GO operator packet and CSV 
   )).rows[0].n;
   assert.equal(countAfter,countBefore);
 });
+test('R29 PostgreSQL and Fastify: authenticated GET only and no change in source/rollback state',async()=>{
+  const path='/guest/pilots/'+pilot+'/r29';
+  const before=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal((await request('GET',path+'/readiness')).status,401);
+  assert.equal((await request('GET',path+'/readiness',entities[2].auth)).status,404);
+  assert.equal((await request('GET',path+'/report.csv',entities[2].auth)).status,404);
+  const x=await request('GET',path+'/readiness',entities[0].auth);
+  assert.equal(x.status,200,JSON.stringify(x.value));
+  assert.equal(x.value.schema,'osmanx.guest.r29.manual-staging-review.v1');
+  assert.equal(x.value.pilotId,pilot);
+  assert.equal(x.value.sourcePrsRequired,15);
+  assert.equal(x.value.stagedSynthetic.passed,6);
+  assert.equal(x.value.actualStagingVerified,false);
+  assert.equal(x.value.customerGo,false);
+  assert.equal(x.value.productionAuthorized,false);
+  assert.equal(x.value.stopLifted,false);
+  assert.equal(Date.parse(x.value.expiresAt)-Date.parse(x.value.issuedAt),600000);
+  const manager=await request('GET',path+'/readiness',entities[1].auth);
+  assert.equal(manager.status,200);
+  assert.equal(manager.value.productionAuthorized,false);
+  const csv=await request('GET',path+'/report.csv',entities[1].auth);
+  assert.equal(csv.status,200);
+  assert.equal(csv.bytes.subarray(0,3).toString('hex'),'efbbbf');
+  for(const e of entities)
+    assert.equal(csv.bytes.toString('utf8').includes(e.email),false);
+  const after=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal(after,before);
+});
 test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes',async()=>{
   const flags=(await admin.query(
     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class"+
@@ -339,4 +371,10 @@ test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes
   assert.ok(r28Stop.value.blockers.includes('R28_EMERGENCY_STOP_ACTIVE'));
   assert.equal(r28Stop.value.customerGo,false);
   assert.equal(r28Stop.value.productionAuthorized,false);
+  const r29Stop=await request('GET',
+    '/guest/pilots/'+pilot+'/r29/readiness',entities[0].auth);
+  assert.equal(r29Stop.status,200);
+  assert.equal(r29Stop.value.customerGo,false);
+  assert.equal(r29Stop.value.productionAuthorized,false);
+  assert.equal(r29Stop.value.stopLifted,false);
 });
