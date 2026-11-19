@@ -390,6 +390,23 @@ if grep -Fq '"manualCodeReviewAndSemanticStagingR36":true' "$root/RELEASE.json";
     test -f "$root/$f" || { echo "Missing R36 source $f" >&2; exit 3; }
   done
 fi
+# R37 canary, real PostgreSQL introspection and Docker inspection are
+# strictly operator-only. Web API never loads private material.
+if grep -Fq '"verifiedCanaryRestoreImageMainR37":true' "$root/RELEASE.json"; then
+  grep -Fq '"manualCodeReviewAndSemanticStagingR36":true' "$root/RELEASE.json" || {
+    echo "R37 requires R36 source" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R37 refuses enabled guest writes" >&2; exit 3;
+  }
+  for f in src/guest-r37-canary-guard.mjs scripts/r37-canary-preflight.mjs \
+    src/guest-r37-dr-verified.mjs scripts/r37-local-dr.mjs \
+    src/guest-r37-image-provenance.mjs scripts/r37-verify-container.mjs \
+    src/guest-r37-postmerge.mjs scripts/r37-main-gate.mjs \
+    src/guest-r37-report.mjs; do
+    test -f "$root/$f" || { echo "Missing R37 operator component $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
