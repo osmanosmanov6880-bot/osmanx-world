@@ -137,7 +137,7 @@ after(async()=>{
   if(app)await app.close();
   if(pool)await pool.end();
   if(admin)await admin.end();
-  if(dbName)await rootAdmin.query('DROP DATABASE "'+dbName+'" WITH (FORCE)');
+  if(dbName)await rootAdmin.query('DROP DATABASE "'+dbName+'"');
   await rootAdmin.end();
   if(fixture)await fixture.cleanup();
   for(const [name,value] of Object.entries(prev)){
