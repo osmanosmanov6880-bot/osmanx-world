@@ -68,9 +68,11 @@ before(async()=>{
   await app.listen({host:'127.0.0.1',port:0});
   base='http://127.0.0.1:'+app.server.address().port;
   for(const org of orgs){
-    org.auth=tokens(expect(await call('POST','/auth/login',null,{
+    const logged=await call('POST','/auth/login',null,{
       tenantSlug:org.slug,email:org.email,password
-    }),200));
+    });
+    expect(logged,200);
+    org.auth=tokens(logged);
   }
 });
 after(async()=>{
