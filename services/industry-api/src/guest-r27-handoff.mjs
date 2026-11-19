@@ -11,7 +11,7 @@ import {verifyR26Brief} from './guest-r26-brief.mjs';
 import {R27_AUDIT_SCHEMA} from './guest-r27-decision-audit.mjs';
 import {R27_REHEARSAL_SCHEMA} from './guest-r27-rehearsal.mjs';
 export const R27_HANDOFF_SCHEMA='osmanx.guest.r27.operator-handoff.v1';
-const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const SHA=/^[a-f0-9]{64}$/;
 const code=c=>typeof c==='string'&&/^[A-Z][A-Z0-9_]{1,72}$/.test(c);
 const digest=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
