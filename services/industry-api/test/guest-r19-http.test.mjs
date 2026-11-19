@@ -235,8 +235,9 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   });
   assert.equal(ownedBrief.status,200);
   assert.match(ownedBrief.headers.get('content-type')||'',/text\/csv/);
-  const csv=await ownedBrief.text();
-  assert.ok(csv.startsWith('\uFEFF'));
+  const csvBytes=Buffer.from(await ownedBrief.arrayBuffer());
+  assert.equal(csvBytes.subarray(0,3).toString('hex'),'efbbbf');
+  const csv=csvBytes.toString('utf8');
   assert.ok(csv.includes('SHA-256'));
   assert.equal(csv.includes(tenants[0].email),false);
   assert.equal(csv.includes(tenants[1].email),false);
