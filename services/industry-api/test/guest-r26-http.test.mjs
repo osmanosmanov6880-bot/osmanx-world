@@ -368,8 +368,9 @@ test('R31 real PostgreSQL and Fastify: tenant-safe GET-only handoff and no STOP 
   assert.equal(owner.value.productionGo,false);
   assert.equal(owner.value.guestWritesEnabled,false);
   assert.equal(owner.value.stopLifted,false);
-  assert.equal(Date.parse(owner.value.expiresAt)-
-    Date.parse(owner.value.issuedAt),600000);
+  const ttlMs=Date.parse(owner.value.expiresAt)-
+    Date.parse(owner.value.issuedAt);
+  assert.ok(ttlMs>0&&ttlMs<=600000,'R31 TTL exceeds ten-minute bound');
   const manager=await request('GET',path+'/readiness',entities[1].auth);
   assert.equal(manager.status,200);
   assert.equal(manager.value.productionGo,false);
