@@ -9,7 +9,7 @@ import {verifyR31OperatorReport} from './guest-r31-report.mjs';
 import {R31_PIN} from './guest-r32-source.mjs';
 export const R32_REPORT_SCHEMA='osmanx.guest.r32.manual-release-readiness.v1';
 const SHA=/^[a-f0-9]{64}$/;
-const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][0-9a-f]{12}$/i;
+const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const exact=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&
   Object.keys(x).sort().join('|')===keys.slice().sort().join('|');
