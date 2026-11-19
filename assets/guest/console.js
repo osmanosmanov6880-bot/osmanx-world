@@ -79,6 +79,7 @@ function showAuth(){
   $('r26Panel').hidden=true;
   $('r27Panel').hidden=true;
   $('r28Panel').hidden=true;
+  $('r29Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -428,6 +429,7 @@ async function openPilot(id){
   await loadR26Reliability();
   await loadR27Readiness();
   await loadR28OperatorStatus();
+  await loadR29Staging();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1049,6 +1051,64 @@ async function loadR28OperatorStatus(){
     $('r28Next').textContent='Проверка не выполнена.';
   }
 }
+const R29_BLOCKER_LABELS={
+  R29_SOURCE_CHAIN_UNVERIFIED:'Не подтверждены исходные коммиты и все обязательные CI проверки',
+  R29_FIFTEEN_MANUAL_MERGES_REQUIRED:'Не проведены ручные слияния всех пятнадцати PR',
+  R29_VIRTUAL_MERGE_UNVERIFIED:'Нет проверенного виртуального дерева Git с гарантией отсутствия конфликтов',
+  R29_DISPOSABLE_ROLLBACK_UNVERIFIED:'Не подтверждён результат SQL-отката в отдельной тестовой базе',
+  R29_STAGING_HTTP_CI_NOT_BOUND_TO_THIS_REPORT:'Staging CI ещё не привязан к этому отчёту независимой подписью',
+  R29_FINAL_MAIN_MERGED_TREE_CI_MISSING:'Нет новой полной CI-приёмки после слияния в main',
+  R29_REAL_VPS_AND_OFFSITE_DR_NOT_VERIFIED:'Нет подтверждения настоящего VPS и внешних копий',
+  R29_LAWFUL_CUSTOMER_APPROVAL_NOT_VERIFIED:'Нет проверенного договора и основания обработки',
+  R29_CHANGE_WINDOW_ROLLBACK_NOT_APPROVED:'Не утверждены окно изменений и порядок внешнего отката',
+  R29_EMERGENCY_STOP_ACTIVE:'Действует экстренная остановка'
+};
+async function loadR29Staging(){
+  const panel=$('r29Panel'),status=$('r29Status'),
+    tasks=$('r29Tasks'),issues=$('r29Blockers');
+  panel.hidden=!manage();tasks.replaceChildren();issues.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const report=await api('/guest/pilots/'+model.selected.item.id+'/r29/preflight');
+    if(report.schema!=='osmanx.guest.r29.staging-handoff.v1'||
+      report.pilotId!==model.selected.item.id||
+      report.productionAuthorized!==false||report.customerGo!==false||
+      report.deployAllowed!==false||
+      report.automaticMergeAllowed!==false||
+      report.actualProductionChecked!==false||
+      report.liveClientDataUsed!==false||
+      report.noProductionChanges!==true||
+      report.requiredSourcePrs!==15||
+      !Array.isArray(report.steps)||report.steps.length!==5||
+      !Array.isArray(report.blockers)||
+      !report.blockers.includes('R29_FINAL_MAIN_MERGED_TREE_CI_MISSING'))
+      throw Error('R29 не предоставил закрытый отчёт о готовности');
+    $('r29Reviewed').textContent=String(report.reviewedSourcePrs)+' / 15';
+    $('r29FirstPr').textContent='#'+String(report.firstUnmergedPr);
+    $('r29Expiry').textContent=new Date(report.expiresAt).toLocaleString('ru-RU',{
+      year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit'
+    });
+    status.className='alert';
+    status.textContent=report.stage==='STOP'?
+      'STOP активен — ни одна операция запуска не разрешена.':
+      'NO-GO: тестовый код может проверяться, но production и новый клиент не одобрены.';
+    for(const step of report.steps)
+      appendText(tasks,'li',step.title+
+        '. Для закрытия требуется: '+step.evidence+
+        '. Исполнение: только независимый оператор.','small');
+    for(const issue of report.blockers)
+      appendText(issues,'li',R29_BLOCKER_LABELS[issue]||issue,'small');
+    $('r29Next').textContent='Первое действие: проверить PR #'+
+      report.firstUnmergedPr+' в GitHub независимым человеком; затем '+
+      'последовательный ручной merge и обязательный CI на итоговом main.';
+  }catch{
+    status.className='alert';
+    status.textContent='R29 недоступен. Запуск и обработка реальных данных запрещены.';
+    $('r29Reviewed').textContent='—';$('r29FirstPr').textContent='—';
+    $('r29Expiry').textContent='—';$('r29Next').textContent='';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1541,6 +1601,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r29Refresh').addEventListener('click',()=>safely(()=>loadR29Staging()));
+$('r29Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r29/report.csv',
+    'osmanx-guest-r29-staging-review.csv');
+  setStatus('Получен ограниченный по сроку отчёт R29. Разрешение на запуск отсутствует.');
+}));
 $('r28Refresh').addEventListener('click',()=>safely(()=>loadR28OperatorStatus()));
 $('r28Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');

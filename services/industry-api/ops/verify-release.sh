@@ -263,6 +263,25 @@ if grep -Fq '"independentReleaseReviewSupportedR28":true' "$root/RELEASE.json"; 
     }
   done
 fi
+# R29 only adds reviewed source planning, local transient merge-tree and
+# disposable SQL rollback tests. It MUST NOT enable production writes.
+if grep -Fq '"virtualMergeStagingSupportedR29":true' "$root/RELEASE.json"; then
+  grep -Fq '"independentReleaseReviewSupportedR28":true' "$root/RELEASE.json" || {
+    echo "R29 missing verified R28 ancestry" >&2;exit 3;
+  }
+  grep -Fq '"latestMigration":"016_guest_r26_source_reviews.sql"' "$root/RELEASE.json" || {
+    echo "R29 unexpected schema revision" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R29 cannot activate customer data collection" >&2;exit 3;
+  }
+  for f in src/guest-r29-rollback.mjs src/guest-r29-preflight.mjs \
+    scripts/r29-release-review.mjs scripts/r29-merge-tree.mjs; do
+    test -f "$root/$f" || {
+      echo "R29 mandatory preflight source missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

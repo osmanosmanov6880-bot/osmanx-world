@@ -9,6 +9,8 @@ import pg from 'pg';
 import {hashPassword} from '../src/password.mjs';
 import {makePool} from '../src/database.mjs';
 import {buildApp} from '../src/app.mjs';
+import {rehearseR29DisposableRollback}
+  from '../src/guest-r29-rollback.mjs';
 const API='/api/industry/v1',tag=randomUUID().slice(0,8);
 const password='Synthetic-R26-Nonproduction-2026!!';
 const entities=[
@@ -279,6 +281,57 @@ test('R28 actual Fastify/PostgreSQL: manager-only no-GO operator packet and CSV 
   )).rows[0].n;
   assert.equal(countAfter,countBefore);
 });
+test('R29 full real Fastify/PostgreSQL read-only pilot report, 15 PR NO-GO and rollback rehearsal',async()=>{
+  const path='/guest/pilots/'+pilot+'/r29';
+  assert.equal((await request('GET',path+'/preflight')).status,401);
+  assert.equal((await request('GET',path+'/preflight',entities[2].auth)).status,404);
+  assert.equal((await request('GET',path+'/report.csv',entities[2].auth)).status,404);
+  const before=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  const owner=await request('GET',path+'/preflight',entities[0].auth);
+  assert.equal(owner.status,200,JSON.stringify(owner.value));
+  const report=owner.value;
+  assert.equal(report.schema,'osmanx.guest.r29.staging-handoff.v1');
+  assert.equal(report.pilotId,pilot);
+  assert.equal(report.version,initial.version+1);
+  assert.equal(report.requiredSourcePrs,15);
+  assert.equal(report.reviewedSourcePrs,0);
+  assert.equal(report.firstUnmergedPr,47);
+  assert.equal(report.steps.length,5);
+  assert.equal(report.customerGo,false);
+  assert.equal(report.productionAuthorized,false);
+  assert.equal(report.noProductionChanges,true);
+  assert.equal(report.stage,'NO_GO_EXTERNAL_EVIDENCE_PENDING');
+  assert.equal(Date.parse(report.expiresAt)-Date.parse(report.issuedAt),600000);
+  assert.ok(report.blockers.includes('R29_FINAL_MAIN_MERGED_TREE_CI_MISSING'));
+  const manager=await request('GET',path+'/preflight',entities[1].auth);
+  assert.equal(manager.status,200);
+  assert.equal(manager.value.customerGo,false);
+  const csv=await request('GET',path+'/report.csv',entities[1].auth);
+  assert.equal(csv.status,200);
+  assert.equal(csv.bytes.subarray(0,3).toString('hex'),'efbbbf');
+  for(const e of entities)
+    assert.equal(csv.bytes.toString('utf8').includes(e.email),false);
+  const result=await rehearseR29DisposableRollback({
+    pool,tenantId:entities[0].tenant,pilotId:pilot,
+    actorId:entities[0].account
+  });
+  assert.equal(result.schema,'osmanx.guest.r29.disposable-sql-rollback.v1');
+  assert.equal(result.targetIsDisposable,true);
+  assert.equal(result.tenantRlsApplied,true);
+  assert.equal(result.transactionRolledBack,true);
+  assert.equal(result.snapshotsIdentical,true);
+  assert.equal(result.beforeSha,result.afterSha);
+  assert.equal(result.tableCount,5);
+  assert.equal(result.changedRecordsPersisted,0);
+  assert.equal(result.productionDatabaseTouched,false);
+  assert.equal(result.actualLiveMigrationRollbackVerified,false);
+  const after=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal(after,before);
+});
 test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes',async()=>{
   const flags=(await admin.query(
     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class"+
@@ -339,4 +392,11 @@ test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes
   assert.ok(r28Stop.value.blockers.includes('R28_EMERGENCY_STOP_ACTIVE'));
   assert.equal(r28Stop.value.customerGo,false);
   assert.equal(r28Stop.value.productionAuthorized,false);
+  const r29Stop=await request('GET',
+    '/guest/pilots/'+pilot+'/r29/preflight',entities[1].auth);
+  assert.equal(r29Stop.status,200);
+  assert.equal(r29Stop.value.stage,'STOP');
+  assert.ok(r29Stop.value.blockers.includes('R29_EMERGENCY_STOP_ACTIVE'));
+  assert.equal(r29Stop.value.customerGo,false);
+  assert.equal(r29Stop.value.productionAuthorized,false);
 });
