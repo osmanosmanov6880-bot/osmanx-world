@@ -4,8 +4,8 @@
  * Never combines private keys, overwrites files or deploys.
  */
 import {createPrivateKey,generateKeyPairSync,sign} from 'node:crypto';
-import {open} from 'node:fs/promises';
-import {resolve} from 'node:path';
+import {open,realpath} from 'node:fs/promises';
+import {resolve,dirname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readOutsideCheckout} from '../src/guest-tenant-authorization.mjs';
 import {evaluateRegistry,registryMessage,R16_SCHEMA} from '../src/guest-r16-registry.mjs';
@@ -57,7 +57,12 @@ export function assembleRegistry(unsigned,parts,keys,now=new Date()){
 }
 async function createNew(path,content){
   if(typeof path!=='string'||!path.startsWith('/'))throw Error('Absolute output required');
-  const h=await open(resolve(path),'wx',0o600);
+  const dest=resolve(path),parent=dirname(dest);
+  const actual=await realpath(parent);
+  const checkout=resolve(fileURLToPath(new URL('..',import.meta.url)));
+  if(actual!==parent||dest===checkout||dest.startsWith(checkout+sep))
+    throw Error('Refusing signer artifacts within source or symlink directory');
+  const h=await open(dest,'wx',0o600);
   try{await h.writeFile(content);await h.sync();}
   finally{await h.close();}
 }
