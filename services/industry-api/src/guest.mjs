@@ -15,6 +15,7 @@ import {loadR17Witness} from './guest-r17-witness.mjs';
 import {loadR18Anchor} from './guest-r18-anchor.mjs';
 import {inspectR20Pilot} from './guest-r20-inspection.mjs';
 import {auditR21Database} from './guest-r21-db-audit.mjs';
+import {inspectR23Panel} from './guest-r23-panel.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -578,6 +579,31 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       ].every(k=>checks[k]===true),
       daily:r20.daily,customerGo:false,legalGo:false,
       productionAuthorized:false,productionChanged:false};
+  }));
+
+  // R23: authenticated owner/manager handoff is local evidence only. The
+  // external release plan and host/DR checks are never loaded from untrusted
+  // browser fields or marked complete based on successful CI alone.
+  app.get(P+'/pilots/:id/r23/handoff',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    let permit=null,witness=null,anchor=null,scope=null;
+    try{permit=await inspectR16Tenant(s.tenant_id,process.env);}catch{}
+    try{witness=await loadR17Witness(process.env);}catch{}
+    if(witness){try{anchor=await loadR18Anchor(process.env,witness);}catch{}}
+    if(anchor){try{scope=await loadR19Scope(process.env,anchor);}catch{}}
+    const validScope=scope?.valid===true&&
+      scope.tenantId===s.tenant_id&&scope.pilotId===pilot.id;
+    const days=validScope?scope.record.policy.retentionDays:30;
+    const r20=await inspectR20Pilot(db,{
+      tenantId:s.tenant_id,pilot,hold,permit,witness,anchor,scope
+    });
+    const r21=await auditR21Database(db,{
+      tenantId:s.tenant_id,pilotId:pilot.id,retentionDays:days
+    });
+    return inspectR23Panel({
+      pilot,tenantId:s.tenant_id,hold,scope,r20,r21
+    });
   }));
 
   // R12 human pilot gate. Optional enrollment is irreversible; legacy pilots stay compatible.
