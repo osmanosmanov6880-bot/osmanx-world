@@ -31,6 +31,8 @@ import {makeR27Handoff,r27HandoffCsv} from './guest-r27-handoff.mjs';
 import {evaluateR28ManualGate} from './guest-r28-stage-gate.mjs';
 import {makeR28OperatorPacket,r28OperatorCsv}
   from './guest-r28-operator-packet.mjs';
+import {makeR29StagingHandoff,r29HandoffCsv}
+  from './guest-r29-preflight.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1121,6 +1123,33 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
         'attachment; filename="osmanx-guest-r28-manual-review.csv"');
       reply.header('Cache-Control','no-store');
       return reply.send(r28OperatorCsv(report,{now:checkedAt}));
+    }));
+
+  // R29: strictly read-only pilot-scoped staging readiness. Neither GitHub
+  // source CI nor SQL rollback can be asserted from the live owner dashboard.
+  // Offline proof inputs are null unless separately independently reviewed.
+  async function r29Readiness(db,s,pilotId){
+    const r28=await r28Readiness(db,s,pilotId);
+    const now=new Date(); // R28 handoff must exist BEFORE checking expiry
+    return makeR29StagingHandoff({
+      r28,chain:null,virtualMerge:null,rollback:null,now
+    });
+  }
+  app.get(P+'/pilots/:id/r29/preflight',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const packet=await r29Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return packet;
+    }));
+  app.get(P+'/pilots/:id/r29/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const packet=await r29Readiness(db,s,req.params.id);
+      const verifiedAt=new Date();
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r29-staging-review.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r29HandoffCsv(packet,{now:verifiedAt}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
