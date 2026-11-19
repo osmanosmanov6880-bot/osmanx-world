@@ -55,7 +55,10 @@ test('R21 never mutates database while auditing migration 011-014, RLS, role gra
   assert.equal(r.customerGo,false);
   assert.equal(r.productionAuthorized,false);
   assert.ok(f.queries.every(x=>x.sql.startsWith('SELECT')));
-  assert.ok(f.queries.filter(x=>x.sql.includes('guest_r19_daily_usage')).every(
+  // Scope-specific data queries carry tenant/pilot parameters; the separate
+  // role metadata query only checks permissions and has no tenant identifier.
+  assert.ok(f.queries.filter(x=>x.sql.includes('guest_r19_daily_usage')&&
+    x.sql.includes('WHERE tenant_id=$1')).every(
     x=>x.params[0]===f.tenantId&&x.params[1]===f.pilotId));
 });
 test('R21 refuses public role, mutable audit events, missing FORCE RLS, rollback and outdated logs',async()=>{
