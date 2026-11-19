@@ -133,6 +133,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r20Panel" hidden aria-labelledby="r20Heading">
+  <hr class="separator">
+  <span class="eyebrow">R20 / Центр эксплуатационной приёмки</span>
+  <h3 id="r20Heading">Первый клиент: что действительно проверено</h3>
+  <p id="r20Status" class="info" role="status" aria-live="polite">Считывание независимых проверок.</p>
+  <ul id="r20Checklist" class="items"></ul>
+  <p id="r20Budget" class="small"></p>
+  <p class="small">Здесь нет разрешения на production. Подписи релиза R14–R19, сохранность внешнего архива, юридические основания и договор проверяются независимо вне этого кабинета. Положительный результат автоматических тестов не заменяет решение уполномоченного лица.</p>
+  <div class="actions"><button id="r20Refresh" type="button" class="secondary">Обновить проверку R20</button></div>
+</section>
+
 <section id="r19Panel" hidden aria-labelledby="r19Heading">
   <hr class="separator">
   <span class="eyebrow">R19 / Контролируемый первый пилот</span>
