@@ -68,6 +68,7 @@ function showAuth(){
   $('actionAssignmentForm').hidden=true;$('actionHistoryPanel').hidden=true;
   model.bulkPreview=null;model.diagnostic=null;model.operations=null;
   model.selectedAction=null;model.launchGate=null;model.safety=null;model.staffMembers=[];
+  model.admission=null;$('admissionPanel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -76,6 +77,7 @@ function showWorkspace(){
   $('requestForm').querySelector('button[type=submit]').disabled=!write();
   $('pilotForm').querySelector('button[type=submit]').disabled=!manage();
   $('staffPanel').hidden=!manage();
+  $('admissionPanel').hidden=!manage();
   $('overviewPanel').hidden=!manage();
   $('operationsPanel').hidden=!manage();
   $('retentionRun').hidden=model.me.role!=='owner';
@@ -94,6 +96,7 @@ async function refresh(){
   model.requests=requests.items;model.pilots=pilots.items;
   drawRequests();drawPilots();
   if(manage()){
+    await loadAdmission();
     await loadStaff();
     await loadOverview();
     await loadOperations();
@@ -111,6 +114,41 @@ function actionButton(label,onClick,secondary=false){
   button.textContent=label;
   button.addEventListener('click',()=>safely(()=>onClick()));
   return button;
+}
+async function loadAdmission(){
+  const output=$('admissionStatus');
+  const expiry=$('admissionExpiration');
+  try{
+    const value=await api('/guest/admission/self');
+    if(value.schema!=='osmanx.guest.r16.self-status.v1')throw Error('Неверная версия допуска');
+    model.admission=value;
+    const authorized=value.permitValid===true;
+    const reason={
+      authorized:'разрешение подтверждено',
+      guest_writes_disabled:'сбор данных отключён',
+      revoked:'разрешение отозвано',
+      global_emergency_stop:'экстренная остановка всех компаний',
+      tenant_emergency_stop:'экстренная остановка этой компании',
+      registry_changed_or_stopped:'реестр обновляется или остановлен',
+      not_enrolled:'организация ещё не допущена',
+      invalid_signed_tenant_permit:'подписи или доказательства недействительны',
+      registry_unavailable:'подписанный реестр недоступен',
+      private_evidence_unavailable:'документы подтверждения недоступны',
+      invalid_or_missing_permit:'нет действующего подтверждения'
+    }[value.reason]||'допуск не подтверждён';
+    output.textContent='Режим: '+(value.mode==='multi'?'несколько компаний':value.mode==='single'?'одна компания':'отключён')+
+      ' · '+(authorized?'Допуск действителен':'Запись недоступна')+' · '+reason+'.';
+    output.className=authorized?'info':'alert';
+    expiry.textContent=authorized&&value.validUntil?
+      'Срок действия до '+new Date(value.validUntil).toLocaleString('ru-RU')+
+      '. После окончания требуется новое подтверждение.':
+      'Оператор должен проверить причину; браузер не снимает ограничения.';
+  }catch{
+    model.admission=null;
+    output.className='alert';
+    output.textContent='Проверка допуска недоступна на текущем сервере. Не считайте статус разрешённым.';
+    expiry.textContent='';
+  }
 }
 async function loadOverview(){
   const data=await api('/guest/overview');

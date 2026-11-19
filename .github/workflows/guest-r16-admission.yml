@@ -1,0 +1,123 @@
+name: OSMANX Guest R16 multi-tenant admission acceptance
+on:
+  pull_request:
+    branches: [main, feat/guest-r15-tenant-admission-20261119]
+    paths:
+      - "services/industry-api/**"
+      - "assets/guest/console.html"
+      - "assets/guest/console.js"
+      - "tests/guest-console-r16.test.mjs"
+      - ".github/workflows/guest-r16-admission.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - "assets/guest/console.html"
+      - "assets/guest/console.js"
+      - ".github/workflows/guest-r16-admission.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r16-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Node syntax and safe contract checks
+        run: |
+          set -euo pipefail
+          for f in src/guest-r16-registry.mjs scripts/r16-signer.mjs             scripts/r16-operator.mjs test/r16-synthetic-fixture.mjs             test/guest-r16.test.mjs test/guest-r16-http.test.mjs; do
+            node --check "$f"
+          done
+          node --check ../../assets/guest/console.js
+          test -s ../../docs/GUEST_INTELLIGENCE_R16.md
+          grep -Fq 'await assertR16Tenant(session.tenant_id,process.env)' src/app.mjs
+          grep -Fq 'GUEST_WRITES_ENABLED: "false"' ops/compose.r14.yml
+          if find . -type f \( -name '*.key' -o -name '*.pem' -o -name 'identity.txt' \) -print -quit | grep -q .; then
+            echo "::error::Refusing secret material in repository"
+            exit 1
+          fi
+      - name: Offline multi-tenant, dual signers and hot-stop unit tests
+        run: node --test test/guest-r16.test.mjs
+      - name: Existing single-tenant R15 regression
+        run: node --test test/guest-r15.test.mjs
+      - name: Russian admission dashboard contract
+        run: node --test ../../tests/guest-console-r16.test.mjs
+
+  r16-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: industry_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d industry_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      ALLOWED_ORIGIN: http://localhost
+      MIGRATION_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+      DATABASE_URL: postgres://industry_app:industrypass@127.0.0.1:5432/industry_ci
+      WORKER_DB_URL: postgres://industry_worker:workerpass@127.0.0.1:5432/industry_ci
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies and syntax verify
+        run: |
+          set -euo pipefail
+          for f in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$f"; done
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Create isolated least-privilege PostgreSQL roles
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+      - name: Apply migrations twice without rewriting history
+        run: |
+          npm run migrate
+          npm run migrate
+      - name: All R7-R16 Fastify PostgreSQL HTTP and security tests
+        run: npm test
+
+  r16-source-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - name: Two reproducible source releases without secrets or customer data
+        run: |
+          set -euo pipefail
+          bash ops/build-release.sh "$RUNNER_TEMP/r16-a"
+          bash ops/build-release.sh "$RUNNER_TEMP/r16-b"
+          archive="$(find "$RUNNER_TEMP/r16-a" -maxdepth 1 -name '*.tar.gz' | head -n 1)"
+          test -f "$archive"
+          bash ops/verify-release.sh "$archive"
+          test "$(sha256sum "$archive" | awk '{print $1}')" = \
+            "$(sha256sum "$RUNNER_TEMP/r16-b/$(basename "$archive")" | awk '{print $1}')"
+          tar -tzf "$archive" > "$RUNNER_TEMP/r16-file-list.txt"
+          grep -Fq 'industry-api/src/guest-r16-registry.mjs' "$RUNNER_TEMP/r16-file-list.txt"
+          grep -Fq 'industry-api/scripts/r16-operator.mjs' "$RUNNER_TEMP/r16-file-list.txt"
+          grep -Fq 'industry-api/scripts/r16-signer.mjs' "$RUNNER_TEMP/r16-file-list.txt"
+          echo "R16 source release verified; no production deploy."
