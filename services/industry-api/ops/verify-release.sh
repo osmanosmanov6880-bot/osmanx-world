@@ -170,6 +170,23 @@ if grep -Fq '"manualStagingSupportedR23":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R24 aggregate-only intelligence is non-activating. Require the full
+# quality/statistics/economics/playbook/report source and disabled writes.
+if grep -Fq '"decisionIntelligenceSupportedR24":true' "$root/RELEASE.json"; then
+  grep -Fq '"manualStagingSupportedR23":true' "$root/RELEASE.json" || {
+    echo "R24 requires verified R23 ancestry" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R24 must never activate guest collection" >&2;exit 3;
+  }
+  for f in src/guest-r24-quality.mjs \
+    src/guest-r24-statistics.mjs src/guest-r24-economics.mjs \
+    src/guest-r24-playbook.mjs src/guest-r24-brief.mjs; do
+    test -f "$root/$f" || {
+      echo "R24 required intelligence module missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

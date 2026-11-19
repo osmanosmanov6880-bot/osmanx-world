@@ -40,7 +40,7 @@ async function api(path,{method='GET',body,headers={}}={}){
   }
   return data;
 }
-async function downloadCsv(path){
+async function downloadCsv(path,filename='osmanx-guest-r4-report.csv'){
   const csrf=csrfCookie();
   if(!csrf)throw Error('Требуется вход.');
   const response=await fetch(API+path,{credentials:'same-origin',cache:'no-store',
@@ -51,7 +51,7 @@ async function downloadCsv(path){
   if(blob.size>1000000)throw Error('Слишком большой отчёт');
   const objectUrl=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=objectUrl;a.download='osmanx-guest-r4-report.csv';
+  a.href=objectUrl;a.download=filename;
   document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
 }
@@ -74,6 +74,7 @@ function showAuth(){
   $('r21Panel').hidden=true;
   $('r22Panel').hidden=true;
   $('r23Panel').hidden=true;
+  $('r24Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -418,6 +419,7 @@ async function openPilot(id){
   await loadR21Posture();
   await loadR22LaunchReview();
   await loadR23Handoff();
+  await loadR24Intelligence();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -648,6 +650,71 @@ async function loadR23Handoff(){
   }catch{
     status.className='alert';
     status.textContent='R23 недоступен. Решение — NO-GO.';
+  }
+}
+const R24_ISSUES={
+  PROTOCOL_MISSING_OR_INVALID:'Не указан действующий протокол эксперимента',
+  PROTOCOL_NOT_PREREGISTERED:'Регистрация протокола нуждается в проверке',
+  NON_RANDOM_ASSIGNMENT:'Случайное распределение не подтверждено',
+  MANUAL_AGGREGATE_SOURCE:'Необходима независимая сверка ручного источника',
+  NO_OBSERVATIONS:'Нет наблюдений',
+  OBSERVATION_IN_FUTURE:'Обнаружена дата из будущего',
+  OBSERVATION_OUTSIDE_PROTOCOL:'Дата за границей протокола',
+  UNBALANCED_PERIOD_GROUPS:'В одном из периодов группы существенно различаются',
+  TARGET_SAMPLE_NOT_REACHED:'Выборка ещё не достигла целевого объёма',
+  UNBALANCED_TOTAL_GROUPS:'Суммарные объёмы групп несопоставимы',
+  OUTCOME_WINDOW_NOT_COMPLETED:'Окно наблюдения повторных визитов ещё не завершилось'
+};
+const percent=number=>typeof number==='number'&&Number.isFinite(number)?
+  number.toLocaleString('ru-RU',{maximumFractionDigits:2})+' %':'Нет данных';
+async function loadR24Intelligence(){
+  const panel=$('r24Panel'),summary=$('r24Status'),
+    warnings=$('r24Quality'),actions=$('r24Decisions');
+  panel.hidden=!manage();warnings.replaceChildren();actions.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const report=await api('/guest/pilots/'+model.selected.item.id+'/r24/intelligence');
+    if(report.schema!=='osmanx.guest.r24.manager-brief.v1'||
+       !report.statistics||!report.scenario||!Array.isArray(report.decisions)||
+       report.customerGo!==false||report.productionAuthorized!==false||
+       report.causalEffectProven!==false)
+      throw Error('Неверная структура аналитического отчёта');
+    const stats=report.statistics,econ=report.scenario;
+    summary.className=report.stopped||report.quality.analysisStatus==='BLOCKED'?'alert':'info';
+    summary.textContent=(report.stopped?'Сбор остановлен. ':'')+
+      'Изучено '+report.observedPeriods+' периодов; статус: '+
+      ({NO_DATA:'нет данных',QUALITY_BLOCKED:'ошибки качества',
+        EXPLORATORY:'предварительный результат',
+        ELIGIBLE_FOR_INDEPENDENT_REVIEW:'нужна независимая проверка'}[stats.state]||stats.state)+
+      '. Причинный эффект не подтверждён.';
+    $('r24ControlRate').textContent=percent(stats.controlRatePct);
+    $('r24OfferRate').textContent=percent(stats.offerRatePct);
+    $('r24Difference').textContent=typeof stats.differencePp==='number'?
+      stats.differencePp.toLocaleString('ru-RU',{maximumFractionDigits:2})+' п.п.':'—';
+    $('r24Interval').textContent=stats.interval95Pp?
+      'Приблизительный 95% интервал разницы: '+
+      stats.interval95Pp.map(v=>v.toLocaleString('ru-RU')).join(' — ')+
+      ' п.п. Не учитывает кластеризацию и ошибки отбора.':
+      'Статистический интервал ещё не доступен.';
+    $('r24Economics').textContent=econ.state==='SCENARIO_ONLY'&&
+       typeof econ.observedDifferenceScenarioRub==='number'?
+      'Сценарная модель: '+currencies.format(econ.observedDifferenceScenarioRub)+
+      '; безубыточная разница: '+percent(econ.breakEvenDifferencePp)+
+      '. Это не реальная прибыль.':
+      'Финансовая модель не готова: требуется проверить исходные допущения.';
+    for(const code of report.quality.issues)
+      appendText(warnings,'li',R24_ISSUES[code]||'Требует проверки: '+code,'small');
+    if(report.quality.issues.length===0)
+      appendText(warnings,'li','Автоматические проверки не выявили нарушений. Первичные данные всё ещё требуют подтверждения.','small');
+    for(const action of report.decisions)
+      appendText(actions,'li',action.title+'. '+action.next+
+        ' Подтверждение: '+action.evidence,'small');
+  }catch{
+    summary.className='alert';
+    summary.textContent='Аналитика R24 недоступна. Нельзя принимать решения без проверенных данных.';
+    $('r24ControlRate').textContent='—';$('r24OfferRate').textContent='—';
+    $('r24Difference').textContent='—';$('r24Interval').textContent='';
+    $('r24Economics').textContent='';
   }
 }
 async function loadReport(){
@@ -1141,6 +1208,13 @@ $('r20Refresh').addEventListener('click',()=>safely(()=>loadR20Inspection()));
 $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
+$('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r24Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот руководителя.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r24/brief.csv',
+    'osmanx-guest-r24-aggregate-brief.csv');
+  setStatus('Проверяемый R24 CSV сохранён без персональных данных.');
+}));
 $('operationsRefresh').addEventListener('click',()=>safely(async()=>{
   await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
 }));

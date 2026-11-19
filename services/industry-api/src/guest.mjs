@@ -16,6 +16,11 @@ import {loadR18Anchor} from './guest-r18-anchor.mjs';
 import {inspectR20Pilot} from './guest-r20-inspection.mjs';
 import {auditR21Database} from './guest-r21-db-audit.mjs';
 import {inspectR23Panel} from './guest-r23-panel.mjs';
+import {inspectR24AggregateQuality} from './guest-r24-quality.mjs';
+import {summarizeR24Retention} from './guest-r24-statistics.mjs';
+import {modelR24Economics} from './guest-r24-economics.mjs';
+import {buildR24Playbook} from './guest-r24-playbook.mjs';
+import {createR24Brief,r24BriefCsv} from './guest-r24-brief.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -779,6 +784,39 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       diagnostic:diagnoseAggregates({pilot,observations:rows})
     };
   }));
+
+  // R24: usable guest retention intelligence from existing validated AGGREGATES.
+  // Both routes are GET-only, owner/manager+tenant-scoped and cannot mutate
+  // a pilot, assign an action, lift STOP or enable data collection.
+  async function r24Intelligence(db,s,pilotId){
+    const pilot=await getPilot(db,s.tenant_id,pilotId);
+    const rows=await activeObservations(db,s.tenant_id,pilot.id);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    const quality=inspectR24AggregateQuality({pilot,observations:rows});
+    const statistics=summarizeR24Retention(quality);
+    const economics=modelR24Economics({
+      plan:pilot.plan,quality,statistics
+    });
+    const playbook=buildR24Playbook({
+      quality,statistics,economics,stopActive:hold?.active===true
+    });
+    return createR24Brief({
+      pilotId:pilot.id,version:pilot.version,phase:pilot.phase,
+      evidenceDigest:proof(pilot,rows),quality,statistics,
+      economics,playbook,stopActive:hold?.active===true
+    });
+  }
+  app.get(P+'/pilots/:id/r24/intelligence',req=>forTenant(req,MANAGE,
+    async(db,s)=>r24Intelligence(db,s,req.params.id)));
+  app.get(P+'/pilots/:id/r24/brief.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const brief=await r24Intelligence(db,s,req.params.id);
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r24-aggregate-brief.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r24BriefCsv(brief));
+    }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
   app.get(P+'/pilots/:id/actions',req=>forTenant(req,null,async(db,s)=>{

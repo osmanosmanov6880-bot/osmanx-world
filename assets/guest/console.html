@@ -133,6 +133,29 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r24Panel" hidden aria-labelledby="r24Heading">
+  <hr class="separator">
+  <span class="eyebrow">R24 / Интеллект решений</span>
+  <h3 id="r24Heading">Что показывают повторные визиты</h3>
+  <p id="r24Status" class="info" role="status" aria-live="polite">Анализ агрегатов пока не загружен.</p>
+  <div class="triple" aria-label="Наблюдаемые показатели">
+    <div><strong>Контроль</strong><p id="r24ControlRate">—</p></div>
+    <div><strong>Предложение</strong><p id="r24OfferRate">—</p></div>
+    <div><strong>Разница</strong><p id="r24Difference">—</p></div>
+  </div>
+  <p id="r24Interval" class="small"></p>
+  <p id="r24Economics" class="small"></p>
+  <h4>Ограничения и ошибки данных</h4>
+  <ul id="r24Quality" class="items"></ul>
+  <h4>Что проверить дальше</h4>
+  <ol id="r24Decisions" class="items"></ol>
+  <div class="actions">
+    <button id="r24Refresh" type="button" class="secondary">Пересчитать по данным пилота</button>
+    <button id="r24Download" type="button" class="secondary">Скачать проверяемый CSV</button>
+  </div>
+  <p class="small">Разница долей и финансовый сценарий не являются доказательством причины ухода гостей или фактической прибыли. Данные только текущей компании. Управленческие действия не выполняются автоматически.</p>
+</section>
+
 <section id="r23Panel" hidden aria-labelledby="r23Heading">
   <hr class="separator">
   <span class="eyebrow">R23 / Контролируемая подготовка выпуска</span>

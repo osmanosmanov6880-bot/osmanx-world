@@ -208,6 +208,39 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(handoff.customerGo,false);
   assert.equal(handoff.productionAuthorized,false);
   assert.equal(JSON.stringify(handoff).includes('PRIVATE KEY'),false);
+  const intelligencePath='/guest/pilots/'+pilotRow.id+'/r24/intelligence';
+  assert.equal((await call('GET',intelligencePath,tenants[1].auth)).status,404);
+  assert.equal((await call('GET',intelligencePath)).status,401);
+  const r24=expect(await call('GET',intelligencePath,own),200);
+  assert.equal(r24.schema,'osmanx.guest.r24.manager-brief.v1');
+  assert.equal(r24.observedPeriods,0);
+  assert.equal(r24.statistics.state,'NO_DATA');
+  assert.equal(r24.guestIdentifiersIncluded,false);
+  assert.equal(r24.causalEffectProven,false);
+  assert.equal(r24.customerGo,false);
+  assert.equal(r24.productionAuthorized,false);
+  assert.equal(JSON.stringify(r24).includes('PRIVATE KEY'),false);
+  const briefPath='/guest/pilots/'+pilotRow.id+'/r24/brief.csv';
+  const foreignBrief=await fetch(url+API+briefPath,{
+    headers:{Origin:ORIGIN,Accept:'text/csv',
+      Cookie:tenants[1].auth.cookie,
+      'X-CSRF-Token':tenants[1].auth.csrf},
+    redirect:'error'
+  });
+  assert.equal(foreignBrief.status,404);
+  const ownedBrief=await fetch(url+API+briefPath,{
+    headers:{Origin:ORIGIN,Accept:'text/csv',
+      Cookie:own.cookie,'X-CSRF-Token':own.csrf},
+    redirect:'error'
+  });
+  assert.equal(ownedBrief.status,200);
+  assert.match(ownedBrief.headers.get('content-type')||'',/text\/csv/);
+  const csvBytes=Buffer.from(await ownedBrief.arrayBuffer());
+  assert.equal(csvBytes.subarray(0,3).toString('hex'),'efbbbf');
+  const csv=csvBytes.toString('utf8');
+  assert.ok(csv.includes('SHA-256'));
+  assert.equal(csv.includes(tenants[0].email),false);
+  assert.equal(csv.includes(tenants[1].email),false);
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
@@ -286,6 +319,12 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(afterStopR23.checks.independentSignedPilot,false);
   assert.equal(afterStopR23.localTechnicalPossible,false);
   assert.equal(afterStopR23.customerGo,false);
+  const stoppedIntel=expect(await call('GET',intelligencePath,own),200);
+  assert.equal(stoppedIntel.observedPeriods,2);
+  assert.equal(stoppedIntel.customerGo,false);
+  assert.equal(stoppedIntel.productionAuthorized,false);
+  assert.ok(typeof stoppedIntel.statistics.differencePp==='number');
+  assert.ok(stoppedIntel.quality.issues.includes('OUTCOME_WINDOW_NOT_COMPLETED'));
   const grants=(await admin.query(
     "SELECT has_table_privilege('industry_app','industry.guest_r19_collection_events','DELETE') AS del,"+
     "has_table_privilege('industry_app','industry.guest_r19_collection_events','UPDATE') AS upd"
