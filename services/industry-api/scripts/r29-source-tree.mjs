@@ -89,7 +89,7 @@ export async function fetchR29SourceTree({
     if(!response.ok)throw Error('R29 GitHub source unavailable');
     return response.json();
   };
-  const mainSha=previous?.previous?.mainComparison?.mainSha;
+  const mainSha=previous?.mainComparison?.mainSha;
   const [r28,run,ancestry,sourceCommit,mainCommit,mainCompare]=
     await Promise.all([
       get('/pulls/'+R28_PR.number),
