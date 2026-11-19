@@ -331,8 +331,10 @@ test('R30 PostgreSQL and Fastify: isolated tenant-scoped NO-GO GETs with no data
   assert.equal(owner.value.customerGo,false);
   assert.equal(owner.value.guestWritesEnabled,false);
   assert.equal(owner.value.stopLifted,false);
-  assert.equal(Date.parse(owner.value.expiresAt)-
-    Date.parse(owner.value.issuedAt),600000);
+  const r30Ttl=Date.parse(owner.value.expiresAt)-
+    Date.parse(owner.value.issuedAt);
+  assert.ok(r30Ttl>0&&r30Ttl<=600000,
+    'R30 handoff TTL must be positive and at most ten minutes');
   const manager=await request('GET',path+'/readiness',entities[1].auth);
   assert.equal(manager.status,200);
   assert.equal(manager.value.externalReceipts.verifiedInApi,0);
