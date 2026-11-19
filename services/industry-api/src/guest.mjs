@@ -1081,8 +1081,9 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     }));
   app.get(P+'/pilots/:id/r27/handoff.csv',(req,reply)=>forTenant(req,MANAGE,
     async(db,s)=>{
-      const now=new Date();
       const packet=await r27Readiness(db,s,req.params.id);
+      // Verify after issuance, never before the handoff timestamp.
+      const now=new Date();
       reply.header('Content-Type','text/csv; charset=utf-8');
       reply.header('Content-Disposition',
         'attachment; filename="osmanx-guest-r27-operator-handoff.csv"');
