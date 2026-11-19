@@ -288,10 +288,10 @@ test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes
     'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
   )).rows[0].n;
   assert.equal(unchanged,2);
-  const stopped=await request('GET','/guest/pilots/'+pilot+'/r27/readiness',
+  const r27Stop=await request('GET','/guest/pilots/'+pilot+'/r27/readiness',
     entities[0].auth);
-  assert.equal(stopped.status,200);
-  assert.equal(stopped.value.decision.stage,'SAFETY_HOLD');
-  assert.equal(stopped.value.customerGo,false);
-  assert.equal(stopped.value.productionAuthorized,false);
+  assert.equal(r27Stop.status,200);
+  assert.equal(r27Stop.value.decision.stage,'SAFETY_HOLD');
+  assert.equal(r27Stop.value.customerGo,false);
+  assert.equal(r27Stop.value.productionAuthorized,false);
 });
