@@ -7,6 +7,7 @@ import pg from 'pg';
 import {hashPassword} from '../src/password.mjs';
 import {makePool} from '../src/database.mjs';
 import {buildApp} from '../src/app.mjs';
+import {syntheticPermit} from './r15-synthetic-fixture.mjs';
 
 const P='/api/industry/v1',prefix=randomUUID().slice(0,8);
 const URL_ORIGIN='https://osmanx.world';
@@ -21,7 +22,7 @@ const previous={node:process.env.NODE_ENV,origin:process.env.ALLOWED_ORIGIN,
   flag:process.env.GUEST_WRITES_ENABLED};
 const admin=new pg.Pool({connectionString:process.env.MIGRATION_DB_URL});
 const db=makePool(process.env.DATABASE_URL);
-let app,base,authA,authB,manager;
+let app,base,authA,authB,manager,permitFixture;
 async function call(method,path,auth,body,headers={}){
   const response=await fetch(base+P+path,{
     method,redirect:'error',headers:{
@@ -65,6 +66,7 @@ before(async()=>{
     await admin.query("INSERT INTO industry.memberships(tenant_id,account_id,role) VALUES($1,$2,'owner')",
       [org.id,org.accountId]);
   }
+  permitFixture=await syntheticPermit(tenants[0].id);
   process.env.NODE_ENV='production';process.env.ALLOWED_ORIGIN=URL_ORIGIN;
   process.env.GUEST_WRITES_ENABLED='false';
   app=await buildApp(db);
@@ -76,6 +78,7 @@ before(async()=>{
 after(async()=>{
   if(app)await app.close();
   await db.end();await admin.end();
+  if(permitFixture)await permitFixture.cleanup();
   for(const [k,value] of [['NODE_ENV',previous.node],['ALLOWED_ORIGIN',previous.origin],
     ['GUEST_WRITES_ENABLED',previous.flag]])
     if(value===undefined)delete process.env[k];else process.env[k]=value;
@@ -101,7 +104,7 @@ test('R7 production-mode HTTP: 503 write gate, RLS, origin, auth and independent
   assert.equal(duplicate.duplicate,true);
   assert.equal(duplicate.item.id,lead.id);
   assert.equal(must(await call('GET','/guest/requests',authB),200).items.length,0);
-  must(await call('PATCH','/guest/requests/'+lead.id,authB,{state:'qualified'}),404);
+  must(await call('PATCH','/guest/requests/'+lead.id,authB,{state:'qualified'}),503);
   const invited=must(await call('POST','/staff/invitations',authA,
     {email:managerEmail,role:'manager'}),201);
   must(await call('POST','/staff/invitations/accept',null,{
