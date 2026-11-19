@@ -31,6 +31,7 @@ import {makeR27Handoff,r27HandoffCsv} from './guest-r27-handoff.mjs';
 import {evaluateR28ManualGate} from './guest-r28-stage-gate.mjs';
 import {makeR28OperatorPacket,r28OperatorCsv}
   from './guest-r28-operator-packet.mjs';
+import {makeR29Report,r29ReportCsv} from './guest-r29-report.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1121,6 +1122,30 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
         'attachment; filename="osmanx-guest-r28-manual-review.csv"');
       reply.header('Cache-Control','no-store');
       return reply.send(r28OperatorCsv(report,{now:checkedAt}));
+    }));
+
+  // R29 ONLY GET; chain, real staging and actual rollback remain unverified
+  // until separate independent operator actions OUTSIDE this web API.
+  async function r29Readiness(db,s,pilotId){
+    const r28=await r28Readiness(db,s,pilotId);
+    const now=new Date();
+    return makeR29Report({r28,now});
+  }
+  app.get(P+'/pilots/:id/r29/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const result=await r29Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return result;
+    }));
+  app.get(P+'/pilots/:id/r29/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r29Readiness(db,s,req.params.id);
+      const now=new Date();
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r29-staging-review.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r29ReportCsv(report,{now}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
