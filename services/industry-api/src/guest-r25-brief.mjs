@@ -15,7 +15,7 @@ const SHA=/^[a-f0-9]{64}$/;
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const exact=(x,keys)=>x&&typeof x==='object'&&!Array.isArray(x)&&
   Object.keys(x).sort().join('|')===[...keys].sort().join('|');
-export function makeR25Brief({pilot,rows,r24,hold=false,now=new Date()}={}){
+export function makeR25Brief({pilot,rows,r24,hold=false,recordingAvailable=false,now=new Date()}={}){
   if(!UUID.test(pilot?.id||'')||
     !Number.isSafeInteger(pilot?.version)||pilot.version<1||
     !SHA.test(r24?.evidenceDigest||'')||
@@ -48,6 +48,7 @@ export function makeR25Brief({pilot,rows,r24,hold=false,now=new Date()}={}){
     tallySourceSha:sourceDigest,
     profile,board,nextExperiment,
     emergencyStopActive:hold===true,
+    recordingAvailable:recordingAvailable===true&&hold!==true,
     anonymousCategoryEstimatesOnly:true,
     individualGuestsLinked:false,causalExplanationProven:false,
     confidenceInCustomerMotives:false,
@@ -63,7 +64,7 @@ export function verifyR25Brief(report,{pilotId,r24EvidenceSha}={}){
   if(!exact(report,[
     'schema','pilotId','version','phase','r24EvidenceSha',
     'r24RetainedReturns','tallySourceSha','profile','board',
-    'nextExperiment','emergencyStopActive',
+    'nextExperiment','emergencyStopActive','recordingAvailable',
     'anonymousCategoryEstimatesOnly','individualGuestsLinked',
     'causalExplanationProven','confidenceInCustomerMotives',
     'actionsAutomaticallyExecuted','signed','legalGo','customerGo',
@@ -85,7 +86,9 @@ export function verifyR25Brief(report,{pilotId,r24EvidenceSha}={}){
        report?.profile?.individualReasonsKnown!==false)
       blockers.push('INVALID_SIGNAL_PROFILE');
   }catch{blockers.push('INVALID_REPORT_CONTENT');}
-  if(report?.anonymousCategoryEstimatesOnly!==true||
+  if(typeof report?.recordingAvailable!=='boolean'||
+     (report?.emergencyStopActive===true&&report?.recordingAvailable===true)||
+     report?.anonymousCategoryEstimatesOnly!==true||
      report?.individualGuestsLinked!==false||
      report?.causalExplanationProven!==false||
      report?.confidenceInCustomerMotives!==false||
