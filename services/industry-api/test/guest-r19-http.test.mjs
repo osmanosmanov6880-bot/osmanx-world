@@ -158,6 +158,20 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(preflight.checks.signedTenantAndPilot,true);
   assert.equal(preflight.checks.exactRegisteredProtocol,true);
   assert.equal(preflight.maxDailyWrites,2);
+  // R20 is accessible only to this authenticated company. It is a GET
+  // inspection: no signed keys, approval artifacts or live writes returned.
+  const inspectionPath='/guest/pilots/'+pilotRow.id+'/r20/inspection';
+  assert.equal((await call('GET',inspectionPath,tenants[1].auth)).status,404);
+  assert.equal((await call('GET',inspectionPath)).status,401);
+  const inspection=expect(await call('GET',inspectionPath,own),200);
+  assert.equal(inspection.schema,'osmanx.guest.r20.pilot-inspection.v1');
+  assert.equal(inspection.checks.r19ScopeExact,true);
+  assert.equal(inspection.daily.used,0);
+  assert.equal(inspection.daily.auditEvents,0);
+  assert.equal(inspection.customerGo,false);
+  assert.equal(inspection.productionAuthorized,false);
+  assert.equal(inspection.legalGo,false);
+  assert.equal(JSON.stringify(inspection).includes('PRIVATE KEY'),false);
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
@@ -215,6 +229,10 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(stopped.stopped,true);
   const lastStatus=expect(await call('GET','/guest/admission/self',own),200);
   assert.equal(lastStatus.pilotCollection.valid,false);
+  const inspectionStopped=expect(await call('GET',inspectionPath,own),200);
+  assert.equal(inspectionStopped.technicalReviewPossible,false);
+  assert.equal(inspectionStopped.checks.r19ScopeExact,false);
+  assert.equal(inspectionStopped.customerGo,false);
   assert.equal((await call('POST',path,own,{
     expectedVersion:3,observation:{date:thirdDate,control:80,controlReturn:10,offer:80,offerReturn:20}},
     {'Idempotency-Key':'r19-after-stop-'+tag})).status,503);
