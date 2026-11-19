@@ -33,6 +33,7 @@ import {makeR28OperatorPacket,r28OperatorCsv}
   from './guest-r28-operator-packet.mjs';
 import {makeR29Report,r29ReportCsv} from './guest-r29-report.mjs';
 import {makeR30Report,r30ReportCsv} from './guest-r30-report.mjs';
+import {makeR31OperatorReport,r31OperatorCsv} from './guest-r31-report.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1170,6 +1171,29 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
         'attachment; filename="osmanx-guest-r30-independent-review.csv"');
       reply.header('Cache-Control','no-store');
       return reply.send(r30ReportCsv(report,{now:new Date()}));
+    }));
+
+  // R31 operator review: only tenant-scoped MANAGE GETs. Never import user
+  // claims or call external staging from a logged-in browser session.
+  async function r31Readiness(db,s,pilotId){
+    const r30=await r30Readiness(db,s,pilotId);
+    const now=new Date();
+    return makeR31OperatorReport({r30,now});
+  }
+  app.get(P+'/pilots/:id/r31/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r31Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return report;
+    }));
+  app.get(P+'/pilots/:id/r31/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r31Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r31-manual-handoff.csv"');
+      return reply.send(r31OperatorCsv(report,{now:new Date()}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.

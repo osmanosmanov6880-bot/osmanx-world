@@ -81,6 +81,7 @@ function showAuth(){
   $('r28Panel').hidden=true;
   $('r29Panel').hidden=true;
   $('r30Panel').hidden=true;
+  $('r31Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -432,6 +433,7 @@ async function openPilot(id){
   await loadR28OperatorStatus();
   await loadR29Acceptance();
   await loadR30Acceptance();
+  await loadR31Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1131,6 +1133,45 @@ async function loadR30Acceptance(){
     $('r30Expires').textContent='—';
   }
 }
+const R31_GAPS={
+  R31_SEVENTEEN_PRS_REQUIRE_HUMAN_REVIEW:'17 PR требуют ручного code review и поочерёдного объединения',
+  R31_FRESH_POST_MERGE_MAIN_CI_MISSING:'Нет CI окончательной объединённой ветки main',
+  R31_REAL_STAGING_OPERATOR_GET_NOT_EXECUTED_IN_API:'Реальный staging проверяется отдельно одобренным оператором',
+  R31_FOUR_SIGNED_INDEPENDENT_WITNESSES_MISSING:'Нет четырёх независимых Ed25519 подтверждений',
+  R31_OFFSITE_DR_PROOF_AND_ROLLBACK_NOT_VERIFIED:'Не доказаны внешнее восстановление и настоящий откат',
+  R31_LAWFUL_BASIS_AND_CLIENT_CONTRACT_NOT_VERIFIED:'Не проверены законное основание и договор',
+  R31_MANUAL_CHANGE_WINDOW_UNAPPROVED:'Не утверждено окно изменений'
+};
+async function loadR31Acceptance(){
+  const panel=$('r31Panel'),list=$('r31Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r31/readiness');
+    if(x.schema!=='osmanx.guest.r31.operator-handoff.v1'||
+      x.pilotId!==model.selected.item.id||x.sourcePrsRequired!==17||
+      x.sourcePrsCheckedInApi!==0||x.customerGo!==false||
+      x.productionGo!==false||x.guestWritesEnabled!==false||
+      x.stopLifted!==false||x.staging?.realVpsProbedInApi!==false||
+      x.witnesses?.verifiedInApi!==0||
+      !Array.isArray(x.blockers)||
+      !x.blockers.includes('R31_FRESH_POST_MERGE_MAIN_CI_MISSING'))
+      throw Error('R31 evidence rejected');
+    $('r31Status').textContent='NO-GO — внешние доказательства не подтверждены';
+    $('r31Sources').textContent='0 / 17';
+    $('r31Witnesses').textContent='0 / 4';
+    $('r31Expiry').textContent=new Date(x.expiresAt).toLocaleString('ru-RU',{
+      year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'
+    });
+    for(const code of x.blockers)
+      appendText(list,'li',R31_GAPS[code]||R30_GAPS[code]||R29_GAPS[code]||code,'small');
+  }catch{
+    $('r31Status').textContent='NO-GO — проверка R31 недоступна';
+    $('r31Sources').textContent='—';
+    $('r31Witnesses').textContent='—';
+    $('r31Expiry').textContent='—';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1623,6 +1664,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r31Refresh').addEventListener('click',()=>safely(()=>loadR31Acceptance()));
+$('r31Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r31/report.csv',
+    'osmanx-guest-r31-manual-handoff.csv');
+  setStatus('Экспорт R31: NO-GO. Независимая приёмка обязательна.');
+}));
 $('r30Refresh').addEventListener('click',()=>safely(()=>loadR30Acceptance()));
 $('r30Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот');
