@@ -153,6 +153,23 @@ if grep -Fq '"independentReadinessSupportedR22":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R23 is review-only. Require full R22 ancestry, no guest write defaults
+# and all five operator components in every reproducible release.
+if grep -Fq '"manualStagingSupportedR23":true' "$root/RELEASE.json"; then
+  grep -Fq '"independentReadinessSupportedR22":true' "$root/RELEASE.json" || {
+    echo "R23 depends on R22 immutable release content" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R23 cannot activate live guest writes" >&2;exit 3;
+  }
+  for f in scripts/r23-merge-plan.mjs \
+    scripts/r23-http-canary.mjs scripts/r23-tenant-isolation.mjs \
+    scripts/r23-operator-handoff.mjs src/guest-r23-panel.mjs; do
+    test -f "$root/$f" || {
+      echo "R23 operator component missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
