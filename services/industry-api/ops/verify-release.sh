@@ -343,6 +343,22 @@ if grep -Fq '"independentReviewBundleSupportedR33":true' "$root/RELEASE.json"; t
     test -f "$root/$f" || { echo "Missing R33 module $f" >&2; exit 3; }
   done
 fi
+# R34 operator release review is source-only and always defaults to NO-GO.
+if grep -Fq '"operatorReleaseReviewSupportedR34":true' "$root/RELEASE.json"; then
+  grep -Fq '"independentReviewBundleSupportedR33":true' "$root/RELEASE.json" || {
+    echo "R34 requires R33 source" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R34 may not enable customer writes" >&2; exit 3;
+  }
+  for f in src/guest-r34-source.mjs src/guest-r34-host-evidence.mjs \
+    src/guest-r34-quorum.mjs src/guest-r34-custody.mjs \
+    src/guest-r34-client.mjs src/guest-r34-acceptance.mjs \
+    src/guest-r34-report.mjs scripts/r34-review-github.mjs \
+    scripts/r34-operator-staging.mjs scripts/r34-offline-review.mjs; do
+    test -f "$root/$f" || { echo "Missing R34 file $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
