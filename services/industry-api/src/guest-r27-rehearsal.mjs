@@ -60,7 +60,8 @@ function syntheticInputs(id){
   });
   return {pilot,obs,tally,stop};
 }
-function buildSyntheticCase(id){
+export function buildR27SyntheticCase(id){
+  if(!Object.hasOwn(EXPECTED,id))throw new TypeError('Unknown synthetic case');
   const {pilot,obs,tally,stop}=syntheticInputs(id);
   const quality=inspectR24AggregateQuality({
     pilot,observations:obs,now:FIXED_TIME});
@@ -99,7 +100,7 @@ function buildSyntheticCase(id){
 export function runR27FirstClientRehearsal(){
   const cases=Object.entries(EXPECTED).map(([id,expected])=>{
     try{
-      const x=buildSyntheticCase(id),a=x.decision;
+      const x=buildR27SyntheticCase(id),a=x.decision;
       const got=a.state,success=got===expected&&
         a.customerGo===false&&a.productionAuthorized===false&&
         a.causalEffectProven===false&&a.automaticActionTaken===false&&
