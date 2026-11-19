@@ -136,6 +136,23 @@ if grep -Fq '"hostPostureSupportedR21":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R22 contains only non-activating release, signed host and two-copy DR
+# evidence modules. Even a verified artifact is NOT a production permission.
+if grep -Fq '"independentReadinessSupportedR22":true' "$root/RELEASE.json"; then
+  grep -Fq '"hostPostureSupportedR21":true' "$root/RELEASE.json" || {
+    echo "R22 release requires R21 source provenance" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R22 must ship with data collection disabled" >&2;exit 3;
+  }
+  for f in scripts/r22-release-chain.mjs \
+    scripts/r22-host-witness.mjs scripts/r22-dr-quorum.mjs \
+    scripts/r22-preflight-review.mjs; do
+    test -f "$root/$f" || {
+      echo "R22 source release missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

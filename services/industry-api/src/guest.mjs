@@ -528,6 +528,58 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
     };
   }));
 
+  // R22 combined first-pilot inspection remains strictly read-only.
+  // Detached host, DR and two-human evidence are verified OFFLINE; never
+  // infer their validity from mere filesystem existence on an API server.
+  app.get(P+'/pilots/:id/r22/launch-review',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    let permit=null,witness=null,anchor=null,scope=null;
+    try{permit=await inspectR16Tenant(s.tenant_id,process.env);}catch{}
+    try{witness=await loadR17Witness(process.env);}catch{}
+    if(witness){
+      try{anchor=await loadR18Anchor(process.env,witness);}catch{}
+    }
+    if(anchor){
+      try{scope=await loadR19Scope(process.env,anchor);}catch{}
+    }
+    const permitForPilot=scope?.valid===true&&
+      scope.tenantId===s.tenant_id&&scope.pilotId===pilot.id;
+    const r21=await auditR21Database(db,{
+      tenantId:s.tenant_id,pilotId:pilot.id,
+      retentionDays:permitForPilot?scope.record.policy.retentionDays:30
+    });
+    const r20=await inspectR20Pilot(db,{
+      tenantId:s.tenant_id,pilot,hold,permit,witness,anchor,scope
+    });
+    const checks={
+      tenantIsolated:true,
+      signedPilotScope:permitForPilot,
+      emergencyHoldInactive:hold?.active!==true,
+      sourceProtocolLocked:r20.checks.registeredProtocol===true,
+      quotaMatchesAppendOnlyEvents:r21.checks.auditMatchesQuota===true,
+      retentionRequiresNoAction:r21.checks.noOverRetentionDrift===true,
+      databaseSecurityPasses:r21.technicalPostureReady===true,
+      historicalTechnicalPasses:r20.technicalReviewPossible===true,
+      independentVpsWitness:false,
+      twoDistinctDrCopiesVerified:false,
+      twoHumanReleaseTicketVerified:false,
+      allPrsMergedAndMainProtected:false,
+      legalAndOffsiteApproved:false
+    };
+    const pending=Object.entries(checks).filter(([,v])=>v!==true)
+      .map(([key])=>key);
+    return {schema:'osmanx.guest.r22.launch-review.v1',
+      pilotId:pilot.id,phase:pilot.phase,checks,pending,
+      operatorReviewNeeded:true,localTechnicalReviewPossible:[
+        'signedPilotScope','emergencyHoldInactive','sourceProtocolLocked',
+        'quotaMatchesAppendOnlyEvents','retentionRequiresNoAction',
+        'databaseSecurityPasses','historicalTechnicalPasses'
+      ].every(k=>checks[k]===true),
+      daily:r20.daily,customerGo:false,legalGo:false,
+      productionAuthorized:false,productionChanged:false};
+  }));
+
   // R12 human pilot gate. Optional enrollment is irreversible; legacy pilots stay compatible.
   app.get(P+'/pilots/:id/launch/gate',req=>forTenant(req,null,async(db,s)=>{
     const pilot=await getPilot(db,s.tenant_id,req.params.id);

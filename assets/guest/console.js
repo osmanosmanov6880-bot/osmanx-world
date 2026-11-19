@@ -72,6 +72,7 @@ function showAuth(){
   $('r19Panel').hidden=true;
   $('r20Panel').hidden=true;
   $('r21Panel').hidden=true;
+  $('r22Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -414,6 +415,7 @@ async function openPilot(id){
   await loadR19Preflight();
   await loadR20Inspection();
   await loadR21Posture();
+  await loadR22LaunchReview();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -547,6 +549,52 @@ async function loadR21Posture(){
     out.className='alert';
     out.textContent='Невозможно проверить состояние R21. Решение — NO-GO.';
     $('r21Summary').textContent='';
+  }
+}
+const R22_LABELS={
+  tenantIsolated:'Проверка относится к текущей компании',
+  signedPilotScope:'Действует подписанный допуск именно этого пилота',
+  emergencyHoldInactive:'Отсутствует аварийная остановка',
+  sourceProtocolLocked:'Исследование имеет зафиксированный протокол',
+  quotaMatchesAppendOnlyEvents:'Лимит операций совпадает с неизменяемым журналом',
+  retentionRequiresNoAction:'Нет просроченных записей журнала',
+  databaseSecurityPasses:'PostgreSQL: миграции, RLS и полномочия проверены',
+  historicalTechnicalPasses:'Условия запуска и данные R12–R21 технически согласованы',
+  independentVpsWitness:'Независимый свидетель фактической конфигурации VPS',
+  twoDistinctDrCopiesVerified:'Восстановлены и сверены две отдельные DR-копии',
+  twoHumanReleaseTicketVerified:'Два независимых оператора подтвердили релиз',
+  allPrsMergedAndMainProtected:'Все зависимые PR слиты, ветка main защищена',
+  legalAndOffsiteApproved:'Договор, правовые основания и WORM-хранение подтверждены'
+};
+async function loadR22LaunchReview(){
+  const panel=$('r22Panel'),output=$('r22Status'),list=$('r22Checklist');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const report=await api('/guest/pilots/'+model.selected.item.id+'/r22/launch-review');
+    if(report.schema!=='osmanx.guest.r22.launch-review.v1'||
+       !report.checks||!Array.isArray(report.pending)||
+       report.customerGo!==false||report.productionAuthorized!==false)
+      throw Error('Недостоверный R22 ответ');
+    output.className='alert';
+    const passed=report.localTechnicalReviewPossible===true;
+    output.textContent=passed?
+      'Локальные проверки пройдены. Реальный запуск заблокирован до независимых подписей, внешнего восстановления, правового допуска и выпуска через main.':
+      'Внутренние технические условия не выполнены. Сбор данных первого клиента запрещён.';
+    for(const [code,label] of Object.entries(R22_LABELS))
+      appendText(list,'li',
+        (report.checks[code]===true?'Проверено: ':'Ожидает подтверждения: ')+label,
+        'small');
+    const daily=report.daily;
+    $('r22Budget').textContent=daily&&Number.isSafeInteger(daily.used)?
+      'Операций сегодня: '+daily.used+' из '+daily.max+
+      ', в аудите '+daily.auditEvents+
+      '. Успешные тесты не заменяют самостоятельный допуск клиента.':
+      'Дневной лимит и состояние аудита не подтверждены.';
+  }catch{
+    output.className='alert';
+    output.textContent='R22: проверка недоступна. Это NO-GO.';
+    $('r22Budget').textContent='';
   }
 }
 async function loadReport(){
@@ -1038,6 +1086,7 @@ $('launchGateExport').addEventListener('click',()=>safely(()=>downloadLaunchGate
 $('r19Refresh').addEventListener('click',()=>safely(()=>loadR19Preflight()));
 $('r20Refresh').addEventListener('click',()=>safely(()=>loadR20Inspection()));
 $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
+$('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('operationsRefresh').addEventListener('click',()=>safely(async()=>{
   await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
 }));

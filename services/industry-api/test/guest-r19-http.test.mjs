@@ -184,6 +184,18 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(posture.independentHostAuditVerified,false);
   assert.equal(JSON.stringify(posture).includes('PRIVATE KEY'),false);
   assert.equal(JSON.stringify(posture).includes('r19-first-'+tag+'@'),false);
+  const r22Path='/guest/pilots/'+pilotRow.id+'/r22/launch-review';
+  assert.equal((await call('GET',r22Path,tenants[1].auth)).status,404);
+  assert.equal((await call('GET',r22Path)).status,401);
+  const r22=expect(await call('GET',r22Path,own),200);
+  assert.equal(r22.schema,'osmanx.guest.r22.launch-review.v1');
+  assert.equal(r22.checks.signedPilotScope,true);
+  assert.equal(r22.checks.independentVpsWitness,false);
+  assert.equal(r22.checks.twoDistinctDrCopiesVerified,false);
+  assert.equal(r22.checks.allPrsMergedAndMainProtected,false);
+  assert.equal(r22.customerGo,false);
+  assert.equal(r22.productionAuthorized,false);
+  assert.equal(JSON.stringify(r22).includes('PRIVATE KEY'),false);
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
@@ -254,6 +266,10 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(afterStopPosture.technicalPostureReady,false);
   assert.equal(afterStopPosture.auditEventCount,2);
   assert.equal(afterStopPosture.customerGo,false);
+  const afterStopR22=expect(await call('GET',r22Path,own),200);
+  assert.equal(afterStopR22.checks.signedPilotScope,false);
+  assert.equal(afterStopR22.localTechnicalReviewPossible,false);
+  assert.equal(afterStopR22.customerGo,false);
   const grants=(await admin.query(
     "SELECT has_table_privilege('industry_app','industry.guest_r19_collection_events','DELETE') AS del,"+
     "has_table_privilege('industry_app','industry.guest_r19_collection_events','UPDATE') AS upd"

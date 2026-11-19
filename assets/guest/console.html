@@ -133,6 +133,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r22Panel" hidden aria-labelledby="r22Heading">
+  <hr class="separator">
+  <span class="eyebrow">R22 / Независимая приёмка первого клиента</span>
+  <h3 id="r22Heading">Согласование релиза, безопасность и восстановление</h3>
+  <p id="r22Status" class="alert" role="status" aria-live="polite">Доступность реального запуска ещё не проверена.</p>
+  <ul id="r22Checklist" class="items"></ul>
+  <p id="r22Budget" class="small"></p>
+  <div class="actions"><button type="button" id="r22Refresh" class="secondary">Проверить R22</button></div>
+  <p class="small">Этот кабинет проверяет только данные своей компании. Внешние подписи операторов VPS, два независимых DR-восстановления, согласия и успешное слияние PR здесь не выдаются. Нет кнопки включения production или отмены аварийной остановки.</p>
+</section>
+
 <section id="r21Panel" hidden aria-labelledby="r21Heading">
   <hr class="separator">
   <span class="eyebrow">R21 / Аудит безопасности инфраструктуры</span>
