@@ -118,6 +118,24 @@ if grep -Fq '"releaseReviewSupportedR20":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R21 operator gates are read-only. Retain all R14-R20 modules and make
+# any packaged R21 claim dependent on the full immutable source graph.
+if grep -Fq '"hostPostureSupportedR21":true' "$root/RELEASE.json"; then
+  grep -Fq '"releaseReviewSupportedR20":true' "$root/RELEASE.json" || {
+    echo "R21 package missing R20 provenance" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R21 package must keep production collection disabled" >&2;exit 3;
+  }
+  for f in src/guest-r21-db-audit.mjs \
+    scripts/r21-release-chain.mjs scripts/r21-host-posture.mjs \
+    scripts/r21-db-audit.mjs scripts/r21-evidence-bundle.mjs \
+    scripts/r21-assemble.mjs; do
+    test -f "$root/$f" || {
+      echo "R21 required operator module missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
