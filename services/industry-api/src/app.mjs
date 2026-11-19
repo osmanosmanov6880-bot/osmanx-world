@@ -8,6 +8,7 @@ import { registerScheduleRoutes, lockResource, assertBookable } from './schedule
 import { registerIntegrationRoutes } from './integrations.mjs';
 import { registerGuestRoutes } from './guest.mjs';
 import { probeGuestDatabase } from './readiness.mjs';
+import {loadTenantPermit,assertTenantPermission} from './guest-tenant-authorization.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -69,6 +70,15 @@ export async function buildApp(pool){
       // R10: even an operator enabling writes cannot bypass migration/RLS/least-privilege checks.
       // Fail closed before parsing or mutating any protected Guest records.
       await probeGuestDatabase(pool);
+      // R15: fail closed before authentication or any mutation if the external
+      // signed admission packet is missing, expired, or mismatched to this release.
+      // A valid packet alone never authorizes a request; authentication, CSRF,
+      // tenant membership and existing R12/R13 safeguards still apply.
+      try{
+        req.guestAdmission=await loadTenantPermit(process.env);
+      }catch{
+        throw httpError(503,'Нужен актуальный подписанный допуск R15');
+      }
     }
   });
   app.setErrorHandler((error,req,reply)=>{
@@ -98,6 +108,9 @@ export async function buildApp(pool){
   }
   async function forTenant(request,roles,fn){
     const session=await auth(request);
+    const guestMutation=opt.secure && ['POST','PATCH','PUT','DELETE'].includes(request.method) &&
+      (request.url===PREFIX+'/guest'||request.url.startsWith(PREFIX+'/guest/'));
+    if(guestMutation)assertTenantPermission(request.guestAdmission,session.tenant_id);
     return withTenant(pool,session.tenant_id,async db=>{
       const role=await requireMembership(db,session.tenant_id,session.account_id,roles);
       return fn(db,session,role);

@@ -7,6 +7,7 @@ import pg from 'pg';
 import {hashPassword} from '../src/password.mjs';
 import {makePool} from '../src/database.mjs';
 import {buildApp} from '../src/app.mjs';
+import {syntheticPermit} from './r15-synthetic-fixture.mjs';
 
 const P='/api/industry/v1',ORIGIN='https://osmanx.world',tag=randomUUID().slice(0,8);
 const password='Synthetic-Owner-R10-Strong-Pass-2026!';
@@ -17,7 +18,7 @@ const invited='r10-manager-'+tag+'@example.test';
 const prior={node:process.env.NODE_ENV,origin:process.env.ALLOWED_ORIGIN,
   writes:process.env.GUEST_WRITES_ENABLED};
 const db=makePool(process.env.DATABASE_URL),admin=new pg.Pool({connectionString:process.env.MIGRATION_DB_URL});
-let app,base,owner,outsider,manager,managerId;
+let app,base,owner,outsider,manager,managerId,permitFixture;
 const plan={baselinePct:20,liftPp:10,margin:350,discount:12,fixed:1000,fee:25000};
 const protocol={startDate:'2026-11-01',endDate:'2026-11-16',
   outcomeWindowDays:1,allocation:'random',source:'pos',primaryMetric:'repeat_visit'};
@@ -70,6 +71,7 @@ before(async()=>{
     await admin.query("INSERT INTO industry.memberships(tenant_id,account_id,role) VALUES($1,$2,'owner')",
       [entity.id,entity.owner]);
   }
+  permitFixture=await syntheticPermit(own.id);
   process.env.NODE_ENV='production';
   process.env.ALLOWED_ORIGIN=ORIGIN;
   process.env.GUEST_WRITES_ENABLED='false';
@@ -82,6 +84,7 @@ before(async()=>{
 after(async()=>{
   if(app)await app.close();
   await db.end();await admin.end();
+  if(permitFixture)await permitFixture.cleanup();
   for(const [k,v] of [['NODE_ENV',prior.node],['ALLOWED_ORIGIN',prior.origin],
     ['GUEST_WRITES_ENABLED',prior.writes]]){
     if(v===undefined)delete process.env[k];else process.env[k]=v;

@@ -1,0 +1,93 @@
+name: OSMANX Guest R15 tenant admission acceptance
+on:
+  pull_request:
+    branches: [main, feat/guest-r14-production-operations-20261118]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r15-admission.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r15-admission.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r15-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source safety and private evidence checks
+        run: |
+          set -euo pipefail
+          for file in src/guest-tenant-authorization.mjs scripts/r15-review.mjs test/r15-synthetic-fixture.mjs test/guest-r15.test.mjs; do
+            node --check "$file"
+          done
+          grep -Fq 'assertTenantPermission(request.guestAdmission,session.tenant_id)' src/app.mjs
+          grep -Fq 'GUEST_WRITES_ENABLED: "false"' ops/compose.r14.yml
+          test -s ../../docs/GUEST_INTELLIGENCE_R15.md
+          if find . -type f \( -name '*.pem' -o -name '*.key' -o -name 'identity.txt' \) -print -quit | grep -q .; then
+            echo '::error::Private material inside source release'
+            exit 1
+          fi
+      - name: Signed admission and GET-only canary checks
+        run: node --test test/guest-r15.test.mjs
+      - name: Install required server dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Legacy production guard regression
+        run: node --test test/guest-r10-guard.test.mjs
+
+  r15-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: industry_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d industry_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      ALLOWED_ORIGIN: http://localhost
+      MIGRATION_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+      DATABASE_URL: postgres://industry_app:industrypass@127.0.0.1:5432/industry_ci
+      WORKER_DB_URL: postgres://industry_worker:workerpass@127.0.0.1:5432/industry_ci
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Node syntax and packages
+        run: |
+          set -euo pipefail
+          for file in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$file"; done
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Independent least-privilege roles
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+      - name: Migrate and repeat without rewriting prior evidence
+        run: |
+          npm run migrate
+          npm run migrate
+      - name: All PostgreSQL Fastify R7-R15 regression tests
+        run: npm test

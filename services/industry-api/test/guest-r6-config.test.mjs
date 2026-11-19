@@ -85,7 +85,7 @@ test('R6 production mutation gate: live/GET allowed, POST disabled until explici
     process.env.GUEST_WRITES_ENABLED='true';
     const gated=await app.inject({method:'POST',url:'/api/industry/v1/guest/requests',
       payload:{title:'No auth lead',source:'field'}});
-    assert.equal(gated.statusCode,401,'Writes enabled never bypass login');
+    assert.equal(gated.statusCode,503,'R15 signed admission is mandatory before authentication and all writes');
     const enabled=await app.inject({method:'GET',url:'/api/industry/v1/health/ready'});
     assert.equal(enabled.json().guestWritesEnabled,true);
   }finally{

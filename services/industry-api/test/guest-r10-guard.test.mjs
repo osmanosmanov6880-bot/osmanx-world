@@ -59,7 +59,7 @@ test('R10 explicit writes flag never bypasses database migration, RLS or least p
 });
 test('R10 even safe schema and operator flag never bypass authentication',async()=>{
   const r=await tryMutation(safe());
-  assert.equal(r.status,401);
+  assert.equal(r.status,503); // R15 requires external, signed evidence before auth.
   assert.equal(r.probed,1);
   assert.equal(r.unexpected,0); // No session means auth must fail before business writes.
 });
