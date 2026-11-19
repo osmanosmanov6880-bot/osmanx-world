@@ -61,7 +61,7 @@ export function verifyPortableProof(proof,keys,{
       now,minSequence,minRevision,releaseCommit
     });
     if(!r17.valid)blockers.push('invalid_signed_r17_witness');
-    const r18=verifyAnchor(proof.records.anchor,{
+    r18=verifyAnchor(proof.records.anchor,{
       checkpoint:r17.checkpoint,checkpointDigest:r17.checkpointDigest
     },{
       custodian:keys?.custodian,owner:keys?.witnessOwner,
