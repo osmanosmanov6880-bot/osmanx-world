@@ -49,7 +49,7 @@ export function verifyPortableProof(proof,keys,{
     const {bundleDigest,...base}=proof;
     if(hash(base)!==bundleDigest)blockers.push('bundle_digest');
   }catch{blockers.push('bundle_digest');}
-  let r17=null;
+  let r17=null,r18=null;
   try{
     const r16=evaluateRegistry(proof.records.registry,{
       owner:keys?.platformOwner,manager:keys?.platformManager
