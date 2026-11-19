@@ -20,7 +20,7 @@ test('no expiring Runway links or auto-play on gallery',()=>{
 });
 test('all landing pages link to media showcase',()=>{
   for(const path of ['index.html','assets/catalog/index.html','assets/guest/offer.html'])
-    assert.match(read(path),/\/assets\/stories\/index\.html/);
+    assert.match(read(path), /\/assets\/stories\/(?:index|cinema)\.html/);
 });
 test('all commercial case studies are explicitly illustrative',()=>{
   const page=read('assets/stories/index.html');
