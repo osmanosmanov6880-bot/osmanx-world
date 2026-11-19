@@ -83,6 +83,7 @@ function showAuth(){
   $('r30Panel').hidden=true;
   $('r31Panel').hidden=true;
   $('r32Panel').hidden=true;
+  $('r33Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -436,6 +437,7 @@ async function openPilot(id){
   await loadR30Acceptance();
   await loadR31Acceptance();
   await loadR32Acceptance();
+  await loadR33Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1215,6 +1217,51 @@ async function loadR32Acceptance(){
     $('r32Expiry').textContent='—';
   }
 }
+const R33_GAPS={
+  R33_NINETEEN_PRS_REQUIRE_HUMAN_MERGE:'19 PR требуют независимого ревью и последовательного ручного объединения',
+  R33_POST_MERGE_MAIN_CI_REQUIRED:'Нет успешного CI финального main после объединения',
+  R33_TWO_SIGNED_STAGING_WITNESSES_MISSING:'Нет двух подписей независимых свидетелей staging',
+  R33_LIVE_TLS_DNS_AND_VPS_NOT_WITNESSED:'Реальные TLS, DNS и VPS не проверены независимым оператором',
+  R33_DISPOSABLE_ROLLBACK_ONLY:'Проверка отката пока ограничена одноразовой тестовой базой',
+  R33_ACTUAL_OFFSITE_RESTORE_NOT_PROVED:'Отсутствует подтверждение реального внешнего восстановления',
+  R33_CLIENT_PRIVACY_AND_LAWFUL_BASIS_MISSING:'Не проверены договор, политика данных и законное основание',
+  R33_CHANGE_WINDOW_AND_PRODUCTION_APPROVAL_MISSING:'Нет согласованного окна изменения и допуска production'
+};
+async function loadR33Acceptance(){
+  const panel=$('r33Panel'),list=$('r33Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r33/readiness');
+    if(x.schema!=='osmanx.guest.r33.independent-review-readiness.v1'||
+      x.pilotId!==model.selected.item.id||x.source?.prsRequired!==19||
+      x.source?.prsVerifiedInApi!==0||
+      x.staging?.verifiedInApi!==0||
+      x.privacy?.signaturesVerifiedInApi!==0||
+      x.rollback?.liveRollbackPerformed!==false||
+      x.productionAuthorized!==false||x.customerGo!==false||
+      x.stopLifted!==false||x.guestWritesEnabled!==false||
+      !Array.isArray(x.blockers)||
+      !x.blockers.includes('R33_POST_MERGE_MAIN_CI_REQUIRED'))
+      throw Error('R33 status failed closed');
+    $('r33Status').textContent='NO-GO — нужна независимая эксплуатационная приёмка';
+    $('r33Sources').textContent='0 / 19';
+    $('r33Staging').textContent='0 / 2';
+    $('r33Privacy').textContent='0 / 2';
+    $('r33Expiry').textContent='Отчёт действителен до: '+
+      new Date(x.expiresAt).toLocaleString('ru-RU',{
+        year:'numeric',month:'2-digit',day:'2-digit',
+        hour:'2-digit',minute:'2-digit'
+      });
+    for(const code of x.blockers)
+      appendText(list,'li',R33_GAPS[code]||R32_GAPS[code]||
+        R31_GAPS[code]||R30_GAPS[code]||R29_GAPS[code]||code,'small');
+  }catch{
+    $('r33Status').textContent='NO-GO — статус R33 не подтверждён';
+    $('r33Sources').textContent='—';$('r33Staging').textContent='—';
+    $('r33Privacy').textContent='—';$('r33Expiry').textContent='Срок отчёта: —';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1707,6 +1754,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r33Refresh').addEventListener('click',()=>safely(()=>loadR33Acceptance()));
+$('r33Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r33/report.csv',
+    'osmanx-guest-r33-independent-review.csv');
+  setStatus('R33: экспорт NO-GO завершён. Коммерческий запуск запрещён.');
+}));
 $('r32Refresh').addEventListener('click',()=>safely(()=>loadR32Acceptance()));
 $('r32Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот');

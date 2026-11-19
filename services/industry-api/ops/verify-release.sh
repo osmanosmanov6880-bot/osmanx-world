@@ -327,6 +327,22 @@ if grep -Fq '"humanCutoverPreflightSupportedR32":true' "$root/RELEASE.json"; the
     }
   done
 fi
+# R33 source-only operator audit; no live collection, deployment or STOP lift.
+if grep -Fq '"independentReviewBundleSupportedR33":true' "$root/RELEASE.json"; then
+  grep -Fq '"humanCutoverPreflightSupportedR32":true' "$root/RELEASE.json" || {
+    echo "R33 requires R32 source" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R33 may not enable live guest writes" >&2; exit 3;
+  }
+  for f in src/guest-r33-source.mjs src/guest-r33-signatures.mjs \
+    src/guest-r33-staging-witness.mjs src/guest-r33-rollback-ledger.mjs \
+    src/guest-r33-privacy.mjs src/guest-r33-proof-bundle.mjs \
+    src/guest-r33-report.mjs scripts/r33-review-github.mjs \
+    scripts/r33-offline-review.mjs; do
+    test -f "$root/$f" || { echo "Missing R33 module $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

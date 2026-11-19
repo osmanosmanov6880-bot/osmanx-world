@@ -133,6 +133,26 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r33Panel" hidden aria-labelledby="r33Heading">
+  <hr class="separator">
+  <span class="eyebrow">R33 / Independent Review Bundle</span>
+  <h3 id="r33Heading">19 PR, staging, откат и приватность</h3>
+  <p id="r33Status" class="alert" role="status" aria-live="polite">NO-GO — независимая эксплуатационная приёмка не завершена.</p>
+  <div class="triple" aria-label="R33: этапы ручной приёмки">
+    <div><strong>Цепочка PR</strong><p id="r33Sources">0 / 19</p></div>
+    <div><strong>Подписи staging</strong><p id="r33Staging">0 / 2</p></div>
+    <div><strong>Подписи приватности</strong><p id="r33Privacy">0 / 2</p></div>
+  </div>
+  <p class="small">Учебный откат — отдельная одноразовая база. Криптографические подписи заявлений не подтверждают настоящий TLS, DNS, содержимое договора или реальное восстановление.</p>
+  <h4>Условия до запуска</h4>
+  <ul id="r33Blockers" class="items"></ul>
+  <p class="small">Ручная офлайн-проверка принимает 4 доверенных Ed25519 ключа, 2 HTTP-снимка, цепочку отката и план минимизации данных. Браузер не отправляет внешние доказательства, не запрашивает production и не включает сбор данных.</p>
+  <div class="actions">
+    <button id="r33Refresh" type="button" class="secondary">Проверить R33</button>
+    <button id="r33Download" type="button" class="secondary">Скачать NO-GO CSV</button>
+  </div>
+  <p id="r33Expiry" class="small">Срок отчёта: —</p>
+</section>
 <section id="r32Panel" hidden aria-labelledby="r32Heading">
   <hr class="separator">
   <span class="eyebrow">R32 / Human Cutover Preflight</span>
