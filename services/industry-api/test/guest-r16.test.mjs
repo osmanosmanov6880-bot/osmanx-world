@@ -9,6 +9,7 @@ import {
   emergencyStop,r16Configured
 } from '../src/guest-r16-registry.mjs';
 import {reviewRegistry,reviewWithCanary} from '../scripts/r16-operator.mjs';
+import {validateUnsigned,signPartial,assembleRegistry} from '../scripts/r16-signer.mjs';
 import {PROBES,LOCAL} from '../scripts/r14-monitor.mjs';
 
 async function setup(t,count=2){
@@ -134,4 +135,24 @@ test('R16 operator review is scoped, synthetic and exposes no credentials or gue
   assert.equal(report.customerGo,false);
   assert.equal(observed.length,PROBES.length);
   assert.ok(observed.every(x=>x.method==='GET'&&x.redirect==='error'&&x.url.startsWith(LOCAL)));
+});
+
+test('R16 operator signs separately and assembly rejects crossed human or tampered partial',async t=>{
+  const {fixture:fx}=await setup(t);
+  const unsigned={...fx.registry};delete unsigned.attestations;
+  assert.equal(validateUnsigned(unsigned,fx.now),true);
+  const owner=signPartial(unsigned,{role:'owner',actorId:'r16-platform-owner',
+    privatePem:fx.operators.owner.privateKey.export({type:'pkcs8',format:'pem'})},fx.now);
+  const manager=signPartial(unsigned,{role:'manager',actorId:'r16-platform-manager',
+    privatePem:fx.operators.manager.privateKey.export({type:'pkcs8',format:'pem'})},fx.now);
+  const registry=assembleRegistry(unsigned,[owner,manager],platformKeys(fx),fx.now);
+  assert.equal(evaluateRegistry(registry,platformKeys(fx),
+    fx.env.GUEST_RELEASE_COMMIT,1,fx.now).valid,true);
+  assert.throws(()=>assembleRegistry(unsigned,[owner,{...manager,actorId:owner.actorId}],
+    platformKeys(fx),fx.now));
+  assert.throws(()=>assembleRegistry({...unsigned,revision:2},[owner,manager],
+    platformKeys(fx),fx.now));
+  assert.throws(()=>signPartial(unsigned,{role:'owner',actorId:'owner-unsafe',
+    privatePem:fx.operators.manager.publicKey.export({type:'spki',format:'pem'})},fx.now));
+  assert.throws(()=>validateUnsigned({...unsigned,extra:true},fx.now));
 });
