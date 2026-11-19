@@ -79,6 +79,7 @@ function showAuth(){
   $('r26Panel').hidden=true;
   $('r27Panel').hidden=true;
   $('r28Panel').hidden=true;
+  $('r29Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -428,6 +429,7 @@ async function openPilot(id){
   await loadR26Reliability();
   await loadR27Readiness();
   await loadR28OperatorStatus();
+  await loadR29Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1049,6 +1051,45 @@ async function loadR28OperatorStatus(){
     $('r28Next').textContent='Проверка не выполнена.';
   }
 }
+const R29_GAPS={
+  R29_FIFTEEN_PR_SOURCE_TREE_NOT_VERIFIED_IN_API:'15 PR и Git-деревья требуют независимой проверки',
+  R29_MERGED_MAIN_CI_NOT_VERIFIED:'CI на итоговом main ещё не проверен',
+  R29_REAL_STAGING_ORIGIN_NOT_PROBED:'Реальный staging HTTPS не проверен',
+  R29_ACTUAL_ROLLBACK_NOT_PERFORMED:'Реальный откат не проводился',
+  R29_EXTERNAL_VPS_DR_LEGAL_REVIEW_REQUIRED:'Не проведён независимый VPS/DR и правовой аудит'
+};
+async function loadR29Acceptance(){
+  const panel=$('r29Panel'),list=$('r29Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r29/readiness');
+    if(x.schema!=='osmanx.guest.r29.manual-staging-review.v1'||
+       x.pilotId!==model.selected.item.id||
+       x.sourcePrsRequired!==15||
+       x.verifiedSourcePrsInApi!==0||
+       x.customerGo!==false||x.productionAuthorized!==false||
+       x.mainChanged!==false||x.stopLifted!==false||
+       x.actualStagingVerified!==false||
+       x.stagedSynthetic?.total!==6||
+       !Array.isArray(x.blockers)||
+       !x.blockers.includes('R29_ACTUAL_ROLLBACK_NOT_PERFORMED'))
+      throw Error('R29 evidence invalid or unauthorized');
+    $('r29Status').textContent='NO-GO — независимая эксплуатационная приёмка не проведена.';
+    $('r29PrCount').textContent='0 / 15';
+    $('r29Synthetic').textContent=String(x.stagedSynthetic.passed)+' / 6';
+    $('r29Expires').textContent=new Date(x.expiresAt).toLocaleString('ru-RU',{
+      year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit'
+    });
+    for(const code of x.blockers)
+      appendText(list,'li',R29_GAPS[code]||code,'small');
+  }catch{
+    $('r29Status').textContent='NO-GO — R29 недоступен; результаты неподтверждены.';
+    $('r29PrCount').textContent='—';$('r29Synthetic').textContent='—';
+    $('r29Expires').textContent='—';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1541,6 +1582,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r29Refresh').addEventListener('click',()=>safely(()=>loadR29Acceptance()));
+$('r29Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r29/report.csv',
+    'osmanx-guest-r29-staging-review.csv');
+  setStatus('R29 CSV сохранён. Автоматическая публикация запрещена.');
+}));
 $('r28Refresh').addEventListener('click',()=>safely(()=>loadR28OperatorStatus()));
 $('r28Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
