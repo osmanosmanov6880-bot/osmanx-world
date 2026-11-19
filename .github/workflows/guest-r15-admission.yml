@@ -40,5 +40,7 @@ jobs:
           fi
       - name: Signed admission and GET-only canary checks
         run: node --test test/guest-r15.test.mjs
+      - name: Install required server dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Legacy production guard regression
         run: node --test test/guest-r10-guard.test.mjs
