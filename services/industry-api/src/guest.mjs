@@ -10,6 +10,10 @@ import {launchPreflight} from './guest-launch.mjs';
 import {assessGuestQuality,buildSafetyExport,REASONS} from './guest-safety.mjs';
 import {r19Configured,loadR19Scope,protocolDigest} from './guest-r19-scope.mjs';
 import {inspectR19Budget} from './guest-r19-usage.mjs';
+import {inspectR16Tenant} from './guest-r16-registry.mjs';
+import {loadR17Witness} from './guest-r17-witness.mjs';
+import {loadR18Anchor} from './guest-r18-anchor.mjs';
+import {inspectR20Pilot} from './guest-r20-inspection.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -465,6 +469,33 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       customerGo:false,legalApprovalNotVerified:true,
       productionChanged:false
     };
+  }));
+
+  // R20: tenant-scoped, owner/manager only, intentionally READ-ONLY.
+  // All network-proof and operator release approvals are external; none of
+  // these booleans can enable production or lift a safety STOP.
+  app.get(P+'/pilots/:id/r20/inspection',req=>forTenant(req,MANAGE,async(db,s)=>{
+    const pilot=await getPilot(db,s.tenant_id,req.params.id);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    let permit=null,witness=null,anchor=null,scope=null;
+    try{permit=await inspectR16Tenant(s.tenant_id,process.env);}
+    catch{/* Missing R16 permits remain explicitly blocked. */}
+    try{witness=await loadR17Witness(process.env);}
+    catch{/* Missing R17 checkpoints remain explicitly blocked. */}
+    if(witness){
+      try{anchor=await loadR18Anchor(process.env,witness);}
+      catch{/* Missing independent R18 remains blocked. */}
+    }
+    if(anchor){
+      try{scope=await loadR19Scope(process.env,anchor);}
+      catch{/* Missing R19 signed scope/STOP remains blocked. */}
+    }
+    const report=await inspectR20Pilot(db,{
+      tenantId:s.tenant_id,pilot,hold,permit,witness,anchor,scope
+    });
+    // No raw consent evidence, key material, signer identities, other-tenant
+    // URLs or PII-containing source documents leave this server.
+    return report;
   }));
 
   // R12 human pilot gate. Optional enrollment is irreversible; legacy pilots stay compatible.
