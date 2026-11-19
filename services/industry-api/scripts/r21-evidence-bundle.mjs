@@ -26,7 +26,7 @@ function safeBlockers(value,max){
   if(value===undefined||value===null)return [];
   if(!Array.isArray(value)||value.length>max)
     throw Error('Unsafe external evidence blocker list');
-  const valid=/^[a-z][a-z0-9_:-]{0,79}$/;
+  const valid=/^[a-z][A-Za-z0-9_:-]{0,79}$/;
   if(!value.every(x=>typeof x==='string'&&valid.test(x)))
     throw Error('Evidence blocker must be an allowlisted machine code');
   return [...value];
