@@ -249,6 +249,8 @@ export async function buildApp(pool){
       if(r18Configured(process.env)&&externalAnchorVerified===null){
         externalAnchorVerified=false;externalAnchorFenceReady=false;
       }
+      const pilotCollection=r19Configured(process.env)?
+        await inspectR19Scope(session.tenant_id,process.env):null;
       const allowed=status.permitValid&&witnessVerified!==false&&witnessFenceReady!==false&&
         externalAnchorVerified!==false&&externalAnchorFenceReady!==false;
       return {schema:'osmanx.guest.r16.self-status.v1',mode:'multi',
@@ -259,7 +261,7 @@ export async function buildApp(pool){
         registryRevision:status.registryRevision,validUntil:status.validUntil,
         witnessVerified,witnessSequence,witnessFenceReady,
         externalAnchorVerified,externalAnchorFenceReady,externalAnchorSequence,
-        writesChanged:false};
+        pilotCollection,writesChanged:false};
     }
     try{
       const bundle=await loadTenantPermit(process.env);
