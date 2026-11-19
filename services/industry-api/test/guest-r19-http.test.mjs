@@ -260,6 +260,23 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
     },{'Idempotency-Key':'r25-disabled-'+tag});
   assert.equal(blockedSignal.status,503);
   assert.equal((await usage()).used,0);
+  const r26Path='/guest/pilots/'+pilotRow.id+'/r26/reliability';
+  assert.equal((await call('GET',r26Path)).status,401);
+  assert.equal((await call('GET',r26Path,tenants[1].auth)).status,404);
+  const reliability=expect(await call('GET',r26Path,own),200);
+  assert.equal(reliability.schema,'osmanx.guest.r26.source-reliability-brief.v1');
+  assert.equal(reliability.sourceRowCount,0);
+  assert.equal(reliability.reviewEnabled,false);
+  assert.equal(reliability.customerGo,false);
+  const deniedReview=await call('POST',
+    '/guest/pilots/'+pilotRow.id+'/r26/source-review',own,{
+      expectedVersion:1,sourceSha:reliability.r25SourceSha,
+      r24EvidenceSha:reliability.r24EvidenceSha,
+      evidenceSha:'f'.repeat(64),
+      method:'independent_aggregate_recount',verdict:'rejected'
+    },{'Idempotency-Key':'r26-disabled-'+tag});
+  assert.equal(deniedReview.status,503);
+  assert.deepEqual(await usage(),{used:0,maxDaily:2,events:0});
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
