@@ -1,7 +1,7 @@
 name: OSMANX Guest R15 tenant admission acceptance
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feat/guest-r14-production-operations-20261118]
     paths:
       - "services/industry-api/**"
       - ".github/workflows/guest-r15-admission.yml"
