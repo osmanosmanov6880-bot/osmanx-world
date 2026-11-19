@@ -187,6 +187,23 @@ if grep -Fq '"decisionIntelligenceSupportedR24":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R25 category collection is disabled by default and uses the R19 budget
+# when independently enabled on an approved pilot. Never ship a live key.
+if grep -Fq '"operationalHypothesesSupportedR25":true' "$root/RELEASE.json"; then
+  grep -Fq '"decisionIntelligenceSupportedR24":true' "$root/RELEASE.json" || {
+    echo "R25 requires R24 source provenance" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R25 cannot activate live guest writes" >&2;exit 3;
+  }
+  for f in migrations/015_guest_r25_operational_tallies.sql \
+    src/guest-r25-signals.mjs src/guest-r25-hypotheses.mjs \
+    src/guest-r25-experiment.mjs src/guest-r25-brief.mjs; do
+    test -f "$root/$f" || {
+      echo "R25 operational module missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

@@ -241,6 +241,25 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.ok(csv.includes('SHA-256'));
   assert.equal(csv.includes(tenants[0].email),false);
   assert.equal(csv.includes(tenants[1].email),false);
+  const r25Path='/guest/pilots/'+pilotRow.id+'/r25/insights';
+  assert.equal((await call('GET',r25Path)).status,401);
+  assert.equal((await call('GET',r25Path,tenants[1].auth)).status,404);
+  const operational=expect(await call('GET',r25Path,own),200);
+  assert.equal(operational.schema,'osmanx.guest.r25.operational-brief.v1');
+  assert.equal(operational.profile.totalSampled,0);
+  assert.equal(operational.recordingAvailable,false);
+  assert.equal(operational.customerGo,false);
+  const blockedSignal=await call('POST',
+    '/guest/pilots/'+pilotRow.id+'/operational-signals',own,{
+      expectedVersion:1,tally:{
+        date:firstDate,shift:'morning',source:'staff_estimate',
+        sampled:20,counts:{
+          wait:5,stockout:2,ordering:1,price:1,service:1,unknown:10
+        }
+      }
+    },{'Idempotency-Key':'r25-disabled-'+tag});
+  assert.equal(blockedSignal.status,503);
+  assert.equal((await usage()).used,0);
   const before=await fences();
   assert.deepEqual(before,{r17:0,r18:0});
   const first={
@@ -325,6 +344,10 @@ test('R19 live: tenant and pilot isolation, idempotency, rollback quota, emergen
   assert.equal(stoppedIntel.productionAuthorized,false);
   assert.ok(typeof stoppedIntel.statistics.differencePp==='number');
   assert.ok(stoppedIntel.quality.issues.includes('OUTCOME_WINDOW_NOT_COMPLETED'));
+  const stoppedSignals=expect(await call('GET',r25Path,own),200);
+  assert.equal(stoppedSignals.emergencyStopActive,true);
+  assert.equal(stoppedSignals.recordingAvailable,false);
+  assert.equal(stoppedSignals.customerGo,false);
   const grants=(await admin.query(
     "SELECT has_table_privilege('industry_app','industry.guest_r19_collection_events','DELETE') AS del,"+
     "has_table_privilege('industry_app','industry.guest_r19_collection_events','UPDATE') AS upd"

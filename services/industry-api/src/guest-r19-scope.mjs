@@ -59,7 +59,7 @@ export function scopeMessage(record){
 export function collectionOperation(url,method){
   if(method!=='POST'||typeof url!=='string')return null;
   const path=url.split('?')[0];
-  const matched=/^\/api\/industry\/v1\/guest\/pilots\/([0-9a-f-]{36})\/(start|observations|observations\/import)$/.exec(path);
+  const matched=/^\/api\/industry\/v1\/guest\/pilots\/([0-9a-f-]{36})\/(start|observations|observations\/import|operational-signals)$/.exec(path);
   if(!matched||!UUID.test(matched[1]))return null;
   return {pilotId:matched[1],kind:matched[2]};
 }

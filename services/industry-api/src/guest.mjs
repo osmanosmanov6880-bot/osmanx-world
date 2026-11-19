@@ -21,6 +21,8 @@ import {summarizeR24Retention} from './guest-r24-statistics.mjs';
 import {modelR24Economics} from './guest-r24-economics.mjs';
 import {buildR24Playbook} from './guest-r24-playbook.mjs';
 import {createR24Brief,r24BriefCsv} from './guest-r24-brief.mjs';
+import {parseR25Tally,R25_CODES} from './guest-r25-signals.mjs';
+import {makeR25Brief,r25BriefCsv} from './guest-r25-brief.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -816,6 +818,113 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
         'attachment; filename="osmanx-guest-r24-aggregate-brief.csv"');
       reply.header('Cache-Control','no-store');
       return reply.send(r24BriefCsv(brief));
+    }));
+
+  // R25: append-only ANONYMOUS shift counts. This is a separately gated
+  // extension of R19 collection, NOT a substitute for guest consent.
+  const r25Path=P+'/pilots/:id/operational-signals';
+  app.post(r25Path,(req,reply)=>forTenant(req,MANAGE,async(db,s)=>{
+    if(process.env.GUEST_R25_SIGNALS_ENABLED!=='true'||
+       (process.env.NODE_ENV==='production'&&!r19Configured(process.env)))
+      throw problem(503,'R25: запись анонимных сводок отключена до отдельной приёмки');
+    const b=bodyOf(req);
+    requiredKeys(b,['expectedVersion','tally'],'Операционная сводка R25');
+    const key=keyOf(req),version=versionOf(b);
+    const pilot=await getPilot(db,s.tenant_id,req.params.id,true);
+    await assertUnheld(db,s.tenant_id,pilot.id);
+    const tally=guard(()=>parseR25Tally(b.tally,{protocol:pilot.protocol}));
+    const fingerprint=digest(tally);
+    const previous=await db.query(
+      'SELECT id,payload_digest FROM industry.guest_r25_operational_tallies'+
+      ' WHERE tenant_id=$1 AND pilot_id=$2 AND idempotency_key=$3',
+      [s.tenant_id,pilot.id,key]);
+    if(previous.rowCount){
+      if(previous.rows[0].payload_digest!==fingerprint)
+        throw problem(409,'R25: ключ уже привязан к другому агрегату');
+      return {duplicate:true,signalId:previous.rows[0].id,
+        version:pilot.version,productionActivated:false};
+    }
+    verifyVersion(pilot,version);
+    expectPhase(pilot,['running']);
+    const existing=await db.query(
+      'SELECT id FROM industry.guest_r25_operational_tallies'+
+      ' WHERE tenant_id=$1 AND pilot_id=$2 AND observed_on=$3::date AND shift=$4',
+      [s.tenant_id,pilot.id,tally.date,tally.shift]
+    );
+    if(existing.rowCount)throw problem(409,'R25: эта смена уже зафиксирована');
+    const countRows=await db.query(
+      'SELECT count(*)::int AS n FROM industry.guest_r25_operational_tallies'+
+      ' WHERE tenant_id=$1 AND pilot_id=$2',
+      [s.tenant_id,pilot.id]);
+    if(countRows.rows[0].n>=36)
+      throw problem(409,'R25: максимум 36 анонимных смен на пилот');
+    const values=[
+      s.tenant_id,pilot.id,tally.date,tally.shift,tally.source,tally.sampled,
+      ...R25_CODES.map(k=>tally.counts[k]),key,fingerprint,s.account_id
+    ];
+    const inserted=await db.query(
+      'INSERT INTO industry.guest_r25_operational_tallies'+
+      '(tenant_id,pilot_id,observed_on,shift,source_kind,sampled,'+
+      'wait_count,stockout_count,ordering_count,price_count,service_count,'+
+      'unknown_count,idempotency_key,payload_digest,recorded_by)'+
+      ' VALUES($1,$2,$3::date,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)'+
+      ' RETURNING id',values
+    );
+    const updated=await db.query(
+      'UPDATE industry.guest_pilots SET version=version+1,updated_at=now()'+
+      ' WHERE tenant_id=$1 AND id=$2 RETURNING version',
+      [s.tenant_id,pilot.id]
+    );
+    await record(db,s,'r25.tally.recorded',inserted.rows[0].id,{pilotId:pilot.id});
+    reply.code(201);
+    return {signalId:inserted.rows[0].id,
+      version:updated.rows[0].version,productionActivated:false};
+  }));
+  async function r25Intelligence(db,s,pilotId){
+    const pilot=await getPilot(db,s.tenant_id,pilotId);
+    const hold=await getActiveHold(db,s.tenant_id,pilot.id);
+    const r24=await r24Intelligence(db,s,pilot.id);
+    const list=await db.query(
+      'SELECT observed_on::text AS date,shift,source_kind AS source,sampled,'+
+      'wait_count AS wait,stockout_count AS stockout,'+
+      'ordering_count AS ordering,price_count AS price,'+
+      'service_count AS service,unknown_count AS unknown'+
+      ' FROM industry.guest_r25_operational_tallies'+
+      ' WHERE tenant_id=$1 AND pilot_id=$2'+
+      ' ORDER BY observed_on ASC,shift ASC LIMIT 37',
+      [s.tenant_id,pilot.id]
+    );
+    if(list.rowCount>36)throw problem(409,'R25: число смен требует аудита');
+    const rows=list.rows.map(row=>({
+      date:row.date,shift:row.shift,source:row.source,
+      sampled:row.sampled,
+      counts:Object.fromEntries(R25_CODES.map(k=>[k,row[k]]))
+    }));
+    let signedForPilot=false;
+    if(process.env.GUEST_R25_SIGNALS_ENABLED==='true'&&
+       pilot.phase==='running'&&hold?.active!==true){
+      if(process.env.NODE_ENV!=='production')signedForPilot=true;
+      else if(process.env.GUEST_WRITES_ENABLED==='true'&&r19Configured(process.env)){
+        try{
+          const scope=await loadR19Scope(process.env);
+          signedForPilot=scope.valid===true&&
+            scope.tenantId===s.tenant_id&&scope.pilotId===pilot.id;
+        }catch{/* Missing real external scope = blocked. */}
+      }
+    }
+    return makeR25Brief({pilot,rows,r24,hold:hold?.active===true,
+      recordingAvailable:signedForPilot});
+  }
+  app.get(P+'/pilots/:id/r25/insights',req=>forTenant(req,MANAGE,
+    async(db,s)=>r25Intelligence(db,s,req.params.id)));
+  app.get(P+'/pilots/:id/r25/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r25Intelligence(db,s,req.params.id);
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r25-barriers.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r25BriefCsv(report));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.

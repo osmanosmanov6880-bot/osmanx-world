@@ -133,6 +133,60 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r25Panel" hidden aria-labelledby="r25Heading">
+  <hr class="separator">
+  <span class="eyebrow">R25 / Операционные гипотезы</span>
+  <h3 id="r25Heading">Где могут возникать препятствия для гостей</h3>
+  <p id="r25Status" class="info" role="status" aria-live="polite">Откройте пилот для просмотра агрегатов.</p>
+  <div class="triple" aria-label="Показатели R25">
+    <div><strong>Анонимных наблюдений</strong><p id="r25Sampled">—</p></div>
+    <div><strong>Смены</strong><p id="r25Shifts">—</p></div>
+    <div><strong>Главный сигнал</strong><p id="r25Leader">—</p></div>
+  </div>
+  <h4>Доли возможных препятствий</h4>
+  <ul id="r25Categories" class="items" aria-label="Группы анонимных препятствий"></ul>
+  <h4>Что изменилось между ранними и поздними сменами</h4>
+  <ul id="r25Comparison" class="items"></ul>
+  <h4>Гипотезы для независимой проверки</h4>
+  <ol id="r25Hypotheses" class="items"></ol>
+  <h4>Следующий контролируемый эксперимент</h4>
+  <p id="r25NextTest" class="info"></p>
+  <div class="actions">
+    <button id="r25Refresh" type="button" class="secondary">Обновить R25</button>
+    <button id="r25Download" type="button" class="secondary">Скачать CSV со сводкой</button>
+  </div>
+  <form id="r25EntryForm">
+    <fieldset id="r25EntryFieldset" disabled class="grid">
+      <legend>Зафиксировать анонимную сводку смены</legend>
+      <div><label for="r25Date">Дата</label><input id="r25Date" type="date" required></div>
+      <div><label for="r25Shift">Смена</label>
+        <select id="r25Shift" required>
+          <option value="morning">Утро</option>
+          <option value="afternoon">День</option>
+          <option value="evening">Вечер</option>
+        </select>
+      </div>
+      <div><label for="r25Source">Источник</label>
+        <select id="r25Source" required>
+          <option value="staff_estimate">Анонимная оценка персонала</option>
+          <option value="anonymous_counter">Анонимный счётчик</option>
+        </select>
+      </div>
+      <div><label for="r25Sample">Наблюдалось взаимодействий (от 10)</label>
+        <input id="r25Sample" type="number" min="10" max="10000" step="1" value="20" required>
+      </div>
+      <div><label for="r25Wait">Ожидание</label><input id="r25Wait" type="number" min="0" max="10000" step="1" value="0" required></div>
+      <div><label for="r25Stockout">Нет нужной позиции</label><input id="r25Stockout" type="number" min="0" max="10000" step="1" value="0" required></div>
+      <div><label for="r25Ordering">Сложность заказа</label><input id="r25Ordering" type="number" min="0" max="10000" step="1" value="0" required></div>
+      <div><label for="r25Price">Неясная цена</label><input id="r25Price" type="number" min="0" max="10000" step="1" value="0" required></div>
+      <div><label for="r25Service">Обслуживание</label><input id="r25Service" type="number" min="0" max="10000" step="1" value="0" required></div>
+      <div><label for="r25Unknown">Нет подтверждённого признака</label><input id="r25Unknown" type="number" min="0" max="10000" step="1" value="20" required></div>
+      <div><button id="r25Submit" type="submit">Зафиксировать сводку</button></div>
+    </fieldset>
+  </form>
+  <p class="small">Каждое взаимодействие относится ровно к одной категории, включая «нет подтверждённого признака». Итог категорий должен совпадать с общим числом. Никаких имён, контактов и комментариев посетителей. Система не устанавливает причину ухода; она проверяет операционные гипотезы.</p>
+</section>
+
 <section id="r24Panel" hidden aria-labelledby="r24Heading">
   <hr class="separator">
   <span class="eyebrow">R24 / Интеллект решений</span>
