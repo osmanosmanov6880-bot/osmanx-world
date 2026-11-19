@@ -19,6 +19,18 @@ const ISO=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const exact=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&
   Object.keys(v).sort().join('|')===[...keys].sort().join('|');
 export const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+// R22: a blocker is a MACHINE CODE, not arbitrary user text.
+ // Blockers from external operator JSON must never smuggle email, file paths,
+ // token values or private messages into a supposedly secret-free bundle.
+function safeBlockers(value,max){
+  if(value===undefined||value===null)return [];
+  if(!Array.isArray(value)||value.length>max)
+    throw Error('Unsafe external evidence blocker list');
+  const valid=/^[a-z][a-z0-9_:-]{0,79}$/;
+  if(!value.every(x=>typeof x==='string'&&valid.test(x)))
+    throw Error('Evidence blocker must be an allowlisted machine code');
+  return [...value];
+}
 function compact(input){
   // Hardcoded allowlist guarantees no database URL, filename, auth header,
   // email, raw guest record, secret key, or consent document is serialized.
@@ -27,19 +39,19 @@ function compact(input){
   return {
     chain:{schema:c?.schema||null,stagedCodeVerified:c?.stagedCodeVerified===true,
       allDependenciesMerged:c?.allDependenciesMerged===true,
-      blockers:Array.isArray(c?.blockers)?c.blockers.filter(x=>typeof x==='string').slice(0,80):[]},
+      blockers:safeBlockers(c?.blockers,80)},
     host:{schema:h?.schema||null,liveHostInspected:h?.liveHostInspected===true,
       safeIsolatedRehearsal:h?.safeIsolatedRehearsal===true,
-      blockers:Array.isArray(h?.blockers)?h.blockers.filter(x=>typeof x==='string').slice(0,30):[]},
+      blockers:safeBlockers(h?.blockers,30)},
     database:{schema:d?.schema||null,technicalPostureReady:d?.technicalPostureReady===true,
-      blockers:Array.isArray(d?.blockers)?d.blockers.filter(x=>typeof x==='string').slice(0,30):[],
+      blockers:safeBlockers(d?.blockers,30),
       usageRows:Number.isSafeInteger(d?.usageRows)?d.usageRows:null,
       auditEventCount:Number.isSafeInteger(d?.auditEventCount)?d.auditEventCount:null},
     restore:{schema:r?.schema||null,technicalRestoreReady:r?.technicalRestoreReady===true,
-      blockers:Array.isArray(r?.blockers)?r.blockers.filter(x=>typeof x==='string').slice(0,30):[]},
+      blockers:safeBlockers(r?.blockers,30)},
     ticket:{schema:t?.schema||null,valid:t?.valid===true,
       ticketDigest:SHA.test(t?.ticketDigest||'')?t.ticketDigest:null,
-      blockers:Array.isArray(t?.blockers)?t.blockers.filter(x=>typeof x==='string').slice(0,30):[]}
+      blockers:safeBlockers(t?.blockers,30)}
   };
 }
 function blockersFor(bundle){
