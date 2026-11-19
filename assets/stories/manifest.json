@@ -1,0 +1,140 @@
+{
+  "brand": "OSMANX WORLD",
+  "project": "STORIES - CINEMA EXPERIENCE",
+  "version": "R1",
+  "video_count": 12,
+  "clips": [
+    {
+      "id": "01-restaurant",
+      "sector": "Ресторан",
+      "title": "Здесь больше не будет ужина",
+      "group": "hospitality",
+      "source_name": "untitled.mp4",
+      "video": "/assets/stories/media/01-restaurant.mp4",
+      "poster": "/assets/stories/posters/01-restaurant.webp",
+      "bytes": 1676282,
+      "sha256": "f341c28e850dbec6b1833cda0ae22c46549a5a0821913945fdb1467377ae31eb"
+    },
+    {
+      "id": "02-fashion",
+      "sector": "Магазин одежды",
+      "title": "Они спросили нужный размер",
+      "group": "retail",
+      "source_name": "untitled (1).mp4",
+      "video": "/assets/stories/media/02-fashion.mp4",
+      "poster": "/assets/stories/posters/02-fashion.webp",
+      "bytes": 942441,
+      "sha256": "ffc26d87aeb572253928b75b344eca68bc7b82971ba83d32d586909ed5d2ea88"
+    },
+    {
+      "id": "03-dentistry",
+      "sector": "Стоматология",
+      "title": "Время, которое не вернётся",
+      "group": "health",
+      "source_name": "untitled (2).mp4",
+      "video": "/assets/stories/media/03-dentistry.mp4",
+      "poster": "/assets/stories/posters/03-dentistry.webp",
+      "bytes": 937635,
+      "sha256": "e9f2fff7280c260ed6da4e651d8ce6b11b5d49c585d1abdb7badf0c0dff3aee7"
+    },
+    {
+      "id": "04-auto",
+      "sector": "Автосервис",
+      "title": "Клиенту никто не ответил",
+      "group": "service",
+      "source_name": "untitled (3).mp4",
+      "video": "/assets/stories/media/04-auto.mp4",
+      "poster": "/assets/stories/posters/04-auto.webp",
+      "bytes": 715286,
+      "sha256": "2e2ef0cc13633703751919dc0a3ff52e47e0223436c6dd3ed18112634f8f0c43"
+    },
+    {
+      "id": "05-fitness",
+      "sector": "Фитнес",
+      "title": "Абонемент не продлён",
+      "group": "service",
+      "source_name": "untitled (4).mp4",
+      "video": "/assets/stories/media/05-fitness.mp4",
+      "poster": "/assets/stories/posters/05-fitness.webp",
+      "bytes": 1199094,
+      "sha256": "3ac7e8fab61d21e4167020350750fed9342838e69627525b55c5c90d49ebb7e4"
+    },
+    {
+      "id": "06-education",
+      "sector": "Образование",
+      "title": "Курс остался незавершённым",
+      "group": "education",
+      "source_name": "untitled (5).mp4",
+      "video": "/assets/stories/media/06-education.mp4",
+      "poster": "/assets/stories/posters/06-education.webp",
+      "bytes": 444373,
+      "sha256": "aafc0a1cb0103e68a1edf0849ddf102a288a7509fda9102d316b68ca7e2a59c2"
+    },
+    {
+      "id": "07-coffee",
+      "sector": "Кофейня",
+      "title": "Заказ, которого не было",
+      "group": "hospitality",
+      "source_name": "untitled (6).mp4",
+      "video": "/assets/stories/media/07-coffee.mp4",
+      "poster": "/assets/stories/posters/07-coffee.webp",
+      "bytes": 1633584,
+      "sha256": "394c8d1d42a955c506ad62c62a45240d3b8f6dbd6f01ed5157fe7de1866893f8"
+    },
+    {
+      "id": "08-return",
+      "sector": "Ресторан",
+      "title": "Они не вернулись",
+      "group": "hospitality",
+      "source_name": "untitled (7).mp4",
+      "video": "/assets/stories/media/08-return.mp4",
+      "poster": "/assets/stories/posters/08-return.webp",
+      "bytes": 1052455,
+      "sha256": "c8820c73bea3b248546139f9c8d9a23049857a85acc66384244f75786b268527"
+    },
+    {
+      "id": "09-appointment",
+      "sector": "Клиника",
+      "title": "Пациент не пришёл",
+      "group": "health",
+      "source_name": "untitled (8).mp4",
+      "video": "/assets/stories/media/09-appointment.mp4",
+      "poster": "/assets/stories/posters/09-appointment.webp",
+      "bytes": 818783,
+      "sha256": "4771681db401ae0e27486001c1010596b8349da7542bfb39a0fc42b695aaed76"
+    },
+    {
+      "id": "10-construction",
+      "sector": "Ремонт и строительство",
+      "title": "Заявка исчезла",
+      "group": "service",
+      "source_name": "untitled (9).mp4",
+      "video": "/assets/stories/media/10-construction.mp4",
+      "poster": "/assets/stories/posters/10-construction.webp",
+      "bytes": 785875,
+      "sha256": "b17ce400fb123f63efd634fab983328c5827f26e9f81d05d1cd130f7423f6ed7"
+    },
+    {
+      "id": "11-logistics",
+      "sector": "Логистика",
+      "title": "Упущенная доставка",
+      "group": "service",
+      "source_name": "A_sophisticated_logistics_dispatch_center_bathed_in_deep_navy_light__A_customer_stands_beside_a_shri.mp4",
+      "video": "/assets/stories/media/11-logistics.mp4",
+      "poster": "/assets/stories/posters/11-logistics.webp",
+      "bytes": 992086,
+      "sha256": "623873f75ee0b930cc085c264ce26515c939b6cedc762921e47888733cdd2474"
+    },
+    {
+      "id": "12-shoes",
+      "sector": "Магазин обуви",
+      "title": "Последний размер",
+      "group": "retail",
+      "source_name": "untitled (10).mp4",
+      "video": "/assets/stories/media/12-shoes.mp4",
+      "poster": "/assets/stories/posters/12-shoes.webp",
+      "bytes": 1024496,
+      "sha256": "69e8091c339d7aa68280f2af51ed04be0d34e59cdf1b10ea2cf8c41854c3f17b"
+    }
+  ]
+}
