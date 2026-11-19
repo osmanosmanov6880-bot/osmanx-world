@@ -10,6 +10,8 @@ import { registerGuestRoutes } from './guest.mjs';
 import { probeGuestDatabase } from './readiness.mjs';
 import {loadTenantPermit,assertTenantPermission} from './guest-tenant-authorization.mjs';
 import {r16Configured,loadR16Registry,assertR16Tenant,inspectR16Tenant} from './guest-r16-registry.mjs';
+import {r17Configured,loadR17Witness} from './guest-r17-witness.mjs';
+import {assertR17Fence,inspectR17Fence} from './guest-r17-fence.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -77,8 +79,15 @@ export async function buildApp(pool){
       // tenant membership and existing R12/R13 safeguards still apply.
       try{
         // R16 opt-in never silently falls back to R15 if a signed registry is absent.
+        if(r17Configured(process.env)&&!r16Configured(process.env))
+          throw Error('R17 requires R16');
         if(r16Configured(process.env))req.guestRegistry=await loadR16Registry(process.env);
         else req.guestAdmission=await loadTenantPermit(process.env);
+        if(r17Configured(process.env)){
+          req.r17Witness=await loadR17Witness(process.env);
+          if(req.guestRegistry.digest!==req.r17Witness.registryDigest)
+            throw Error('Registry changed during admission');
+        }
       }catch{
         throw httpError(503,'Нужен актуальный подписанный допуск компании R15/R16');
       }
@@ -113,16 +122,37 @@ export async function buildApp(pool){
     const session=await auth(request);
     const guestMutation=opt.secure && ['POST','PATCH','PUT','DELETE'].includes(request.method) &&
       (request.url===PREFIX+'/guest'||request.url.startsWith(PREFIX+'/guest/'));
+    let witness=null;
     if(guestMutation){
       if(r16Configured(process.env)){
-        // Re-read the signed registry and per-tenant stop markers AFTER auth,
-        // not merely at request start; R16 never trusts a submitted tenant ID.
+        // Tenant always comes from the authenticated session, not a request body.
         await assertR16Tenant(session.tenant_id,process.env);
+        if(r17Configured(process.env)){
+          try{
+            witness=await loadR17Witness(process.env);
+            if(witness.registryDigest!==request.guestRegistry?.digest||
+               witness.checkpointDigest!==request.r17Witness?.checkpointDigest)
+              throw Error('Checkpoint changed during authorization');
+          }catch{throw httpError(503,'R17: независимое подтверждение не прошло');}
+        }
       }else assertTenantPermission(request.guestAdmission,session.tenant_id);
     }
     return withTenant(pool,session.tenant_id,async db=>{
       const role=await requireMembership(db,session.tenant_id,session.account_id,roles);
-      return fn(db,session,role);
+      // The fence advances inside this exact transaction, not before it.
+      if(witness)await assertR17Fence(db,witness);
+      const response=await fn(db,session,role);
+      if(witness){
+        // Late stop/revocation/checkpoint change aborts the entire transaction.
+        await assertR16Tenant(session.tenant_id,process.env);
+        let latest;
+        try{latest=await loadR17Witness(process.env);}
+        catch{throw httpError(503,'R17: подтверждение изменилось во время операции');}
+        if(latest.checkpointDigest!==witness.checkpointDigest)
+          throw httpError(503,'R17: требуется повторить операцию после обновления допуска');
+        await assertR17Fence(db,latest);
+      }
+      return response;
     });
   }
   function setCookies(reply,token,csrf){
@@ -142,9 +172,22 @@ export async function buildApp(pool){
         mode:'disabled',permitValid:false,reason:'guest_writes_disabled',writesChanged:false};
     if(r16Configured(process.env)){
       const status=await inspectR16Tenant(session.tenant_id,process.env);
+      let witnessVerified=null,witnessSequence=null,witnessFenceReady=null;
+      if(r17Configured(process.env)){
+        witnessVerified=false;witnessFenceReady=false;
+        try{
+          const witness=await loadR17Witness(process.env);
+          const fence=await inspectR17Fence(db,witness);
+          witnessVerified=true;witnessSequence=witness.sequence;
+          witnessFenceReady=fence.fenceReady;
+        }catch{/* No filenames or private documents in the status response. */}
+      }
+      const allowed=status.permitValid&&witnessVerified!==false&&witnessFenceReady!==false;
       return {schema:'osmanx.guest.r16.self-status.v1',mode:'multi',
-        permitValid:status.permitValid,reason:status.reason,
+        permitValid:allowed,
+        reason:status.permitValid&&!allowed?'r17_witness_or_fence_unavailable':status.reason,
         registryRevision:status.registryRevision,validUntil:status.validUntil,
+        witnessVerified,witnessSequence,witnessFenceReady,
         writesChanged:false};
     }
     try{

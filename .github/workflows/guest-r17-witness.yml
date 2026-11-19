@@ -1,0 +1,128 @@
+name: OSMANX Guest R17 independent witness and onboarding acceptance
+on:
+  pull_request:
+    branches: [main, feat/guest-r16-multitenant-revocation-20261119]
+    paths:
+      - "services/industry-api/**"
+      - "assets/guest/console.js"
+      - "tests/guest-console-r17.test.mjs"
+      - ".github/workflows/guest-r17-witness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - "assets/guest/console.js"
+      - ".github/workflows/guest-r17-witness.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r17-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify R17 code syntax, policy and no committed private keys
+        run: |
+          set -euo pipefail
+          for file in src/guest-r17-witness.mjs src/guest-r17-fence.mjs \
+             scripts/r17-witness-signer.mjs scripts/r17-onboarding.mjs \
+             test/guest-r17.test.mjs test/guest-r17-http.test.mjs \
+             test/r17-synthetic-fixture.mjs ../../tests/guest-console-r17.test.mjs; do
+            node --check "$file"
+          done
+          node --check ../../assets/guest/console.js
+          test -s ../../docs/GUEST_INTELLIGENCE_R17.md
+          grep -Fq 'await assertR17Fence(db,witness)' src/app.mjs
+          grep -Fq 'FORCE ROW LEVEL SECURITY' migrations/012_guest_registry_checkpoint_fence.sql
+          grep -Fq 'GUEST_WRITES_ENABLED: "false"' ops/compose.r14.yml
+          if find . -type f \( -name '*.pem' -o -name '*.key' -o -name 'identity.txt' \) -print -quit | grep -q .; then
+            echo "::error::Private keys or identities in source!"
+            exit 1
+          fi
+      - name: Install runtime dependencies for read-only onboarding tests
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: R17 offline Ed25519, hash chain, revocation and onboarding tests
+        run: node --test test/guest-r17.test.mjs
+      - name: R16 multi-tenant compatibility regression
+        run: node --test test/guest-r16.test.mjs
+      - name: Russian operator UI R16-R17 contract
+        run: node --test ../../tests/guest-console-r16.test.mjs ../../tests/guest-console-r17.test.mjs
+
+  r17-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: industry_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d industry_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      ALLOWED_ORIGIN: http://localhost
+      MIGRATION_DB_URL: postgres://postgres:postgres@127.0.0.1:5432/industry_ci
+      DATABASE_URL: postgres://industry_app:industrypass@127.0.0.1:5432/industry_ci
+      WORKER_DB_URL: postgres://industry_worker:workerpass@127.0.0.1:5432/industry_ci
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify syntax and install pinned dependencies
+        run: |
+          set -euo pipefail
+          for file in src/*.mjs scripts/*.mjs test/*.mjs; do node --check "$file"; done
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Provision least-privilege PostgreSQL roles
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_app LOGIN PASSWORD 'industrypass' NOBYPASSRLS;"
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d industry_ci -v ON_ERROR_STOP=1 -c "CREATE ROLE industry_worker LOGIN PASSWORD 'workerpass' BYPASSRLS;"
+      - name: Apply migration 012 and verify repeat migrations
+        run: |
+          npm run migrate
+          npm run migrate
+      - name: Real Fastify PostgreSQL, tenant RLS, rollback and R7-R17 regression
+        run: npm test
+
+  r17-reproducible:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify reproducible signed-source contents without any secrets
+        run: |
+          set -euo pipefail
+          bash ops/build-release.sh "$RUNNER_TEMP/r17-a"
+          bash ops/build-release.sh "$RUNNER_TEMP/r17-b"
+          archive="$(find "$RUNNER_TEMP/r17-a" -maxdepth 1 -name '*.tar.gz' | head -n 1)"
+          test -f "$archive"
+          bash ops/verify-release.sh "$archive"
+          cmp "$archive" "$RUNNER_TEMP/r17-b/$(basename "$archive")"
+          tar -tzf "$archive" > "$RUNNER_TEMP/r17-file-list.txt"
+          for file in src/guest-r17-witness.mjs src/guest-r17-fence.mjs \
+            scripts/r17-witness-signer.mjs scripts/r17-onboarding.mjs \
+            migrations/012_guest_registry_checkpoint_fence.sql; do
+            grep -Fxq "industry-api/$file" "$RUNNER_TEMP/r17-file-list.txt"
+          done
+          echo "R17 deterministic source verified; NO deployment."
