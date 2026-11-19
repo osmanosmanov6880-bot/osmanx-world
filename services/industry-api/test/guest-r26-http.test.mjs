@@ -311,6 +311,43 @@ test('R29 PostgreSQL and Fastify: authenticated GET only and no change in source
   )).rows[0].n;
   assert.equal(after,before);
 });
+test('R30 PostgreSQL and Fastify: isolated tenant-scoped NO-GO GETs with no database mutation',async()=>{
+  const path='/guest/pilots/'+pilot+'/r30';
+  const before=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal((await request('GET',path+'/readiness')).status,401);
+  assert.equal((await request('GET',path+'/readiness',entities[2].auth)).status,404);
+  assert.equal((await request('GET',path+'/report.csv',entities[2].auth)).status,404);
+  const owner=await request('GET',path+'/readiness',entities[0].auth);
+  assert.equal(owner.status,200,JSON.stringify(owner.value));
+  assert.equal(owner.value.schema,'osmanx.guest.r30.independent-acceptance.v1');
+  assert.equal(owner.value.pilotId,pilot);
+  assert.equal(owner.value.sourcePrsRequired,16);
+  assert.equal(owner.value.sourcePrsVerifiedInApi,0);
+  assert.equal(owner.value.stagingReview.syntheticR29Cases,6);
+  assert.equal(owner.value.actualStagingVerified,false);
+  assert.equal(owner.value.productionAuthorized,false);
+  assert.equal(owner.value.customerGo,false);
+  assert.equal(owner.value.guestWritesEnabled,false);
+  assert.equal(owner.value.stopLifted,false);
+  assert.equal(Date.parse(owner.value.expiresAt)-
+    Date.parse(owner.value.issuedAt),600000);
+  const manager=await request('GET',path+'/readiness',entities[1].auth);
+  assert.equal(manager.status,200);
+  assert.equal(manager.value.externalReceipts.verifiedInApi,0);
+  const csv=await request('GET',path+'/report.csv',entities[1].auth);
+  assert.equal(csv.status,200);
+  assert.equal(csv.bytes.subarray(0,3).toString('hex'),'efbbbf');
+  for(const item of entities)
+    assert.equal(csv.bytes.toString('utf8').includes(item.email),false);
+  assert.equal((await request('POST',path+'/readiness',entities[0].auth,{}))
+    .status,404);
+  const after=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal(after,before);
+});
 test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes',async()=>{
   const flags=(await admin.query(
     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class"+

@@ -133,6 +133,25 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r30Panel" hidden aria-labelledby="r30Heading">
+  <hr class="separator">
+  <span class="eyebrow">R30 / Независимые доказательства</span>
+  <h3 id="r30Heading">Приёмка 16 PR, подписей и реального staging</h3>
+  <p id="r30Status" class="alert" role="status" aria-live="polite">NO-GO: внешняя приёмка ещё не проведена.</p>
+  <div class="triple">
+    <div><strong>Цепочка исходников</strong><p id="r30PrCount">0 / 16</p></div>
+    <div><strong>Независимые роли</strong><p id="r30Signers">0 / 4</p></div>
+    <div><strong>Действителен до</strong><p id="r30Expires">—</p></div>
+  </div>
+  <h4>Необходимые доказательства</h4>
+  <ul id="r30Blockers" class="items"></ul>
+  <p class="small">Проверка SHA, Ed25519 и офлайн HTTP-трасс выполняется отдельно от кабинета. Валидные подписи сами по себе не доказывают фактический staging, восстановление, договор или разрешение на запуск.</p>
+  <div class="actions">
+    <button id="r30Refresh" type="button" class="secondary">Обновить R30</button>
+    <button id="r30Download" type="button" class="secondary">Скачать отчёт R30</button>
+  </div>
+  <p class="small">Нет функций деплоя, merge, изменения базы, включения сбора сведений или снятия STOP. Только NO-GO и шаги для независимого оператора.</p>
+</section>
 <section id="r29Panel" hidden aria-labelledby="r29Heading">
   <hr class="separator">
   <span class="eyebrow">R29 / Staging &amp; Merge Acceptance</span>

@@ -278,6 +278,23 @@ if grep -Fq '"stagingMergeReviewSupportedR29":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R30 preserves the entire R29 release chain, read-only verification tools
+# and fail-closed default collection policy.
+if grep -Fq '"independentEvidenceReviewSupportedR30":true' "$root/RELEASE.json"; then
+  grep -Fq '"stagingMergeReviewSupportedR29":true' "$root/RELEASE.json" || {
+    echo "R30 requires R29 source" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R30 must remain non-activating" >&2;exit 3;
+  }
+  for file in src/guest-r30-source-review.mjs src/guest-r30-evidence.mjs \
+    src/guest-r30-probe.mjs src/guest-r30-report.mjs \
+    scripts/r30-review-github.mjs; do
+    test -f "$root/$file" || {
+      echo "R30 release missing $file" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

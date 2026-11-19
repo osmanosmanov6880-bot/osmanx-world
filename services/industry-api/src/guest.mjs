@@ -32,6 +32,7 @@ import {evaluateR28ManualGate} from './guest-r28-stage-gate.mjs';
 import {makeR28OperatorPacket,r28OperatorCsv}
   from './guest-r28-operator-packet.mjs';
 import {makeR29Report,r29ReportCsv} from './guest-r29-report.mjs';
+import {makeR30Report,r30ReportCsv} from './guest-r30-report.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1146,6 +1147,29 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
         'attachment; filename="osmanx-guest-r29-staging-review.csv"');
       reply.header('Cache-Control','no-store');
       return reply.send(r29ReportCsv(report,{now}));
+    }));
+
+  // R30 independent handoff: read-only and tenant-bound; all external facts
+  // remain unverified. Neither endpoint accepts evidence/approval inputs.
+  async function r30Readiness(db,s,pilotId){
+    const r29=await r29Readiness(db,s,pilotId);
+    const now=new Date();
+    return makeR30Report({r29,now});
+  }
+  app.get(P+'/pilots/:id/r30/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r30Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return report;
+    }));
+  app.get(P+'/pilots/:id/r30/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r30Readiness(db,s,req.params.id);
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r30-independent-review.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r30ReportCsv(report,{now:new Date()}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.
