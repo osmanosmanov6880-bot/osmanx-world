@@ -28,6 +28,9 @@ import {makeR26Brief,r26BriefCsv} from './guest-r26-brief.mjs';
 import {auditR27Decision} from './guest-r27-decision-audit.mjs';
 import {runR27FirstClientRehearsal} from './guest-r27-rehearsal.mjs';
 import {makeR27Handoff,r27HandoffCsv} from './guest-r27-handoff.mjs';
+import {evaluateR28ManualGate} from './guest-r28-stage-gate.mjs';
+import {makeR28OperatorPacket,r28OperatorCsv}
+  from './guest-r28-operator-packet.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1089,6 +1092,35 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
         'attachment; filename="osmanx-guest-r27-operator-handoff.csv"');
       reply.header('Cache-Control','no-store');
       return reply.send(r27HandoffCsv(packet,{now}));
+    }));
+
+  // R28: pilot-scoped operations-readiness report. This API deliberately
+  // refuses to fetch GitHub or untrusted host evidence at request time:
+  // source-chain and independent receipt verification are offline tooling.
+  // No write, no merge/deploy token, no remote VPS interaction.
+  async function r28Readiness(db,s,pilotId){
+    const r27=await r27Readiness(db,s,pilotId);
+    const now=new Date(); // after R27 handoff issuance (no timestamp race)
+    const gate=evaluateR28ManualGate({
+      handoff:r27,chain:null,receipts:null,now
+    });
+    return makeR28OperatorPacket({handoff:r27,gate,now});
+  }
+  app.get(P+'/pilots/:id/r28/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r28Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return report;
+    }));
+  app.get(P+'/pilots/:id/r28/handoff.csv',(req,reply)=>
+    forTenant(req,MANAGE,async(db,s)=>{
+      const report=await r28Readiness(db,s,req.params.id);
+      const checkedAt=new Date(); // validate AFTER report was created
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r28-manual-review.csv"');
+      reply.header('Cache-Control','no-store');
+      return reply.send(r28OperatorCsv(report,{now:checkedAt}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.

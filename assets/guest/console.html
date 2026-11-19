@@ -133,6 +133,28 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r28Panel" hidden aria-labelledby="r28Heading">
+  <hr class="separator">
+  <span class="eyebrow">R28 / Защищённая подготовка первого запуска</span>
+  <h3 id="r28Heading">Независимая приёмка релиза — только ручное решение</h3>
+  <p id="r28Status" class="alert" role="status" aria-live="polite">Запуск запрещён, пока не проверены реальный сервер, документы и цепочка PR.</p>
+  <div class="triple" aria-label="Состояние подготовки R28">
+    <div><strong>Статус допуска</strong><p id="r28Stage">NO-GO</p></div>
+    <div><strong>Проверено PR во внешнем GitHub</strong><p id="r28Verified">—</p></div>
+    <div><strong>Пакет действителен до</strong><p id="r28Expiry">—</p></div>
+  </div>
+  <h4>Семь этапов независимой приёмки</h4>
+  <ol id="r28Tasks" class="items"></ol>
+  <h4>Что блокирует commercial production</h4>
+  <ul id="r28Blockers" class="items"></ul>
+  <p id="r28Next" class="info">Обязательны независимый аудит исходных данных и ручное слияние PR.</p>
+  <div class="actions">
+    <button id="r28Refresh" type="button" class="secondary">Обновить состояние R28</button>
+    <button id="r28Download" type="button" class="secondary">Скачать чек-лист оператора CSV</button>
+  </div>
+  <p class="small">Проверка 14 PR и четырёх подписанных внешних квитанций выполняется отдельно, вне личного кабинета. Этот экран отображает только безопасный статус текущего пилота. SHA-256 не является подписью. Пакет действует не более 15 минут. Нет кнопок слияния, снятия STOP, публикации или включения сбора.</p>
+</section>
+
 <section id="r27Panel" hidden aria-labelledby="r27Heading">
   <hr class="separator">
   <span class="eyebrow">R27 / Первый клиент · техническая репетиция</span>

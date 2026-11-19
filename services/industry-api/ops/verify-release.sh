@@ -246,6 +246,23 @@ if grep -Fq '"firstClientRehearsalSupportedR27":true' "$root/RELEASE.json"; then
     }
   done
 fi
+# R28 is a manual-review source package only. No public deployment
+# or customer collection can be enabled by the release manifest.
+if grep -Fq '"independentReleaseReviewSupportedR28":true' "$root/RELEASE.json"; then
+  grep -Fq '"firstClientRehearsalSupportedR27":true' "$root/RELEASE.json" || {
+    echo "R28 missing verified R27 source" >&2;exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R28 cannot activate production collection" >&2;exit 3;
+  }
+  for f in src/guest-r28-attestations.mjs src/guest-r28-stage-gate.mjs \
+    src/guest-r28-operator-packet.mjs scripts/r28-release-plan.mjs \
+    scripts/r28-verify-evidence.mjs; do
+    test -f "$root/$f" || {
+      echo "R28 mandatory offline module missing $f" >&2;exit 3;
+    }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
