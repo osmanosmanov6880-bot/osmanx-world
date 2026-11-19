@@ -4,7 +4,7 @@
  * source truth, contract validity, external WORM custody or production GO.
  * Private keys NEVER enter this module, API, repository or release.
  */
-import {createHash,createPublicKey,verify} from 'node:crypto';
+import {KeyObject,createHash,createPublicKey,verify} from 'node:crypto';
 export const R28_EVIDENCE_SCHEMA='osmanx.guest.r28.offline-evidence-receipts.v1';
 export const ROLES=Object.freeze(['host','recovery','privacy','release']);
 export const R28_SIGNING_SCHEMA='osmanx.guest.r28.ed25519-receipt.v1';
@@ -67,7 +67,9 @@ export function verifyR28IndependentReceipts({
       fail('STALE_OR_FUTURE_OBSERVATION');continue;
     }
     try{
-      const key=createPublicKey(publicKeys[item.role]);
+      const supplied=publicKeys[item.role];
+      const key=supplied instanceof KeyObject&&supplied.type==='public'?
+        supplied:createPublicKey(supplied);
       if(key.asymmetricKeyType!=='ed25519'){
         fail('NON_ED25519_KEY');continue;
       }
