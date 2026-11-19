@@ -206,6 +206,41 @@ test('R26 pilot version invalidates both internal declarations without rewriting
     entities[0].auth,ownerInput,
     {'Idempotency-Key':'r26-old-version-'+tag})).status,409);
 });
+test('R27 actual Fastify/PostgreSQL: private pilot handoff, synthetic paths and expiring CSV',async()=>{
+  const owned='/guest/pilots/'+pilot+'/r27';
+  assert.equal((await request('GET',owned+'/readiness')).status,401);
+  assert.equal((await request('GET',owned+'/readiness',entities[2].auth)).status,404);
+  assert.equal((await request('GET',owned+'/rehearsal',entities[2].auth)).status,404);
+  assert.equal((await request('GET',owned+'/handoff.csv',entities[2].auth)).status,404);
+  const readiness=await request('GET',owned+'/readiness',entities[1].auth);
+  assert.equal(readiness.status,200,JSON.stringify(readiness.value));
+  const packet=readiness.value;
+  assert.equal(packet.schema,'osmanx.guest.r27.operator-handoff.v1');
+  assert.equal(packet.pilotId,pilot);
+  assert.equal(packet.version,initial.version+1);
+  assert.equal(packet.customerGo,false);
+  assert.equal(packet.productionAuthorized,false);
+  assert.equal(packet.reportContainsPersonalData,false);
+  assert.equal(packet.decision.stage,'DATA_BLOCKED');
+  assert.ok(packet.blockers.includes('R27_EXTERNAL_SOURCE_AUDIT_REQUIRED'));
+  assert.ok(packet.blockers.includes('R27_HUMAN_MERGE_AND_CHANGE_TICKET_REQUIRED'));
+  assert.equal(Date.parse(packet.expiresAt)-Date.parse(packet.issuedAt),1800000);
+  const rehearsal=await request('GET',owned+'/rehearsal',entities[0].auth);
+  assert.equal(rehearsal.status,200);
+  assert.equal(rehearsal.value.schema,
+    'osmanx.guest.r27.synthetic-first-client-rehearsal.v1');
+  assert.equal(rehearsal.value.allPassed,true,JSON.stringify(rehearsal.value.cases));
+  assert.equal(rehearsal.value.passedCases,7);
+  assert.equal(packet.rehearsal.sha256,rehearsal.value.sha256);
+  assert.equal(rehearsal.value.realCustomerDataUsed,false);
+  assert.equal(rehearsal.value.runtimeExternalCalls,0);
+  const exported=await request('GET',owned+'/handoff.csv',entities[0].auth);
+  assert.equal(exported.status,200);
+  assert.equal(exported.bytes.subarray(0,3).toString('hex'),'efbbbf');
+  for(const item of entities)
+    assert.equal(exported.bytes.toString('utf8').includes(item.email),false);
+  assert.equal(exported.bytes.toString('utf8').includes('ПЕРВОЕ РАЗРЕШЕНИЕ НА ЗАПУСК'),false);
+});
 test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes',async()=>{
   const flags=(await admin.query(
     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class"+
@@ -253,4 +288,10 @@ test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes
     'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
   )).rows[0].n;
   assert.equal(unchanged,2);
+  const stopped=await request('GET','/guest/pilots/'+pilot+'/r27/readiness',
+    entities[0].auth);
+  assert.equal(stopped.status,200);
+  assert.equal(stopped.value.decision.stage,'SAFETY_HOLD');
+  assert.equal(stopped.value.customerGo,false);
+  assert.equal(stopped.value.productionAuthorized,false);
 });
