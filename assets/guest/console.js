@@ -134,10 +134,15 @@ async function loadAdmission(){
       invalid_signed_tenant_permit:'подписи или доказательства недействительны',
       registry_unavailable:'подписанный реестр недоступен',
       private_evidence_unavailable:'документы подтверждения недоступны',
-      invalid_or_missing_permit:'нет действующего подтверждения'
+      invalid_or_missing_permit:'нет действующего подтверждения',
+      r17_witness_or_fence_unavailable:'не удалось проверить независимые подтверждения R17 или защиту PostgreSQL'
     }[value.reason]||'допуск не подтверждён';
+    const r17=value.witnessVerified===null||value.witnessVerified===undefined?
+      ' · R17 не включён':' · R17: '+(value.witnessVerified===true&&value.witnessFenceReady===true?
+        'подписи и контрольная точка подтверждены':'проверка не пройдена')+
+        (Number.isSafeInteger(value.witnessSequence)?', запись №'+value.witnessSequence:'');
     output.textContent='Режим: '+(value.mode==='multi'?'несколько компаний':value.mode==='single'?'одна компания':'отключён')+
-      ' · '+(authorized?'Допуск действителен':'Запись недоступна')+' · '+reason+'.';
+      ' · '+(authorized?'Допуск действителен':'Запись недоступна')+' · '+reason+r17+'.';
     output.className=authorized?'info':'alert';
     expiry.textContent=authorized&&value.validUntil?
       'Срок действия до '+new Date(value.validUntil).toLocaleString('ru-RU')+
