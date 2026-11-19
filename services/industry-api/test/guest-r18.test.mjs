@@ -152,8 +152,8 @@ test('R18 stacked release gate refuses any open/unverified/human-unapproved PR',
   for(const spec of CHAIN){
     pulls[spec.number]={number:spec.number,base:{ref:spec.base},
       head:{sha:spec.sha},merged:true,state:'closed',merged_at:'2026-11-19T00:00:00Z'};
-    checks[spec.number]=Array.from({length:spec.minChecks},()=>({
-      head_sha:spec.sha,status:'completed',conclusion:'success'
+    checks[spec.number]=spec.requiredChecks.map(name=>({
+      name,head_sha:spec.sha,status:'completed',conclusion:'success'
     }));
   }
   const manual={externalArchiveRetained:true,encryptedDrRestored:true,
