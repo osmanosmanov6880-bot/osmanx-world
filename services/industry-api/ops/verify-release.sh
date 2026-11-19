@@ -375,6 +375,21 @@ if grep -Fq '"byteEvidenceAndHumanReviewSupportedR35":true' "$root/RELEASE.json"
     test -f "$root/$f" || { echo "Missing R35 file $f" >&2; exit 3; }
   done
 fi
+# R36 ships only operator tools and a read-only tenant NO-GO report.
+if grep -Fq '"manualCodeReviewAndSemanticStagingR36":true' "$root/RELEASE.json"; then
+  grep -Fq '"byteEvidenceAndHumanReviewSupportedR35":true' "$root/RELEASE.json" || {
+    echo "R36 requires R35 source" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R36 must not enable guest writes" >&2; exit 3;
+  }
+  for f in src/guest-r36-source.mjs src/guest-r36-patch-audit.mjs \
+    src/guest-r36-staging-content.mjs src/guest-r36-disposable-restore.mjs \
+    src/guest-r36-report.mjs scripts/r36-review-github.mjs \
+    scripts/r36-staging-canary.mjs scripts/r36-disposable-restore.mjs; do
+    test -f "$root/$f" || { echo "Missing R36 source $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
