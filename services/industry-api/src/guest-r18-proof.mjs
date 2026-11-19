@@ -81,5 +81,6 @@ export function verifyPortableProof(proof,keys,{
     revision:r17?.checkpoint?.revision||null,
     sequence:r17?.checkpoint?.sequence||null,
     proofDigest:typeof proof?.bundleDigest==='string'?proof.bundleDigest:null,
+    anchorDigest:r18?.anchorDigest||null,
     productionChanged:false,offsiteStorageVerified:false};
 }
