@@ -14,6 +14,8 @@ import {r17Configured,loadR17Witness} from './guest-r17-witness.mjs';
 import {assertR17Fence,inspectR17Fence} from './guest-r17-fence.mjs';
 import {r18Configured,loadR18Anchor} from './guest-r18-anchor.mjs';
 import {assertR18Fence,inspectR18Fence} from './guest-r18-fence.mjs';
+import {r19Configured,collectionOperation,loadR19Scope,inspectR19Scope} from './guest-r19-scope.mjs';
+import {assertR19Pilot,consumeR19Budget} from './guest-r19-usage.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -85,6 +87,9 @@ export async function buildApp(pool){
           throw Error('R17 requires R16');
         if(r18Configured(process.env)&&!r17Configured(process.env))
           throw Error('R18 requires R17');
+        if(r19Configured(process.env)&&!r18Configured(process.env)&&
+           collectionOperation(req.url,req.method))
+          throw Error('R19 scoped collection requires R18');
         if(r16Configured(process.env))req.guestRegistry=await loadR16Registry(process.env);
         else req.guestAdmission=await loadTenantPermit(process.env);
         if(r17Configured(process.env)){
@@ -94,6 +99,8 @@ export async function buildApp(pool){
         }
         if(r18Configured(process.env))
           req.r18Anchor=await loadR18Anchor(process.env,req.r17Witness);
+        if(r19Configured(process.env)&&collectionOperation(req.url,req.method))
+          req.r19Scope=await loadR19Scope(process.env,req.r18Anchor);
       }catch{
         throw httpError(503,'Нужен актуальный подписанный допуск компании R15/R16');
       }
@@ -128,7 +135,9 @@ export async function buildApp(pool){
     const session=await auth(request);
     const guestMutation=opt.secure && ['POST','PATCH','PUT','DELETE'].includes(request.method) &&
       (request.url===PREFIX+'/guest'||request.url.startsWith(PREFIX+'/guest/'));
-    let witness=null,externalAnchor=null;
+    let witness=null,externalAnchor=null,scopedPilot=null;
+    const collection=guestMutation&&r19Configured(process.env)?
+      collectionOperation(request.url,request.method):null;
     if(guestMutation){
       if(r16Configured(process.env)){
         // Tenant always comes from the authenticated session, not a request body.
@@ -148,6 +157,15 @@ export async function buildApp(pool){
                 throw Error('External anchor changed during authorization');
             }catch{throw httpError(503,'R18: внешний контрольный якорь не подтверждён');}
           }
+          if(collection){
+            try{
+              scopedPilot=await loadR19Scope(process.env,externalAnchor);
+              if(scopedPilot.scopeDigest!==request.r19Scope?.scopeDigest||
+                 scopedPilot.tenantId!==session.tenant_id||
+                 scopedPilot.pilotId!==collection.pilotId)
+                throw Error('R19 tenant or pilot changed since request start');
+            }catch{throw httpError(503,'R19: сбор для этого пилота не разрешён');}
+          }
         }
       }else assertTenantPermission(request.guestAdmission,session.tenant_id);
     }
@@ -156,6 +174,7 @@ export async function buildApp(pool){
       // The fence advances inside this exact transaction, not before it.
       if(witness)await assertR17Fence(db,witness);
       if(externalAnchor)await assertR18Fence(db,externalAnchor);
+      if(scopedPilot)await assertR19Pilot(db,session.tenant_id,collection.pilotId,scopedPilot);
       const response=await fn(db,session,role);
       if(witness){
         // Late stop/revocation/checkpoint change aborts the entire transaction.
@@ -174,6 +193,20 @@ export async function buildApp(pool){
             throw httpError(503,'R18: повторите операцию с новым подтверждением');
           await assertR18Fence(db,latestAnchor);
         }
+      }
+      if(scopedPilot){
+        // STOP and scope changes invalidate the *whole* SQL transaction.
+        let latest;
+        try{latest=await loadR19Scope(process.env,externalAnchor);}
+        catch{throw httpError(503,'R19: допуск отменён во время операции');}
+        if(latest.scopeDigest!==scopedPilot.scopeDigest)
+          throw httpError(503,'R19: требуется новый допуск пилота');
+        await assertR19Pilot(db,session.tenant_id,collection.pilotId,latest);
+        if(response?.duplicate!==true)
+          await consumeR19Budget(db,{
+            tenantId:session.tenant_id,pilotId:collection.pilotId,
+            kind:collection.kind,scope:latest
+          });
       }
       return response;
     });
