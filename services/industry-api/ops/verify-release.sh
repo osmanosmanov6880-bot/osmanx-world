@@ -256,7 +256,8 @@ if grep -Fq '"independentReleaseReviewSupportedR28":true' "$root/RELEASE.json"; 
     echo "R28 cannot activate production collection" >&2;exit 3;
   }
   for f in src/guest-r28-attestations.mjs src/guest-r28-stage-gate.mjs \
-    src/guest-r28-operator-packet.mjs scripts/r28-release-plan.mjs; do
+    src/guest-r28-operator-packet.mjs scripts/r28-release-plan.mjs \
+    scripts/r28-verify-evidence.mjs; do
     test -f "$root/$f" || {
       echo "R28 mandatory offline module missing $f" >&2;exit 3;
     }
