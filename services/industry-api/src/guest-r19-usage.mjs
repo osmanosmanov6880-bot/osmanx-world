@@ -40,14 +40,14 @@ export async function consumeR19Budget(db,{tenantId,pilotId,kind,scope}){
   try{
     const maxDaily=scope.maxDailyWrites;
     const r=await db.query(
-      "INSERT INTO industry.guest_r19_daily_usage"+
+      "INSERT INTO industry.guest_r19_daily_usage AS usage"+
       "(tenant_id,pilot_id,utc_day,used_count,max_daily,last_scope_sha)"+
       " VALUES($1,$2,(now() AT TIME ZONE 'UTC')::date,1,$3,$4)"+
       " ON CONFLICT(tenant_id,pilot_id,utc_day) DO UPDATE"+
-      " SET used_count=industry.guest_r19_daily_usage.used_count+1,"+
-      " max_daily=LEAST(industry.guest_r19_daily_usage.max_daily,EXCLUDED.max_daily),"+
+      " SET used_count=usage.used_count+1,"+
+      " max_daily=LEAST(usage.max_daily,EXCLUDED.max_daily),"+
       " last_scope_sha=EXCLUDED.last_scope_sha,updated_at=now()"+
-      " WHERE industry.guest_r19_daily_usage.used_count<LEAST(industry.guest_r19_daily_usage.max_daily,EXCLUDED.max_daily)"+
+      " WHERE usage.used_count<LEAST(usage.max_daily,EXCLUDED.max_daily)"+
       " RETURNING used_count,max_daily",
       [tenantId,pilotId,maxDaily,scope.scopeDigest]
     );
