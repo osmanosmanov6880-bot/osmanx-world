@@ -438,12 +438,17 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       {available:false,used:null,maxDaily:null};
     const signedPeople=gate.checks.ownerSigned&&gate.checks.managerSigned&&
       gate.checks.independent;
+    // R12 checks independent human approvals at draft -> running transition.
+    // Later observation version increments must not retroactively invalidate
+    // the legitimate start; R19 still rechecks protocol and R13 hold per write.
+    const approvedAtLaunch=pilot.phase==='running'&&!!pilot.launch_gate_enrolled_at;
     const checks={
       signedTenantAndPilot:ownScope,
       exactRegisteredProtocol:ownScope&&scope.record.protocolDigest===fingerprint,
-      launchTwoHumans:signedPeople&&!!pilot.launch_gate_enrolled_at,
+      launchTwoHumans:approvedAtLaunch||
+        (signedPeople&&!!pilot.launch_gate_enrolled_at),
       correctLifecycle:pilot.phase==='draft'?
-        gate.canStartIsolatedPilot:pilot.phase==='running'&&signedPeople,
+        gate.canStartIsolatedPilot:pilot.phase==='running',
       noSafetyHold:hold?.active!==true,
       withinDailyLimit:budget.available
     };
