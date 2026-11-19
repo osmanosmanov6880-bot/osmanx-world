@@ -66,9 +66,15 @@ grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
 # R18 extensions are required only in R18 release bundles; legacy R14
 # archives remain verifiable, but they are NOT R18 production acceptance.
 if grep -Fq '"externalAnchorRequiredForR18":true' "$root/RELEASE.json"; then
-  grep -Fq '"latestMigration":"013_guest_external_anchor_fence.sql"' "$root/RELEASE.json" || {
-    echo "Missing R18 schema declaration" >&2;exit 3;
-  }
+  if grep -Fq '"singlePilotScopeSupportedR19":true' "$root/RELEASE.json"; then
+    grep -Fq '"latestMigration":"014_guest_single_pilot_rollout.sql"' "$root/RELEASE.json" || {
+      echo "Missing R19 schema declaration" >&2;exit 3;
+    }
+  else
+    grep -Fq '"latestMigration":"013_guest_external_anchor_fence.sql"' "$root/RELEASE.json" || {
+      echo "Missing R18 schema declaration" >&2;exit 3;
+    }
+  fi
   full_sha="$(sed -n 's/.*"fullCommit":"\([a-f0-9]\{40\}\)".*/\1/p' "$root/RELEASE.json")"
   [[ "$full_sha" =~ ^[a-f0-9]{40}$ ]] && test "$(printf '%.12s' "$full_sha")" = "$revision" || {
     echo "R18 full commit does not match source release" >&2;exit 3;
@@ -81,6 +87,20 @@ if grep -Fq '"externalAnchorRequiredForR18":true' "$root/RELEASE.json"; then
       echo "R18 release missing $entry" >&2;exit 3;
     }
   done
+fi
+# R19 is an optional, explicitly signed one-pilot permission. Release tools
+# assert the complete code exists but NEVER enable it automatically.
+if grep -Fq '"singlePilotScopeSupportedR19":true' "$root/RELEASE.json"; then
+  for entry in migrations/014_guest_single_pilot_rollout.sql \
+    src/guest-r19-scope.mjs src/guest-r19-usage.mjs \
+    scripts/r19-operator.mjs scripts/r19-first-client-rehearsal.mjs; do
+    test -f "$root/$entry" || {
+      echo "R19 release missing $entry" >&2;exit 3;
+    }
+  done
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R19 must ship with collection disabled" >&2;exit 3;
+  }
 fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
