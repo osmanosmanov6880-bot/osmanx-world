@@ -4,13 +4,17 @@
  * Explicit human obligations cannot be derived from CI.
  */
 export const CHAIN=Object.freeze([
-  {number:47,base:'main',sha:'840bb083e606058a9a32450f3b3a3e881a34891e',minChecks:4},
+  {number:47,base:'main',sha:'840bb083e606058a9a32450f3b3a3e881a34891e',
+    requiredChecks:['industry-api','ops-contract','encrypted-backup-restore','package-and-smoke']},
   {number:48,base:'feat/guest-r14-production-operations-20261118',
-    sha:'125df326215494f1f690db6afbe1a796bcf3509a',minChecks:2},
+    sha:'125df326215494f1f690db6afbe1a796bcf3509a',
+    requiredChecks:['r15-postgres','r15-offline']},
   {number:49,base:'feat/guest-r15-tenant-admission-20261119',
-    sha:'be2fa8391a6fc837e63bee98acaa010429f410cc',minChecks:3},
+    sha:'be2fa8391a6fc837e63bee98acaa010429f410cc',
+    requiredChecks:['r16-source-release','r16-postgres','r16-offline']},
   {number:51,base:'feat/guest-r16-multitenant-revocation-20261119',
-    sha:'73ade05c91216913febd5ab4da2fc9a3694c1f84',minChecks:3}
+    sha:'73ade05c91216913febd5ab4da2fc9a3694c1f84',
+    requiredChecks:['r17-offline','r17-reproducible','r17-postgres']}
 ]);
 const MANUAL=['externalArchiveRetained','encryptedDrRestored',
   'independentLegalApproval','twoPersonOperationsApproval',
@@ -26,9 +30,10 @@ export function evaluateReleaseChain({pulls={},checks={},manual={}}={}){
       pr?.head?.sha===step.sha;
     const merged=pr?.merged===true&&typeof pr?.merged_at==='string'&&
       pr?.state==='closed';
-    const ciGood=Array.isArray(a)&&a.length>=step.minChecks&&
-      a.every(x=>x?.status==='completed'&&x?.conclusion==='success'&&
-        x?.head_sha===step.sha);
+    const ciGood=Array.isArray(a)&&
+      step.requiredChecks.every(name=>a.some(x=>x?.name===name&&
+        x?.status==='completed'&&x?.conclusion==='success'&&
+        x?.head_sha===step.sha));
     if(!refsGood)blockers.push('missing_or_changed_pr_'+step.number);
     if(!merged)blockers.push('unmerged_pr_'+step.number);
     if(!ciGood)blockers.push('unverified_ci_'+step.number);
@@ -66,7 +71,7 @@ export async function githubSnapshot({
     const list=await read('/commits/'+step.sha+'/check-runs?per_page=100');
     pulls[step.number]=pr;
     checks[step.number]=(list.check_runs||[]).map(x=>({
-      status:x.status,conclusion:x.conclusion,head_sha:x.head_sha
+      name:x.name,status:x.status,conclusion:x.conclusion,head_sha:x.head_sha
     }));
   }
   return {pulls,checks};
