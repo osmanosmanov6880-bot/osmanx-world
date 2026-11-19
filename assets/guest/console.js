@@ -70,6 +70,7 @@ function showAuth(){
   model.selectedAction=null;model.launchGate=null;model.safety=null;model.staffMembers=[];
   model.admission=null;$('admissionPanel').hidden=true;
   $('r19Panel').hidden=true;
+  $('r20Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -410,6 +411,7 @@ async function openPilot(id){
   await Promise.all([loadDiagnostics(),loadActions(),loadLaunchGate()]);
   await loadSafety();
   await loadR19Preflight();
+  await loadR20Inspection();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -456,6 +458,51 @@ async function loadR19Preflight(){
       $('observationForm').querySelector('button[type=submit]').disabled=true;
       $('bulkCommit').disabled=true;
     }
+  }
+}
+const R20_LABELS={
+  registeredProtocol:'Зафиксированный неизменяемый протокол',
+  launchEnrolled:'Действует запись о включении двухсотрудникового допуска R12',
+  noSafetyHold:'Нет активной R13 остановки пилота',
+  r16TenantPermit:'Действующее разрешение компании R16',
+  r17SignedCheckpoint:'Криптографическая контрольная точка R17',
+  r18ExternalReceipt:'Независимая квитанция хранителя R18',
+  r19ScopeExact:'Подписанный допуск относится к этой компании и пилоту',
+  scopeInDate:'Срок действия допуска ещё не завершился',
+  withinDailyBudget:'Есть свободные операции в дневной квоте',
+  dailyAuditMatchesQuota:'Сохранённые операции совпадают с журналом',
+  retentionWindowCurrent:'Срок хранения требует соблюдения и отдельной проверки',
+  releaseChainVerified:'Слияние и проверка всей цепочки R14–R19',
+  externalDrAttested:'Восстановление и WORM-хранение подтверждены независимо',
+  legalEvidenceReviewed:'Правовые основания подтверждены человеком'
+};
+async function loadR20Inspection(){
+  const panel=$('r20Panel'),output=$('r20Status'),list=$('r20Checklist');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const report=await api('/guest/pilots/'+model.selected.item.id+'/r20/inspection');
+    if(report.schema!=='osmanx.guest.r20.pilot-inspection.v1'||
+       !report.checks||!Array.isArray(report.technicalBlockers))
+      throw Error('Неверный формат технической приёмки');
+    output.className=report.technicalReviewPossible?'info':'alert';
+    output.textContent=report.technicalReviewPossible?
+      'Внутренние технические признаки проверены. Запуск реального клиента всё ещё запрещён до независимой приёмки.':
+      'К запуску не готово: '+report.technicalBlockers.length+
+      ' технических блокирующих условий. Клиентская запись не разрешена.';
+    for(const [code,label] of Object.entries(R20_LABELS)){
+      const pass=report.checks[code]===true;
+      appendText(list,'li',(pass?'Проверено: ':'Требует проверки: ')+label,'small');
+    }
+    $('r20Budget').textContent=report.daily?.used===null?
+      'Сведения о дневных операциях недоступны.':
+      'Операций за сегодня: '+report.daily.used+' из '+report.daily.max+
+      '; в журнале '+report.daily.auditEvents+
+      '. Внешние юридические и резервные подтверждения в кабинет не передаются.';
+  }catch{
+    output.className='alert';
+    output.textContent='Проверка R20 недоступна. Это означает NO-GO, а не разрешение на работу.';
+    $('r20Budget').textContent='';
   }
 }
 async function loadReport(){
@@ -945,6 +992,7 @@ $('launchGateAttest').addEventListener('click',()=>safely(async()=>{
 }));
 $('launchGateExport').addEventListener('click',()=>safely(()=>downloadLaunchGateProof()));
 $('r19Refresh').addEventListener('click',()=>safely(()=>loadR19Preflight()));
+$('r20Refresh').addEventListener('click',()=>safely(()=>loadR20Inspection()));
 $('operationsRefresh').addEventListener('click',()=>safely(async()=>{
   await loadOperations();setStatus('Очередь руководителя пересчитана по серверным данным.');
 }));
