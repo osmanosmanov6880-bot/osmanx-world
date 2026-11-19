@@ -241,6 +241,44 @@ test('R27 actual Fastify/PostgreSQL: private pilot handoff, synthetic paths and 
     assert.equal(exported.bytes.toString('utf8').includes(item.email),false);
   assert.equal(exported.bytes.toString('utf8').includes('ПЕРВОЕ РАЗРЕШЕНИЕ НА ЗАПУСК'),false);
 });
+test('R28 actual Fastify/PostgreSQL: manager-only no-GO operator packet and CSV with no side effects',async()=>{
+  const root='/guest/pilots/'+pilot+'/r28';
+  const countBefore=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal((await request('GET',root+'/readiness')).status,401);
+  assert.equal((await request('GET',root+'/readiness',entities[2].auth)).status,404);
+  assert.equal((await request('GET',root+'/handoff.csv',entities[2].auth)).status,404);
+  const response=await request('GET',root+'/readiness',entities[0].auth);
+  assert.equal(response.status,200,JSON.stringify(response.value));
+  const packet=response.value;
+  assert.equal(packet.schema,'osmanx.guest.r28.manual-operator-packet.v1');
+  assert.equal(packet.pilotId,pilot);
+  assert.equal(packet.version,initial.version+1);
+  assert.equal(packet.verifiedSourcePrs,0);
+  assert.equal(packet.totalSourcePrsRequired,14);
+  assert.equal(packet.stage,'SOURCE_CHAIN_UNVERIFIED');
+  assert.equal(packet.customerGo,false);
+  assert.equal(packet.productionAuthorized,false);
+  assert.equal(packet.cryptographicPublisherSignature,false);
+  assert.equal(packet.operatorSteps.length,7);
+  assert.ok(packet.blockers.includes('R28_LAWFUL_BASIS_NOT_VERIFIED'));
+  assert.ok(packet.blockers.includes('R28_MANUAL_MERGES_OUTSTANDING'));
+  assert.equal(Date.parse(packet.expiresAt)-Date.parse(packet.issuedAt),900000);
+  const manager=await request('GET',root+'/readiness',entities[1].auth);
+  assert.equal(manager.status,200);
+  assert.equal(manager.value.customerGo,false);
+  const csv=await request('GET',root+'/handoff.csv',entities[1].auth);
+  assert.equal(csv.status,200);
+  assert.equal(csv.bytes.subarray(0,3).toString('hex'),'efbbbf');
+  for(const item of entities)
+    assert.equal(csv.bytes.toString('utf8').includes(item.email),false);
+  assert.equal(csv.bytes.toString('utf8').includes('SKIP_PRODUCTION'),false);
+  const countAfter=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal(countAfter,countBefore);
+});
 test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes',async()=>{
   const flags=(await admin.query(
     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class"+
@@ -294,4 +332,11 @@ test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes
   assert.equal(r27Stop.value.decision.stage,'SAFETY_HOLD');
   assert.equal(r27Stop.value.customerGo,false);
   assert.equal(r27Stop.value.productionAuthorized,false);
+  const r28Stop=await request('GET',
+    '/guest/pilots/'+pilot+'/r28/readiness',entities[1].auth);
+  assert.equal(r28Stop.status,200);
+  assert.equal(r28Stop.value.stage,'STOP');
+  assert.ok(r28Stop.value.blockers.includes('R28_EMERGENCY_STOP_ACTIVE'));
+  assert.equal(r28Stop.value.customerGo,false);
+  assert.equal(r28Stop.value.productionAuthorized,false);
 });
