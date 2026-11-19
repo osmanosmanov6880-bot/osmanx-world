@@ -14,9 +14,10 @@ const ROLES=['client_representative','privacy_reviewer',
 async function readStdin(stream){
   let size=0;const chunks=[];
   for await(const part of stream){
-    size+=part.length;
+    const bytes=Buffer.isBuffer(part)?part:Buffer.from(part);
+    size+=bytes.length;
     if(size>LIMIT)throw Error('Evidence exceeds 256 KiB');
-    chunks.push(part);
+    chunks.push(bytes);
   }
   if(!size)throw Error('Evidence is empty');
   return Buffer.concat(chunks).toString('utf8');
