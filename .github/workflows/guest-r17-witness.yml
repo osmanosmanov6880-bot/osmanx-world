@@ -46,6 +46,8 @@ jobs:
             echo "::error::Private keys or identities in source!"
             exit 1
           fi
+      - name: Install runtime dependencies for read-only onboarding tests
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: R17 offline Ed25519, hash chain, revocation and onboarding tests
         run: node --test test/guest-r17.test.mjs
       - name: R16 multi-tenant compatibility regression
