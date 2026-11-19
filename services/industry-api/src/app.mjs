@@ -9,6 +9,7 @@ import { registerIntegrationRoutes } from './integrations.mjs';
 import { registerGuestRoutes } from './guest.mjs';
 import { probeGuestDatabase } from './readiness.mjs';
 import {loadTenantPermit,assertTenantPermission} from './guest-tenant-authorization.mjs';
+import {r16Configured,loadR16Registry,assertR16Tenant,inspectR16Tenant} from './guest-r16-registry.mjs';
 
 const PREFIX='/api/industry/v1';
 const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -75,9 +76,11 @@ export async function buildApp(pool){
       // A valid packet alone never authorizes a request; authentication, CSRF,
       // tenant membership and existing R12/R13 safeguards still apply.
       try{
-        req.guestAdmission=await loadTenantPermit(process.env);
+        // R16 opt-in never silently falls back to R15 if a signed registry is absent.
+        if(r16Configured(process.env))req.guestRegistry=await loadR16Registry(process.env);
+        else req.guestAdmission=await loadTenantPermit(process.env);
       }catch{
-        throw httpError(503,'Нужен актуальный подписанный допуск R15');
+        throw httpError(503,'Нужен актуальный подписанный допуск компании R15/R16');
       }
     }
   });
@@ -110,7 +113,13 @@ export async function buildApp(pool){
     const session=await auth(request);
     const guestMutation=opt.secure && ['POST','PATCH','PUT','DELETE'].includes(request.method) &&
       (request.url===PREFIX+'/guest'||request.url.startsWith(PREFIX+'/guest/'));
-    if(guestMutation)assertTenantPermission(request.guestAdmission,session.tenant_id);
+    if(guestMutation){
+      if(r16Configured(process.env)){
+        // Re-read the signed registry and per-tenant stop markers AFTER auth,
+        // not merely at request start; R16 never trusts a submitted tenant ID.
+        await assertR16Tenant(session.tenant_id,process.env);
+      }else assertTenantPermission(request.guestAdmission,session.tenant_id);
+    }
     return withTenant(pool,session.tenant_id,async db=>{
       const role=await requireMembership(db,session.tenant_id,session.account_id,roles);
       return fn(db,session,role);
@@ -125,6 +134,30 @@ export async function buildApp(pool){
     reply.clearCookie(opt.sid,{path:'/',secure:opt.secure,sameSite:'strict'});
     reply.clearCookie(opt.csrf,{path:'/',secure:opt.secure,sameSite:'strict'});
   }
+  app.get(PREFIX+'/guest/admission/self',async req=>forTenant(req,rolesManage,async(db,session)=>{
+    // Company-scoped, read-only status. Never return key paths, manifests,
+    // other companies, operational secrets or approval documents.
+    if(!opt.secure||process.env.GUEST_WRITES_ENABLED!=='true')
+      return {schema:'osmanx.guest.r16.self-status.v1',
+        mode:'disabled',permitValid:false,reason:'guest_writes_disabled',writesChanged:false};
+    if(r16Configured(process.env)){
+      const status=await inspectR16Tenant(session.tenant_id,process.env);
+      return {schema:'osmanx.guest.r16.self-status.v1',mode:'multi',
+        permitValid:status.permitValid,reason:status.reason,
+        registryRevision:status.registryRevision,validUntil:status.validUntil,
+        writesChanged:false};
+    }
+    try{
+      const bundle=await loadTenantPermit(process.env);
+      assertTenantPermission(bundle,session.tenant_id);
+      return {schema:'osmanx.guest.r16.self-status.v1',mode:'single',
+        permitValid:true,reason:'authorized',validUntil:bundle.permit.expiresAt,
+        writesChanged:false};
+    }catch{
+      return {schema:'osmanx.guest.r16.self-status.v1',mode:'single',
+        permitValid:false,reason:'invalid_or_missing_permit',writesChanged:false};
+    }
+  }));
   app.get(PREFIX+'/health/live',async()=>({status:'live'}));
   app.get(PREFIX+'/health/ready',async()=>{
     const integrity=await probeGuestDatabase(pool);
