@@ -30,7 +30,7 @@ test('R8 browser disallows offline/manager CSV and renders honest operator state
     assert(h.includes('id="'+id+'"'),id);
   assert.match(h,/<button id="csv"[^>]*disabled/);
   for(const fragment of ['refreshR8','refreshR8Ops','r8Online','updateCsvPermission',
-    '/cinema/exports/approve','confirm:\\'EXPORT_LOADED\\'','approvedCount',
+    '/cinema/exports/approve',"confirm:'EXPORT_LOADED'",'approvedCount',
     'window.confirm','rows.length>500','r8-ops'])
     assert(js.includes(fragment),fragment);
   assert.doesNotMatch(js,/localStorage|sessionStorage|innerHTML\s*=\s*item\./i);
