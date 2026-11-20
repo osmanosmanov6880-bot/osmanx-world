@@ -1,0 +1,29 @@
+name: MOSCOW 1000 R1 static QA
+on:
+  pull_request:
+    paths:
+      - 'moscow-1000/**'
+      - 'tests/moscow-1000-r1.test.mjs'
+      - '.github/workflows/moscow-1000-r1.yml'
+      - 'index.html'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r1-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate R1 source and editorial safety
+        run: |
+          set -euo pipefail
+          node --check moscow-1000/content.js
+          node --check moscow-1000/app.js
+          node --test tests/moscow-1000-r1.test.mjs
+          grep -Fq '/moscow-1000/' index.html
+          grep -Fq "moscow-1000/***" .github/workflows/deploy.yml
