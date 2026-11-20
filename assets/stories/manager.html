@@ -22,13 +22,35 @@
 <section id="workspace" hidden aria-labelledby="work-title">
 <div class="hero"><div><p class="eyebrow">OSMANX / SALES OPERATIONS</p><h1 id="work-title">От интереса — к решению.</h1><p>Реальные обращения, статусы и вручную подтверждённые оценки сделок. Анонимные события просмотра не являются уникальными посетителями.</p></div><button id="reload" type="button">Обновить данные ↻</button></div>
 <section class="metrics" id="metrics" aria-label="Показатели заявок"></section>
+<section class="r4-followup-board" aria-labelledby="r4-followup-heading">
+  <div class="panel-head"><div><p class="eyebrow">R4 · FOLLOW-UP CONTROL</p><h2 id="r4-followup-heading">Следующие действия</h2></div>
+    <label for="r4-followup-window">Период <select id="r4-followup-window"><option value="overdue">Просроченные</option><option value="today">Сегодня (UTC)</option><option value="next7">Ближайшие 7 дней</option></select></label>
+  </div>
+  <div id="r4-followup-items" aria-live="polite"><p class="hint">Загрузка задач после авторизации…</p></div>
+</section>
 <section class="layout">
 <div class="panel"><div class="panel-head"><h2>Заявки и работа с ними</h2><button id="csv" type="button">Экспорт CSV</button></div>
 <div class="filter-row"><label for="state">Статус</label><select id="state"><option value="">Все</option><option value="new">Новые</option><option value="contacted">Связались</option><option value="qualified">Квалифицированы</option><option value="proposal">Предложение</option><option value="won">Согласованы</option><option value="lost">Не состоялись</option></select></div>
 <p id="leads-status" aria-live="polite" class="hint"></p>
 <div id="leads" class="leads"></div>
 </div>
-<aside class="panel stats"><h2>Динамика и источники</h2><p class="hint">Счётчики действий приблизительные и не являются числом уникальных зрителей. Денежные показатели — оценка согласованных сделок, а не поступления на счёт.</p><h3>Источники</h3><div id="sources"></div><h3>Сюжеты</h3><div id="stories"></div><h3>Последние 30 дней</h3><div id="events"></div>
+<aside class="panel stats"><h2>Динамика и источники</h2><p class="hint">Счётчики действий приблизительные и не являются числом уникальных зрителей. Денежные показатели — оценка согласованных сделок, а не поступления на счёт.</p><h3>Источники</h3><div id="sources"></div><h3>Сюжеты</h3><div id="stories"></div><h3>Кампании и обращения</h3><div id="r4-campaign-metrics"></div>
+<h3>Ссылка для выбранного сюжета</h3>
+<form id="r4-link-form" class="r4-link-form">
+<label for="r4-campaign-name">Код кампании <input id="r4-campaign-name" placeholder="moscow_november" required maxlength="40" pattern="[a-z0-9][a-z0-9_-]{0,39}"></label>
+<label for="r4-campaign-story">Сюжет <select id="r4-campaign-story">
+<option value="01-restaurant">Ресторан</option><option value="07-coffee">Кофейня</option>
+<option value="02-fashion">Одежда</option><option value="12-shoes">Обувь</option>
+<option value="03-dentistry">Стоматология</option><option value="04-auto">Автосервис</option>
+<option value="05-fitness">Фитнес</option><option value="06-education">Обучение</option>
+<option value="08-return">Повторный визит</option><option value="09-appointment">Запись</option>
+<option value="10-construction">Ремонт</option><option value="11-logistics">Логистика</option>
+</select></label>
+<button type="submit">Создать ссылку</button>
+<input id="r4-created-link" type="text" readonly hidden aria-label="Ссылка на выбранную кампанию">
+<p class="hint" id="r4-link-status" role="status"></p>
+</form>
+<h3>Последние 30 дней</h3><div id="events"></div>
 </aside>
 </section>
 <p class="hint privacy">Персональные данные доступны только авторизованным сотрудникам назначенной организации. Не сохраняйте CSV на общие устройства. Для удаления заявки используйте действие владельца или политику хранения.</p>
