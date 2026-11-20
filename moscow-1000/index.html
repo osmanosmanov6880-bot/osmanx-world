@@ -18,6 +18,7 @@
 <script defer src="/moscow-1000/publication.js"></script>
 <script defer src="/moscow-1000/command-data.js"></script>
 <script defer src="/moscow-1000/command-offline.js"></script>
+<script defer src="/moscow-1000/command-navigation.js"></script>
 <script defer src="/moscow-1000/command-map.js"></script>
 <script defer src="/moscow-1000/command.js"></script>
 </head>
@@ -80,6 +81,7 @@
     <div class="day-tabs" data-days="quests" aria-label="Дни квестов"></div>
     <div class="screen-body quests-body"><div class="quest-progress panel"><div class="quest-ring" id="quest-ring"><div><strong id="quest-count">— / 50</strong><small>квестов<br>выполнено</small></div></div><div class="quest-level"><b id="quest-level">Уровень —</b><span id="quest-xp">— XP</span><div class="progress-track"><i id="xp-progress"></i></div></div></div><div id="quest-list"></div><button class="achievement-card panel" id="achievements" type="button"><span class="trophy-icon" data-icon="trophy"></span><span><b>Достижения</b><small id="achievements-count">Ожидают старта экспедиции</small></span><span data-icon="chevron"></span></button><p class="fine-print">Задания выполняет автор. Здесь — опубликованный прогресс.</p></div>
    </section>
+   <div class="viewer-tools" role="group" aria-label="Ссылки и закладки"><button type="button" id="save-place" aria-pressed="false"><span data-icon="bookmark"></span><span id="save-place-label">Сохранить</span></button><button type="button" id="saved-places"><span data-icon="book"></span><span>Мои места <b id="saved-places-count"></b></span></button><button type="button" id="share-place"><span data-icon="share"></span><span>Поделиться</span></button></div>
   </main>
   <nav class="bottom-nav" aria-label="Основная навигация">
    <a href="#hq" data-view="hq" aria-current="page"><span data-icon="home"></span><span>Штаб</span></a><a href="#map" data-view="map"><span data-icon="map"></span><span>Карта</span></a><a href="#analytics" data-view="analytics"><span data-icon="people"></span><span>Сводка</span></a><a href="#journal" data-view="journal"><span data-icon="journal"></span><span>Журнал</span></a><a href="#quests" data-view="quests"><span data-icon="flag"></span><span>Квесты</span></a>

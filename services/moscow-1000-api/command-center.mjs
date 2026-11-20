@@ -1,4 +1,5 @@
 /** Private expedition command center. Public access is only to an explicitly approved aggregate snapshot. */
+import {EXPORT_ROW_LIMIT,EXPORT_BYTE_LIMIT,commandExportBytes} from './command-export.mjs';
 const ROOT='/moscow-1000/api/command';
 const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
 const reply=(value,status=200)=>Response.json(value,{status,headers});
@@ -18,7 +19,7 @@ const denied=()=>reply({ok:false,error:'Недостаточно полномо�
 const invalid=()=>reply({ok:false,error:'Проверьте поля формы.'},400);
 const conflict=()=>reply({ok:false,error:'Запись изменилась. Обновите данные и повторите действие.'},409);
 const contactDto=row=>({id:row.id,revision:row.revision,day:row.day,name:row.name,category:row.category,person:row.person,channel:row.channel,outcome:row.outcome,problem:row.problem,nextStep:row.next_step,createdAt:row.created_at,updatedAt:row.updated_at});
-const expenseDto=row=>({id:row.id,day:row.day,amountRub:row.amount_kopecks/100,category:row.category,note:row.note,createdAt:row.created_at});
+const expenseDto=row=>({id:row.id,revision:row.revision,day:row.day,amountRub:row.amount_kopecks/100,amountKopecks:row.amount_kopecks,category:row.category,note:row.note,createdAt:row.created_at,updatedAt:row.updated_at||row.created_at});
 const hash=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))),x=>x.toString(16).padStart(2,'0')).join('');
 const idempotencyConflict=()=>reply({ok:false,code:'idempotency_conflict',error:'Этот ключ уже использован для другой записи. Обновите состояние черновика перед новой отправкой.'},409);
 function russianFoldSql(expression) {
@@ -164,35 +165,94 @@ async function contacts(req,db,actor,rest,url) {
   }
   return null;
 }
+function expenseInput(value,patch=false) {
+  const amount=Math.round((value?.amountRub||0)*100);
+  if (!only(value,patch?['day','amountRub','category','note','expectedRevision']:['day','amountRub','category','note'])||!dayValid(value.day)||typeof value.amountRub!=='number'||!Number.isSafeInteger(amount)||amount<1||amount>100000000||Math.abs(value.amountRub*100-amount)>1e-6||!clean(value.category,80,true)||(value.note!==undefined&&!clean(value.note,300))) return null;
+  if (patch&&(!Number.isSafeInteger(value.expectedRevision)||value.expectedRevision<1)) return null;
+  return {day:value.day,amountKopecks:amount,category:value.category.trim(),note:(value.note||'').trim()};
+}
+const missingLedger=()=>reply({ok:false,code:'migration_required',error:'Сначала примените миграцию R8 для учёта расходов.'},503);
+async function ledgerReady(db) {
+  try {await db.prepare('SELECT revision,updated_at,updated_by FROM command_expenses LIMIT 1').first();return true;} catch {return false;}
+}
+function expenseFilters(url) {
+  const page=pagination(url);if (!page) return null;
+  const category=(url.searchParams.get('category')||'').trim();
+  if (!clean(category,80)) return null;
+  const clauses=[],args=[];
+  if (page.day!==null) {clauses.push('day=?');args.push(page.day);}
+  if (category) {clauses.push('category=?');args.push(category);}
+  return {...page,where:clauses.length?' WHERE '+clauses.join(' AND '):'',args};
+}
 async function expenses(req,db,actor,rest,url) {
+  if (!await ledgerReady(db)) return missingLedger();
   if (rest==='/expenses'&&req.method==='GET') {
-    const page=pagination(url);if (!page) return invalid();
-    const where=page.day===null?'':' WHERE day=?';
-    const rows=(await db.prepare('SELECT * FROM command_expenses'+where+' ORDER BY created_at DESC,id DESC LIMIT 26 OFFSET ?').bind(...(page.day===null?[]:[page.day]),page.offset).all()).results||[];
-    return reply({ok:true,expenses:rows.slice(0,25).map(expenseDto),nextOffset:rows.length>25?page.offset+25:null});
+    const page=expenseFilters(url);if (!page) return invalid();
+    // The visible page and totals use the same database snapshot. Totals never
+    // change merely because another page was loaded on a small phone screen.
+    const result=await db.batch([
+      db.prepare('SELECT * FROM command_expenses'+page.where+' ORDER BY created_at DESC,id DESC LIMIT 26 OFFSET ?').bind(...page.args,page.offset),
+      db.prepare('SELECT COUNT(*) AS total,COALESCE(SUM(amount_kopecks),0) AS total_kopecks FROM command_expenses'+page.where).bind(...page.args),
+      db.prepare('SELECT revision FROM command_state WHERE slot=1')
+    ]);
+    const rows=result[0].results||[],aggregate=result[1].results?.[0],revision=result[2].results?.[0]?.revision??0;
+    return reply({ok:true,expenses:rows.slice(0,25).map(expenseDto),nextOffset:rows.length>25?page.offset+25:null,total:aggregate.total,totalKopecks:aggregate.total_kopecks,totalRub:aggregate.total_kopecks/100,revision});
   }
   if (rest==='/expenses'&&req.method==='POST') {
     if (!actor.editor) return denied();
-    const value=await body(req),amount=Math.round((value?.amountRub||0)*100);
-    if (!only(value,['day','amountRub','category','note'])||!dayValid(value.day)||typeof value.amountRub!=='number'||!Number.isSafeInteger(amount)||amount<1||amount>100000000||Math.abs(value.amountRub*100-amount)>1e-6||!clean(value.category,80,true)||(value.note!==undefined&&!clean(value.note,300))) return invalid();
-    const canonical={day:value.day,amountKopecks:amount,category:value.category.trim(),note:(value.note||'').trim()};
+    const canonical=expenseInput(await body(req));if (!canonical) return invalid();
     return createCommandRecord(req,db,actor,{operation:'expense',value:canonical,table:'command_expenses',dto:expenseDto,event:'command_expense_created',
-      insert:(id,at,condition='',args=[])=>db.prepare('INSERT INTO command_expenses(id,day,amount_kopecks,category,note,created_at,created_by) SELECT ?,?,?,?,?,?,?'+condition).bind(id,canonical.day,amount,canonical.category,canonical.note,at,actor.email,...args)
+      insert:(id,at,condition='',args=[])=>db.prepare('INSERT INTO command_expenses(id,day,amount_kopecks,category,note,created_at,created_by,updated_at,updated_by) SELECT ?,?,?,?,?,?,?,?,?'+condition).bind(id,canonical.day,canonical.amountKopecks,canonical.category,canonical.note,at,actor.email,at,actor.email,...args)
     });
   }
-  const match=/^\/expenses\/([0-9a-f-]{36})$/.exec(rest);
-  if (match&&req.method==='DELETE') {
-    if (!actor.editor) return denied();
-    if (!only(await body(req),[])) return invalid();
-    const id=match[1],at=stamp();
+  const match=/^\/expenses\/([0-9a-f-]{36})$/.exec(rest);if (!match) return null;
+  const id=match[1];
+  if (req.method==='GET') {
+    const row=await db.prepare('SELECT * FROM command_expenses WHERE id=?').bind(id).first();
+    return row?reply({ok:true,expense:expenseDto(row)}):reply({ok:false,error:'Запись не найдена.'},404);
+  }
+  if (!actor.editor) return denied();
+  if (req.method==='PATCH') {
+    const input=await body(req),value=expenseInput(input,true);if (!value) return invalid();
+    const at=stamp(),args=[id,input.expectedRevision];
+    const exists='EXISTS(SELECT 1 FROM command_expenses WHERE id=? AND revision=?)';
     const result=await db.batch([
-      audit(db,'command_expense_erased',actor,null,at,' WHERE EXISTS(SELECT 1 FROM command_expenses WHERE id=?)',[id]),
-      stateChange(db,actor,at,' AND EXISTS(SELECT 1 FROM command_expenses WHERE id=?)',[id]),
-      db.prepare('DELETE FROM command_expenses WHERE id=?').bind(id)
+      audit(db,'command_expense_updated',actor,id,at,' WHERE '+exists,args),
+      stateChange(db,actor,at,' AND '+exists,args),
+      db.prepare('UPDATE command_expenses SET revision=revision+1,day=?,amount_kopecks=?,category=?,note=?,updated_at=?,updated_by=? WHERE id=? AND revision=?').bind(value.day,value.amountKopecks,value.category,value.note,at,actor.email,...args),
+      db.prepare('SELECT * FROM command_expenses WHERE id=?').bind(id)
     ]);
-    return result[2]?.meta?.changes?reply({ok:true,erased:true}):reply({ok:false,error:'Запись не найдена.'},404);
+    if (!result[2]?.meta?.changes) return conflict();
+    return reply({ok:true,expense:expenseDto(result[3].results[0])});
+  }
+  if (req.method==='DELETE') {
+    const value=await body(req);
+    if (!only(value,['expectedRevision'])||(value.expectedRevision!==undefined&&(!Number.isSafeInteger(value.expectedRevision)||value.expectedRevision<1))) return invalid();
+    // R6/R7 clients send {}. New clients always provide expectedRevision. The
+    // compatibility path deliberately retains the former explicit-delete API.
+    const at=stamp(),condition='id=?'+(value.expectedRevision===undefined?'':' AND revision=?'),args=[id,...(value.expectedRevision===undefined?[]:[value.expectedRevision])];
+    const exists='EXISTS(SELECT 1 FROM command_expenses WHERE '+condition+')';
+    const result=await db.batch([
+      audit(db,'command_expense_erased',actor,null,at,' WHERE '+exists,args),
+      stateChange(db,actor,at,' AND '+exists,args),
+      db.prepare('DELETE FROM command_expenses WHERE '+condition).bind(...args)
+    ]);
+    return result[2]?.meta?.changes?reply({ok:true,erased:true}):value.expectedRevision===undefined?reply({ok:false,error:'Запись не найдена.'},404):conflict();
   }
   return null;
+}
+async function budget(db) {
+  const result=await db.batch([
+    db.prepare('SELECT revision FROM command_state WHERE slot=1'),
+    db.prepare('SELECT COUNT(*) AS count,COALESCE(SUM(amount_kopecks),0) AS total_kopecks FROM command_expenses'),
+    db.prepare('SELECT day,COUNT(*) AS count,SUM(amount_kopecks) AS total_kopecks FROM command_expenses GROUP BY day ORDER BY day'),
+    db.prepare('SELECT category,COUNT(*) AS count,SUM(amount_kopecks) AS total_kopecks FROM command_expenses GROUP BY category ORDER BY total_kopecks DESC,category')
+  ]);
+  const total=result[1].results?.[0],byDay=new Map((result[2].results||[]).map(row=>[row.day,row]));
+  const amount=row=>({count:row?.count||0,totalKopecks:row?.total_kopecks||0,totalRub:(row?.total_kopecks||0)/100});
+  const limitKopecks=10000000,remainingKopecks=limitKopecks-total.total_kopecks;
+  return reply({ok:true,revision:result[0].results?.[0]?.revision??0,limitKopecks,limitRub:limitKopecks/100,totalKopecks:total.total_kopecks,totalRub:total.total_kopecks/100,totalCount:total.count,remainingKopecks,remainingRub:remainingKopecks/100,
+    days:Array.from({length:10},(_,i)=>({day:i+1,...amount(byDay.get(i+1))})),categories:(result[3].results||[]).map(row=>({category:row.category,...amount(row)}))});
 }
 async function quests(req,db,actor,rest) {
   if (rest!=='/quests') return null;
@@ -276,18 +336,98 @@ function publicMetrics(value) {
   }
   return result;
 }
+function publicDocument(text) {
+  const value=JSON.parse(text);
+  if (value.status==='unpublished') return unpublished();
+  if (value.status!=='published'||!Number.isSafeInteger(value.version)||value.version<1||!Number.isFinite(Date.parse(value.reviewedAt))||!Array.isArray(value.days)||value.days.length>10||!Array.isArray(value.quests)||value.quests.length>50) throw Error('Bad snapshot');
+  const days=value.days.map(row=>{if (!dayValid(row.day)) throw Error('Bad day');return {day:row.day,metrics:publicMetrics(row.metrics)};});
+  const quests=value.quests.map(row=>{if (!dayValid(row.day)||!new RegExp('^d'+row.day+'-q[1-5]$').test(row.questId)||row.completed!==true) throw Error('Bad quest');return {day:row.day,questId:row.questId,completed:true};});
+  return {ok:true,status:'published',version:value.version,reviewedAt:value.reviewedAt,metrics:publicMetrics(value.metrics),days,quests};
+}
+async function exportCommand(req,db,actor,url) {
+  if (!actor.editor) return denied();
+  if (req.headers.get('Sec-Fetch-Site')==='cross-site'||(req.headers.has('Origin')&&req.headers.get('Origin')!==url.origin)) return denied();
+  const format=url.searchParams.get('format')||'json';
+  if (!['json','contacts.csv','expenses.csv'].includes(format)) return invalid();
+  if (!await ledgerReady(db)) return missingLedger();
+  // Each table is read in one transaction, with count guards evaluated inside
+  // that same snapshot. An oversized export fails before data is serialized;
+  // it must never look like a complete but silently truncated owner download.
+  const result=await db.batch([
+    db.prepare('SELECT revision FROM command_state WHERE slot=1'),
+    db.prepare('SELECT (SELECT COUNT(*) FROM command_contacts) AS contacts,(SELECT COUNT(*) FROM command_expenses) AS expenses,(SELECT COUNT(*) FROM command_quests) AS quests'),
+    db.prepare('SELECT * FROM command_contacts WHERE ?=1 AND (SELECT COUNT(*) FROM command_contacts)<=? ORDER BY created_at,id LIMIT ?').bind(format!=='expenses.csv'?1:0,EXPORT_ROW_LIMIT,EXPORT_ROW_LIMIT),
+    db.prepare('SELECT * FROM command_expenses WHERE ?=1 AND (SELECT COUNT(*) FROM command_expenses)<=? ORDER BY created_at,id LIMIT ?').bind(format!=='contacts.csv'?1:0,EXPORT_ROW_LIMIT,EXPORT_ROW_LIMIT),
+    db.prepare('SELECT day,quest_id,completed,updated_at FROM command_quests WHERE ?=1 ORDER BY day,quest_id LIMIT 51').bind(format==='json'?1:0),
+    db.prepare('SELECT version,source_revision,document_json,reviewed_at FROM command_public WHERE slot=1 AND ?=1').bind(format==='json'?1:0)
+  ]);
+  // Schema-only deployments create command_state on the first authenticated
+  // mutation. Before that, a complete empty snapshot has business revision 0.
+  const counts=result[1].results?.[0],revision=result[0].results?.[0]?.revision??0;
+  const tooLarge=()=>reply({ok:false,code:'export_too_large',error:'Полная выгрузка превышает безопасный размер. Файл не создан и данные не обрезаны. Используйте прямой резервный экспорт базы владельцем.',limits:{rowsPerTable:EXPORT_ROW_LIMIT,bytes:EXPORT_BYTE_LIMIT}},413);
+  if ((format!=='expenses.csv'&&counts.contacts>EXPORT_ROW_LIMIT)||(format!=='contacts.csv'&&counts.expenses>EXPORT_ROW_LIMIT)||(format==='json'&&counts.quests>50)) return tooLarge();
+  const publicationRow=result[5].results?.[0];
+  let publication=null;
+  if (publicationRow) {
+    try {publication={version:publicationRow.version,sourceRevision:publicationRow.source_revision,reviewedAt:publicationRow.reviewed_at,snapshot:publicDocument(publicationRow.document_json)};}
+    catch {return reply({ok:false,code:'invalid_publication',error:'Не удалось прочитать опубликованную сводку. Полная выгрузка не создана.'},503);}
+  }
+  const exportedAt=stamp();
+  const snapshot={schemaVersion:1,project:'OSMANX MOSCOW 1000',exportedAt,revision,counts:{contacts:counts.contacts,expenses:counts.expenses,quests:counts.quests},
+    contacts:(result[2].results||[]).map(contactDto),expenses:(result[3].results||[]).map(expenseDto),
+    quests:(result[4].results||[]).map(row=>({day:row.day,questId:row.quest_id,completed:row.completed===1,updatedAt:row.updated_at})),publication};
+  const encoded=await commandExportBytes(snapshot,format);if (!encoded) return tooLarge();
+  // A successful download is recorded without advancing the business revision.
+  // If audit storage fails, return an error, never an unaudited attachment.
+  try {await db.batch([audit(db,'command_data_exported',actor,'revision:'+revision+':'+format,exportedAt)]);}
+  catch {return reply({ok:false,code:'export_audit_unavailable',error:'Не удалось записать выгрузку в журнал. Повторите скачивание позже.'},503);}
+  const count=format==='contacts.csv'?counts.contacts:format==='expenses.csv'?counts.expenses:counts.contacts+counts.expenses+counts.quests;
+  const suffix=format==='json'?'backup.json':format;
+  return new Response(encoded.bytes,{status:200,headers:{...headers,
+    'Content-Type':format==='json'?'application/json; charset=utf-8':'text/csv; charset=utf-8',
+    'Content-Disposition':'attachment; filename="OSMANX_R8_'+exportedAt.slice(0,10)+'_r'+revision+'_'+suffix+'"',
+    'Content-Digest':encoded.contentDigest,'X-Content-SHA256':encoded.sha256,
+    'X-Export-Revision':String(revision),'X-Export-Count':String(count),'X-Export-Contacts':String(counts.contacts),'X-Export-Expenses':String(counts.expenses),'X-Export-Quests':String(counts.quests)
+  }});
+}
+const commandAuditEvents={
+  contact:['command_contact_created','command_contact_updated','command_contact_erased'],
+  expense:['command_expense_created','command_expense_updated','command_expense_erased'],
+  quest:['command_quest_changed'],publication:['command_aggregates_published','command_aggregates_unpublished'],export:['command_data_exported']
+};
+function encodeAuditCursor(value) {return btoa(JSON.stringify(value)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');}
+function decodeAuditCursor(text,category) {
+  if (!/^[A-Za-z0-9_-]{1,600}$/.test(text)) return null;
+  try {
+    const value=JSON.parse(atob(text.replaceAll('-','+').replaceAll('_','/')));
+    return Array.isArray(value)&&value.length===5&&value[0]===1&&value[1]===category&&Number.isSafeInteger(value[2])&&value[2]>=0&&typeof value[3]==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value[3])&&Number.isFinite(Date.parse(value[3]))&&typeof value[4]==='string'&&/^[0-9a-f-]{36}$/.test(value[4])?value:null;
+  } catch {return null;}
+}
+async function commandAudit(db,url) {
+  const category=url.searchParams.get('category')||'all';
+  if (category!=='all'&&!Object.hasOwn(commandAuditEvents,category)) return invalid();
+  const raw=url.searchParams.get('cursor'),cursor=raw===null?null:decodeAuditCursor(raw,category);
+  if (raw!==null&&!cursor) return invalid();
+  const events=category==='all'?Object.values(commandAuditEvents).flat():commandAuditEvents[category];
+  const allowed='event IN ('+events.map(()=>'?').join(',')+')';
+  const ceiling=cursor?' AND rowid<=?':'',ceilingArgs=cursor?[cursor[2]]:[];
+  const after=cursor?' AND (at<? OR (at=? AND id<?))':'',afterArgs=cursor?[cursor[3],cursor[3],cursor[4]]:[];
+  const result=await db.batch([
+    db.prepare('SELECT id,event,actor,subject_id,at FROM operator_audit WHERE '+allowed+ceiling+after+' ORDER BY at DESC,id DESC LIMIT 26').bind(...events,...ceilingArgs,...afterArgs),
+    db.prepare('SELECT COUNT(*) AS total,COALESCE(MAX(rowid),0) AS ceiling FROM operator_audit WHERE '+allowed+ceiling).bind(...events,...ceilingArgs)
+  ]);
+  const rows=result[0].results||[],summary=result[1].results?.[0],page=rows.slice(0,25),last=page.at(-1);
+  const safeSubject=value=>typeof value==='string'&&(/^[0-9a-f-]{36}$/.test(value)||/^d(?:10|[1-9])-q[1-5]$/.test(value)||/^revision:\d+:(?:json|contacts\.csv|expenses\.csv)$/.test(value))?value:null;
+  return reply({ok:true,events:page.map(row=>({id:row.id,event:row.event,actor:row.actor,subjectId:safeSubject(row.subject_id),at:row.at})),total:summary.total,
+    nextCursor:rows.length>25?encodeAuditCursor([1,category,cursor?cursor[2]:summary.ceiling,last.at,last.id]):null});
+}
 export async function publicCommandSnapshot(env) {
   if (!env.DB) return reply({ok:false,status:'unavailable',error:'Публичные данные пока не подключены.'},503);
   try {
     const row=await env.DB.prepare('SELECT document_json FROM command_public WHERE slot=1').first();
     if (!row) return reply(unpublished());
-    const value=JSON.parse(row.document_json);
-    if (value.status==='unpublished') return reply(unpublished());
-    if (value.status!=='published'||!Number.isSafeInteger(value.version)||value.version<1||!Number.isFinite(Date.parse(value.reviewedAt))||!Array.isArray(value.days)||value.days.length>10||!Array.isArray(value.quests)||value.quests.length>50) throw Error('Bad snapshot');
-    const days=value.days.map(row=>{if (!dayValid(row.day)) throw Error('Bad day');return {day:row.day,metrics:publicMetrics(row.metrics)};});
-    const quests=value.quests.map(row=>{if (!dayValid(row.day)||!new RegExp('^d'+row.day+'-q[1-5]$').test(row.questId)||row.completed!==true) throw Error('Bad quest');return {day:row.day,questId:row.questId,completed:true};});
     // Construct a new whitelist-only object even if storage accidentally contains private keys.
-    return reply({ok:true,status:'published',version:value.version,reviewedAt:value.reviewedAt,metrics:publicMetrics(value.metrics),days,quests});
+    return reply(publicDocument(row.document_json));
   } catch { return reply({ok:false,status:'unavailable',error:'Не удалось получить проверенные данные.'},503); }
 }
 export async function commandRoute(req,env,actor=null) {
@@ -302,6 +442,9 @@ export async function commandRoute(req,env,actor=null) {
   } catch { return reply({ok:false,error:'Сначала примените миграцию R6.'},503); }
   if (rest.startsWith('/contacts')) return await contacts(req,env.DB,actor,rest,url)||reply({ok:false,error:'Route not found'},404);
   if (rest.startsWith('/expenses')) return await expenses(req,env.DB,actor,rest,url)||reply({ok:false,error:'Route not found'},404);
+  if (rest==='/budget'&&req.method==='GET') return budget(env.DB);
+  if (rest==='/export'&&req.method==='GET') return exportCommand(req,env.DB,actor,url);
+  if (rest==='/audit'&&req.method==='GET') return commandAudit(env.DB,url);
   if (rest==='/quests') return await quests(req,env.DB,actor,rest)||reply({ok:false,error:'Route not found'},404);
   if (rest==='/publish'&&req.method==='POST') return publish(req,env,actor);
   if (rest==='/unpublish'&&req.method==='POST') {

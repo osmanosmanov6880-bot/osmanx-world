@@ -33,9 +33,32 @@
     return { lat: clamp(Math.atan(Math.sinh(Math.PI * (1 - 2 * y / size))) * 180 / Math.PI, -85, 85), lng: ((x / size * 360 % 360) + 360) % 360 - 180 };
   }
 
+  const validCoordinates = point => point && Number.isFinite(point.lat) && Number.isFinite(point.lng) && point.lat > 55.5 && point.lat < 56 && point.lng > 37 && point.lng < 38.2;
+  const normalizeSearch = value => typeof value === 'string' ? value.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/ё/g,'е').trim().replace(/\s+/g,' ') : '';
+
   function safeMarkers(markers) {
     if (!Array.isArray(markers)) return [];
-    return markers.filter(marker => marker && Number.isInteger(marker.day) && marker.day >= 1 && marker.day <= 10 && Number.isFinite(marker.lat) && Number.isFinite(marker.lng) && marker.lat > 55.5 && marker.lat < 56 && marker.lng > 37 && marker.lng < 38.2 && typeof marker.id === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(marker.id) && typeof marker.title === 'string').slice(0,200).map(marker => ({ id: marker.id, day: marker.day, lat: marker.lat, lng: marker.lng, label: marker.title.slice(0,160), summary: typeof marker.summary === 'string' ? marker.summary.slice(0,400) : '', reviewed: true }));
+    const seen = new Set(), result = [];
+    for (const marker of markers) {
+      if (!marker || !Number.isInteger(marker.day) || marker.day < 1 || marker.day > 10 || !validCoordinates(marker) || typeof marker.id !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(marker.id) || /^area-(?:[1-9]|10)-\d+$/.test(marker.id) || seen.has(marker.id) || typeof marker.title !== 'string' || !marker.title.trim()) continue;
+      seen.add(marker.id);
+      result.push({ id: marker.id, day: marker.day, lat: marker.lat, lng: marker.lng, label: marker.title.trim().slice(0,160), summary: typeof marker.summary === 'string' ? marker.summary.trim().slice(0,400) : '', reviewed: true });
+      if (result.length === 200) break;
+    }
+    return result;
+  }
+
+  function filterPoints(points, query) {
+    const terms = normalizeSearch(query).slice(0,160).split(' ').filter(Boolean);
+    return points.filter(point => {
+      const text = normalizeSearch(point.label) + ' ' + normalizeSearch(point.summary);
+      return terms.every(term => text.includes(term));
+    });
+  }
+
+  function osmLink(point) {
+    if (!validCoordinates(point)) return null;
+    return 'https://www.openstreetmap.org/?mlat=' + encodeURIComponent(point.lat) + '&mlon=' + encodeURIComponent(point.lng) + '#map=17/' + point.lat + '/' + point.lng;
   }
 
   function mount(container, options) {
@@ -45,7 +68,7 @@
     if (!Array.isArray(days) || !days.length) throw new Error('OSMANX public geography is missing');
     if (container.__osmanxMap) container.__osmanxMap.destroy();
 
-    const state = { day: 1, zoom: 15, lat: 55.75, lng: 37.62, selected: null, dark: true, alive: true };
+    const state = { day: 1, zoom: 15, lat: 55.75, lng: 37.62, selected: null, query: '', dark: true, alive: true };
     let reviewed = safeMarkers(options.markers);
     let frame = 0;
     let fitPending = false;
@@ -67,8 +90,9 @@
       '<div class="ox-map-unavailable" role="status" hidden><strong>Карта не загрузилась</strong><span>Проверьте соединение. Ориентиры доступны в списке ниже.</span><button type="button" data-map-action="retry">Повторить загрузку</button></div>' +
       '<div class="ox-map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a></div></div>' +
       '<button type="button" class="ox-map-route" aria-expanded="false">' + icon('pin') + '<span><strong class="ox-map-route-title"></strong><small class="ox-map-route-detail"></small></span>' + icon('chevron') + '</button>' +
+      '<section class="ox-map-point-detail" hidden><div class="ox-map-detail-top"><span class="ox-map-point-status"></span><button type="button" class="ox-map-detail-close" aria-label="Закрыть выбранный ориентир">' + icon('cross') + '</button></div><h3 class="ox-map-detail-title" tabindex="-1"></h3><p class="ox-map-detail-summary"></p><p class="ox-map-detail-coordinates"></p><a class="ox-map-detail-link" target="_blank" rel="noopener noreferrer">Открыть точку в OpenStreetMap</a><p class="ox-map-detail-note">Внешняя карта откроется в новой вкладке.</p></section>' +
       '<button type="button" class="ox-map-list-toggle" aria-expanded="false">' + icon('list') + '<span>Список ориентиров</span></button>' +
-      '<div class="ox-map-point-list" hidden></div>' +
+      '<div class="ox-map-point-list" hidden><h3 class="ox-map-list-heading" tabindex="-1"></h3><form class="ox-map-search" role="search" aria-label="Поиск ориентиров выбранного дня"><label>Найти ориентир<input type="search" maxlength="160" placeholder="Название или описание" autocomplete="off" spellcheck="false"></label><button type="button" class="ox-map-search-clear" hidden>Сбросить поиск</button></form><p class="ox-map-search-status" role="status" aria-live="polite"></p><div class="ox-map-search-results"></div></div>' +
       '<p class="ox-map-note">Публичные ориентиры района. Линия соединяет точки условно и не содержит проверенных пешеходных маршрутов.</p>';
     container.replaceChildren(shell);
 
@@ -82,6 +106,12 @@
     const routeDetail = shell.querySelector('.ox-map-route-detail');
     const listToggle = shell.querySelector('.ox-map-list-toggle');
     const pointList = shell.querySelector('.ox-map-point-list');
+    const pointResults = shell.querySelector('.ox-map-search-results');
+    const searchInput = shell.querySelector('.ox-map-search input');
+    const searchClear = shell.querySelector('.ox-map-search-clear');
+    const pointDetail = shell.querySelector('.ox-map-point-detail');
+    const detailTitle = shell.querySelector('.ox-map-detail-title');
+    const detailClose = shell.querySelector('.ox-map-detail-close');
     const layerButton = shell.querySelector('.ox-map-layer');
 
     function listen(el, event, callback, opts) {
@@ -92,9 +122,6 @@
     function route() { return days.find(day => day.number === state.day) || days[0]; }
     function allPoints() {
       return route().anchors.map((anchor, index) => ({ ...anchor, id: 'area-' + state.day + '-' + index, reviewed: false })).concat(reviewed.filter(marker => marker.day === state.day));
-    }
-    function osmLink(point) {
-      return 'https://www.openstreetmap.org/?mlat=' + encodeURIComponent(point.lat) + '&mlon=' + encodeURIComponent(point.lng) + '#map=17/' + point.lat + '/' + point.lng;
     }
 
     function schedule() {
@@ -180,7 +207,7 @@
         pin.setAttribute('aria-label', point.label + (point.reviewed ? ' — опубликованная точка' : ' — ориентир района'));
         pin.setAttribute('aria-pressed', String(state.selected === point.id));
         pin.innerHTML = '<svg viewBox="0 0 28 38" aria-hidden="true"><path d="M14 1C6.8 1 1 6.8 1 14c0 9 13 23 13 23s13-14 13-23C27 6.8 21.2 1 14 1Z"/><circle cx="14" cy="13.5" r="4"/></svg>';
-        pin.addEventListener('click', () => selectPoint(point));
+        pin.addEventListener('click', () => selectPoint(point.id, { notify: true, focus: true }));
         pinsLayer.append(pin);
         if (point.id === focusedId) pin.focus({ preventScroll: true });
       }
@@ -188,21 +215,65 @@
       shell.querySelector('[data-map-action="out"]').disabled = state.zoom <= MIN_ZOOM;
     }
 
-    function selectPoint(point) {
+    function getSelectedPoint() {
+      if (!state.alive) return null;
+      const point = allPoints().find(item => item.id === state.selected);
+      return point ? { ...point } : null;
+    }
+
+    function renderSelection() {
+      const point = getSelectedPoint();
+      routeTitle.textContent = route().title;
+      routeDetail.textContent = allPoints().length + ' ориентира · ' + route().focus;
+      pointDetail.hidden = !point;
+      if (!point) {
+        shell.querySelector('.ox-map-point-status').textContent = '';
+        detailTitle.textContent = '';
+        shell.querySelector('.ox-map-detail-summary').textContent = '';
+        shell.querySelector('.ox-map-detail-coordinates').textContent = '';
+        shell.querySelector('.ox-map-detail-link').removeAttribute('href');
+        return;
+      }
+      shell.querySelector('.ox-map-point-status').textContent = (point.reviewed ? 'Опубликованная точка' : 'Ориентир района') + ' · день ' + state.day;
+      detailTitle.textContent = point.label;
+      shell.querySelector('.ox-map-detail-summary').textContent = point.summary || (point.reviewed ? 'Публичная точка, одобренная автором экспедиции.' : 'Ориентир для знакомства с районом. Это часть плана дня, а не отметка о состоявшейся встрече.');
+      shell.querySelector('.ox-map-detail-coordinates').textContent = point.lat.toFixed(5) + ', ' + point.lng.toFixed(5);
+      shell.querySelector('.ox-map-detail-link').href = osmLink(point);
+    }
+
+    function selectPoint(id, behavior = {}) {
+      if (!state.alive || typeof id !== 'string') return false;
+      const point = allPoints().find(item => item.id === id);
+      if (!point) return false;
       state.selected = point.id;
-      routeTitle.textContent = point.label;
-      routeDetail.textContent = point.reviewed ? 'Опубликованная точка · день ' + state.day : 'Ориентир района · день ' + state.day;
+      fitPending = false;
+      state.lat = point.lat;
+      state.lng = point.lng;
+      state.zoom = Math.max(state.zoom, 16);
+      renderSelection();
       renderPointList();
       schedule();
-      if (typeof options.onSelect === 'function') options.onSelect({ ...point }, state.day);
+      if (behavior.notify === true && typeof options.onSelect === 'function') options.onSelect({ ...point }, state.day, { reason: 'user' });
+      if (behavior.focus === true) detailTitle.focus();
+      return true;
+    }
+
+    function clearSelection(behavior = {}) {
+      if (!state.alive) return;
+      const hadSelection = state.selected !== null;
+      const restoreFocus = pointDetail.contains(document.activeElement);
+      state.selected = null;
+      renderSelection(); renderPointList(); schedule();
+      if (hadSelection && behavior.notify === true && typeof options.onSelect === 'function') options.onSelect(null, state.day, { reason: behavior.reason === 'withdrawn' ? 'withdrawn' : 'user' });
+      if (behavior.focus === true || restoreFocus) canvas.focus({ preventScroll: true });
     }
 
     function renderPointList() {
-      pointList.replaceChildren();
-      const points = allPoints();
-      const heading = document.createElement('h3');
-      heading.textContent = 'Ориентиры · день ' + state.day;
-      pointList.append(heading);
+      pointResults.replaceChildren();
+      const all = allPoints(), points = filterPoints(all, state.query);
+      shell.querySelector('.ox-map-list-heading').textContent = 'Ориентиры · день ' + state.day;
+      shell.querySelector('.ox-map-search-status').textContent = state.query.trim() ? 'Найдено: ' + points.length + ' из ' + all.length : 'Ориентиров в плане: ' + all.length;
+      searchClear.hidden = !state.query;
       const list = document.createElement('ol');
       for (const point of points) {
         const row = document.createElement('li');
@@ -210,6 +281,7 @@
         const focus = document.createElement('button');
         focus.type = 'button';
         focus.className = 'ox-map-point-focus';
+        focus.setAttribute('aria-pressed', String(state.selected === point.id));
         focus.innerHTML = icon('pin');
         const text = document.createElement('span');
         const name = document.createElement('strong');
@@ -219,11 +291,7 @@
         text.append(name, meta);
         focus.append(text);
         focus.addEventListener('click', () => {
-          state.lat = point.lat;
-          state.lng = point.lng;
-          state.zoom = 16;
-          selectPoint(point);
-          canvas.focus({ preventScroll: true });
+          selectPoint(point.id, { notify: true, focus: true });
         });
         const link = document.createElement('a');
         link.href = osmLink(point);
@@ -234,8 +302,13 @@
         if (point.summary) { const summary = document.createElement('p'); summary.textContent = point.summary; row.append(summary); }
         list.append(row);
       }
-      pointList.append(list);
-      listToggle.querySelector('span').textContent = (pointList.hidden ? 'Список ориентиров' : 'Скрыть список') + ' (' + points.length + ')';
+      if (!points.length) {
+        const empty = document.createElement('p');
+        empty.className = 'ox-map-search-empty';
+        empty.textContent = 'В этом дне такого ориентира нет. Измените запрос или сбросьте поиск.';
+        pointResults.append(empty);
+      } else pointResults.append(list);
+      listToggle.querySelector('span').textContent = (pointList.hidden ? 'Список ориентиров' : 'Скрыть список') + ' (' + all.length + ')';
     }
 
     function toggleList() {
@@ -243,6 +316,7 @@
       routeButton.setAttribute('aria-expanded', String(!pointList.hidden));
       listToggle.setAttribute('aria-expanded', String(!pointList.hidden));
       renderPointList();
+      if (!pointList.hidden) shell.querySelector('.ox-map-list-heading').focus();
     }
 
     function fit() {
@@ -268,11 +342,11 @@
 
     function setDay(number) {
       const next = Number(number);
-      if (!Number.isInteger(next) || !days.some(day => day.number === next)) return false;
+      if (!state.alive || !Number.isInteger(next) || !days.some(day => day.number === next)) return false;
       state.day = next;
       state.selected = null;
-      routeTitle.textContent = route().title;
-      routeDetail.textContent = allPoints().length + ' ориентира · ' + route().focus;
+      state.query = ''; searchInput.value = '';
+      renderSelection();
       renderPointList();
       fit();
       return true;
@@ -349,6 +423,7 @@
       } else if (event.key === '+' || event.key === '=' || event.key === '-') {
         event.preventDefault(); zoomAt(state.zoom + (event.key === '-' ? -1 : 1));
       } else if (event.key === 'Home') { event.preventDefault(); fit(); }
+      else if (event.key === 'Escape' && state.selected) { event.preventDefault(); clearSelection({ notify: true, focus: true }); }
     });
     listen(shell, 'click', event => {
       const action = event.target.closest('[data-map-action]')?.dataset.mapAction;
@@ -362,6 +437,13 @@
     });
     listen(routeButton, 'click', toggleList);
     listen(listToggle, 'click', toggleList);
+    listen(detailClose, 'click', () => clearSelection({ notify: true, focus: true }));
+    listen(pointDetail, 'keydown', event => {
+      if (event.key === 'Escape') { event.preventDefault(); clearSelection({ notify: true, focus: true }); }
+    });
+    listen(shell.querySelector('.ox-map-search'), 'submit', event => event.preventDefault());
+    listen(searchInput, 'input', () => { state.query = searchInput.value.slice(0,160); renderPointList(); });
+    listen(searchClear, 'click', () => { state.query = ''; searchInput.value = ''; renderPointList(); searchInput.focus({ preventScroll: true }); });
     listen(layerButton, 'click', () => {
       state.dark = !state.dark;
       shell.classList.toggle('is-light', !state.dark);
@@ -374,7 +456,15 @@
 
     const api = {
       setDay,
-      setMarkers(markers) { reviewed = safeMarkers(markers); state.selected = null; setDay(state.day); },
+      selectPoint,
+      getSelectedPoint,
+      clearSelection,
+      setMarkers(markers) {
+        if (!state.alive) return;
+        reviewed = safeMarkers(markers);
+        if (state.selected && !getSelectedPoint()) clearSelection({ notify: true, reason: 'withdrawn' });
+        else { renderSelection(); renderPointList(); schedule(); }
+      },
       refresh() { schedule(); },
       getState() { return { day: state.day, zoom: state.zoom, lat: state.lat, lng: state.lng, selected: state.selected }; },
       destroy() {
@@ -394,5 +484,5 @@
     return api;
   }
 
-  root.OSMANXCommandMap = Object.freeze({ mount, project, unproject });
+  root.OSMANXCommandMap = Object.freeze({ mount, project, unproject, safeMarkers, filterPoints, normalizeSearch, osmLink });
 })(typeof window !== 'undefined' ? window : globalThis);

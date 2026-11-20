@@ -52,3 +52,12 @@ body{overscroll-behavior-y:contain}.app-shell{overflow-wrap:break-word}
 @media(min-width:480px) and (max-width:999px){.hero{height:205px;padding-top:20px}.hero-copy{margin-top:50px}}
 @media(min-width:1000px){.hero{height:197px;padding-top:20px}.hero-copy{margin-top:43px}.hq-meta-actions .mobile-admin-link{display:none}.hq-meta-actions .day-selector{min-height:32px}.connection-banner{font-size:11px}}
 @media(orientation:landscape) and (max-width:999px){.screen-body,.screen-heading,.hero,.day-tabs,.segment-tabs,.connection-banner{padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}.bottom-nav{padding-left:max(7px,env(safe-area-inset-left,0px));padding-right:max(7px,env(safe-area-inset-right,0px))}}
+
+/* R8: viewer-controlled links and saved places, separate from expedition results. */
+.viewer-tools{display:flex;gap:4px;padding:10px 0 0;margin:4px var(--gutter) 0;border-top:1px solid #223147}
+.viewer-tools button{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:0;min-height:44px;border:0;border-radius:9px;background:transparent;font-size:12px;color:#a7b6c9;padding:6px 2px}
+.viewer-tools button:hover{background:#122136}.viewer-tools button[aria-pressed=true]{color:#ff7188}.viewer-tools svg{width:17px;height:17px}.viewer-tools b{font-size:11px;color:#e7edf5}
+.saved-place-list{display:flex;flex-direction:column;gap:8px}.saved-place{display:flex;align-items:center;gap:8px;border:1px solid #2a3c53;border-radius:11px;background:#0a1626;padding:8px 5px 8px 12px}
+.saved-place-open{display:flex;flex:1;min-width:0;min-height:48px;justify-content:center;flex-direction:column;gap:4px}.saved-place-open b{font-size:14px;overflow-wrap:anywhere}.saved-place-open small{font-size:12px;color:#9db0c9}.saved-place .icon-button{color:#a5b7cd}
+.share-fallback label{display:block;font-size:14px;margin:15px 0 7px}.share-fallback input{width:100%;min-height:46px;border:1px solid #455975;border-radius:8px;background:#071322;color:#e7edf5;padding:10px;font-size:16px}
+@media(max-width:359px){.viewer-tools{gap:2px}.viewer-tools button{font-size:11px;gap:4px}.viewer-tools svg{width:15px;height:15px}}

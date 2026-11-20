@@ -5,6 +5,7 @@
   const API = '/moscow-1000/api';
   const $ = id => document.getElementById(id);
   const workflow = window.OSMANXContactWorkflow;
+  const ledger = window.OSMANXLedgerWorkflow;
   const draftVault = workflow.browserVault();
   const authChannel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('osmanx-private-session') : null;
   const state = {
@@ -12,11 +13,15 @@
     contactOffset: null, expenseOffset: null, quests: [], editing: null,
     contactsSeq: 0, expensesSeq: 0, questsSeq: 0, authSeq: 0,
     confirmAction: null, confirmationBusy: false,
+    expenseTotal: null, expenseTotalKopecks: null, expenseRevision: null,
+    expenseFilters: { allDays: false, category: '' }, expenseEditing: null, expenseEditSeq: 0,
+    budgetSeq: 0, budget: null, auditSeq: 0, auditEvents: [], auditCursor: null, auditTotal: null,
+    exportSeq: 0, exportBusy: false, exportController: null,
     contactTotal: null, filters: { q: '', outcome: '', followup: 'all' },
     draft: null, draftTimer: null, draftSeq: 0, draftKey: null, pendingContact: null,
     contactChanged: false, contactDetailed: false, expenseAttempt: null, draftStorageUsed: false, draftsLoading: false,
   };
-  const titles = { contacts: 'Контакты', expenses: 'Расходы', quests: 'Квесты и стратегия', publish: 'Публикация' };
+  const titles = { contacts: 'Контакты', expenses: 'Расходы', quests: 'Квесты и стратегия', publish: 'Публикация', data: 'Данные и история' };
   const outcomes = { visited: 'Визит', dialogue: 'Диалог', interest: 'Интерес', refusal: 'Отказ', meeting: 'Встреча', pilot: 'Пилот', contract: 'Договор' };
   const categories = { HoReCa: 'Кафе и рестораны', retail: 'Магазины и шоурумы', services: 'Услуги', creative: 'Креативные студии', technology: 'Технологии', other: 'Другое' };
   const expenseCategories = { transport: 'Транспорт', food: 'Питание', production: 'Съёмка', tools: 'Инструменты', other: 'Другое' };
@@ -105,7 +110,25 @@
   }
 
   function clearPrivateViews() {
-    state.contactsSeq++; state.expensesSeq++; state.questsSeq++;
+    state.contactsSeq++; state.expensesSeq++; state.questsSeq++; state.budgetSeq++; state.auditSeq++; state.expenseEditSeq++; state.exportSeq++;
+    state.exportController?.abort(); state.exportController = null; state.exportBusy = false;
+    state.expenseTotal = null; state.expenseTotalKopecks = null; state.expenseRevision = null; state.expenseEditing = null;
+    state.budget = null; state.auditEvents = []; state.auditCursor = null; state.auditTotal = null;
+    state.confirmAction = null; state.confirmationBusy = false;
+    $('confirmAction').disabled = false;
+    for (const button of $('confirmDialog').querySelectorAll('[data-close]')) button.disabled = false;
+    for (const id of ['budgetDays', 'budgetCategories', 'auditList', 'expenseCurrent']) $(id).replaceChildren();
+    for (const id of ['budgetSpent', 'expenseTotal', 'expenseCount', 'auditCount']) $(id).textContent = '—';
+    $('budgetRemaining').textContent = ''; $('budgetProgress').querySelector('span').style.width = '0%'; $('budgetProgress').removeAttribute('aria-valuenow'); $('budgetProgress').removeAttribute('aria-valuetext'); $('budgetRemaining').classList.remove('overspent');
+    $('exportDetails').textContent = ''; $('exportDetails').hidden = true;
+    for (const id of ['exportStatus', 'auditStatus', 'budgetStatus', 'expenseEditStatus']) status(id);
+    $('expenseEditForm').reset(); $('expenseEditForm').setAttribute('aria-busy', 'false');
+    $('expenseFilters').reset(); state.expenseFilters = { allDays: false, category: '' }; $('auditCategory').value = 'all';
+    for (const select of [$('expenseCategoryFilter'), $('editExpenseCategory')]) select.querySelectorAll('[data-custom-category]').forEach(option => option.remove());
+    $('expenseTotalNote').textContent = '';
+    status('workspaceStatus'); status('expenseFormStatus'); status('publishStatus');
+    $('expenseConflict').hidden = true; $('expenseCurrent').hidden = true; $('rebaseExpense').hidden = true;
+    $('moreAudit').hidden = true;
     state.contacts = []; state.expenses = []; state.quests = []; state.editing = null;
     for (const id of ['contactList', 'expenseList', 'questList']) $(id).replaceChildren();
     $('actorEmail').textContent = '';
@@ -304,6 +327,8 @@
     $('publishConfirm').disabled = state.actor?.approver !== true;
     $('publish').disabled = state.actor?.approver !== true || !$('publishConfirm').checked;
     $('unpublish').disabled = state.actor?.approver !== true;
+    for (const button of document.querySelectorAll('[data-export]')) button.disabled = !canEdit || state.exportBusy;
+    if (state.tab === 'data' && !canEdit) status('exportStatus', 'Выгружать личные данные может только редактор.', 'error');
     if (!canEdit) status('workspaceStatus', 'Для этого аккаунта открыт просмотр. Изменять записи может редактор.');
   }
 
@@ -318,11 +343,13 @@
       if (active) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     }
-    document.querySelector('.day-control').hidden = tab === 'publish';
+    document.querySelector('.day-control').hidden = tab === 'publish' || tab === 'data';
+    $('expenseCreateDay').textContent = `Запись за день ${state.expenseAttempt?.body.day || state.day}`;
     status('workspaceStatus');
     applyPermissions();
     if (tab === 'contacts') await loadContacts();
-    if (tab === 'expenses') await loadExpenses();
+    if (tab === 'expenses') await Promise.all([loadExpenses(), loadBudget()]);
+    if (tab === 'data') await loadAudit();
     if (tab === 'quests') await loadQuests();
     if (tab === 'publish' && state.actor?.approver !== true) status('publishStatus', 'Публиковать сводку может только аккаунт с правом подтверждения.', 'error');
   }
@@ -544,64 +571,120 @@
   }
 
   function confirmDeleteContact(contact) {
+    const actor = state.actor;
     confirmation('Удалить контакт?', `«${contact.name}» будет удалён из личного штаба. Восстановление этой записи не предусмотрено. Опубликованная сводка изменится только после следующей публикации.`, 'Удалить', async () => {
+      if (state.actor !== actor) return;
       await api('/command/contacts/' + encodeURIComponent(contact.id), { method: 'DELETE', body: { expectedRevision: contact.revision } });
+      if (state.actor !== actor) return;
       await loadContacts();
-      status('workspaceStatus', 'Контакт удалён.', 'success');
+      if (state.actor === actor) status('workspaceStatus', 'Контакт удалён.', 'success');
     });
+  }
+
+  async function loadBudget() {
+    if (!state.actor) return;
+    const actor = state.actor, seq = ++state.budgetSeq;
+    $('refreshBudget').disabled = true;
+    status('budgetStatus', 'Обновляем бюджет…');
+    try {
+      const data = await api('/command/budget');
+      if (state.actor !== actor || seq !== state.budgetSeq) return;
+      if (!Number.isSafeInteger(data.totalKopecks) || data.totalKopecks < 0 || !Number.isSafeInteger(data.limitKopecks) || data.limitKopecks <= 0 || !Number.isSafeInteger(data.remainingKopecks) || !Array.isArray(data.days) || !Array.isArray(data.categories)) throw new Error('Сервер не передал бюджет целиком. Обновите сервис штаба.');
+      state.budget = data;
+      const categorySelect = $('expenseCategoryFilter'), categoryValue = categorySelect.value;
+      categorySelect.querySelectorAll('[data-custom-category]').forEach(option => option.remove());
+      for (const category of new Set([...data.categories.map(row => row.category), categoryValue])) {
+        if (typeof category !== 'string' || !category || [...categorySelect.options].some(option => option.value === category)) continue;
+        const option = el('option', '', category); option.value = category; option.dataset.customCategory = ''; categorySelect.append(option);
+      }
+      categorySelect.value = categoryValue;
+      $('budgetSpent').textContent = ledger.money(data.totalKopecks);
+      $('budgetRemaining').textContent = (data.remainingKopecks < 0 ? 'Превышение плана: ' : 'Осталось по плану: ') + ledger.money(Math.abs(data.remainingKopecks));
+      $('budgetRemaining').classList.toggle('overspent', data.remainingKopecks < 0);
+      const percent = Math.min(100, Math.round(data.totalKopecks / data.limitKopecks * 100));
+      $('budgetProgress').querySelector('span').style.width = percent + '%';
+      $('budgetProgress').setAttribute('aria-valuenow', String(percent));
+      $('budgetProgress').setAttribute('aria-valuetext', ledger.money(data.totalKopecks) + ' из ' + ledger.money(data.limitKopecks));
+      for (const [id, rows, name] of [['budgetDays', data.days, row => 'День ' + row.day], ['budgetCategories', data.categories, row => expenseCategories[row.category] || row.category]]) {
+        const box = $(id); box.replaceChildren();
+        for (const row of rows) {
+          const line = el('div', 'budget-row');
+          line.append(el('span', '', name(row)), el('strong', '', ledger.money(row.totalKopecks)));
+          box.append(line);
+        }
+        if (!rows.length) box.append(el('p', 'muted', 'Расходов пока нет.'));
+      }
+      status('budgetStatus', `${data.totalCount} записей · весь период · обновлено ${dateLabel(new Date())} МСК`);
+    } catch (error) {
+      if (state.actor !== actor || seq !== state.budgetSeq) return;
+      state.budget = null; $('budgetSpent').textContent = '—'; $('budgetRemaining').textContent = 'Итог не загружен';
+      $('budgetDays').replaceChildren(); $('budgetCategories').replaceChildren();
+      $('budgetProgress').querySelector('span').style.width = '0%'; $('budgetProgress').removeAttribute('aria-valuenow'); $('budgetProgress').removeAttribute('aria-valuetext');
+      status('budgetStatus', error.message, 'error');
+    } finally { if (state.actor === actor && seq === state.budgetSeq) $('refreshBudget').disabled = false; }
   }
 
   async function loadExpenses(append = false) {
     if (!state.actor) return;
-    const seq = ++state.expensesSeq;
+    const actor = state.actor, seq = ++state.expensesSeq;
     const offset = append ? state.expenseOffset : 0;
     if (append && offset === null) return;
     $('moreExpenses').disabled = true;
     if (!append) {
-      $('expenseTotal').textContent = '—'; $('expenseTotalNote').textContent = 'Загрузка записей';
+      $('expenseTotal').textContent = '—'; $('expenseTotalNote').textContent = 'Загрузка итогов всех подходящих записей';
       $('expenseCount').textContent = '—'; $('moreExpenses').hidden = true;
-      emptyView($('expenseList'), 'wallet', 'Загрузка расходов', 'Получаем записи за выбранный день.');
+      emptyView($('expenseList'), 'wallet', 'Загрузка расходов', 'Получаем записи и полную сумму по выбранному фильтру.');
     }
     try {
-      const data = await api(`/command/expenses?day=${state.day}&offset=${offset || 0}`);
-      if (seq !== state.expensesSeq || !state.actor) return;
-      if (!Array.isArray(data.expenses)) throw new Error('Не удалось прочитать список расходов.');
-      state.expenses = append ? [...state.expenses, ...data.expenses] : data.expenses;
-      state.expenseOffset = Number.isInteger(data.nextOffset) ? data.nextOffset : null;
+      const data = await api('/command/expenses?' + ledger.expenseQuery({ day: state.day, ...state.expenseFilters }, offset || 0));
+      if (state.actor !== actor || seq !== state.expensesSeq) return;
+      const page = ledger.expensePage({ records: state.expenses, revision: state.expenseRevision }, data, append);
+      if (page.reload) {
+        status('workspaceStatus', 'Расходы изменились во время просмотра. Список обновлён с первой страницы.');
+        await loadExpenses(); return;
+      }
+      state.expenses = page.records; state.expenseRevision = page.revision;
+      state.expenseOffset = page.nextOffset; state.expenseTotal = page.total; state.expenseTotalKopecks = page.totalKopecks;
       renderExpenses();
     } catch (error) {
-      if (seq !== state.expensesSeq || !state.actor) return;
+      if (state.actor !== actor || seq !== state.expensesSeq) return;
       if (!append) {
+        state.expenses = []; state.expenseOffset = null; state.expenseTotal = null; state.expenseTotalKopecks = null;
         $('expenseTotalNote').textContent = 'Данные не загружены';
         emptyView($('expenseList'), 'wallet', 'Расходы не загружены', error.message, () => loadExpenses());
       } else status('workspaceStatus', error.message, 'error');
-    } finally { if (seq === state.expensesSeq) $('moreExpenses').disabled = false; }
+    } finally { if (state.actor === actor && seq === state.expensesSeq) $('moreExpenses').disabled = false; }
   }
 
   function renderExpenses() {
     const list = $('expenseList'); list.replaceChildren();
-    const total = state.expenses.reduce((sum, expense) => sum + Math.round(Number(expense.amountRub) * 100), 0) / 100;
-    $('expenseTotal').textContent = money(total);
-    $('expenseTotalNote').textContent = state.expenseOffset === null
-      ? `Все сохранённые расходы · день ${state.day}`
-      : `Сумма ${state.expenses.length} загруженных записей · загрузите остальные ниже`;
-    $('expenseCount').textContent = state.expenses.length + (state.expenseOffset !== null ? '+' : '');
+    $('expenseTotal').textContent = ledger.money(state.expenseTotalKopecks);
+    const scope = state.expenseFilters.allDays ? 'все 10 дней' : `день ${state.day}`;
+    $('expenseTotalNote').textContent = `${state.expenseTotal} записей · ${scope} · сумма всей выборки`;
+    $('expenseCount').textContent = `${state.expenses.length} / ${state.expenseTotal}`;
     $('moreExpenses').hidden = state.expenseOffset === null;
-    if (!state.expenses.length) { emptyView(list, 'wallet', 'Расходов пока нет', 'Добавьте расход через форму выше. Сумма попадёт в открытую сводку после публикации.'); return; }
+    if (!state.expenses.length) { emptyView(list, 'wallet', 'Расходов по фильтру нет', 'Измените период или категорию либо добавьте расход через форму выше.'); return; }
     for (const expense of state.expenses) {
       const card = el('article', 'record-card');
-      const top = el('div', 'record-top');
-      top.append(el('h3', '', expenseCategories[expense.category] || expense.category || 'Другое'), el('span', 'expense-price', money(Number(expense.amountRub))));
-      card.append(top);
+      const top = el('div', 'record-top'), amount = ledger.money(ledger.expenseAmount(expense));
+      top.append(el('h3', '', expenseCategories[expense.category] || expense.category || 'Другое'), el('span', 'expense-price', amount));
+      card.append(top, el('p', 'record-detail', `День ${expense.day}`));
       if (expense.note) card.append(el('p', 'record-detail', expense.note));
       const footer = el('div', 'record-footer');
-      const time = el('time', '', dateLabel(expense.createdAt));
-      if (expense.createdAt) time.dateTime = expense.createdAt;
-      footer.append(time, actionButton('trash', `Удалить расход ${money(Number(expense.amountRub))}`, () => confirmation('Удалить расход?', `Запись на ${money(Number(expense.amountRub))} будет удалена из личного штаба.`, 'Удалить', async () => {
-        await api('/command/expenses/' + encodeURIComponent(expense.id), { method: 'DELETE', body: {} });
-        await loadExpenses(); status('workspaceStatus', 'Расход удалён.', 'success');
-      }), true));
-      card.append(footer); list.append(card);
+      const time = el('time', '', dateLabel(expense.updatedAt || expense.createdAt));
+      if (expense.updatedAt || expense.createdAt) time.dateTime = expense.updatedAt || expense.createdAt;
+      const actions = el('div', 'record-actions');
+      actions.append(actionButton('edit', `Изменить расход ${amount}`, () => openExpenseEdit(expense)), actionButton('trash', `Удалить расход ${amount}`, () => {
+        const actor = state.actor;
+        confirmation('Удалить расход?', `Запись на ${amount} за день ${expense.day} будет удалена.`, 'Удалить', async () => {
+          if (state.actor !== actor) return;
+          await api('/command/expenses/' + encodeURIComponent(expense.id), { method: 'DELETE', body: { expectedRevision: expense.revision } });
+          if (state.actor !== actor) return;
+          await Promise.all([loadExpenses(), loadBudget()]);
+          if (state.actor === actor) status('workspaceStatus', 'Расход удалён.', 'success');
+        });
+      }, true));
+      footer.append(time, actions); card.append(footer); list.append(card);
     }
   }
 
@@ -609,8 +692,13 @@
     event.preventDefault();
     if (state.actor?.editor !== true || $('saveExpense').disabled) return;
     const form = $('expenseForm');
-    if (!state.expenseAttempt && !form.reportValidity()) return;
-    if (!state.expenseAttempt) state.expenseAttempt = { key: crypto.randomUUID(), body: { day: state.day, amountRub: Number($('expenseAmount').value), category: $('expenseCategory').value, note: $('expenseNote').value.trim() } };
+    if (!state.expenseAttempt) {
+      const body = ledger.expenseBody({ day: state.day, amount: $('expenseAmount').value, category: $('expenseCategory').value, note: $('expenseNote').value });
+      $('expenseAmount').setCustomValidity(ledger.parseKopecks($('expenseAmount').value) === null ? 'Введите сумму от 0,01 до 1 000 000 ₽, не более двух знаков после запятой.' : '');
+      if (!form.reportValidity()) return;
+      if (!body) { status('expenseFormStatus', 'Проверьте сумму, категорию и комментарий.', 'error'); return; }
+      state.expenseAttempt = { key: crypto.randomUUID(), body };
+    }
     const attempt = state.expenseAttempt;
     const actor = state.actor;
     busyForm(form, true); status('expenseFormStatus', 'Сохраняем расход…');
@@ -619,7 +707,7 @@
       if (state.actor !== actor || state.expenseAttempt !== attempt) return;
       state.expenseAttempt = null;
       form.reset(); status('expenseFormStatus', result.idempotency_replayed ? 'Сервер подтвердил расход. Повторная запись не создана.' : 'Расход сохранён.', 'success');
-      await loadExpenses();
+      await Promise.all([loadExpenses(), loadBudget()]);
     } catch (error) {
       if (state.actor !== actor || state.expenseAttempt !== attempt) return;
       if ([400, 403, 404, 409, 410, 415, 422].includes(error.status)) state.expenseAttempt = null;
@@ -630,7 +718,146 @@
       busyForm(form, false);
       for (const field of form.querySelectorAll('input,select')) field.disabled = !!state.expenseAttempt || state.actor?.editor !== true;
       $('saveExpense').textContent = state.expenseAttempt ? `Повторить запись дня ${state.expenseAttempt.body.day}` : 'Добавить расход';
+      $('expenseCreateDay').textContent = `Запись за день ${state.expenseAttempt?.body.day || state.day}`;
     }
+  }
+
+  function openExpenseEdit(expense) {
+    if (state.actor?.editor !== true || !Number.isSafeInteger(expense.revision) || expense.revision < 1) return;
+    state.expenseEditSeq++;
+    state.expenseEditing = { record: expense, conflict: false, current: null, deleted: false };
+    $('expenseEditForm').reset(); $('expenseEditForm').setAttribute('aria-busy', 'false');
+    for (const field of $('expenseEditForm').querySelectorAll('input,select,button')) field.disabled = false;
+    $('editExpenseAmount').value = ledger.amountInput(ledger.expenseAmount(expense));
+    $('editExpenseAmount').setCustomValidity('');
+    $('editExpenseDay').value = String(expense.day);
+    const select = $('editExpenseCategory');
+    select.querySelectorAll('[data-custom-category]').forEach(node => node.remove());
+    if (![...select.options].some(option => option.value === expense.category)) { const option = el('option', '', expense.category); option.value = expense.category; option.dataset.customCategory = ''; select.append(option); }
+    select.value = expense.category; $('editExpenseNote').value = expense.note || '';
+    status('expenseEditStatus'); $('expenseConflict').hidden = true; $('expenseCurrent').replaceChildren(); $('expenseCurrent').hidden = true; $('rebaseExpense').hidden = true;
+    $('expenseEditDialog').showModal(); $('editExpenseAmount').focus();
+  }
+
+  async function saveExpenseEdit(event) {
+    event.preventDefault();
+    const edit = state.expenseEditing, actor = state.actor;
+    if (actor?.editor !== true || !edit || edit.conflict || edit.deleted || $('saveExpenseEdit').disabled) return;
+    const body = ledger.expenseBody({ day: Number($('editExpenseDay').value), amount: $('editExpenseAmount').value, category: $('editExpenseCategory').value, note: $('editExpenseNote').value });
+    $('editExpenseAmount').setCustomValidity(ledger.parseKopecks($('editExpenseAmount').value) === null ? 'Введите сумму от 0,01 до 1 000 000 ₽ с точностью до копейки.' : '');
+    if (!$('expenseEditForm').reportValidity()) return;
+    if (!body) { status('expenseEditStatus', 'Проверьте поля расхода.', 'error'); return; }
+    const seq = ++state.expenseEditSeq;
+    busyForm($('expenseEditForm'), true); status('expenseEditStatus', 'Сохраняем изменения…');
+    try {
+      await api('/command/expenses/' + encodeURIComponent(edit.record.id), { method: 'PATCH', body: { ...body, expectedRevision: edit.record.revision } });
+      if (state.actor !== actor || state.expenseEditing !== edit || seq !== state.expenseEditSeq) return;
+      $('expenseEditDialog').close(); state.expenseEditing = null;
+      await Promise.all([loadExpenses(), loadBudget()]);
+      if (state.actor === actor) status('workspaceStatus', 'Изменения расхода сохранены.', 'success');
+    } catch (error) {
+      if (state.actor !== actor || state.expenseEditing !== edit || seq !== state.expenseEditSeq) return;
+      if (error.status === 409) { edit.conflict = true; $('expenseConflict').hidden = false; status('expenseEditStatus', 'Другой сеанс изменил эту запись. Ваш ввод остаётся в форме.', 'error'); }
+      else if (error.status === 404) { edit.deleted = true; status('expenseEditStatus', 'Расход удалён. Ваш ввод остаётся в форме, но эта запись больше не может быть изменена.', 'error'); }
+      else status('expenseEditStatus', error.message, 'error');
+    } finally {
+      if (state.actor === actor && seq === state.expenseEditSeq) {
+        busyForm($('expenseEditForm'), false);
+        $('saveExpenseEdit').disabled = !state.expenseEditing || edit.conflict || edit.deleted;
+      }
+    }
+  }
+
+  async function loadCurrentExpense() {
+    const actor = state.actor, edit = state.expenseEditing;
+    if (!actor || !edit || !edit.conflict || $('loadCurrentExpense').disabled) return;
+    const seq = ++state.expenseEditSeq;
+    $('loadCurrentExpense').disabled = true;
+    try {
+      const data = await api('/command/expenses/' + encodeURIComponent(edit.record.id));
+      if (state.actor !== actor || state.expenseEditing !== edit || seq !== state.expenseEditSeq) return;
+      if (data.expense?.id !== edit.record.id || !Number.isSafeInteger(data.expense.revision)) throw new Error('Сервер не передал текущую версию расхода.');
+      edit.current = data.expense;
+      const box = $('expenseCurrent'); box.replaceChildren(); box.hidden = false;
+      box.append(el('strong', '', `День ${edit.current.day} · ${ledger.money(ledger.expenseAmount(edit.current))}`), el('p', '', expenseCategories[edit.current.category] || edit.current.category), el('p', '', edit.current.note || 'Без комментария'), el('small', '', 'Изменено ' + dateLabel(edit.current.updatedAt || edit.current.createdAt) + ' МСК'));
+      $('rebaseExpense').hidden = false;
+      status('expenseEditStatus', 'Сверьте серверную запись с вашим вводом. Применение ввода потребует отдельного сохранения.');
+    } catch (error) {
+      if (state.actor !== actor || state.expenseEditing !== edit || seq !== state.expenseEditSeq) return;
+      if (error.status === 404) { edit.deleted = true; $('rebaseExpense').hidden = true; $('expenseCurrent').hidden = true; status('expenseEditStatus', 'Расход уже удалён. Изменения не будут создавать новую запись.', 'error'); }
+      else status('expenseEditStatus', error.message, 'error');
+    } finally { if (state.actor === actor && state.expenseEditing === edit && seq === state.expenseEditSeq) $('loadCurrentExpense').disabled = edit.deleted; }
+  }
+
+  async function downloadExport(format) {
+    const actor = state.actor;
+    if (actor?.editor !== true || state.exportBusy || !['json', 'contacts.csv', 'expenses.csv'].includes(format)) return;
+    const seq = ++state.exportSeq, controller = new AbortController();
+    state.exportController = controller; state.exportBusy = true; applyPermissions();
+    $('exportDetails').hidden = true; status('exportStatus', 'Готовим полную выгрузку и проверяем файл…');
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch(API + '/command/export?format=' + encodeURIComponent(format), { credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: controller.signal, headers: { Accept: format === 'json' ? 'application/json' : 'text/csv' } });
+      if (state.actor !== actor || seq !== state.exportSeq) return;
+      if (!response.ok) {
+        let error = null; try { error = await response.json(); } catch { /* Do not offer HTML or error pages as a file. */ }
+        if (state.actor !== actor || seq !== state.exportSeq) return;
+        if (response.status === 401) { lock('Сессия завершилась. Войдите заново перед выгрузкой.'); return; }
+        throw new Error(typeof error?.error === 'string' && error.error.length < 300 ? error.error : 'Сервер не подготовил выгрузку. Попробуйте ещё раз.');
+      }
+      const type = response.headers.get('Content-Type') || '';
+      if (!type.toLowerCase().startsWith(format === 'json' ? 'application/json' : 'text/csv')) throw new Error('Сервер вернул неверный формат. Файл не сохранён.');
+      if (Number(response.headers.get('Content-Length') || 0) > ledger.MAX_EXPORT_BYTES) throw new Error('Выгрузка превышает допустимый размер. Файл не сохранён.');
+      const meta = ledger.exportMetadata(response.headers);
+      const bytes = await response.arrayBuffer();
+      await ledger.verifyExport(bytes, response.headers.get('Content-Digest'));
+      if (state.actor !== actor || seq !== state.exportSeq) return;
+      const url = URL.createObjectURL(new Blob([bytes], { type }));
+      const link = el('a'); link.href = url; link.download = ledger.exportFilename(format); document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      status('exportStatus', 'Файл проверен и передан браузеру для сохранения.', 'success');
+      $('exportDetails').textContent = `Версия ${meta.revision} · в файле ${meta.count} записей. В штабе: ${meta.contacts} контактов, ${meta.expenses} расходов, ${meta.quests} результатов квестов.`;
+      $('exportDetails').hidden = false;
+      if (state.tab === 'data') await loadAudit();
+    } catch (error) {
+      if (state.actor !== actor || seq !== state.exportSeq) return;
+      status('exportStatus', error.name === 'AbortError' ? 'Сервер не успел подготовить файл. Проверьте соединение и повторите выгрузку.' : error instanceof TypeError ? 'Не удалось получить файл. Проверьте подключение к интернету.' : error.message, 'error');
+    } finally {
+      clearTimeout(timeout);
+      if (state.actor === actor && seq === state.exportSeq) { state.exportController = null; state.exportBusy = false; applyPermissions(); }
+    }
+  }
+
+  async function loadAudit(append = false) {
+    if (!state.actor) return;
+    const actor = state.actor, seq = ++state.auditSeq, cursor = append ? state.auditCursor : null;
+    if (append && !cursor) return;
+    $('moreAudit').disabled = true; $('refreshAudit').disabled = true; status('auditStatus');
+    if (!append) { $('auditCount').textContent = 'Получаем историю'; $('moreAudit').hidden = true; emptyView($('auditList'), 'history', 'Загрузка истории', 'Получаем подтверждённые действия.'); }
+    try {
+      const data = await api('/command/audit?' + ledger.auditQuery($('auditCategory').value, cursor));
+      if (state.actor !== actor || seq !== state.auditSeq) return;
+      if (!Array.isArray(data.events) || !Number.isSafeInteger(data.total) || data.total < 0 || !(data.nextCursor === null || typeof data.nextCursor === 'string' && data.nextCursor.length <= 2048)) throw new Error('Сервер не передал историю полностью.');
+      const seen = new Set();
+      state.auditEvents = (append ? [...state.auditEvents, ...data.events] : data.events).filter(event => event && typeof event.id === 'string' && !seen.has(event.id) && seen.add(event.id));
+      state.auditCursor = data.nextCursor; state.auditTotal = data.total;
+      const list = $('auditList'); list.replaceChildren();
+      for (const event of state.auditEvents) {
+        const card = el('article', 'audit-event');
+        card.append(el('h3', '', ledger.auditLabels[event.event] || 'Действие штаба'));
+        const time = el('time', '', dateLabel(event.at) + ' МСК'); if (event.at) time.dateTime = event.at;
+        card.append(time, el('p', 'audit-actor', event.actor || 'Аккаунт не указан'));
+        if (typeof event.subjectId === 'string' && /^d(?:10|[1-9])-q[1-5]$/.test(event.subjectId)) card.append(el('p', 'audit-detail', 'День ' + event.subjectId.match(/^d(\d+)/)[1] + ' · задание ' + event.subjectId.slice(-1)));
+        list.append(card);
+      }
+      if (!state.auditEvents.length) emptyView(list, 'history', 'Пока нет действий', 'После сохранения записей, публикации или выгрузки здесь появится подтверждение.');
+      $('auditCount').textContent = `${state.auditEvents.length} / ${state.auditTotal} действий`;
+      $('moreAudit').hidden = !state.auditCursor;
+    } catch (error) {
+      if (state.actor !== actor || seq !== state.auditSeq) return;
+      if (!append) { state.auditEvents = []; state.auditCursor = null; $('auditCount').textContent = 'История не загружена'; emptyView($('auditList'), 'history', 'История недоступна', error.message, () => loadAudit()); }
+      else status('auditStatus', error.message, 'error');
+    } finally { if (state.actor === actor && seq === state.auditSeq) { $('moreAudit').disabled = false; $('refreshAudit').disabled = false; } }
   }
 
   async function loadQuests() {
@@ -669,14 +896,15 @@
       checkbox.disabled = state.actor?.editor !== true;
       checkbox.setAttribute('aria-label', quest.title);
       checkbox.addEventListener('change', async () => {
-        const day = state.day; const completed = checkbox.checked; checkbox.disabled = true;
+        const actor = state.actor, day = state.day; const completed = checkbox.checked; checkbox.disabled = true;
         try {
           await api('/command/quests', { method: 'PUT', body: { day, questId: quest.id, completed } });
+          if (state.actor !== actor) return;
           state.quests = state.quests.filter(item => !(item.day === day && item.questId === quest.id));
           state.quests.push({ day, questId: quest.id, completed });
           if (state.actor && state.day === day && state.tab === 'quests') renderQuests();
           status('workspaceStatus', 'Результат квеста сохранён.', 'success');
-        } catch (error) { checkbox.checked = !completed; checkbox.disabled = state.actor?.editor !== true; status('workspaceStatus', error.message, 'error'); }
+        } catch (error) { if (state.actor === actor) { checkbox.checked = !completed; checkbox.disabled = state.actor?.editor !== true; status('workspaceStatus', error.message, 'error'); } }
       });
       row.append(mark, title, reward, checkbox); list.append(row);
     }
@@ -684,14 +912,16 @@
 
   async function publish() {
     if (state.actor?.approver !== true || !$('publishConfirm').checked || $('publish').disabled) return;
+    const actor = state.actor;
     $('publish').disabled = true; $('publishConfirm').disabled = true;
     status('publishStatus', 'Обновляем открытую сводку…');
     try {
       await api('/command/publish', { method: 'POST', body: { confirm: true } });
+      if (state.actor !== actor) return;
       $('publishConfirm').checked = false;
       status('publishStatus', 'Сводка опубликована. Зрители видят обновлённые общие результаты за все дни.', 'success');
-    } catch (error) { status('publishStatus', error.message, 'error'); }
-    finally { $('publishConfirm').disabled = state.actor?.approver !== true; $('publish').disabled = state.actor?.approver !== true || !$('publishConfirm').checked; }
+    } catch (error) { if (state.actor === actor) status('publishStatus', error.message, 'error'); }
+    finally { if (state.actor === actor) { $('publishConfirm').disabled = state.actor?.approver !== true; $('publish').disabled = state.actor?.approver !== true || !$('publishConfirm').checked; } }
   }
 
   $('googleSignIn').addEventListener('click', () => {
@@ -734,20 +964,45 @@
   $('resetContactFilters').addEventListener('click', () => { $('contactFilters').reset(); $('contactFilters').requestSubmit(); });
   $('contactForm').addEventListener('submit', saveContact);
   $('expenseForm').addEventListener('submit', saveExpense);
+  $('expenseAmount').addEventListener('input', () => $('expenseAmount').setCustomValidity(''));
+  $('editExpenseAmount').addEventListener('input', () => $('editExpenseAmount').setCustomValidity(''));
+  $('expenseFilters').addEventListener('submit', event => { event.preventDefault(); state.expenseFilters = { allDays: $('expenseScope').value === 'all', category: $('expenseCategoryFilter').value }; loadExpenses(); });
+  for (const id of ['expenseScope', 'expenseCategoryFilter']) $(id).addEventListener('change', () => $('expenseFilters').requestSubmit());
+  $('refreshBudget').addEventListener('click', loadBudget);
+  $('expenseEditForm').addEventListener('submit', saveExpenseEdit);
+  $('loadCurrentExpense').addEventListener('click', loadCurrentExpense);
+  $('rebaseExpense').addEventListener('click', () => {
+    const edit = state.expenseEditing;
+    if (state.actor?.editor !== true || !edit?.current || edit.deleted || $('expenseEditForm').getAttribute('aria-busy') === 'true') return;
+    edit.record = edit.current; edit.current = null; edit.conflict = false;
+    $('expenseConflict').hidden = true; $('expenseCurrent').replaceChildren(); $('expenseCurrent').hidden = true; $('rebaseExpense').hidden = true;
+    $('saveExpenseEdit').disabled = false;
+    status('expenseEditStatus', 'Ваш ввод сохранён. Нажмите «Сохранить изменения», чтобы обновить проверенную запись.');
+    $('saveExpenseEdit').focus();
+  });
+  $('expenseEditDialog').addEventListener('cancel', event => { if ($('expenseEditForm').getAttribute('aria-busy') === 'true') event.preventDefault(); });
+  $('expenseEditDialog').addEventListener('close', () => { state.expenseEditSeq++; state.expenseEditing = null; });
+  for (const button of document.querySelectorAll('[data-export]')) button.addEventListener('click', () => downloadExport(button.dataset.export));
+  $('auditCategory').addEventListener('change', () => loadAudit());
+  $('refreshAudit').addEventListener('click', () => loadAudit());
+  $('moreAudit').addEventListener('click', () => loadAudit(true));
   $('moreContacts').addEventListener('click', () => loadContacts(true));
   $('moreExpenses').addEventListener('click', () => loadExpenses(true));
   $('publishConfirm').addEventListener('change', () => { $('publish').disabled = state.actor?.approver !== true || !$('publishConfirm').checked; });
   $('publish').addEventListener('click', publish);
   $('unpublish').addEventListener('click', () => {
     if (state.actor?.approver !== true) return;
+    const actor = state.actor;
     confirmation('Снять сводку с публикации?', 'Зрители больше не увидят опубликованные показатели. Контакты, расходы и результаты квестов останутся в штабе.', 'Снять', async () => {
+      if (state.actor !== actor) return;
       await api('/command/unpublish', { method: 'POST', body: {} });
-      status('publishStatus', 'Сводка снята с публикации. Записи штаба сохранены.', 'success');
+      if (state.actor === actor) status('publishStatus', 'Сводка снята с публикации. Записи штаба сохранены.', 'success');
     });
   });
   for (const button of document.querySelectorAll('[data-close]')) button.addEventListener('click', async () => {
     if (button.dataset.close === 'confirmDialog' && state.confirmationBusy) return;
     if (button.dataset.close === 'contactDialog' && $('contactForm').getAttribute('aria-busy') === 'true') return;
+    if (button.dataset.close === 'expenseEditDialog' && $('expenseEditForm').getAttribute('aria-busy') === 'true') return;
     if (button.dataset.close === 'contactDialog') await rememberDraft();
     $(button.dataset.close).close();
   });
@@ -759,14 +1014,18 @@
   $('confirmDialog').addEventListener('cancel', event => { if (state.confirmationBusy) event.preventDefault(); });
   $('confirmAction').addEventListener('click', async () => {
     if (!state.confirmAction || state.confirmationBusy) return;
+    const actor = state.actor, action = state.confirmAction;
     state.confirmationBusy = true; $('confirmAction').disabled = true;
     for (const button of $('confirmDialog').querySelectorAll('[data-close]')) button.disabled = true;
     status('confirmStatus', 'Выполняем действие…');
-    try { await state.confirmAction(); $('confirmDialog').close(); state.confirmAction = null; }
-    catch (error) { status('confirmStatus', error.message, 'error'); }
+    try { await action(); if (state.actor === actor && state.confirmAction === action) $('confirmDialog').close(); }
+    catch (error) { if (state.actor === actor && state.confirmAction === action) status('confirmStatus', error.message, 'error'); }
     finally {
-      state.confirmationBusy = false; $('confirmAction').disabled = false;
-      for (const button of $('confirmDialog').querySelectorAll('[data-close]')) button.disabled = false;
+      if (state.actor === actor && state.confirmAction === action) {
+        state.confirmationBusy = false; $('confirmAction').disabled = false;
+        for (const button of $('confirmDialog').querySelectorAll('[data-close]')) button.disabled = false;
+        if (!$('confirmDialog').open) state.confirmAction = null;
+      }
     }
   });
   window.addEventListener('pagehide', () => { rememberDraft(); state.authSeq++; lock(); });

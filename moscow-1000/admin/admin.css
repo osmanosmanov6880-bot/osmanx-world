@@ -244,3 +244,61 @@ body:has(dialog[open]){overflow:hidden}
  .contact-save-bar{padding-bottom:calc(13px + env(safe-area-inset-bottom));bottom:calc(-13px - env(safe-area-inset-bottom));margin-bottom:calc(-13px - env(safe-area-inset-bottom))}
 }
 @media(max-width:359px){.contact-filters{padding:12px}.contact-filters .field-row{grid-template-columns:1fr}.contact-filters .field-row label{font-size:12px}.contact-dialog{padding-left:14px;padding-right:14px}.callback-row{flex-direction:column}.callback-row .secondary-button{align-self:flex-start}}
+/* R8 — full private ledger, export and activity. */
+.bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr));padding-left:6px;padding-right:6px}
+.bottom-nav button{min-width:0;min-height:52px;font-size:10px;overflow-wrap:normal}
+.budget-card{margin-bottom:15px}
+.budget-card .section-bar,.audit-section .section-bar{margin:0 0 13px;gap:10px}
+.budget-card .section-bar h2,.audit-section .section-bar h2{font-size:17px}
+.budget-card .text-button,.audit-section .text-button{font-size:13px;min-height:44px;flex:none}
+#budgetSpent{display:block;font-size:30px;line-height:1.15;letter-spacing:-.035em;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.budget-remaining{font-size:14px;color:#90c8b4;line-height:1.5;margin:9px 0 15px}
+.budget-remaining.overspent{color:#ff95a5}
+.budget-progress{height:7px;border-radius:8px;background:#223146;overflow:hidden}
+.budget-progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff2749,#e80031);border-radius:inherit}
+.budget-limit{color:#a2b1c5;font-size:13px;margin-top:9px}
+.budget-details{border-top:1px solid #2d3e54;margin-top:16px;padding-top:4px}
+.budget-details summary{color:#d2dbe7;font-size:14px;cursor:pointer;padding:13px 0;min-height:44px}
+.budget-details h3{font-size:14px;margin:16px 0 7px}
+.budget-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #233248;font-size:14px}
+.budget-row>span{min-width:0;overflow-wrap:anywhere;color:#aabbd0}
+.budget-row>strong{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.budget-breakdown>.muted{font-size:14px}
+.form-context{font-size:14px;color:#a3b6ce;margin:-4px 0 15px}
+.ledger-filters{margin:20px 0 0;padding:14px;border:1px solid #2d3d53;border-radius:12px;background:#0a1521}
+.ledger-filters label{font-size:14px}
+.ledger-filters select{font-size:14px;min-height:44px}
+.ledger-filters .secondary-button{min-height:44px;font-size:14px}
+.record-actions{display:flex;align-items:center;gap:3px}
+.record-actions>.icon-button{width:44px;height:44px}
+.record-footer>time{min-width:0;overflow-wrap:anywhere}
+.expense-price{font-variant-numeric:tabular-nums}
+.export-card>p:not(.status):not(.help-text):not(.export-details){font-size:15px;line-height:1.6;color:#a8bad0;margin-top:12px}
+.export-card h2{font-size:21px}
+.export-actions{display:grid;gap:10px}
+.export-details{font-size:14px;line-height:1.65;color:#c5d3e6;margin-top:12px;overflow-wrap:anywhere}
+.audit-section{margin-top:18px}
+.audit-section>label{font-size:14px}
+.audit-section select{min-height:44px}
+.audit-list{margin-top:17px}
+.audit-event{padding:15px 0;border-bottom:1px solid #2b3a50}
+.audit-event:first-child{padding-top:0}
+.audit-event h3{font-size:15px;line-height:1.4;margin:0 0 6px}
+.audit-event time{font-size:13px;color:#a3b4ca}
+.audit-actor{font-size:14px;color:#c9d5e5;overflow-wrap:anywhere;margin-top:6px}
+.audit-detail{font-size:13px;color:#9eb3cc;margin-top:6px}
+#moreAudit{margin-top:15px;font-size:14px}
+.expense-edit-dialog{width:calc(100% - 24px);max-width:430px;padding:20px;overflow:auto}
+.expense-edit-dialog label{font-size:14px}
+.expense-edit-dialog input,.expense-edit-dialog select{min-height:44px}
+.expense-edit-actions{display:grid;gap:10px;margin-top:22px}
+.expense-conflict{padding:14px;border:1px solid #9c5555;border-radius:10px;background:#391d2638;margin-top:16px}
+.expense-conflict h3{font-size:16px;line-height:1.35}
+.expense-conflict>p{font-size:14px;color:#d4b7bd;line-height:1.6;margin-top:9px}
+.expense-conflict .secondary-button{font-size:14px;margin-top:13px;white-space:normal;min-height:44px}
+#expenseCurrent{padding:13px 0;border-top:1px solid #5d414a;margin-top:14px;overflow-wrap:anywhere}
+#expenseCurrent strong{font-size:16px}
+#expenseCurrent p{font-size:14px;margin-top:7px;color:#b7c5d6}
+#expenseCurrent small{display:block;font-size:13px;color:#9cacc2;margin-top:10px}
+@media(max-width:359px){.ledger-filters .field-row{grid-template-columns:1fr}.budget-card,.export-card,.audit-section{padding:14px}.budget-row{font-size:13px;gap:8px}.bottom-nav button{font-size:9px}.expense-edit-dialog{padding:17px 14px}.expense-edit-dialog .field-row{grid-template-columns:1fr}.record-top{flex-wrap:wrap}.expense-price{margin-left:auto}}
+@media(max-width:599px){.expense-edit-dialog{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)}.expense-edit-actions{position:sticky;bottom:-20px;background:#050d17f5;margin:20px -1px -20px;padding:14px 0 calc(14px + env(safe-area-inset-bottom));border-top:1px solid #2c3c52}}

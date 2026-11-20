@@ -1,4 +1,4 @@
-name: OSMANX MOSCOW 1000 R6-R7 command center QA
+name: OSMANX MOSCOW 1000 R6-R8 command center QA
 on:
   pull_request:
     paths:
@@ -24,11 +24,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for f in moscow-1000/{command,command-data,command-map,command-offline,command-sw}.js moscow-1000/admin/{admin,contact-workflow}.js services/moscow-1000-api/{index,auth-google,command-center}.mjs; do
+          for f in moscow-1000/{command,command-data,command-map,command-offline,command-navigation,command-sw}.js moscow-1000/admin/{admin,contact-workflow,ledger-workflow}.js services/moscow-1000-api/{index,auth-google,command-center,command-export}.mjs; do
             node --check "$f"
           done
           test -s services/moscow-1000-api/migrations/0005_r6_command_center.sql
           test -s services/moscow-1000-api/migrations/0006_r7_command_requests.sql
+          test -s services/moscow-1000-api/migrations/0007_r8_command_ledger.sql
           test -s moscow-1000/serial/index.html
       - name: Full Node regression and integration suite
         run: node --test tests/moscow-1000-*.test.mjs

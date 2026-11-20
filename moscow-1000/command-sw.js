@@ -1,11 +1,11 @@
 /* Public shell only. Admin pages, APIs, OAuth, contacts and map tiles are excluded. */
 (function (root) {
   'use strict';
-  const CACHE = 'osmanx-public-shell-r7.1';
+  const CACHE = 'osmanx-public-shell-r8.3';
   const HOME = '/moscow-1000/';
   const ASSETS = [HOME, '/moscow-1000/command.css', '/moscow-1000/command-map.css',
     '/moscow-1000/content.js', '/moscow-1000/geo.js', '/moscow-1000/publication.js',
-    '/moscow-1000/command-data.js', '/moscow-1000/command-offline.js', '/moscow-1000/command-map.js',
+    '/moscow-1000/command-data.js', '/moscow-1000/command-offline.js', '/moscow-1000/command-navigation.js', '/moscow-1000/command-map.js',
     '/moscow-1000/command.js', '/moscow-1000/mark.svg', '/moscow-1000/reference/moscow-skyline.png',
     '/moscow-1000/command.webmanifest'];
   const allowed = new Set(ASSETS);
