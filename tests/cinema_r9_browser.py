@@ -32,6 +32,7 @@ def configure(page,state,role="owner",r9=True):
         "percentages":{"everAttempted":22.6,"respondedWithin1h":26.7}}))
     def export(r):
         assert r.request.method=="POST"
+        assert r.request.headers.get("x-csrf-token")=="r9-test-csrf-token"
         state["csvRequests"].append(json.loads(r.request.post_data))
         r.fulfill(status=200,content_type="text/csv; charset=utf-8",
             headers={"Content-Disposition":'attachment; filename="osmanx-cinema-snapshot.csv"',
@@ -63,6 +64,9 @@ def main():
                     page=browser.new_page(viewport={"width":width,"height":height},
                         accept_downloads=True,reduced_motion="reduce")
                     errors=[];page.on("pageerror",lambda error:errors.append(str(error)))
+                    page.context.add_cookies([{"name":"osmanx_industry_csrf",
+                        "value":"r9-test-csrf-token",
+                        "url":f"http://127.0.0.1:{PORT}"}])
                     configure(page,state)
                     page.goto(URL,wait_until="domcontentloaded")
                     page.locator("#workspace").wait_for(state="visible",timeout=15000)
