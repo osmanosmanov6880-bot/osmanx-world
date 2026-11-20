@@ -52,15 +52,17 @@ function fail(message){
   byId('login-status').textContent=message;
 }
 async function reload(){
-  const [data,metricData]=await Promise.all([
+  const [data,metricData,followups]=await Promise.all([
     request('/cinema/leads?limit=100'),
-    request('/cinema/metrics')
+    request('/cinema/metrics'),
+    request('/cinema/followups?window='+encodeURIComponent(byId('r4-followup-window').value))
   ]);
   rows=data.items||[];
   currentRole=currentRole||'manager';
   const stage=byId('state').value;
   renderLeads(stage);
   renderMetrics(metricData);
+  renderFollowups(followups);
   byId('leads-status').textContent='Показаны первые '+rows.length+' записей, сортировка по дате. Операции защищены сессией и CSRF.';
 }
 function renderMetrics(data){
@@ -82,7 +84,37 @@ function renderMetrics(data){
     line(events,x.date_utc+' · '+x.event_type+(x.story_id==='all'?'':' · '+x.story_id),x.total);
   }
   if(!(data.events||[]).length)events.textContent='Анонимных счётчиков пока нет.';
+  const campaigns=byId('r4-campaign-metrics');campaigns.replaceChildren();
+  for(const row of data.campaigns||[]){
+    const card=element('div','r4-campaign-card');
+    card.append(element('strong','',row.campaign_code),
+      element('small','',row.leads+' запросов · '+row.won+' согласовано · оценка '+showAmount(row.won_estimate_minor)));
+    campaigns.append(card);
+  }
+  if(!(data.campaigns||[]).length)campaigns.textContent='Кампаний с заявками пока нет.';
+  const follow=data.followups||{};
+  box.append(metric('Просроченные действия',Number(follow.overdue||0)));
+  box.append(metric('Следующие сегодня (UTC)',Number(follow.due_today||0)));
 }
+function renderFollowups(data){
+  const box=byId('r4-followup-items');box.replaceChildren();
+  for(const item of data.items||[]){
+    const card=element('article','r4-followup');
+    card.append(element('strong','',item.contact_name+(item.organization?' · '+item.organization:'')));
+    card.append(element('span','',item.story_id+' · '+item.campaign_code+' · '+(item.next_action_kind||'')));
+    card.append(element('time','',new Date(item.next_action_at).toLocaleString('ru-RU')));
+    box.append(card);
+  }
+  if(!(data.items||[]).length)box.append(element('p','hint','Нет задач на выбранный период.'));
+}
+function asLocalInput(value){
+  if(!value)return '';
+  const date=new Date(value);if(!Number.isFinite(date.getTime()))return '';
+  const pad=x=>String(x).padStart(2,'0');
+  return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate())+'T'+pad(date.getHours())+':'+pad(date.getMinutes());
+}
+const FOLLOWUP_NAMES={call:'Позвонить',email:'Написать',proposal:'Подготовить предложение',review:'Проверить данные'};
+const LOSS_NAMES={price:'Цена',timing:'Не вовремя',competitor:'Конкурент',no_response:'Нет ответа',out_of_scope:'Не наш профиль',other:'Другая'};
 function csvCell(v){
   let s=value(v);
   // Prevent CSV injection in spreadsheet software, including whitespace-prefixed formulas.
@@ -90,9 +122,9 @@ function csvCell(v){
   return '"'+s.replace(/"/g,'""')+'"';
 }
 function exportCsv(){
-  const headers=['ID','Имя','Email','Компания','Сюжет','Наблюдение','Цель','Источник','Стадия','Оценка, коп.','Дата'];
+  const headers=['ID','Имя','Email','Компания','Сюжет','Наблюдение','Цель','Источник','Кампания','Стадия','Оценка, коп.','Следующее действие','Срок','Причина отказа','Дата'];
   const lines=rows.map(x=>[x.id,x.contact_name,x.contact_email,x.organization,x.story_id,x.observation,x.goal,
-    x.source,x.state,x.deal_value_minor,x.created_at].map(csvCell).join(';'));
+    x.source,x.campaign_code,x.state,x.deal_value_minor,x.next_action_kind,x.next_action_at,x.loss_reason_code,x.created_at].map(csvCell).join(';'));
   const body='\ufeff'+headers.map(csvCell).join(';')+'\r\n'+lines.join('\r\n')+'\r\n';
   const href=URL.createObjectURL(new Blob([body],{type:'text/csv;charset=utf-8'}));
   const link=document.createElement('a');link.href=href;link.download='osmanx-cinema-leads.csv';
@@ -109,7 +141,7 @@ function renderLeads(filter=''){
     const date=element('time','',new Date(item.created_at).toLocaleString('ru-RU'));
     head.append(who,date);card.append(head);
     const contact=element('p','contact');const link=element('a','',item.contact_email);link.href='mailto:'+encodeURIComponent(item.contact_email);contact.append('Email: ',link);card.append(contact);
-    card.append(element('p','',item.observation),element('p','',item.goal||'Цель не указана'));
+    card.append(element('p','',item.observation),element('p','',item.goal||'Цель не указана'),element('p','hint','Кампания: '+(item.campaign_code||'direct')));
     const tools=element('div','lead-tools');
     const selector=element('select');
     selector.setAttribute('aria-label','Следующий статус заявки '+item.contact_name);
