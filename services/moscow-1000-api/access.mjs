@@ -36,7 +36,7 @@ export async function verifiedActor(request,env,fetcher=fetch){
     if(header.alg!=='RS256'||typeof header.kid!=='string')throw Error('JWT algorithm rejected');
     const now=Math.floor(Date.now()/1000);
     if(payload.iss!==domain||!(Array.isArray(payload.aud)?payload.aud.includes(aud):payload.aud===aud)||
-       !Number.isFinite(payload.exp)||payload.exp<=now||payload.exp>now+86400||
+       !Number.isFinite(payload.exp)||payload.exp<=now||
        (payload.nbf!==undefined && (!Number.isFinite(payload.nbf)||payload.nbf>now+60))||
        (payload.iat!==undefined && (!Number.isFinite(payload.iat)||payload.iat>now+60)))throw Error('JWT claims rejected');
     const key=(await getKeys(domain,fetcher)).find(k=>k.kid===header.kid);
