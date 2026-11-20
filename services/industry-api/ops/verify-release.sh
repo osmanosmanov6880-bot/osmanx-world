@@ -45,13 +45,16 @@ test -f "$root/Dockerfile" && test -f "$root/compose.yml"
 test -f "$root/shared/pilot-model.js" && test -f "$root/src/guest.mjs"
 test -f "$root/ops/compose.staging.yml" && test -f "$root/ops/stage-launch.sh"
 test -f "$root/ops/r10-operator-gate.sh" && test -f "$root/scripts/r10-stage-gate.mjs"
+test -f "$root/ops/compose.r14.yml" && test -f "$root/ops/r14-canary.sh"
+test -f "$root/scripts/r14-monitor.mjs" && test -f "$root/scripts/r14-admission.mjs"
+test -f "$root/scripts/r14-incident.mjs"
 test -f "$root/RELEASE.json"
 revision="${name#osmanx-industry-}"
 revision="${revision%.tar.gz}"
 grep -Fq "\"commit\":\"$revision\"" "$root/RELEASE.json" || {
   echo "Release revision does not match archive" >&2;exit 3;
 }
-grep -Fq '"schema":"osmanx.industry.r13.release.v1"' "$root/RELEASE.json" || {
+grep -Fq '"schema":"osmanx.industry.r14.release.v1"' "$root/RELEASE.json" || {
   echo "R10 release schema missing" >&2;exit 3;
 }
 grep -Fq '"migration":"011_guest_pilot_safety.sql"' "$root/RELEASE.json" || {
@@ -74,5 +77,5 @@ fi
   actual="$(find . -type f ! -name SHA256SUMS | wc -l)"
   test "$entries" -eq "$actual" || { echo "Unexpected files in bundle" >&2; exit 3; }
 )
-echo "R6 release integrity: verified $name"
+echo "R14 release integrity: verified $name"
 echo "Next step is operator staging, not production deployment."

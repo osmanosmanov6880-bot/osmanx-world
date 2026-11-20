@@ -1,0 +1,55 @@
+name: OSMANX Guest R14 operations acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r14-operations.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r14-operations.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ops-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/industry-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: R14 code/shell static checks
+        run: |
+          set -euo pipefail
+          node --check scripts/r14-monitor.mjs
+          node --check scripts/r14-admission.mjs
+          node --check scripts/r14-incident.mjs
+          node --check test/guest-r14.test.mjs
+          bash -n ops/r14-canary.sh
+          test -s docs/GUEST_INTELLIGENCE_R14.md || test -s ../../docs/GUEST_INTELLIGENCE_R14.md
+      - name: Offline admission, monitor and incident fault tests
+        run: node --test test/guest-r14.test.mjs
+      - name: Compose config with synthetic CI-only placeholders
+        env:
+          POSTGRES_ADMIN_PASSWORD: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          INDUSTRY_APP_PASSWORD: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          INDUSTRY_WORKER_PASSWORD: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+          BOOTSTRAP_EMAIL: ci-r14@invalid.local
+          BOOTSTRAP_PASSWORD: "CI_ONLY_DO_NOT_USE_IN_PRODUCTION_12345"
+          BOOTSTRAP_TENANT_SLUG: ci-synthetic
+          BOOTSTRAP_TENANT_NAME: CI Synthetic
+          BOOTSTRAP_VERTICAL: cafe
+        run: |
+          docker compose -f ops/compose.r14.yml --profile setup config --quiet
+          if grep -q 'GUEST_WRITES_ENABLED:.*${' ops/compose.r14.yml; then
+            echo "::error::R14 canary write flag must be literal false"
+            exit 1
+          fi
+          echo "R14 safety checks completed; never deploys to a VPS."
