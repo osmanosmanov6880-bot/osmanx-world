@@ -3,6 +3,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { withTenant } from './database.mjs';
 import {campaignCode,planFollowup,followupWindow} from './cinema-r4.mjs';
+import {sweepCinemaRows} from './cinema-retention.mjs';
 
 const STATES=['new','contacted','qualified','proposal','won','lost'];
 const PATHS={
@@ -250,9 +251,6 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
   app.post(base+'/retention',req=>protectOwner(req,['owner'],async(db,s)=>{
     const b=only(req.body, ['confirm']);
     if(b.confirm!=='ERASE_EXPIRED')throw error(400,'Требуется подтверждение удаления');
-    const removed=await db.query("DELETE FROM industry.cinema_leads WHERE tenant_id=$1 AND created_at<now()-interval '90 days' RETURNING id",[s.tenant_id]);
-    const expiredMetrics=await db.query("DELETE FROM industry.cinema_daily_events WHERE tenant_id=$1 AND date_utc<(now() AT TIME ZONE 'UTC')::date-interval '180 days'",[s.tenant_id]);
-    await db.query("DELETE FROM industry.cinema_rate_limits WHERE tenant_id=$1 AND bucket_hour<now()-interval '48 hours'",[s.tenant_id]);
-    return {erasedLeads:removed.rowCount,expiredMetrics:expiredMetrics.rowCount,retentionDays:90};
+    return sweepCinemaRows(db,s.tenant_id);
   }));
 }
