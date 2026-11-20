@@ -1,6 +1,7 @@
 import {makePool} from './database.mjs';
 import {buildApp} from './app.mjs';
 import {probeGuestDatabase} from './readiness.mjs';
+import {registerR38BuildHealth} from './guest-r38-build-route.mjs';
 
 const pool=makePool();
 let app;
@@ -14,6 +15,7 @@ try{
   // elevated runtime DB account or disabled RLS. Credentials are never printed.
   if(process.env.NODE_ENV==='production')await probeGuestDatabase(pool);
   app=await buildApp(pool);
+  registerR38BuildHealth(app);
   await app.listen({host,port});
   console.log('OSMANX INDUSTRY API listening on '+host+':'+port+
     ' (readiness verified; Guest writes '+(process.env.GUEST_WRITES_ENABLED==='true'?'operator-enabled':'disabled')+')');

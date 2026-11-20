@@ -88,6 +88,7 @@ function showAuth(){
   $('r35Panel').hidden=true;
   $('r36Panel').hidden=true;
   $('r37Panel').hidden=true;
+  $('r38Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -446,6 +447,7 @@ async function openPilot(id){
   await loadR35Acceptance();
   await loadR36Acceptance();
   await loadR37Acceptance();
+  await loadR38Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1464,6 +1466,54 @@ async function loadR37Acceptance(){
     $('r37Dr').textContent='—';$('r37Expiry').textContent='Отчёт до: —';
   }
 }
+const R38_GAPS={
+  R38_24_PRS_REQUIRE_INDEPENDENT_REVIEW_AND_MERGE:'24 PR ожидают ручной проверки и последовательного объединения',
+  R38_FIRST_PENDING_PR47_IS_DRAFT_WITHOUT_HUMAN_APPROVAL:'PR #47 — Draft; независимый reviewer ещё не одобрил',
+  R38_RELEASE_SOURCE_MUST_BE_ANCESTOR_OF_MAIN:'Исходный коммит должен находиться в истории main',
+  R38_CURRENT_MAIN_REQUIRES_POSTMERGE_CI:'Для итогового main нужен новый успешный CI',
+  R38_RESOLVED_CANARY_COMPOSE_NOT_OPERATOR_VERIFIED:'Оператор не проверил итоговую Compose-конфигурацию',
+  R38_CANARY_SOURCE_SHA_AND_RUNNING_BUILD_NOT_WITNESSED:'Запущенная сборка не подтверждена по SHA',
+  R38_DISPOSABLE_AGE_RESTORE_NOT_INDEPENDENTLY_WITNESSED:'Нет независимой AGE/PostgreSQL репетиции',
+  R38_REMOTE_STAGING_OFFSITE_LEGAL_AND_CHANGE_APPROVAL_MISSING:'Нет полного staging/offsite/юридического допуска'
+};
+async function loadR38Acceptance(){
+  const panel=$('r38Panel'),list=$('r38Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r38/readiness');
+    if(x.schema!=='osmanx.guest.r38.release-safety-no-go.v1'||
+      x.pilotId!==model.selected.item.id||
+      x.source?.requiredPrs!==24||
+      x.source?.mergedPrsVerifiedInApi!==0||
+      x.compose?.operatorComposeCallsFromWebApi!==0||
+      x.compose?.remoteDockerContextAllowed!==false||
+      x.buildIdentity?.runtimeBuildHealthReadFromWebApi!==false||
+      x.restore?.offsiteRestoreExecutedByWebApi!==false||
+      x.productionAuthorized!==false||x.customerGo!==false||
+      x.guestWritesEnabled!==false||x.stopLifted!==false||
+      !Array.isArray(x.blockers)||
+      !x.blockers.includes('R38_CURRENT_MAIN_REQUIRES_POSTMERGE_CI'))
+      throw Error('R38 unsafe or unverified response');
+    $('r38Status').textContent='NO-GO — независимый выпуск не разрешён';
+    $('r38Source').textContent='0 / 24 подтверждено в API';
+    $('r38Build').textContent='Нужна проверка оператора';
+    $('r38Recovery').textContent='Внешний тест не проведён';
+    $('r38Expiry').textContent='Отчёт до: '+
+      new Date(x.expiresAt).toLocaleString('ru-RU',{
+        year:'numeric',month:'2-digit',day:'2-digit',
+        hour:'2-digit',minute:'2-digit'});
+    for(const code of x.blockers)
+      appendText(list,'li',R38_GAPS[code]||R37_GAPS[code]||
+        R36_GAPS[code]||R35_GAPS[code]||R34_GAPS[code]||
+        R33_GAPS[code]||R32_GAPS[code]||R31_GAPS[code]||
+        R30_GAPS[code]||R29_GAPS[code]||code,'small');
+  }catch{
+    $('r38Status').textContent='NO-GO — R38 статус не подтверждён';
+    $('r38Source').textContent='—';$('r38Build').textContent='—';
+    $('r38Recovery').textContent='—';$('r38Expiry').textContent='Отчёт до: —';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1956,6 +2006,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r38Refresh').addEventListener('click',()=>safely(()=>loadR38Acceptance()));
+$('r38Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r38/report.csv',
+    'osmanx-guest-r38-no-go.csv');
+  setStatus('R38: NO-GO CSV сохранён. Production и гостевые записи не разрешены.');
+}));
 $('r37Refresh').addEventListener('click',()=>safely(()=>loadR37Acceptance()));
 $('r37Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');

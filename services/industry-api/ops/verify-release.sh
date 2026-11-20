@@ -407,6 +407,23 @@ if grep -Fq '"verifiedCanaryRestoreImageMainR37":true' "$root/RELEASE.json"; the
     test -f "$root/$f" || { echo "Missing R37 operator component $f" >&2; exit 3; }
   done
 fi
+# R38: resolved compose and runtime revision are operator-only, customer NO-GO.
+if grep -Fq '"resolvedComposeAndBuildIdentityR38":true' "$root/RELEASE.json"; then
+  grep -Fq '"verifiedCanaryRestoreImageMainR37":true' "$root/RELEASE.json" || {
+    echo "R38 requires R37 source" >&2; exit 3;
+  }
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || {
+    echo "R38 refuses active guest writes" >&2; exit 3;
+  }
+  for f in src/guest-r38-compose.mjs src/guest-r38-build.mjs \
+    src/guest-r38-build-route.mjs src/guest-r38-dr-preflight.mjs \
+    src/guest-r38-mainline.mjs src/guest-r38-report.mjs \
+    scripts/r38-compose-policy.mjs scripts/r38-docker-endpoint.mjs \
+    scripts/r38-source-commit.mjs scripts/r38-local-build-probe.mjs \
+    scripts/r38-dr-preflight.mjs scripts/r38-main-gate.mjs; do
+    test -f "$root/$f" || { echo "Missing R38 component $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

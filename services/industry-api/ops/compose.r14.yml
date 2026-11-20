@@ -6,7 +6,7 @@ x-api: &api
     context: ..
     dockerfile: Dockerfile
     args:
-      OSMANX_SOURCE_SHA: ${OSMANX_SOURCE_SHA:-}
+      OSMANX_SOURCE_SHA: ${OSMANX_SOURCE_SHA:?Pinned SHA required}
   image: osmanx-guest-api:r14-canary
 services:
   db:
@@ -81,6 +81,7 @@ services:
       PORT: "3047"
       ALLOWED_ORIGIN: https://osmanx.world
       GUEST_WRITES_ENABLED: "false"
+      OSMANX_SOURCE_SHA: ${OSMANX_SOURCE_SHA:?Pinned SHA required}
       DATABASE_URL: postgresql://industry_app:${INDUSTRY_APP_PASSWORD:?}@db:5432/guest_r14_canary
     ports: ["127.0.0.1:3150:3047"]
     depends_on:

@@ -625,6 +625,46 @@ test('R37 PostgreSQL/Fastify 401/404, MANAGE scoped NO-GO and zero writes',async
   )).rows[0].n;
   assert.equal(after,before);
 });
+test('R38 PostgreSQL/Fastify tenant-scoped NO-GO GETs and zero customer writes',async()=>{
+  const base='/guest/pilots/'+pilot+'/r38';
+  const initial=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal((await request('GET',base+'/readiness')).status,401);
+  assert.equal((await request('GET',base+'/readiness',entities[2].auth)).status,404);
+  assert.equal((await request('GET',base+'/report.csv',entities[2].auth)).status,404);
+  const owner=await request('GET',base+'/readiness',entities[0].auth);
+  assert.equal(owner.status,200,JSON.stringify(owner.value));
+  const packet=owner.value;
+  assert.equal(packet.schema,'osmanx.guest.r38.release-safety-no-go.v1');
+  assert.equal(packet.pilotId,pilot);
+  assert.equal(packet.source.requiredPrs,24);
+  assert.equal(packet.source.mergedPrsVerifiedInApi,0);
+  assert.equal(packet.compose.operatorComposeCallsFromWebApi,0);
+  assert.equal(packet.compose.remoteDockerContextAllowed,false);
+  assert.equal(packet.buildIdentity.runtimeBuildHealthReadFromWebApi,false);
+  assert.equal(packet.restore.offsiteRestoreExecutedByWebApi,false);
+  assert.equal(packet.productionAuthorized,false);
+  assert.equal(packet.customerGo,false);
+  assert.equal(packet.guestWritesEnabled,false);
+  assert.equal(packet.stopLifted,false);
+  assert.ok(Date.parse(packet.expiresAt)>Date.parse(packet.issuedAt));
+  assert.ok(Date.parse(packet.expiresAt)-Date.parse(packet.issuedAt)<=600000);
+  const manager=await request('GET',base+'/readiness',entities[1].auth);
+  assert.equal(manager.status,200);
+  assert.equal(manager.value.productionAuthorized,false);
+  const csv=await request('GET',base+'/report.csv',entities[1].auth);
+  assert.equal(csv.status,200);
+  assert.equal(csv.bytes.subarray(0,3).toString('hex'),'efbbbf');
+  for(const person of entities)
+    assert.equal(csv.bytes.toString('utf8').includes(person.email),false);
+  assert.equal((await request('POST',base+'/readiness',entities[0].auth,{}))
+    .status,404);
+  const after=(await admin.query(
+    'SELECT count(*)::int AS n FROM industry.guest_r26_source_reviews'
+  )).rows[0].n;
+  assert.equal(after,initial);
+});
 test('R26 PostgreSQL FORCE RLS, immutable trigger and STOP veto with zero writes',async()=>{
   const flags=(await admin.query(
     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class"+

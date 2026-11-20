@@ -16,14 +16,28 @@ envfile="$(realpath -e "$envfile")"
 node "$ROOT/scripts/r37-canary-preflight.mjs" "$envfile" "$ROOT/ops/compose.r14.yml" >/dev/null || {
   echo "R37 canary private-file/topology preflight refused" >&2; exit 2;
 }
+# R38 require a clean Git tree or SHA256-verified release before Docker.
+source_sha="$(node "$ROOT/scripts/r38-source-commit.mjs" "$ROOT")" || exit 2
+[[ "$source_sha" =~ ^[a-f0-9]{40}$ ]] || { echo "Unverified source SHA"; exit 2; }
+[[ -z "${OSMANX_SOURCE_SHA:-}" || "${OSMANX_SOURCE_SHA}" == "$source_sha" ]] || {
+  echo "Caller SHA mismatches verified source"; exit 2;
+}
+export OSMANX_SOURCE_SHA="$source_sha"
 [[ -z "${DOCKER_HOST:-}" && -z "${DOCKER_CONTEXT:-}" ]] || { echo "Refusing remote Docker contexts";exit 2; }
 for cmd in docker node curl; do command -v "$cmd" >/dev/null || { echo "Missing dependency $cmd";exit 2; };done
 [[ "$(docker context show)" == default ]] || { echo "Only local Docker allowed";exit 2; }
+docker_endpoint="$(docker context inspect default --format '{{.Endpoints.docker.Host}}')"
+node "$ROOT/scripts/r38-docker-endpoint.mjs" default "$docker_endpoint" || exit 2
 docker info >/dev/null
 node "$ROOT/scripts/preflight.mjs" "$envfile" >/dev/null
 project="osmanx-guest-r14-canary"
 compose=(docker compose -p "$project" --env-file "$envfile" -f "$ROOT/ops/compose.r14.yml")
 "${compose[@]}" config --quiet
+# Resolved Compose can include secrets. Pipe directly; never echo or persist it.
+"${compose[@]}" config --format json |
+  node "$ROOT/scripts/r38-compose-policy.mjs" --stdin "$source_sha" >/dev/null || {
+    echo "R38 resolved compose policy refused" >&2; exit 2;
+  }
 if [[ "$mode" == plan ]]; then
   echo "R14 plan: isolated canary, loopback 3150, encrypted offsite DR required before customer launch"
   echo "Writes disabled; Nginx, production services and DNS unchanged"
@@ -56,7 +70,10 @@ fi
 "${compose[@]}" up -d api
 ready=0
 for attempt in $(seq 1 40); do
-  if node "$ROOT/scripts/r14-monitor.mjs" --local >/dev/null 2>&1; then ready=1;break;fi
+  if node "$ROOT/scripts/r14-monitor.mjs" --local >/dev/null 2>&1 &&
+     node "$ROOT/scripts/r38-local-build-probe.mjs" "$source_sha" >/dev/null 2>&1; then
+    ready=1;break;
+  fi
   sleep 2
 done
 if [[ "$ready" != 1 ]]; then
@@ -64,4 +81,4 @@ if [[ "$ready" != 1 ]]; then
   echo "R14 API readiness/security failed. API stopped, database preserved." >&2
   exit 1
 fi
-echo "R14 canary healthy; NO public exposure and NO customer data accepted."
+echo "R38 canary healthy, pinned build SHA, no public exposure/customer data."
