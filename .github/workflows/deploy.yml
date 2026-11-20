@@ -7,6 +7,7 @@ on:
       - "robots.txt"
       - "sitemap.xml"
       - "assets/**"
+      - "moscow-1000/**"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -29,6 +30,13 @@ jobs:
         run: |
           set -euo pipefail
           test -s index.html
+          test -s moscow-1000/index.html
+          test -s moscow-1000/app.js
+          test -s moscow-1000/styles.css
+          test -s moscow-1000/content.js
+          node --check moscow-1000/app.js
+          node --check moscow-1000/content.js
+          node --test tests/moscow-1000-r1.test.mjs
           test -s assets/guest/offer.html
           test -s assets/guest/experiment.html
           test -s assets/guest/pilot.html
@@ -107,7 +115,7 @@ jobs:
           test -n "$DEPLOY_HOST"
           test "$DEPLOY_USER" = "deploy-osmanx"
           ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'test -d /var/www/osmanx.world && test -w /var/www/osmanx.world'
-          rsync -az --delete --chmod=D2755,F0644             -e "ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes"             --exclude='/assets/downloads/***' --include='/index.html' --include='/robots.txt' --include='/sitemap.xml' --include='/assets/***' --include='/assets/downloads/source/***' --exclude='*'             ./ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/"
+          rsync -az --delete --chmod=D2755,F0644             -e "ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes"             --exclude='/assets/downloads/***' --include='/index.html' --include='/robots.txt' --include='/sitemap.xml' --include='/assets/***' --include='/moscow-1000/***' --include='/assets/downloads/source/***' --exclude='*'             ./ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/osmanx.world/"
           ssh -i ~/.ssh/osmanx_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'test -s /var/www/osmanx.world/index.html'
 
       - name: Verify deployed file integrity on VPS
