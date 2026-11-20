@@ -23,7 +23,7 @@ export async function checkR38Compose({
     throw Error('R38 local Docker env and exact private path required');
   const raw=await runner(['compose','-p','osmanx-guest-r14-canary',
     '--env-file',envFile,'-f',root+'/ops/compose.r14.yml',
-    'config','--format','json']);
+    '--profile','setup','config','--format','json']);
   if(typeof raw!=='string'||raw.length>131072)
     throw Error('Rendered Compose metadata unavailable');
   const inspection=inspectR38RenderedCompose(JSON.parse(raw));
