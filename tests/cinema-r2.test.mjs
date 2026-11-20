@@ -63,7 +63,7 @@ test('R2: frontend has opt-in player, 12 story brief links, safe model imports a
   const page=read('assets/stories/cinema.html');
   const module=read('assets/stories/cinema-r2.js');
   const css=read('assets/stories/cinema-r2.css');
-  assert.match(page,/src="\/assets\/stories\/cinema-r2\.mjs"/);
+  assert.match(page,/src="\/assets\/stories\/cinema-r2\.js"/);
   assert.match(page,/href="\/assets\/stories\/cinema-r2\.css"/);
   assert.match(page,/preload="none"/);
   assert.match(page,/r2-transcript/);
@@ -76,6 +76,7 @@ test('R2: frontend has opt-in player, 12 story brief links, safe model imports a
   assert.match(module,/navigator\.clipboard/);
   assert.match(module,/navigator\.share/);
   assert.match(css,/prefers-reduced-motion/);
+  assert.doesNotMatch(read('assets/stories/cinema.css'),/fonts\.googleapis\.com|@import\s+url\(['"]?https?:\/\//i);
   assert.doesNotMatch(page+module+css,/_jwt=|cloudfront\.net|GoogleAnalytics|gtag\(/i);
   assert.doesNotMatch(page,/\sautoplay(?:\s|=|>)/i);
 });
