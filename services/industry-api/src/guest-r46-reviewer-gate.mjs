@@ -116,6 +116,9 @@ export function assessR46ManualQueue({
  }
  const firstBlocker=queue.find(x=>
    !x.sourceMatch||x.draft||!x.review.valid||!x.ciGreen)?.number??47;
+ if(queue.some(x=>x.draft))blockers.push('DRAFT_PRS_REQUIRE_HUMAN_READY_TRANSITION');
+ if(queue.some(x=>!x.review.valid))
+   blockers.push('TWO_TRUSTED_CURRENT_HEAD_APPROVALS_MISSING');
  blockers.push('HUMAN_MERGES_NOT_EXECUTED');
  blockers.push('FRESH_POST_MERGE_MAIN_CI_NOT_EXECUTED');
  blockers.push('REAL_STAGING_OFFSITE_RECOVERY_LEGAL_GATE_UNVERIFIED');
