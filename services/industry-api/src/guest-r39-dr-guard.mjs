@@ -28,14 +28,17 @@ export function checkR39TargetUrl(url){
 export function checkR39TargetSnapshot(snapshot,{expectedDb}={}){
   const problems=[];
   if(!snapshot||!DB.test(expectedDb||'')||
-    snapshot.database_name!==expectedDb||
-    !['127.0.0.1','::1'].includes(snapshot.server_ip)||
-    Number(snapshot.server_port)!==5432||
-    snapshot.in_recovery!==false||
-    !Number.isFinite(Date.parse(snapshot.server_started||''))||
-    snapshot.non_system_relations!==0||
-    !Number.isSafeInteger(snapshot.non_system_relations))
-    problems.push('NONEMPTY_OR_UNTRUSTED_POSTGRES_TARGET');
+    snapshot.database_name!==expectedDb)
+    problems.push('WRONG_DISPOSABLE_DATABASE');
+  if(!['127.0.0.1','::1'].includes(snapshot?.server_ip)||
+    Number(snapshot?.server_port)!==5432||snapshot?.in_recovery!==false)
+    problems.push('NOT_LOOPBACK_PRIMARY_POSTGRES');
+  if(typeof snapshot?.server_started!=='string'||
+    !Number.isFinite(Date.parse(snapshot.server_started)))
+    problems.push('UNVERIFIED_POSTGRES_START_TIME');
+  if(snapshot?.non_system_relations!==0||
+    !Number.isSafeInteger(snapshot?.non_system_relations))
+    problems.push('NONEMPTY_USER_SCHEMAS');
   if(snapshot?.other_connections!==0||
     !Number.isSafeInteger(snapshot?.other_connections))
     problems.push('UNEXPECTED_DATABASE_CONNECTIONS');
