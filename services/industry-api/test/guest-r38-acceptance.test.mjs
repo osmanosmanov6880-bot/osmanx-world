@@ -36,7 +36,17 @@ function compose(){
     services[name]={networks:{r14_private:{}},ports:[]};
   }
   services.db.volumes=[{type:'volume',
-    source:'osmanx-guest-r14-canary_guest_r14_data'}];
+    source:'osmanx-guest-r14-canary_guest_r14_data',
+    target:'/var/lib/postgresql/data'}];
+  services.provision.volumes=[{type:'bind',
+    source:'/tmp/project/ops/provision-roles.sh',
+    target:'/ops/provision-roles.sh',read_only:true}];
+  for(const name of ['migrate','bootstrap']){
+    services[name].read_only=true;
+    services[name].profiles=['setup'];
+  }
+  services.api.init=true;
+  services.api.tmpfs=['/tmp'];
   services.api.ports=[{host_ip:'127.0.0.1',published:3150,
     target:3047,protocol:'tcp'}];
   services.api.environment={GUEST_WRITES_ENABLED:'false',

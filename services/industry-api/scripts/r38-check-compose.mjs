@@ -8,6 +8,8 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {inspectR38RenderedCompose}
   from '../src/guest-r38-compose-runtime.mjs';
+import {inspectR39ComposePrivileges}
+  from '../src/guest-r39-compose-boundaries.mjs';
 const exec=promisify(execFile);
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
 export async function checkR38Compose({
@@ -21,13 +23,17 @@ export async function checkR38Compose({
     throw Error('R38 local Docker env and exact private path required');
   const raw=await runner(['compose','-p','osmanx-guest-r14-canary',
     '--env-file',envFile,'-f',root+'/ops/compose.r14.yml',
-    'config','--format','json']);
+    '--profile','setup','config','--format','json']);
   if(typeof raw!=='string'||raw.length>131072)
     throw Error('Rendered Compose metadata unavailable');
   const inspection=inspectR38RenderedCompose(JSON.parse(raw));
   if(!inspection.valid)throw Error('Canary rendered Compose refused: '+
     inspection.blockers.join(','));
-  return inspection;
+  const sandbox=inspectR39ComposePrivileges(JSON.parse(raw));
+  if(!sandbox.valid)throw Error('R39 rendered privileges refused: '+
+    sandbox.blockers.join(','));
+  return {...inspection,r39SandboxVerified:true,
+    sandboxPolicySchema:sandbox.schema};
 }
 const direct=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(direct){
