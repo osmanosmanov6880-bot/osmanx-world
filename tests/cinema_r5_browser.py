@@ -56,7 +56,7 @@ def install(page,state):
         elif path.endswith("/history"):
             respond(r,{"items":[]})
         else:respond(r,{"erased":True,"id":LEAD})
-    page.route("**/api/industry/v1/cinema/leads/*",mutation)
+    page.route("**/api/industry/v1/cinema/leads/**",mutation)
 
 def new_state():
     return {"lead":{
