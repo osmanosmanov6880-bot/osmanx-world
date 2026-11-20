@@ -90,6 +90,10 @@ test('R39 DB snapshot rejects public relations, other sessions, nulls, wrong ser
   assert.match(R39_EMPTY_SQL,/n\.nspname NOT IN/);
   assert.equal(checkR39TargetSnapshot(snapshot(),{
     expectedDb:'industry_dr_r36_trial123'}).valid,true);
+  // Real Docker CI maps 127.0.0.1 on the host to a private bridge IP
+  // inside PostgreSQL. This is accepted only with a local client URL.
+  assert.equal(checkR39TargetSnapshot({...snapshot(),server_ip:'172.18.0.2'},{
+    expectedDb:'industry_dr_r36_trial123'}).valid,true);
   for(const x of [
     {...snapshot(),non_system_relations:1},
     {...snapshot(),non_system_relations:null},
@@ -124,7 +128,7 @@ test('R39 injected PG preflight never touches remote target or leaks connection 
         rowCount:1,rows:[{...snapshot(),non_system_relations:2}]}),
       end:async()=>{}
     })
-  }),/user data/);
+  }),/NONEMPTY_USER_SCHEMAS/);
 });
 test('R39 Compose accepts approved canary and forbids host/system privileges',()=>{
   const good=inspectR39ComposePrivileges(compose());
