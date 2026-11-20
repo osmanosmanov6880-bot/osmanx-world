@@ -40,6 +40,7 @@ import {makeR34Readiness,r34ReadinessCsv} from './guest-r34-report.mjs';
 import {makeR35Readiness,r35ReadinessCsv} from './guest-r35-report.mjs';
 import {makeR36Readiness,r36ReadinessCsv} from './guest-r36-report.mjs';
 import {makeR37Readiness,r37ReadinessCsv} from './guest-r37-report.mjs';
+import {makeR38Readiness,r38ReadinessCsv} from './guest-r38-report.mjs';
 import { money, count, protocol as validateStudyProtocol } from '../shared/experiment-model.js';
 import { READINESS_KEYS, readiness, planSampleSize, weeklyLedger, evaluate, reportCsv } from '../shared/pilot-model.js';
 
@@ -1334,6 +1335,27 @@ export function registerGuestRoutes(app,{prefix,forTenant,bodyOf}){
       reply.header('Content-Disposition',
         'attachment; filename="osmanx-guest-r37-operator-audit.csv"');
       return reply.send(r37ReadinessCsv(report,{now:new Date()}));
+    }));
+
+  // R38: tenant read-only NO-GO packet only. No Docker, GitHub or DR actions.
+  async function r38Readiness(db,s,pilotId){
+    const r37=await r37Readiness(db,s,pilotId);
+    return makeR38Readiness({r37,now:new Date()});
+  }
+  app.get(P+'/pilots/:id/r38/readiness',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r38Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      return report;
+    }));
+  app.get(P+'/pilots/:id/r38/report.csv',(req,reply)=>forTenant(req,MANAGE,
+    async(db,s)=>{
+      const report=await r38Readiness(db,s,req.params.id);
+      reply.header('Cache-Control','no-store');
+      reply.header('Content-Type','text/csv; charset=utf-8');
+      reply.header('Content-Disposition',
+        'attachment; filename="osmanx-guest-r38-no-go.csv"');
+      return reply.send(r38ReadinessCsv(report,{now:new Date()}));
     }));
 
   // R9.3: actionable decision log with owner/manager assignment and role-scoped execution.

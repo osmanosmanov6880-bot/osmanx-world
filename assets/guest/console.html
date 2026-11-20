@@ -133,6 +133,26 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r38Panel" hidden aria-labelledby="r38Heading">
+  <hr class="separator">
+  <span class="eyebrow">R38 / Artifact &amp; Operator Proof</span>
+  <h3 id="r38Heading">24 PR — реальный источник, Compose и AGE</h3>
+  <p id="r38Status" class="alert" role="status" aria-live="polite">NO-GO — независимая приёмка не выполнена.</p>
+  <div class="triple" aria-label="R38 готовность">
+    <div><strong>24 PR</strong><p id="r38Source">Ручное объединение не подтверждено</p></div>
+    <div><strong>Docker / build</strong><p id="r38Build">Идентичность сборки не проверена</p></div>
+    <div><strong>AGE / rollback</strong><p id="r38Recovery">Внешний восстановительный тест не завершён</p></div>
+  </div>
+  <p class="small">R38 сверяет реальную Compose-конфигурацию, запрещает удалённый Docker, проверяет исходный SHA и защищает прямое AGE-восстановление. Контроль main допускает сторонние коммиты, но требует происхождения source и свежего CI. Запуск операторских программ из браузера запрещён.</p>
+  <h4>Что препятствует публикации</h4>
+  <ul id="r38Blockers" class="items"></ul>
+  <div class="actions">
+    <button id="r38Refresh" type="button" class="secondary">Обновить статус R38</button>
+    <button id="r38Download" type="button" class="secondary">Скачать NO-GO CSV</button>
+  </div>
+  <p id="r38Expiry" class="small">Срок отчёта: —</p>
+  <p class="small">Локальная метка коммита Docker не является криптографической аттестацией удалённого сервера. Коммерческий запуск требует независимых свидетельств и юридического допуска.</p>
+</section>
 <section id="r37Panel" hidden aria-labelledby="r37Heading">
   <hr class="separator">
   <span class="eyebrow">R37 / Publication Safety</span>

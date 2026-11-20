@@ -7,6 +7,7 @@ WORKDIR /app
 ARG OSMANX_SOURCE_SHA=""
 LABEL org.opencontainers.image.revision="${OSMANX_SOURCE_SHA}" \
       io.osmanx.guest.writes-default="false"
+ENV OSMANX_SOURCE_SHA=${OSMANX_SOURCE_SHA}
 COPY --chown=node:node package.json ./
 RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund \
     && npm cache clean --force
