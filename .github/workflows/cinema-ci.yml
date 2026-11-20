@@ -13,6 +13,8 @@ on:
       - "tests/cinema-r6.test.mjs"
       - "tests/cinema-r7.test.mjs"
       - "tests/cinema_r7_browser.py"
+      - "tests/cinema-r8.test.mjs"
+      - "tests/cinema_r8_browser.py"
       - "tests/cinema_r6_browser.py"
       - "tests/cinema_r5_browser.py"
       - "tests/cinema_r3_browser.py"
@@ -44,6 +46,8 @@ on:
       - "tests/cinema-r6.test.mjs"
       - "tests/cinema-r7.test.mjs"
       - "tests/cinema_r7_browser.py"
+      - "tests/cinema-r8.test.mjs"
+      - "tests/cinema_r8_browser.py"
       - "tests/cinema_r6_browser.py"
       - "tests/cinema_r4_browser.py"
       - "tests/cinema_r5_browser.py"
@@ -70,7 +74,7 @@ jobs:
           node --check assets/stories/story-engine.js
           node --check assets/sovereign/site.js
       - name: Confirm all media, page links and SHA-256
-        run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs tests/cinema-r3.test.mjs tests/cinema-r4.test.mjs tests/cinema-r5.test.mjs tests/cinema-r6.test.mjs tests/cinema-r7.test.mjs
+        run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs tests/cinema-r3.test.mjs tests/cinema-r4.test.mjs tests/cinema-r5.test.mjs tests/cinema-r6.test.mjs tests/cinema-r7.test.mjs tests/cinema-r8.test.mjs
       - name: Check playable MP4 containers
         run: |
           set -euo pipefail
@@ -112,6 +116,7 @@ jobs:
           python tests/cinema_r5_browser.py
           python tests/cinema_r6_browser.py
           python tests/cinema_r7_browser.py
+          python tests/cinema_r8_browser.py
       - name: Upload cinematic browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
