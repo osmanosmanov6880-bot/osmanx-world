@@ -308,6 +308,64 @@ function renderLeads(filter=''){
   }
   if(!leads.length)container.append(element('p','hint','Заявок с выбранным статусом нет.'));
 }
+function subjectVerified(){return currentRole==='owner'&&r5Online&&byId('r5-identity-verified').checked;}
+async function downloadSubjectRecord(id){
+  if(!subjectVerified())throw Error('Сначала подтвердите проверку личности заявителя.');
+  const data=await request('/cinema/leads/'+encodeURIComponent(id)+'/export');
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}));
+  try{
+    const a=element('a');a.href=url;a.download='osmanx-subject-'+id+'.json';
+    document.body.append(a);a.click();a.remove();
+  }finally{setTimeout(()=>URL.revokeObjectURL(url),1500);}
+  if(data.truncated)byId('r5-subject-status').textContent='Экспорт содержит не всю историю. Обратитесь к администратору.';
+}
+function subjectRows(data){
+  const box=byId('r5-subject-results');box.replaceChildren();
+  const buttons=[];
+  for(const item of data.items||[]){
+    const row=element('article','r5-subject-item'),meta=element('div');
+    meta.append(element('strong','',new Date(item.created_at).toLocaleString('ru-RU')),
+      element('div','hint',item.state+' · '+item.id));
+    const actions=element('div','r5-subject-actions');
+    const exportButton=element('button','','Экспорт JSON');exportButton.type='button';
+    const eraseButton=element('button','r5-danger','Удалить запись');eraseButton.type='button';
+    exportButton.disabled=eraseButton.disabled=!subjectVerified();
+    buttons.push(exportButton,eraseButton);
+    exportButton.addEventListener('click',async()=>{
+      exportButton.disabled=true;
+      try{
+        await downloadSubjectRecord(item.id);
+      }catch(err){byId('r5-subject-status').textContent=err.message;}
+      finally{exportButton.disabled=!subjectVerified();}
+    });
+    eraseButton.addEventListener('click',async()=>{
+      if(!subjectVerified())return;
+      if(!window.confirm('Подтверждаете проверку личности и безвозвратное удаление обращения '+item.id+'?'))return;
+      eraseButton.disabled=true;
+      try{
+        await request('/cinema/leads/'+item.id,{method:'DELETE'});
+        byId('r5-subject-status').textContent='Запись и её журнал удалены.';
+        row.remove();await reload();
+      }catch(err){byId('r5-subject-status').textContent=err.message;eraseButton.disabled=false;}
+    });
+    actions.append(exportButton,eraseButton);row.append(meta,actions);box.append(row);
+  }
+  if(!(data.items||[]).length)box.textContent='Записей с таким точным email не найдено.';
+  const refresh=()=>{for(const button of buttons)button.disabled=!subjectVerified();};
+  byId('r5-identity-verified').onchange=refresh;
+}
+byId('r5-subject-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  if(currentRole!=='owner'||!r5Online)return;
+  byId('r5-identity-verified').checked=false;
+  byId('r5-subject-results').replaceChildren();
+  byId('r5-subject-status').textContent='Ищем обращения…';
+  try{
+    const found=await request('/cinema/privacy/search?email='+encodeURIComponent(byId('r5-subject-email').value.trim()));
+    subjectRows(found);
+    byId('r5-subject-status').textContent='Перед экспортом или удалением подтвердите проверку личности.';
+  }catch(err){byId('r5-subject-status').textContent=err.message;}
+});
 byId('state').addEventListener('change',e=>renderLeads(e.target.value));
 byId('r4-followup-window').addEventListener('change',()=>reload().catch(e=>byId('leads-status').textContent=e.message));
 byId('r5-report-days').addEventListener('change',()=>reload().catch(e=>byId('r5-report').textContent=e.message));
@@ -338,7 +396,7 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;rows=[];staff=[];r5Online=false;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();
+  currentRole=null;rows=[];staff=[];r5Online=false;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
