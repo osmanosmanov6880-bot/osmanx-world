@@ -1,0 +1,47 @@
+name: OSMANX MOSCOW 1000 R4 secure release QA
+on:
+  pull_request:
+    paths:
+      - 'moscow-1000/**'
+      - 'services/moscow-1000-api/**'
+      - 'scripts/*r4*.mjs'
+      - 'tests/moscow-1000-*.test.mjs'
+      - 'tests/smoke_r4_browser.py'
+      - '.github/workflows/moscow-1000-r4.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-editorial-media-and-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check R1 through R4
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in moscow-1000/{content,app,map,geo,publication,public-r2,public-r3,intake}.js moscow-1000/editor/{editor,media-studio}.js services/moscow-1000-api/{index,access,admin,editorial,digest,media,calendar,recovery}.mjs scripts/{build_r4_seo,check_r4_staging,inspect_r4_config}.mjs; do
+            node --check "$file"
+          done
+      - name: All R1 - R4 Node integration and unit tests
+        run: |
+          node --test tests/moscow-1000-r1.test.mjs tests/moscow-1000-r2.test.mjs tests/moscow-1000-api.test.mjs tests/moscow-1000-r3.test.mjs tests/moscow-1000-r4.test.mjs
+      - name: Explicit production deployment and privacy guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s services/moscow-1000-api/migrations/0003_r4_operations.sql
+          test -s services/moscow-1000-api/wrangler.staging.toml.example
+          test -s moscow-1000/editor/media-studio.js
+          test -s services/moscow-1000-api/recovery.mjs
+          grep -Fq 'STREAM_UPLOAD_ENABLED = "false"' services/moscow-1000-api/wrangler.staging.toml.example
+          grep -Fq 'DIGEST_DELIVERY_ENABLED = "false"' services/moscow-1000-api/wrangler.staging.toml.example
+          grep -Fq 'REPLACE_WITH_DISTINCT_STAGING_D1_ID' services/moscow-1000-api/wrangler.staging.toml.example
+          grep -Fq 'verifiedActor' services/moscow-1000-api/index.mjs
+          test ! -e moscow-1000/private-crm.json
+          test ! -e services/moscow-1000-api/.dev.vars
+          test ! -e services/moscow-1000-api/wrangler.toml
