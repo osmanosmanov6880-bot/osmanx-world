@@ -24,7 +24,7 @@ export async function preflightR39RestoreTarget({
     if(result.rowCount!==1)throw Error('R39 local DB probe returned unexpected rows');
     const safety=checkR39TargetSnapshot(result.rows[0],{
       expectedDb:parsed.allowedDb});
-    if(!safety.valid)throw Error('R39 target has user data, unexpected connections or failed host binding');
+    if(!safety.valid)throw Error('R39_PREFLIGHT:'+safety.failures.join(','));
     return {schema:'osmanx.guest.r39.readonly-preflight.v1',
       targetDatabase:parsed.allowedDb,localHostValidated:true,
       emptyDatabaseVerified:true,networkMutations:0,
@@ -37,8 +37,15 @@ if(direct){
     if(process.argv.length!==2)throw Error('No arguments accepted; use operator env only');
     const result=await preflightR39RestoreTarget();
     process.stdout.write(JSON.stringify(result)+'\n');
-  }catch{
-    process.stderr.write('R39 disposable restore preflight: NO-GO\n');
+  }catch(error){
+    // Only whitelist internal reason codes. Never print SQL, URLs, passwords
+    // or arbitrary PostgreSQL exception messages.
+    const reason=typeof error?.message==='string'&&
+      error.message.startsWith('R39_PREFLIGHT:')?
+      error.message.slice('R39_PREFLIGHT:'.length).replace(/[^A-Z0-9_,]/g,''):
+      /^[0-9A-Z]{5}$/.test(error?.code||'')?
+        'POSTGRES_'+error.code:'DATABASE_PREFLIGHT_FAILED';
+    process.stderr.write('R39 disposable restore preflight: NO-GO '+reason+'\n');
     process.exitCode=2;
   }
 }
