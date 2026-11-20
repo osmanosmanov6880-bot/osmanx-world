@@ -1,5 +1,5 @@
 // CINEMA R8: read-only release gate. Does not apply migrations or enable intake.
-import {makePool} from '../src/database.mjs';
+import {makePool,withTenant} from '../src/database.mjs';
 import {inspectCinemaR7} from './cinema-r7-readiness.mjs';
 export async function inspectCinemaR8(pool,env=process.env){
   const prior=await inspectCinemaR7(pool,env);
@@ -17,9 +17,14 @@ export async function inspectCinemaR8(pool,env=process.env){
   checks.r8AuditAction=constraint.rowCount===1&&constraint.rows[0].definition.includes('bulk_export_authorized');
   if(checks.r8Schema){
     // Publicly safe metadata only: last execution timestamp, no personal data.
-    const x=await pool.query("SELECT executed_at FROM industry.cinema_retention_runs ORDER BY executed_at DESC LIMIT 1");
-    checks.r8RecentRetentionObserved=x.rowCount>0&&
-      (Date.now()-new Date(x.rows[0].executed_at).getTime())<48*3600000;
+    const tenant=env.CINEMA_TENANT_ID;
+    if(typeof tenant==='string'&&/^[0-9a-f-]{36}$/i.test(tenant)){
+      const x=await withTenant(pool,tenant,db=>db.query(
+        "SELECT executed_at FROM industry.cinema_retention_runs WHERE tenant_id=$1 ORDER BY executed_at DESC LIMIT 1",
+        [tenant]));
+      checks.r8RecentRetentionObserved=x.rowCount>0&&
+        (Date.now()-new Date(x.rows[0].executed_at).getTime())<48*3600000;
+    }
   }
   checks.r8OperatorReviewed=env.CINEMA_R8_OPERATOR_REVIEWED==='true';
   checks.r8ImageDigestPinned=/^sha256:[0-9a-f]{64}$/.test(env.CINEMA_R8_IMAGE_DIGEST||'');
