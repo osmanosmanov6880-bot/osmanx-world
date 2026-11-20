@@ -348,40 +348,42 @@ function csvCell(v){
   return '"'+s.replace(/"/g,'""')+'"';
 }
 async function exportCsv(){
-  const button=byId('csv');
-  if(button.disabled||!r8Online||currentRole!=='owner')return;
-  if(!rows.length||rows.length>500){
-    byId('leads-status').textContent='Для экспорта выберите от 1 до 500 загруженных записей.';
-    return;
+  const button=byId('csv'),status=byId('leads-status');
+  if(button.disabled||!r9Online||currentRole!=='owner')return;
+  const selected=rows.map(x=>x.id);
+  if(selected.length<1||selected.length>500||new Set(selected).size!==selected.length){
+    status.textContent='Выберите от 1 до 500 уникальных загруженных записей. Обновите очередь.';return;
   }
-  if(new Set(rows.map(x=>x.id)).size!==rows.length){
-    byId('leads-status').textContent='Обнаружены повторяющиеся ID. Обновите кабинет.';return;
-  }
-  if(!window.confirm('Экспортировать '+rows.length+
-    ' записей с персональными данными? Храните файл на защищённом устройстве.'))return;
+  if(!window.confirm('Создать защищённый серверный CSV для '+selected.length+
+    ' записей? Данные будут взяты из PostgreSQL заново. Храните файл только на защищённом устройстве.'))return;
   button.disabled=true;
-  byId('leads-status').textContent='Проверяем доступ и регистрируем разрешение…';
+  status.textContent='Сервер формирует новый снимок данных и регистрирует выдачу…';
   try{
-    for(let i=0;i<rows.length;i+=100){
-      const ids=rows.slice(i,i+100).map(row=>row.id);
-      const permission=await request('/cinema/exports/approve',{
-        method:'POST',payload:{confirm:'EXPORT_LOADED',leadIds:ids}});
-      if(!permission.approved||permission.approvedCount!==ids.length)
-        throw Error('Сервер не подтвердил все строки.');
+    const headers={'Accept':'text/csv','Content-Type':'application/json'};
+    const token=csrf();if(!token)throw Error('Сессия устарела. Войдите заново.');
+    headers['x-csrf-token']=token;
+    const response=await fetch(API+'/cinema/exports/csv',{method:'POST',
+      credentials:'same-origin',cache:'no-store',headers,
+      body:JSON.stringify({confirm:'GENERATE_CSV',leadIds:selected})});
+    if(!response.ok){
+      const details=await response.json().catch(()=>({}));
+      if(response.status===409)showConflict(details.error||'Одна из заявок изменилась или удалена.');
+      throw Error(details.error||('HTTP '+response.status));
     }
-  }catch(err){
-    byId('leads-status').textContent='CSV не создан: '+err.message;
-    updateCsvPermission();return;
-  }
-  const headers=['ID','Имя','Email','Компания','Сюжет','Наблюдение','Цель','Источник','Кампания','Стадия','Оценка, коп.','Следующее действие','Срок','Причина отказа','Дата'];
-  const lines=rows.map(x=>[x.id,x.contact_name,x.contact_email,x.organization,x.story_id,x.observation,x.goal,
-    x.source,x.campaign_code,x.state,x.deal_value_minor,x.next_action_kind,x.next_action_at,x.loss_reason_code,x.created_at].map(csvCell).join(';'));
-  const body='\ufeff'+headers.map(csvCell).join(';')+'\r\n'+lines.join('\r\n')+'\r\n';
-  const href=URL.createObjectURL(new Blob([body],{type:'text/csv;charset=utf-8'}));
-  const link=document.createElement('a');link.href=href;link.download='osmanx-cinema-leads.csv';
-  document.body.append(link);link.click();link.remove();URL.revokeObjectURL(href);
-  byId('leads-status').textContent='CSV сформирован после разрешения владельца: '+rows.length+' строк.';
-  updateCsvPermission();
+    if(!(response.headers.get('Content-Type')||'').toLowerCase().includes('text/csv'))
+      throw Error('Сервер вернул неожиданный формат; файл не создан.');
+    const file=await response.blob();
+    if(!file.size||file.size>8*1024*1024)throw Error('Неправдоподобный размер CSV; файл не создан.');
+    const href=URL.createObjectURL(file);
+    try{
+      const link=document.createElement('a');link.href=href;
+      link.download='osmanx-cinema-snapshot.csv';
+      document.body.append(link);link.click();link.remove();
+    }finally{setTimeout(()=>URL.revokeObjectURL(href),1500);}
+    status.textContent='Сервер сформировал CSV для '+selected.length+
+      ' актуальных записей. Сохранение файла зависит от настроек браузера.';
+  }catch(err){status.textContent='Серверный CSV недоступен: '+err.message;}
+  finally{updateCsvPermission();}
 }
 function renderLeads(filter=''){
   const container=byId('leads');container.replaceChildren();
