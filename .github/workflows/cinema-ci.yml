@@ -77,10 +77,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install pinned Chromium
+      - name: Install browser driver and verify preinstalled Chrome
         run: |
           python -m pip install playwright==1.56.0
-          python -m playwright install --with-deps chromium
+          command -v google-chrome || command -v chromium
+          (google-chrome --version || chromium --version)
       - name: Run mobile and desktop cinematic conversion tests
         run: python tests/cinema_r2_browser.py
       - name: Upload cinematic browser screenshots
