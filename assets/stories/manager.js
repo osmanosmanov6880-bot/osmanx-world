@@ -292,7 +292,32 @@ function csvCell(v){
   if(/^\s*[=+\-@\t\r]/.test(s))s="'"+s;
   return '"'+s.replace(/"/g,'""')+'"';
 }
-function exportCsv(){
+async function exportCsv(){
+  const button=byId('csv');
+  if(button.disabled||!r8Online||currentRole!=='owner')return;
+  if(!rows.length||rows.length>500){
+    byId('leads-status').textContent='Для экспорта выберите от 1 до 500 загруженных записей.';
+    return;
+  }
+  if(new Set(rows.map(x=>x.id)).size!==rows.length){
+    byId('leads-status').textContent='Обнаружены повторяющиеся ID. Обновите кабинет.';return;
+  }
+  if(!window.confirm('Экспортировать '+rows.length+
+    ' записей с персональными данными? Храните файл на защищённом устройстве.'))return;
+  button.disabled=true;
+  byId('leads-status').textContent='Проверяем доступ и регистрируем разрешение…';
+  try{
+    for(let i=0;i<rows.length;i+=100){
+      const ids=rows.slice(i,i+100).map(row=>row.id);
+      const permission=await request('/cinema/exports/approve',{
+        method:'POST',payload:{confirm:'EXPORT_LOADED',leadIds:ids}});
+      if(!permission.approved||permission.approvedCount!==ids.length)
+        throw Error('Сервер не подтвердил все строки.');
+    }
+  }catch(err){
+    byId('leads-status').textContent='CSV не создан: '+err.message;
+    updateCsvPermission();return;
+  }
   const headers=['ID','Имя','Email','Компания','Сюжет','Наблюдение','Цель','Источник','Кампания','Стадия','Оценка, коп.','Следующее действие','Срок','Причина отказа','Дата'];
   const lines=rows.map(x=>[x.id,x.contact_name,x.contact_email,x.organization,x.story_id,x.observation,x.goal,
     x.source,x.campaign_code,x.state,x.deal_value_minor,x.next_action_kind,x.next_action_at,x.loss_reason_code,x.created_at].map(csvCell).join(';'));
@@ -300,6 +325,8 @@ function exportCsv(){
   const href=URL.createObjectURL(new Blob([body],{type:'text/csv;charset=utf-8'}));
   const link=document.createElement('a');link.href=href;link.download='osmanx-cinema-leads.csv';
   document.body.append(link);link.click();link.remove();URL.revokeObjectURL(href);
+  byId('leads-status').textContent='CSV сформирован после разрешения владельца: '+rows.length+' строк.';
+  updateCsvPermission();
 }
 function renderLeads(filter=''){
   const container=byId('leads');container.replaceChildren();
