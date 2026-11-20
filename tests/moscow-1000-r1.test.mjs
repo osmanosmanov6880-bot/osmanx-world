@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {test} from 'node:test';
+import {runInNewContext} from 'node:vm';
+const root=resolve(import.meta.dirname,'..');
+const file=p=>readFileSync(join(root,p),'utf8');
+const dataFile=file('moscow-1000/content.js');
+const global={};runInNewContext(dataFile,{window:global});
+const d=global.OSMANX_PUBLIC_DATA;
+test('10 authentic planned episode definitions',()=>{assert.equal(d.episodes.length,10);assert.equal(new Set(d.episodes.map(x=>x.title)).size,10);assert.equal(JSON.stringify(d.episodes.map(x=>x.id)),JSON.stringify(Array.from({length:10},(_,i)=>String(i+1).padStart(2,'0'))));for(const ep of d.episodes){assert.equal(ep.status,'planned');assert.equal(ep.video,null);assert.equal(ep.publishedAt,null);assert.ok(existsSync(join(root,'moscow-1000/episodes',ep.id,'index.html')));}});
+test('no invented public stats or confidential CRM import',()=>{assert.equal(d.project.approvedStatistics,null);assert.equal(d.project.researchTarget,1000);assert.equal(d.project.budgetTargetRub,100000);const app=file('moscow-1000/app.js');assert.match(app,/approved===true/);assert.doesNotMatch(app,/osmanx_moscow_1000_v1/);});
+test('existing film labeled staged and separate from documentary',()=>{assert.match(d.archiveFilm.src,/^\/assets\/stories\/media\/00-osmanx-film\.mp4$/);assert.match(d.archiveFilm.label,/Постановочн/);const page=file('moscow-1000/index.html');assert.match(page,/НЕ ДОКУМЕНТАЛЬНЫЙ РЕПОРТАЖ/);});
+test('10 SEO routes and canonical tags',()=>{for(const ep of d.episodes){const html=file('moscow-1000/episodes/'+ep.id+'/index.html');assert.match(html,new RegExp('/moscow-1000/episodes/'+ep.id+'/'));assert.match(html,/rel="canonical"/);assert.match(html,/data-view="episode"/);}});
+test('home page has accessible player with opt-in resume',()=>{const page=file('moscow-1000/index.html');assert.match(page,/id="archive-video"/);assert.match(page,/controls playsinline/);assert.match(page,/id="resume-opt-in"/);assert.match(file('moscow-1000/app.js'),/if\(!opt.checked\)return/);});
+test('links never claim publication or form submission',()=>{const page=file('moscow-1000/index.html');assert.match(page,/mailto:hello@osmanx.world/);assert.match(page,/документальные выпуски ещё не опубликованы/i);assert.doesNotMatch(page,/action="\/api\//);});
+test('public pages do not import operational CRM state',()=>{const files=[file('moscow-1000/index.html'),file('moscow-1000/app.js'),file('moscow-1000/content.js')].join('\n');assert.doesNotMatch(files,/fetch\([^)]*api\/crm/i);assert.doesNotMatch(files,/localStorage\.getItem\(['"]osmanx_moscow_1000/);});
