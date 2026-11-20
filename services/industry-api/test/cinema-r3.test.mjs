@@ -132,7 +132,9 @@ test('R3 metrics are explicit about non-unique clicks and only manually entered 
   expect(await send('POST','/cinema/public/events',null,{eventType:'film_started',storyId:'01-restaurant'}),202);
   expect(await send('POST','/cinema/public/events',null,{eventType:'brief_created',storyId:'01-restaurant'}),202);
   const metric=expect(await send('GET','/cinema/metrics',owner),200);
-  assert.equal(metric.schema,'osmanx.cinema.metrics.v1');
+  assert.equal(metric.schema,'osmanx.cinema.metrics.v2');
+  assert(Array.isArray(metric.campaigns));
+  assert(metric.followups && typeof metric.followups.overdue==='number');
   assert(metric.stages.some(x=>x.state==='won' && Number(x.leads)>=1));
   assert(metric.events.some(x=>x.event_type==='film_started' && Number(x.total)>=1));
   assert.match(metric.warning,/не уникальных посетителей/);
