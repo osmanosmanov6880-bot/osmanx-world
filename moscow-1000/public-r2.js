@@ -1,0 +1,15 @@
+(function(){'use strict';
+  const p=window.OSMANX_APPROVED_PUBLICATION;const geo=window.OSMANX_GEO;
+  if(!p)return;
+  const ok=p.status==='published'&&p.schemaVersion===2&&p.metrics&&p.reviewedAt&&p.method;
+  const metrics=['researched','visits','dialogues','decisionMeetings','proposals','pilots','contracts'];
+  const allowed=Object.freeze({researched:'Изученные объекты',visits:'Личные визиты',dialogues:'Содержательные диалоги',decisionMeetings:'Встречи с ЛПР',proposals:'Предложения',pilots:'Согласованные пилоты',contracts:'Подтверждённые договоры'});
+  const holder=document.getElementById('public-funnel');
+  if(holder){holder.replaceChildren();for(const k of metrics){const node=document.createElement('div');node.className='r2-metric';const title=document.createElement('small');title.textContent=allowed[k];const v=document.createElement('strong');const num=ok&&Number.isSafeInteger(p.metrics[k])&&p.metrics[k]>=0?p.metrics[k]:null;v.textContent=num===null?'Нет данных':new Intl.NumberFormat('ru-RU').format(num);node.append(title,v);holder.append(node);}}
+  const source=document.getElementById('public-method');if(source)source.textContent=ok?`Проверено вручную: ${p.reviewedAt.slice(0,10)}. Метод: ${p.method}.`:'Статистика пока не опубликована. Нули не подставляются вместо неизвестных результатов.';
+  const days=document.getElementById('public-day-notes');
+  if(days){days.replaceChildren();const approved=ok&&Array.isArray(p.days)?p.days.filter(x=>x.approvedForWeb===true):[];if(!approved.length){const note=document.createElement('p');note.className='empty-r2';note.textContent='Проверенных публичных итогов по дням пока нет. Карта показывает только географические ориентиры.';days.append(note);}else for(const d of approved){const article=document.createElement('article');article.className='r2-day-result';const h=document.createElement('h3');h.textContent='День '+d.day;const s=document.createElement('p');s.textContent=d.summary;const l=document.createElement('p');l.className='r2-lesson';l.textContent='Вывод: '+d.lesson;const a=document.createElement('a');a.href='?day='+d.day+'#map';a.textContent='Район дня на карте ↗';article.append(h,s,l,a);days.append(article);}}
+  const dayById=Number(document.body.dataset.episode);
+  if(Number.isInteger(dayById)&&geo&&dayById>=1&&dayById<=10){const ep=document.getElementById('episode-r2');if(ep){const route=geo.days[dayById-1];const h=document.createElement('h2');h.textContent='География дня '+dayById;const text=document.createElement('p');text.textContent=route.title+' · '+route.focus+' (ориентировочные районы, не подтверждённые посещения)';const link=document.createElement('a');link.className='btn btn-secondary';link.href='/moscow-1000/?day='+dayById+'#map';link.textContent='Посмотреть карту дня ↗';ep.append(h,text,link);const published=ok&&Array.isArray(p.days)?p.days.find(x=>x.day===dayById&&x.approvedForWeb):null;if(published){const result=document.createElement('p');result.textContent='Опубликованный итог: '+published.summary;ep.append(result);}}}
+  window.OSMANX_PUBLIC_R2_TEST_HOOKS={metrics,allowed};
+})();
