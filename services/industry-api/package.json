@@ -16,7 +16,9 @@
     "cinema:r5:readiness": "node scripts/cinema-r5-readiness.mjs",
     "cinema:r6:readiness": "node scripts/cinema-r6-readiness.mjs",
     "cinema:r7:readiness": "node scripts/cinema-r7-readiness.mjs",
-    "cinema:r7:canary": "node scripts/cinema-r7-canary.mjs"
+    "cinema:r7:canary": "node scripts/cinema-r7-canary.mjs",
+    "cinema:r8:readiness": "node scripts/cinema-r8-readiness.mjs",
+    "cinema:r8:canary": "node scripts/cinema-r8-canary.mjs"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",
