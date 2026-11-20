@@ -45,6 +45,14 @@ test('R5 dashboard renders without HTML interpolation of private lead values',()
   assert.doesNotMatch(script,/localStorage|sessionStorage|innerHTML\s*=\s*item\.|eval\(/);
   assert.match(read('assets/stories/manager.css'),/@media\(max-width:650px\)/);
 });
+test('R5 release verification uses versioned public assets and names failed markers',()=>{
+  const deploy=read('.github/workflows/deploy.yml');
+  for(const marker of [
+    'manager.html?release=$GITHUB_SHA','manager.js?release=$GITHUB_SHA',
+    'cinema-r3.js?release=$GITHUB_SHA','R5 subject-rights form missing',
+    'R5 manager JS missing'
+  ])assert(deploy.includes(marker),marker);
+});
 test('R5 operator gate remains read-only and human attestations stay mandatory',()=>{
   const script=read('services/industry-api/scripts/cinema-r5-readiness.mjs');
   assert.match(script,/cinemaGoNoGo/);
