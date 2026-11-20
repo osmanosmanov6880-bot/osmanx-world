@@ -12,7 +12,8 @@
     "bootstrap": "node scripts/bootstrap.mjs",
     "worker": "node src/worker.mjs",
     "test": "node --test --test-concurrency=1 test/*.test.mjs",
-    "preflight": "node scripts/preflight.mjs"
+    "preflight": "node scripts/preflight.mjs",
+    "cinema:r5:readiness": "node scripts/cinema-r5-readiness.mjs"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",
