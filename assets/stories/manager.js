@@ -330,6 +330,65 @@ function renderLeads(filter=''){
     const erase=element('button','danger','Удалить данные');erase.type='button';erase.hidden=!canDelete;
     const history=element('button','','История');history.type='button';
     tools.append(selector,label,save,history,erase);card.append(tools,status);
+    if(r7Online){
+      const operations=element('section','r7-ops');
+      const actions=element('div','r7-buttons');
+      const feedback=element('p','r7-hint');feedback.setAttribute('role','status');
+      if(['new','contacted','qualified','proposal'].includes(item.state)&&
+         (!item.assigned_to||item.assigned_to===currentAccountId||currentRole==='owner')){
+        const action=item.assigned_to?'release':'claim';
+        const claim=element('button','',action==='claim'?'Взять в работу':'Освободить заявку');
+        claim.type='button';
+        claim.setAttribute('aria-label',(action==='claim'?'Взять':'Освободить')+' заявку '+item.contact_name);
+        claim.addEventListener('click',async()=>{
+          claim.disabled=true;feedback.textContent='Сохраняем ответственного…';
+          try{
+            await request('/cinema/leads/'+item.id+'/claim',{method:'POST',
+              payload:{action,expectedVersion:item.version}});
+            await reload();
+          }catch(err){feedback.textContent=err.message;claim.disabled=false;}
+        });
+        actions.append(claim);
+      }
+      const duplicates=element('button','','Похожие обращения');duplicates.type='button';
+      duplicates.addEventListener('click',async()=>{
+        duplicates.disabled=true;
+        try{
+          const data=await request('/cinema/leads/'+item.id+'/similar');
+          const area=element('div','r7-duplicate');
+          area.append(element('strong','','Точное совпадение email: '+data.total));
+          for(const match of data.items||[]){
+            area.append(element('p','',new Date(match.created_at).toLocaleDateString('ru-RU')+
+              ' · '+match.story_id+' · '+match.state+' · '+match.id));
+          }
+          if(data.truncated)area.append(element('p','','Показаны первые 25 совпадений.'));
+          area.append(element('p','','Совпадение не является основанием автоматически объединять клиентов.'));
+          const prev=operations.querySelector('.r7-duplicate');if(prev)prev.remove();
+          operations.append(area);
+        }catch(err){feedback.textContent=err.message;}
+        finally{duplicates.disabled=false;}
+      });
+      actions.append(duplicates);
+      if(currentRole==='owner'){
+        const audit=element('button','','Проверить историю');audit.type='button';
+        audit.addEventListener('click',async()=>{
+          audit.disabled=true;
+          try{
+            const data=await request('/cinema/leads/'+item.id+'/audit-integrity');
+            const report=element('p','r7-integrity',data.complete?
+              'История последовательна: '+data.eventCount+' записей, версия '+data.leadVersion+
+              '. Это не криптографическое доказательство.':
+              'Не хватает или не совпадают события версии. Нельзя считать историю полной.');
+            const old=operations.querySelector('.r7-integrity');if(old)old.remove();
+            operations.append(report);
+          }catch(err){feedback.textContent=err.message;}
+          finally{audit.disabled=false;}
+        });
+        actions.append(audit);
+      }
+      operations.append(actions,feedback);
+      card.append(operations);
+    }
     if(r5Online&&!['won','lost'].includes(item.state)){
       const contactForm=element('form','r5-contact');
       contactForm.append(element('p','r5-contact-head','Зафиксировать реальную попытку связи'));
