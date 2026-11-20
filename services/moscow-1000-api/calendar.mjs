@@ -1,5 +1,6 @@
 /** Editorial release calendar. A scheduled release requires a separate approver and an actually approved documentary film. */
 import {exposeStream,checkStreamReady} from './media.mjs';
+import {visibilityReady} from './visibility.mjs';
 const res=(x,s=200)=>new Response(JSON.stringify(x),{status:s,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const text=(x,max)=>typeof x==='string'&&x.trim().length>0&&x.length<=max&&!/[<>\u0000-\u001f\u007f]/.test(x)&&!/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(x);
 const ISO=/^20\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/;
@@ -39,15 +40,24 @@ export async function calendarRoute(req,env,actor,rest){
 }
 export async function visibleRelease(db,release){if(!release||release.status!=='published'||!Array.isArray(release.episodes))return release;
  let rows=[];try{rows=(await db.prepare('SELECT day,status,publish_at,checklist_json FROM episode_calendar').all()).results||[];}catch{return release;}
- const cal=new Map(rows.map(x=>[x.day,x]));const filtered=release.episodes.filter(e=>{const c=cal.get(e.day);return !c||c.status==='released';});
+ const cal=new Map(rows.map(x=>[x.day,x]));let jobStates=new Map();
+ try{const jobs=(await db.prepare('SELECT uid,desired,state FROM stream_visibility').all()).results||[];jobStates=new Map(jobs.map(j=>[j.uid,j]));}catch{}
+ const filtered=release.episodes.filter(e=>{const c=cal.get(e.day);if(c&&c.status!=='released')return false;
+   if(e.videoUrl?.startsWith('stream:')){const j=jobStates.get(e.videoUrl.slice(7));if(j&&(j.desired!=='public'||j.state!=='applied'))return false;}return true;});
  return {...release,episodes:filtered};
 }
 export async function releaseDueEpisodes(env,fetcher=fetch,clock=new Date()){
- if(!env.DB)return {ok:false,reason:'no D1'};const db=env.DB;
+ if(!env.DB)return {ok:false,reason:'no D1'};const db=env.DB;const useOutbox=await visibilityReady(db);
  const due=(await db.prepare("SELECT day FROM episode_calendar WHERE status='approved' AND publish_at<=? ORDER BY publish_at LIMIT 5").bind(clock.toISOString()).all()).results||[];let released=0,blocked=0;
  for(const item of due){const row=await db.prepare('SELECT public_json FROM editorial_live WHERE slot=1').first();const release=row?.public_json?JSON.parse(row.public_json):null;const ep=release?.episodes?.find(e=>e.day===item.day);
    if(!ep){blocked++;continue;}
-   if(ep.videoUrl?.startsWith('stream:')){const uid=ep.videoUrl.slice(7);if(!await checkStreamReady(env,fetcher,uid)||!await exposeStream(env,fetcher,uid,true)){blocked++;continue;}}
+   if(ep.videoUrl?.startsWith('stream:')){const uid=ep.videoUrl.slice(7);if(!await checkStreamReady(env,fetcher,uid)){blocked++;continue;}
+     if(useOutbox){const stamp=clock.toISOString();await db.batch([
+       db.prepare("UPDATE episode_calendar SET status='released',updated_at=? WHERE day=? AND status='approved' AND publish_at<=?").bind(stamp,item.day,stamp),
+       db.prepare("INSERT INTO stream_visibility(uid,desired,state,attempts,reason,updated_at) VALUES(?,'public','pending',0,'scheduled-release',?) ON CONFLICT(uid) DO UPDATE SET desired='public',state='pending',attempts=0,reason='scheduled-release',updated_at=excluded.updated_at").bind(uid,stamp)
+     ]);released++;continue;}
+     if(!await exposeStream(env,fetcher,uid,true)){blocked++;continue;}
+   }
    const result=await db.prepare("UPDATE episode_calendar SET status='released',updated_at=? WHERE day=? AND status='approved' AND publish_at<=?").bind(clock.toISOString(),item.day,clock.toISOString()).run();if(result.meta?.changes)released++;
  }
  return {ok:true,released,blocked};
