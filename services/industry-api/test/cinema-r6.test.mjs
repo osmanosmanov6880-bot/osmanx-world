@@ -150,7 +150,7 @@ test('R6 subject export loads all >1000 audit events, logs receipt without email
   assert.equal(access.items.filter(x=>x.action==='subject_export').length,2);
   assert(!JSON.stringify(access).includes('r6-contact-'+suffix+'@'));
   expect(await send('GET','/cinema/privacy/access-log',users.manager),403);
-  const inOther=await withTenant(pool,foreign,db=>db.query('SELECT count(*)::int AS n FROM industry.cinema_access_events',[tenant]));
+  const inOther=await withTenant(pool,foreign,db=>db.query('SELECT count(*)::int AS n FROM industry.cinema_access_events'));
   assert.equal(inOther.rows[0].n,0);
 });
 test('R6 gate never auto-activates; erasure leaves only unlinkable receipts',async()=>{
