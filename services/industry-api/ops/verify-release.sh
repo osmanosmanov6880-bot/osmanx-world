@@ -459,6 +459,20 @@ if grep -Fq '"trustedOperatorAndReviewR41":true' "$root/RELEASE.json"; then
   grep -Fq 'r41-snapshot-age.mjs' "$root/ops/restore-dr.sh" || exit 3
   grep -Fq 'openR40Regular' "$root/scripts/r38-check-compose.mjs" || exit 3
 fi
+# R42 explicitly separates read-only GitHub evidence, synthetic local
+# encrypted backups, signed custody claims and generated npm lock review.
+if grep -Fq '"readOnlyMergeAndSignedBackupReviewR42":true' "$root/RELEASE.json"; then
+  grep -Fq '"trustedOperatorAndReviewR41":true' "$root/RELEASE.json" || exit 3
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || exit 3
+  for f in src/guest-r42-merge-drift.mjs scripts/r42-merge-audit.mjs \
+    src/guest-r42-backup-guard.mjs scripts/r42-backup-preflight.mjs \
+    src/guest-r42-custody-proof.mjs scripts/r42-verify-custody.mjs \
+    src/guest-r42-dependency-audit.mjs scripts/r42-deps-review.mjs; do
+    test -f "$root/$f" || { echo "Missing R42 file: $f" >&2; exit 3; }
+  done
+  grep -Fq 'r42-backup-preflight.mjs' "$root/ops/backup-encrypted.sh" || exit 3
+  grep -Fq 'ln "$temp_dir/$name"' "$root/ops/backup-encrypted.sh" || exit 3
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
