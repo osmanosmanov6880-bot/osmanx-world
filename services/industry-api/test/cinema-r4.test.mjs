@@ -11,6 +11,7 @@ import {parseLead,parseEvent} from '../src/cinema.mjs';
 import {campaignCode,planFollowup,followupWindow} from '../src/cinema-r4.mjs';
 import {sweepCinemaTenant} from '../src/cinema-retention.mjs';
 import {requireConfiguration} from '../scripts/cinema-retention.mjs';
+import {inspectCinemaInfrastructure,cinemaGoNoGo} from '../scripts/cinema-r4-readiness.mjs';
 
 const P='/api/industry/v1',suffix=randomUUID().slice(0,8);
 const admin=new pg.Pool({connectionString:process.env.MIGRATION_DB_URL}),pool=makePool();
@@ -88,6 +89,21 @@ test('R4 pure campaign, deadline and operator CLI rules are fail-closed',()=>{
   assert.equal(followupWindow('today').after.length,24);
   assert.throws(()=>requireConfiguration({CINEMA_RETENTION_ENABLED:'false',CINEMA_TENANT_ID:tenant,DATABASE_URL:'postgres://safe'}));
   assert.equal(requireConfiguration({CINEMA_RETENTION_ENABLED:'true',CINEMA_TENANT_ID:tenant,DATABASE_URL:'postgres://safe'}),tenant);
+});
+test('R4 release gate validates real database RLS but remains NO-GO without human legal attestations',async()=>{
+  const infra=await inspectCinemaInfrastructure(pool,tenant);
+  assert.equal(infra.ready,true,infra.reason);
+  const nogo=await cinemaGoNoGo(pool,{
+    CINEMA_TENANT_ID:tenant,
+    CINEMA_RATE_SECRET:'CI-only-secret-at-least-thirty-two-characters',
+    CINEMA_LEGAL_CONTROLLER_APPROVED:'false',
+    CINEMA_MAILBOX_VERIFIED:'false',
+    CINEMA_RETENTION_TIMER_VERIFIED:'false',
+    CINEMA_RESTORE_VERIFIED:'false'
+  });
+  assert.equal(nogo.go,false);
+  assert.equal(nogo.checks.infrastructure,true);
+  assert.equal(nogo.checks.legalControllerApproved,false);
 });
 test('R4 simultaneous replay creates one lead and does not consume eight rate slots',async()=>{
   const key='cinema-r4-concurrent-'+suffix;
