@@ -28,7 +28,8 @@ const CHECKLIST=Object.freeze([
 
 export function assessR47FirstHandoff({
  pr,reviews=[],trustedReviewers=[],sourcePins,canary,checks,
- compareProof,mergeProof,mainFinal,branchProtectionStatus=0,
+ compareProof,mergeProof,currentComposeMatchesFirstPr,
+ currentComposeSha,mainFinal,branchProtectionStatus=0,
  protectionData=null
 }={}){
  const blockers=[];
@@ -41,6 +42,8 @@ export function assessR47FirstHandoff({
    blockers.push('R14_TEN_FILE_BYTES_NOT_VERIFIED');
  if(canary?.schema!==R47_CANARY_SCHEMA||canary.canaryTopologySafe!==true)
    blockers.push('R14_EFFECTIVE_CANARY_NOT_ISOLATED');
+ if(currentComposeMatchesFirstPr===false)
+   blockers.push('LATER_BRANCH_CANARY_COMPOSE_DIFF_NEEDS_HUMAN_REVIEW');
  if(checks?.schema!==R47_CHECK_SCHEMA||checks.requiredCheckPolicyPassed!==true||
    checks.sha!==R47_FIRST_PR.sha)
    blockers.push('R14_REQUIRED_OPS_CONTRACT_NOT_VERIFIED');
@@ -86,6 +89,9 @@ export function assessR47FirstHandoff({
    firstPrBehindMain:compareProof?.behindMain??null,
    pinnedTenFilesVerified:sourcePins?.exactHistoricalBytesVerified===true,
    realCanaryTopologyValidated:canary?.canaryTopologySafe===true,
+   laterCandidateComposeBlob:typeof currentComposeSha==='string'?
+     currentComposeSha:null,
+   candidateComposeMatchesHistorical:currentComposeMatchesFirstPr===true,
    requiredExactShaCIGreen:checks?.requiredCheckPolicyPassed===true,
    verifiedMergePreview:mergeVerified,
    firstMergeConflictPaths:mergeProof?.conflictPaths||[],
@@ -118,6 +124,8 @@ export function renderR47HumanPacket(r){
      '/'+(r.firstPrBehindMain??'?'),
    'Ten historical blobs verified: '+r.pinnedTenFilesVerified,
    'R14 resolved canary topology safe: '+r.realCanaryTopologyValidated,
+   'Current candidate Compose equals historical PR47: '+
+     r.candidateComposeMatchesHistorical,
    'Required R14 ops-contract current-SHA CI: '+r.requiredExactShaCIGreen,
    'Git merger preview independently checked: '+r.verifiedMergePreview,
    'Two independent current-SHA human approvals: '+r.humanReviewedApproved,
