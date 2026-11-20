@@ -70,6 +70,7 @@ function dbRow(after=false){
     in_recovery:false,server_started:'2026-11-19T11:00:00.000Z',
     industry_schema_count:after?1:0,
     industry_relation_count:after?28:0,
+    user_relation_count:after?28:0,
     unexpected_relation_count:0,migration_count:after?16:0};
 }
 function r36Fixture(){

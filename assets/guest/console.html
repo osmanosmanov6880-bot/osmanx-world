@@ -133,6 +133,25 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:#d8ebeb;max-h
 
 <section id="detailPanel" class="panel" hidden><span class="eyebrow">Выбранный пилот</span>
 <h2 id="pilotHeading">—</h2><p id="protocolStatus" class="info">Протокол ещё не загружен.</p>
+<section id="r38Panel" hidden aria-labelledby="r38Heading">
+  <hr class="separator">
+  <span class="eyebrow">R38 / Release Integrity</span>
+  <h3 id="r38Heading">Проверка запуска и цепочки 24 PR</h3>
+  <p id="r38Status" class="alert" role="status" aria-live="polite">NO-GO — внешние доказательства ещё отсутствуют.</p>
+  <div class="triple">
+    <div><strong>24 PR</strong><p id="r38Reviews">Независимое ревью необходимо</p></div>
+    <div><strong>Docker Compose</strong><p id="r38Runtime">Развёрнутую конфигурацию не проверяли</p></div>
+    <div><strong>AGE / PostgreSQL</strong><p id="r38Recovery">Требуется проверка public и industry</p></div>
+  </div>
+  <p class="small">В R38 добавлены проверки окончательной Compose-конфигурации, настоящих таблиц в схеме public, отозванных одобрений PR и связанный NO-GO пакет. Ни одна проверка оператора не запускается через кабинет.</p>
+  <h4>Оставшиеся блокировки</h4>
+  <ul id="r38Blockers" class="items"></ul>
+  <div class="actions">
+    <button id="r38Refresh" type="button" class="secondary">Обновить R38</button>
+    <button id="r38Download" type="button" class="secondary">Скачать CSV NO-GO</button>
+  </div>
+  <p id="r38Expiry" class="small">Срок отчёта: —</p>
+</section>
 <section id="r37Panel" hidden aria-labelledby="r37Heading">
   <hr class="separator">
   <span class="eyebrow">R37 / Publication Safety</span>
