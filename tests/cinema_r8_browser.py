@@ -1,4 +1,4 @@
-"""CINEMA R8: mobile and desktop read-only owner diagnostics and audited CSV.
+"""CINEMA R8 compatibility: owner diagnostics, but no CSV without R9 server snapshot.
 Synthetic browser fixtures; real PostgreSQL RBAC is verified in cinema-r8.test.mjs.
 """
 import json,shutil,socket,subprocess,sys,time
@@ -39,28 +39,19 @@ def run():
                         "retention":{"lastExecution":None,
                             "assessment":{"status":"not_observed","explanation":"Очистка ещё не зарегистрирована."}},
                         "requiresHumanReview":True}))
-                    def approve(route):
-                        assert route.request.method=="POST"
-                        body=json.loads(route.request.post_data)
-                        state["approvals"].append(body)
-                        reply(route,{"approved":True,"approvedCount":len(body["leadIds"])})
-                    page.route("**/api/industry/v1/cinema/exports/approve",approve)
+                    page.route("**/api/industry/v1/cinema/public/r9-runtime",
+                        lambda r:reply(r,{"error":"R9 not installed"},404))
                     page.goto(URL,wait_until="domcontentloaded")
                     page.locator("#workspace").wait_for(state="visible",timeout=15000)
                     page.locator("#r8-ops").wait_for(state="visible",timeout=15000)
-                    assert page.locator("#csv").is_enabled()
+                    assert page.locator("#csv").is_disabled()
+                    assert page.locator("#r9-response").is_hidden()
                     assert "API R8 доступен" in page.locator("#r8-runtime-status").inner_text()
                     with page.expect_response(lambda r: "/ops/preflight" in r.url and r.status==200,timeout=12000):
                         page.locator("#r8-refresh").click()
                     assert "Очистка ещё не зарегистрирована" in page.locator("#r8-ops-result").inner_text()
-                    page.on("dialog",lambda d:d.accept())
-                    with page.expect_download(timeout=15000) as info:
-                        page.locator("#csv").click()
-                    assert info.value.suggested_filename=="osmanx-cinema-leads.csv"
-                    assert len(state["approvals"])==1
-                    assert state["approvals"][0]["confirm"]=="EXPORT_LOADED"
-                    assert len(state["approvals"][0]["leadIds"])==50
-                    assert "CSV сформирован" in page.locator("#leads-status").inner_text()
+                    assert "R9 ещё не подключён" in page.locator("#r8-runtime-status").inner_text()
+                    assert len(state["approvals"])==0
                     assert not errors,errors
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 3")
                     page.close()
@@ -84,4 +75,4 @@ def run():
         except subprocess.TimeoutExpired:proc.kill()
 if __name__=="__main__":
     run()
-    print("CINEMA R8: mobile/desktop owner CSV, retention and R7 fallback passed")
+    print("CINEMA R8: mobile/desktop owner retention with CSV blocked before R9 PASS")
