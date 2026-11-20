@@ -52,14 +52,14 @@ textarea{width:100%;margin:.5rem 0 1rem;resize:vertical;min-height:7rem;padding:
 <p id="terms"></p>
 <div id="email-section">
 <p>Отправьте запрос на счёт. Обсудим доступные данные, дату начала и условия до оплаты.</p>
-<details><summary>Посмотреть текст письма</summary><label for="message">Текст для отправки на hello@osmanx.world</label><textarea id="message" readonly></textarea></details>
-<p class="actions"><a class="action" id="send" href="mailto:hello@osmanx.world">Открыть письмо</a><button type="button" id="copy">Скопировать запрос</button></p>
-<p>Кнопка открывает черновик. Нажмите «Отправить» в почтовом приложении. Оплата и подключение оформляются отдельно.</p>
+<details><summary>Посмотреть текст письма</summary><label for="message">Текст обращения в личном кабинете MARCOSA</label><textarea id="message" readonly></textarea></details>
+<p class="actions"><a class="action" id="send" href="https://marcosa.club/#contact">Отправить через MARCOSA</a><button type="button" id="copy">Скопировать запрос</button></p>
+<p>Кнопка переводит в MARCOSA, где можно зарегистрироваться и отправить обращение автору. Оплата и подключение оформляются отдельно.</p>
 </div>
 <a class="action" id="checkout" hidden>Перейти к оплате</a>
 <p id="status" role="status"></p>
 </section>
-<noscript><p>Выберите услугу и отправьте письмо, чтобы согласовать условия и запросить счёт.</p><p><a href="mailto:hello@osmanx.world?subject=Пилот%20за%2025000%20рублей">Запросить пилот за 25 000 ₽</a></p><p><a href="mailto:hello@osmanx.world?subject=Сопровождение%20за%2015000%20рублей%20в%20месяц">Запросить сопровождение за 15 000 ₽/месяц</a></p></noscript>
+<noscript><p>Для обращения к автору нужен аккаунт MARCOSA.</p><p><a href="https://marcosa.club/?source=osmanx-world&plan=pilot#contact">Отправить обращение через MARCOSA</a></p></noscript>
 </main>
 <script>
 'use strict';
@@ -81,7 +81,7 @@ const plans = {
 };
 const byId = id => document.getElementById(id);
 const radios = [...document.querySelectorAll('[name="plan"]')];
-const email = 'hello@osmanx.world';
+const marcosaContact = 'https://marcosa.club/';
 function showPlan(key) {
   const plan = plans[key];
   radios.forEach(radio => { radio.checked = radio.value === key; });
@@ -90,7 +90,7 @@ function showPlan(key) {
   const message = 'Здравствуйте! ' + plan.request;
   byId('message').value = message;
   byId('status').textContent = '';
-  byId('send').href = 'mailto:' + email + '?subject=' + encodeURIComponent(plan.title) + '&body=' + encodeURIComponent(message);
+  byId('send').href = marcosaContact + '?source=osmanx-world&plan=' + encodeURIComponent(key) + '#contact';
   const checkout = byId('checkout');
   checkout.hidden = true;
   checkout.removeAttribute('href');
@@ -119,12 +119,12 @@ byId('copy').addEventListener('click', async () => {
   const message = byId('message');
   try {
     await navigator.clipboard.writeText(message.value);
-    byId('status').textContent = 'Текст скопирован. Вставьте его в письмо на ' + email + '.';
+    byId('status').textContent = 'Текст скопирован. Вставьте его в приватное обращение MARCOSA.';
   } catch {
     message.closest('details').open = true;
     message.focus();
     message.select();
-    byId('status').textContent = 'Текст выделен. Скопируйте его и отправьте на ' + email + '.';
+    byId('status').textContent = 'Текст выделен. Скопируйте его и вставьте в приватное обращение MARCOSA.';
   }
 });
 window.addEventListener('popstate', () => showPlan(selectedFromLocation()));

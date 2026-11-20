@@ -178,7 +178,7 @@ dialog{border:1px solid #5c5660;background:#090e15;color:var(--text);padding:0;w
 </section>
 <section class="business"><div class="wrap"><div><span class="intro-tag">НЕ ТОЛЬКО КРАСИВЫЕ КАДРЫ</span><h2>Найдите причину. Проверьте решение.</h2><p>Для кофеен доступен пример эксперимента с повторными визитами, для магазинов — рабочее демо Retail Intelligence. Посмотрите механизмы до обсуждения внедрения.</p></div><a class="primary" href="/assets/catalog/index.html">Выбрать продукт ↗</a></div></section>
 </main>
-<footer class="wrap"><span>© OSMANX WORLD · Идеи превращаются в решения</span><span><a href="mailto:hello@osmanx.world">hello@osmanx.world</a></span></footer>
+<footer class="wrap"><span>© OSMANX WORLD · Идеи превращаются в решения</span><span><a href="https://marcosa.club/#contact">Связаться через MARCOSA</a></span></footer>
 <dialog id="player-dialog" aria-labelledby="dialog-title"><div class="modal-top"><h2 id="dialog-title">OSMANX STORIES</h2><button type="button" class="close" id="close-player" aria-label="Закрыть">×</button></div><video id="player-video" class="modal-video" controls playsinline preload="none" aria-label="Видео OSMANX"></video><div class="modal-bottom"><a id="download-video" download href="#">Скачать MP4</a><a id="dialog-link" href="/assets/catalog/index.html">Узнать о решении ↗</a></div></dialog>
 <script>
 "use strict";
@@ -212,21 +212,17 @@ async function checkVideo(card){
     const length=Number(response.headers.get("content-length")||"0");
     const type=response.headers.get("content-type")||"";
     if(!response.ok||length<100000||!type.includes("video"))return;
-    play.disabled=false;play.querySelector(".play-label").textContent="Смотреть 15 секунд";
-    const state=card.querySelector(".state");state.textContent="Видео доступно";state.classList.add("ready");
+    play.disabled=false;play.querySelector(".play-label").textContent="Смотреть в MARCOSA";
+    const state=card.querySelector(".state");state.textContent="Продолжение в MARCOSA";state.classList.add("ready");
     play.addEventListener("click",()=>openVideo(card,src,play));
     loadPoster(card);
   }catch(e){/* Keep the honest unavailable state until a verified local MP4 exists. */}
 }
 function openVideo(card,src,trigger){
-  if(!dialog.showModal)return;
-  lastTrigger=trigger;
-  title.textContent=card.querySelector("h2").textContent;
-  video.src=src;video.load();
-  download.href=src;download.download=card.dataset.id+".mp4";
-  detail.href=card.querySelector(".story-footer a").href;
-  detail.textContent=card.querySelector(".story-footer a").textContent;
-  dialog.showModal();
+  if(!card || !src || !trigger)return;
+  // The story gallery introduces the work. Episodes, comments, and
+  // communication with the creator continue through a real MARCOSA account.
+  window.location.assign('https://marcosa.club/#series');
 }
 function cleanup(){video.pause();video.removeAttribute("src");video.load();if(lastTrigger)lastTrigger.focus();}
 document.getElementById("close-player").addEventListener("click",()=>dialog.close());

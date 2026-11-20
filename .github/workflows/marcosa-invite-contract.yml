@@ -1,0 +1,24 @@
+name: "OSMANX | MARCOSA membership invitation contract"
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "assets/stories/cinema.html"
+      - "assets/stories/cinema.js"
+      - "assets/stories/index.html"
+      - "assets/guest/offer.html"
+      - "assets/guest/order.html"
+      - "tests/marcosa-invite.test.mjs"
+      - ".github/workflows/marcosa-invite-contract.yml"
+permissions:
+  contents: read
+jobs:
+  invitation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test tests/marcosa-invite.test.mjs
