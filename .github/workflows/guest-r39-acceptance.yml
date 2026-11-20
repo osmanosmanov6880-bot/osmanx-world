@@ -172,6 +172,23 @@ jobs:
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: R39 transactional local DR, Compose boundaries and independent review
         run: node --test test/guest-r29-acceptance.test.mjs test/guest-r30-acceptance.test.mjs test/guest-r31-acceptance.test.mjs test/guest-r32-acceptance.test.mjs test/guest-r33-acceptance.test.mjs test/guest-r34-acceptance.test.mjs test/guest-r35-acceptance.test.mjs test/guest-r36-acceptance.test.mjs test/guest-r37-acceptance.test.mjs test/guest-r38-acceptance.test.mjs test/guest-r39-acceptance.test.mjs
+      - name: R39 actual Docker Compose JSON with synthetic-only passwords
+        run: |
+          set -euo pipefail
+          envfile="$RUNNER_TEMP/r39-canary.env"
+          cat > "$envfile" <<'R39CI'
+          POSTGRES_ADMIN_PASSWORD=synthetic_only_not_real_admin_password_12345678
+          INDUSTRY_APP_PASSWORD=synthetic_only_not_real_app_password_12345678
+          INDUSTRY_WORKER_PASSWORD=synthetic_only_not_real_worker_password_12345678
+          BOOTSTRAP_EMAIL=ci-r39@invalid.local
+          BOOTSTRAP_PASSWORD=synthetic_only_not_real_bootstrap_password_12345678
+          BOOTSTRAP_TENANT_SLUG=ci-r39
+          BOOTSTRAP_TENANT_NAME=CI R39
+          BOOTSTRAP_VERTICAL=cafe
+          R39CI
+          chmod 600 "$envfile"
+          node scripts/r38-check-compose.mjs "$envfile" > "$RUNNER_TEMP/r39-compose-sanitized.json"
+          node --input-type=module -e "import fs from 'node:fs';const x=JSON.parse(fs.readFileSync(process.argv[1]));if(x.valid!==true||x.r39SandboxVerified!==true||x.productionAuthorized!==false||x.secretsReturned!==false)process.exit(1);console.log('R39 real rendered Compose privilege policy verified without secret leakage.')" "$RUNNER_TEMP/r39-compose-sanitized.json"
       - name: R28 four independent Ed25519 roles, no-GO cutover, 15min packet and fourteen PRs
         run: node --test test/guest-r28-protocol.test.mjs test/guest-r28-integration.test.mjs test/guest-r28-cli.test.mjs
       - name: R27 full seven-case synthetic pilot chain, SHA/TTL packet and thirteen PRs
