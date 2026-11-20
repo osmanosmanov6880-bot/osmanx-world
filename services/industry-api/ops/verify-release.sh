@@ -430,6 +430,20 @@ if grep -Fq '"operatorDrAndPrReviewR39":true' "$root/RELEASE.json"; then
   grep -Fq 'pg_restore --single-transaction' "$root/ops/restore-dr.sh" || exit 3
   grep -Fq 'r39-dr-preflight.mjs' "$root/ops/restore-dr.sh" || exit 3
 fi
+# R40 implements safeguards in R14 admission, AGE restore and PR47 review.
+if grep -Fq '"safeAdmissionArchivePatchR40":true' "$root/RELEASE.json"; then
+  grep -Fq '"operatorDrAndPrReviewR39":true' "$root/RELEASE.json" || exit 3
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || exit 3
+  for f in src/guest-r40-secure-files.mjs \
+    src/guest-r40-admission-timeline.mjs \
+    src/guest-r40-archive-integrity.mjs scripts/r40-archive-check.mjs \
+    src/guest-r40-patch-integrity.mjs; do
+    test -f "$root/$f" || { echo "Missing R40 safeguard $f" >&2; exit 3; }
+  done
+  grep -Fq 'readR40Regular' "$root/scripts/r14-admission.mjs" || exit 3
+  grep -Fq 'r40-archive-check.mjs' "$root/ops/restore-dr.sh" || exit 3
+  grep -Fq 'inspectR40UnifiedPatch' "$root/src/guest-r39-review-packet.mjs" || exit 3
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

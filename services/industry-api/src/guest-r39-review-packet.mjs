@@ -4,6 +4,7 @@
  * Does not pretend automated scanning substitutes a security review.
  */
 import {createHash} from 'node:crypto';
+import {inspectR40UnifiedPatch} from './guest-r40-patch-integrity.mjs';
 export const R39_FIRST_PR_SCHEMA='osmanx.guest.r39.first-pr-review-packet.v1';
 const HEAD='840bb083e606058a9a32450f3b3a3e881a34891e';
 const FILES=Object.freeze([
@@ -54,8 +55,15 @@ export function buildR39FirstPrPacket({pr,files,filesComplete=false,
       problems.push('INVALID_OR_UNEXPECTED_PATCH');
     else{
       seen.add(f.filename);
+      const parsed=inspectR40UnifiedPatch(f.patch,{
+        additions:f.additions,deletions:f.deletions});
+      if(!parsed.valid||
+        (Number.isSafeInteger(f.changes)&&
+          f.changes!==f.additions+f.deletions))
+        problems.push('TRUNCATED_OR_INCONSISTENT_GITHUB_PATCH');
       matched.push({path:f.filename,status:f.status,
-        patchSha256:sha(f.patch),additions:f.additions,deletions:f.deletions});
+        patchSha256:sha(f.patch),additions:f.additions,deletions:f.deletions,
+        hunks:parsed.hunks,allHunksVerified:parsed.valid});
     }
   }
   if(seen.size!==FILES.length)problems.push('EXPECTED_R14_FILES_MISSING');

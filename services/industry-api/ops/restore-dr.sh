@@ -19,14 +19,16 @@ test -f "$AGE_IDENTITY_FILE" && test ! -L "$AGE_IDENTITY_FILE" ||
 node "$root/scripts/r39-dr-preflight.mjs" >/dev/null ||
  { echo 'Refusing unsafe target before decryption' >&2; exit 2; }
 name=$(basename -- "$archive")
-archive_dir=$(dirname -- "$archive")
-(
- cd "$archive_dir"
- sha256sum -c "$name.sha256" >/dev/null
-)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
-age -d -i "$AGE_IDENTITY_FILE" -o "$tmp/industry.dump" "$archive"
+# R40: copy the ciphertext and manifest to one private snapshot so an
+# external path replacement cannot change what AGE decrypts after hashing.
+# -P never follows a symlink; the Node fd checker rejects links and hardlinks.
+cp -P -- "$archive" "$tmp/$name"
+cp -P -- "$archive.sha256" "$tmp/$name.sha256"
+node "$root/scripts/r40-archive-check.mjs" "$tmp/$name" "$AGE_IDENTITY_FILE" >/dev/null ||
+ { echo 'Refusing nonidentical AGE ciphertext/manifest before decrypt' >&2; exit 2; }
+age -d -i "$AGE_IDENTITY_FILE" -o "$tmp/industry.dump" "$tmp/$name"
 pg_restore --list "$tmp/industry.dump" >/dev/null
 
 # Repeat immediately before DDL; detect unexpected connections/relations.
