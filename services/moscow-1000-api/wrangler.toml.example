@@ -30,7 +30,7 @@ REQUIRE_TWO_PERSON_REVIEW = "true"
 DIGEST_DELIVERY_ENABLED = "false"
 
 [triggers]
-crons = ["0 3 * * *"]
+crons = ["*/5 * * * *", "0 3 * * *"]
 
 # NEVER commit secrets. Set with `wrangler secret put` on the exact staging/production Worker:
 # TURNSTILE_SECRET
