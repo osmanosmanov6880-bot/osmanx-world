@@ -33,8 +33,22 @@
 <label for="r5-report-days">Период <select id="r5-report-days"><option value="7">7 дней</option><option value="30" selected>30 дней</option><option value="90">90 дней</option></select></label></div>
 <p class="hint">Считаются реальные заявки и вручную зарегистрированные контакты. События видео — не уникальные пользователи. «Согласовано» — не оплачено.</p>
 <div id="r5-report" aria-live="polite">Данные доступны после входа.</div></section>
+<section class="r6-workqueue panel" id="r6-workqueue" hidden aria-labelledby="r6-workqueue-title">
+<div class="panel-head"><div><p class="eyebrow">R6 · VERIFIED SALES OPERATIONS</p><h2 id="r6-workqueue-title">Очередь без пропущенных обращений</h2></div></div>
+<p class="hint">Статусы риска рассчитываются по датам и записям менеджера, не искусственным интеллектом. Очередь отсортирована по дате создания; все страницы доступны.</p>
+<div id="r6-queue-summary" class="r6-summary" aria-live="polite"></div>
+<div class="r6-filters">
+<label for="r6-view">Контроль <select id="r6-view">
+<option value="all">Все обращения</option><option value="overdue">Просроченный контакт</option>
+<option value="unassigned">Без ответственного</option><option value="uncontacted">Более суток без попытки связи</option>
+</select></label>
+<label for="r6-assigned">Ответственный <select id="r6-assigned"><option value="all">Вся команда</option><option value="mine">Мои обращения</option><option value="unassigned">Не назначен</option></select></label>
+</div>
+<p id="r6-queue-status" class="hint" role="status"></p>
+<button id="r6-more" type="button" hidden>Загрузить следующие 50 обращений</button>
+</section>
 <section class="layout">
-<div class="panel"><div class="panel-head"><h2>Заявки и работа с ними</h2><button id="csv" type="button">Экспорт CSV</button></div>
+<div class="panel"><div class="panel-head"><h2>Заявки и работа с ними</h2><button id="csv" type="button">CSV загруженных записей</button></div>
 <div class="filter-row"><label for="state">Статус</label><select id="state"><option value="">Все</option><option value="new">Новые</option><option value="contacted">Связались</option><option value="qualified">Квалифицированы</option><option value="proposal">Предложение</option><option value="won">Согласованы</option><option value="lost">Не состоялись</option></select></div>
 <p id="leads-status" aria-live="polite" class="hint"></p>
 <div id="leads" class="leads"></div>
@@ -67,6 +81,12 @@
 </form>
 <label class="r5-verified"><input id="r5-identity-verified" type="checkbox"> Подтверждаю, что проверил право заявителя на доступ к его данным вне этой системы.</label>
 <p id="r5-subject-status" role="status"></p><div id="r5-subject-results"></div>
+<div id="r6-access-audit" hidden class="r6-access-audit">
+<h3>Операционный журнал доступа к данным</h3>
+<p class="hint">Только тип операции, исполнитель и время. Email не сохраняется в журнале.</p>
+<button id="r6-audit-refresh" type="button">Проверить журнал</button>
+<div id="r6-audit-items" aria-live="polite"></div>
+</div>
 </section>
 <p class="hint privacy">Персональные данные доступны только авторизованным сотрудникам назначенной организации. Не сохраняйте CSV на общие устройства. Для удаления заявки используйте действие владельца или политику хранения.</p>
 </section>

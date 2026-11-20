@@ -13,7 +13,8 @@
     "worker": "node src/worker.mjs",
     "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "preflight": "node scripts/preflight.mjs",
-    "cinema:r5:readiness": "node scripts/cinema-r5-readiness.mjs"
+    "cinema:r5:readiness": "node scripts/cinema-r5-readiness.mjs",
+    "cinema:r6:readiness": "node scripts/cinema-r6-readiness.mjs"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",

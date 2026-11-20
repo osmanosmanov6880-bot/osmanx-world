@@ -13,7 +13,8 @@ const showAmount=v=>{
   if(v===null||v===undefined)return '—';
   return (Number(v)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';
 };
-let rows=[],currentRole=null,staff=[],r5Online=false;
+let rows=[],currentRole=null,staff=[],r5Online=false,r6Online=false,r6Cursor=null,r6Total=0,r6Generation=0;
+let r6Signals=new Map();
 const csrf=()=>{
   for(const name of ['__Host-osmanx_industry_csrf','osmanx_industry_csrf']){
     const cookie=document.cookie.split('; ').find(row=>row.startsWith(name+'='));
@@ -21,8 +22,8 @@ const csrf=()=>{
   }
   return '';
 };
-async function request(path,{method='GET',payload}={}){
-  const options={method,credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json'}};
+async function request(path,{method='GET',payload,headers={}}={}){
+  const options={method,credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json',...headers}};
   if(payload!==undefined){options.body=JSON.stringify(payload);options.headers['Content-Type']='application/json';}
   if(!['GET','HEAD'].includes(method)){
     const token=csrf();if(token)options.headers['x-csrf-token']=token;
@@ -47,34 +48,109 @@ function present(bool){
   byId('workspace').hidden=!bool;
   byId('signout').hidden=!bool;
   byId('r5-subject').hidden=!(bool&&currentRole==='owner'&&r5Online);
+  byId('r6-workqueue').hidden=!(bool&&r6Online);
+  byId('r6-access-audit').hidden=!(bool&&currentRole==='owner'&&r6Online);
 }
 function fail(message){
   present(false);
   byId('login-status').textContent=message;
 }
+function queueParams(cursor=null){
+  const query=new URLSearchParams({limit:'50',view:byId('r6-view').value,assignedTo:byId('r6-assigned').value});
+  if(byId('state').value)query.set('state',byId('state').value);
+  if(cursor){
+    query.set('beforeCreatedAt',cursor.beforeCreatedAt);
+    query.set('beforeId',cursor.beforeId);
+  }
+  return '/cinema/queue?'+query.toString();
+}
+function renderTeamFilter(){
+  const select=byId('r6-assigned'),old=select.value;
+  select.replaceChildren();
+  for(const [id,title] of [['all','Вся команда'],['mine','Мои обращения'],['unassigned','Без ответственного']]){
+    const option=element('option','',title);option.value=id;select.append(option);
+  }
+  for(const person of staff){
+    const option=element('option','',person.email);option.value=person.id;select.append(option);
+  }
+  select.value=[...select.options].some(x=>x.value===old)?old:'all';
+}
+function renderQueueSummary(data){
+  const box=byId('r6-queue-summary');box.replaceChildren();
+  for(const [key,title] of [['active','Открытые'],['overdue','Просроченные'],['unassigned','Без менеджера'],['uncontacted','Без попытки 24 часа']]){
+    const card=element('article','r6-summary-item');
+    card.append(element('strong','',String(data.counts?.[key]??0)),element('span','',title));
+    box.append(card);
+  }
+}
+function queueStatus(){
+  byId('r6-queue-status').textContent='Загружено '+rows.length+' из '+r6Total+' обращений по фильтрам. CSV содержит только загруженные строки.';
+  byId('r6-more').hidden=!r6Cursor;
+  byId('r6-more').disabled=!r6Cursor;
+}
 async function reload(){
+  const generation=++r6Generation;
   const [data,metricData,followups]=await Promise.all([
     request('/cinema/leads?limit=100'),
     request('/cinema/metrics'),
     request('/cinema/followups?window='+encodeURIComponent(byId('r4-followup-window').value))
   ]);
-  // Static R5 may precede server activation: optional calls never break the R4 operator desk.
+  // The static R6 dashboard is backwards-compatible with R4/R5 API deployments.
   const optional=await Promise.allSettled([
     request('/cinema/assignees'),
     request('/cinema/performance?days='+byId('r5-report-days').value)
   ]);
+  if(generation!==r6Generation)return;
   r5Online=optional.every(x=>x.status==='fulfilled');
   staff=r5Online?(optional[0].value.items||[]):[];
   if(r5Online)renderPerformance(optional[1].value);
   else byId('r5-report').textContent='Серверный модуль R5 ещё не подключён. Возможности R4 остаются доступными.';
-  rows=data.items||[];
+  rows=data.items||[];r6Online=false;r6Cursor=null;r6Total=rows.length;r6Signals=new Map();
+  byId('r6-workqueue').hidden=true;
+  byId('r6-access-audit').hidden=true;
+  if(r5Online){
+    renderTeamFilter();
+    const next=await Promise.allSettled([
+      request(queueParams()),
+      request('/cinema/queue/summary')
+    ]);
+    if(generation!==r6Generation)return;
+    if(next.every(x=>x.status==='fulfilled')){
+      const page=next[0].value;
+      r6Online=true;
+      rows=page.items||[];r6Total=page.total||0;r6Cursor=page.nextCursor||null;
+      r6Signals=new Map((page.itemsWithTriage||[]).map(x=>[x.id,x]));
+      renderQueueSummary(next[1].value);
+      queueStatus();
+    }
+  }
   currentRole=currentRole||'manager';
   byId('r5-subject').hidden=!(currentRole==='owner'&&r5Online);
-  const stage=byId('state').value;
-  renderLeads(stage);
+  byId('r6-workqueue').hidden=!r6Online;
+  byId('r6-access-audit').hidden=!(currentRole==='owner'&&r6Online);
+  renderLeads(byId('state').value);
   renderMetrics(metricData);
   renderFollowups(followups);
-  byId('leads-status').textContent='Показаны первые '+rows.length+' записей, сортировка по дате. Операции защищены сессией и CSRF.';
+  byId('leads-status').textContent=r6Online?
+    'Очередь R6 доступна с постраничной загрузкой и защитой прав доступа.':
+    'Показаны первые '+rows.length+' записей (серверная очередь R6 пока не подключена).';
+}
+async function loadMoreQueue(){
+  if(!r6Online||!r6Cursor)return;
+  const button=byId('r6-more'),cursor=r6Cursor,generation=r6Generation;
+  button.disabled=true;byId('r6-queue-status').textContent='Загружаем следующую страницу…';
+  try{
+    const page=await request(queueParams(cursor));
+    if(generation!==r6Generation)return;
+    const existing=new Set(rows.map(x=>x.id));
+    for(const item of page.items||[]){
+      if(!existing.has(item.id)){rows.push(item);existing.add(item.id);}
+    }
+    for(const signal of page.itemsWithTriage||[])r6Signals.set(signal.id,signal);
+    r6Cursor=page.nextCursor||null;
+    r6Total=page.total||r6Total;
+    renderLeads(byId('state').value);queueStatus();
+  }catch(err){byId('r6-queue-status').textContent=err.message;button.disabled=false;}
 }
 function renderMetrics(data){
   const box=byId('metrics');box.replaceChildren();
@@ -172,6 +248,13 @@ function renderLeads(filter=''){
     head.append(who,date);card.append(head);
     const contact=element('p','contact');const link=element('a','',item.contact_email);link.href='mailto:'+encodeURIComponent(item.contact_email);contact.append('Email: ',link);card.append(contact);
     card.append(element('p','',item.observation),element('p','',item.goal||'Цель не указана'),element('p','hint','Кампания: '+(item.campaign_code||'direct')));
+    const risk=r6Signals.get(item.id);
+    if(r6Online&&risk&&risk.signals?.length){
+      const detail=element('div','r6-triage '+risk.priority);
+      detail.append(element('strong','','Сигналы: '+(risk.priority==='urgent'?'срочно':'проверить')));
+      for(const signal of risk.signals)detail.append(element('p','',signal.description));
+      card.append(detail);
+    }
     const tools=element('div','lead-tools');
     const selector=element('select');
     selector.setAttribute('aria-label','Следующий статус заявки '+item.contact_name);
@@ -246,12 +329,19 @@ function renderLeads(filter=''){
       checkboxLabel.append(completed,element('span','','Отметить запланированное действие выполненным и убрать срок'));contactForm.append(checkboxLabel);
       const saveContact=element('button','','Записать действие');saveContact.type='submit';
       contactForm.append(saveContact,element('p','hint','Факт контакта записывается вручную; звонки и сообщения автоматически не отправляются.'));
+      let lastContactBody='',lastContactKey='';
       contactForm.addEventListener('submit',async event=>{
         event.preventDefault();saveContact.disabled=true;
+        const payload={expectedVersion:item.version,channel:channel.value,
+          outcome:outcome.value,completeFollowup:completed.checked};
+        const fingerprint=JSON.stringify(payload);
+        if(fingerprint!==lastContactBody){
+          lastContactBody=fingerprint;lastContactKey=crypto.randomUUID();
+        }
         try{
-          await request('/cinema/leads/'+item.id+'/contacts',{method:'POST',payload:{
-            expectedVersion:item.version,channel:channel.value,outcome:outcome.value,completeFollowup:completed.checked
-          }});
+          await request('/cinema/leads/'+item.id+'/contacts',{
+            method:'POST',payload,headers:{'idempotency-key':lastContactKey}
+          });
           await reload();
         }catch(err){status.textContent=err.message;saveContact.disabled=false;}
       });
@@ -311,14 +401,51 @@ function renderLeads(filter=''){
 function subjectVerified(){return currentRole==='owner'&&r5Online&&byId('r5-identity-verified').checked;}
 async function downloadSubjectRecord(id){
   if(!subjectVerified())throw Error('Сначала подтвердите проверку личности заявителя.');
-  const data=await request('/cinema/leads/'+encodeURIComponent(id)+'/export');
+  let cursor=0,lead=null,all=[],complete=false;
+  // Never quietly provide a truncated subject-data export.
+  for(let page=0;page<50;page++){
+    const response=await request('/cinema/leads/'+encodeURIComponent(id)+'/export'+
+      (cursor?'?afterVersion='+encodeURIComponent(cursor):''));
+    if(!response.lead||response.lead.id!==id)throw Error('Выгрузка не соответствует заявке.');
+    if(!lead)lead=response.lead;
+    const events=response.events||[];
+    for(const event of events){
+      if(!Number.isSafeInteger(event.version)||(all.length&&event.version<=all[all.length-1].version))
+        throw Error('Нарушен порядок версий событий в выгрузке.');
+      all.push(event);
+    }
+    if(!response.truncated){complete=true;break;}
+    if(!Number.isSafeInteger(response.nextAfterVersion)||response.nextAfterVersion<=cursor||
+       !all.length||response.nextAfterVersion!==all[all.length-1].version)
+      throw Error('Сервер не поддерживает полную постраничную выгрузку; файл не создан.');
+    cursor=response.nextAfterVersion;
+  }
+  if(!complete)throw Error('История слишком большая для безопасной выгрузки одним файлом; файл не создан.');
+  const data={schema:'osmanx.cinema.subject-export.complete.v1',complete:true,lead,events:all,
+    operatorIdentityVerification:'human_confirmed_outside_the_system'};
   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}));
   try{
     const a=element('a');a.href=url;a.download='osmanx-subject-'+id+'.json';
     document.body.append(a);a.click();a.remove();
   }finally{setTimeout(()=>URL.revokeObjectURL(url),1500);}
-  if(data.truncated)byId('r5-subject-status').textContent='Экспорт содержит не всю историю. Обратитесь к администратору.';
+  byId('r5-subject-status').textContent='Сформирована полная выгрузка: '+all.length+' событий.';
 }
+async function refreshAccessAudit(){
+  if(currentRole!=='owner'||!r6Online)return;
+  const status=byId('r6-audit-items');status.textContent='Запрашиваем журнал…';
+  try{
+    const response=await request('/cinema/privacy/access-log');
+    status.replaceChildren();
+    for(const item of response.items||[]){
+      const row=element('div','r6-access-event',
+        new Date(item.created_at).toLocaleString('ru-RU')+' · '+item.action+
+        ' · исполнитель '+(item.actor_id||'неизвестен')+' · записей '+item.result_count);
+      status.append(row);
+    }
+    if(!(response.items||[]).length)status.textContent='Пока нет зарегистрированных операций.';
+  }catch(err){status.textContent=err.message;}
+}
+byId('r6-audit-refresh').addEventListener('click',refreshAccessAudit);
 function subjectRows(data){
   const box=byId('r5-subject-results');box.replaceChildren();
   const buttons=[];
@@ -366,7 +493,13 @@ byId('r5-subject-form').addEventListener('submit',async event=>{
     byId('r5-subject-status').textContent='Перед экспортом или удалением подтвердите проверку личности.';
   }catch(err){byId('r5-subject-status').textContent=err.message;}
 });
-byId('state').addEventListener('change',e=>renderLeads(e.target.value));
+byId('r6-view').addEventListener('change',()=>reload().catch(e=>byId('r6-queue-status').textContent=e.message));
+byId('r6-assigned').addEventListener('change',()=>reload().catch(e=>byId('r6-queue-status').textContent=e.message));
+byId('r6-more').addEventListener('click',loadMoreQueue);
+byId('state').addEventListener('change',e=>{
+  if(r6Online)reload().catch(err=>byId('leads-status').textContent=err.message);
+  else renderLeads(e.target.value);
+});
 byId('r4-followup-window').addEventListener('change',()=>reload().catch(e=>byId('leads-status').textContent=e.message));
 byId('r5-report-days').addEventListener('change',()=>reload().catch(e=>byId('r5-report').textContent=e.message));
 byId('r4-link-form').addEventListener('submit',async event=>{
@@ -396,7 +529,7 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;rows=[];staff=[];r5Online=false;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  currentRole=null;rows=[];staff=[];r5Online=false;r6Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
