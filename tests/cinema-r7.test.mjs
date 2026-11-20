@@ -32,7 +32,7 @@ test('R7 staging canary is loopback only and read-only gate never activates writ
   for(const s of ['inspectCinemaR6','r7Index','CINEMA_R7_OPERATOR_REVIEWED',
     'publicIntakeOff','aggregateActionsOff'])assert(gate.includes(s),s);
   assert(!/UPDATE industry|INSERT INTO|DROP TABLE|ALTER TABLE/.test(gate));
-  for(const s of ['127.0.0.1','redirect:\\'error\\'','/cinema/public/config',
+  for(const s of ['127.0.0.1',"redirect:'error'",'/cinema/public/config',
     '/cinema/queue','/cinema/public/leads','config.payload.intakeEnabled!==false'])
     assert(probe.includes(s),s);
   assert(existsSync(join(root,'services/industry-api/ops/CINEMA_R7_RUNBOOK.md')));
