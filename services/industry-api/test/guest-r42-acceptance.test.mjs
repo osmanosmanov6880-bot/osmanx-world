@@ -49,8 +49,8 @@ function custodian(){
     custodianId:'independent-test-custodian',
     objectVersion:'immutable-test-version-1',
     storageClass:'independent-offsite',
-    observedAt:'2026-11-20T10:00:00.000Z',
-    expiresAt:'2026-12-10T10:00:00.000Z'};
+    observedAt:new Date(Date.now()-60000).toISOString(),
+    expiresAt:new Date(Date.now()+86400000).toISOString()};
   receipt.signature=sign(null,Buffer.from(r42CustodyMessage(receipt)),
     pair.privateKey).toString('base64');
   return {receipt,publicKeyPem,
@@ -104,9 +104,9 @@ test('R42 backup source refuses remote databases, unapproved runs and repeated A
     {...source(),acknowledgment:''},
     {...source(),recipient2:PUB1},
     {...source(),recipient2:'garbage'},
-    {...source(),dbUrl:PG_PG_URL.replace('127.0.0.1','db.company.internal')},
-    {...source(),dbUrl:PG_PG_URL.replace('industry_ci','production')},
-    {...source(),dbUrl:PG_PG_URL+'?sslmode=disable'}
+    {...source(),dbUrl:PG_URL.replace('127.0.0.1','db.company.internal')},
+    {...source(),dbUrl:PG_URL.replace('industry_ci','production')},
+    {...source(),dbUrl:PG_URL+'?sslmode=disable'}
   ];
   for(const x of invalid)
     assert.equal(inspectR42BackupSource(x).valid,false,JSON.stringify(x));
