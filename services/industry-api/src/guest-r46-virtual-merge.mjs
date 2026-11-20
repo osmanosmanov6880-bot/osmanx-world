@@ -7,6 +7,7 @@ import {createHash} from 'node:crypto';
 import {R46_PINNED_STACK} from './guest-r46-source-graph.mjs';
 export const R46_VIRTUAL_SCHEMA='osmanx.guest.r46.disposable-32-stage-virtual-merge.v1';
 const SHA=/^[a-f0-9]{40}$/;
+const SHA256=/^[a-f0-9]{64}$/;
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const validPath=p=>typeof p==='string'&&p.length>0&&p.length<=1024&&
  !p.startsWith('/')&&!p.includes('\\')&&!/[\x00-\x1f\x7f\ufffd]/.test(p)&&
@@ -17,7 +18,7 @@ export function assessR46VirtualMerge({
 }={}){
  const blockers=[];
  if(!SHA.test(mainSha||''))blockers.push('UNPINNED_MAIN');
- if(!SHA.test(branchRefsBefore||'')||branchRefsAfter!==branchRefsBefore)
+ if(!SHA256.test(branchRefsBefore||'')||branchRefsAfter!==branchRefsBefore)
    blockers.push('BRANCH_REF_SNAPSHOT_DRIFT');
  if(!Array.isArray(steps)||steps.length<1||
    steps.length>R46_PINNED_STACK.length)
