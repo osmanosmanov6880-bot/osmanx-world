@@ -1,0 +1,26 @@
+name = "osmanx-moscow-1000-api"
+main = "index.mjs"
+compatibility_date = "2026-11-19"
+workers_dev = false
+
+# Deploy ONLY after Cloudflare orange-cloud DNS and explicit owner approval.
+[[routes]]
+pattern = "osmanx.world/moscow-1000/api/*"
+zone_name = "osmanx.world"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "osmanx-moscow-1000"
+database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+
+[vars]
+TURNSTILE_SITE_KEY = "REPLACE_WITH_PUBLIC_SITE_KEY"
+EMAIL_FROM = "OSMANX <updates@osmanx.world>"
+NOTIFY_EMAIL = "hello@osmanx.world"
+
+[triggers]
+crons = ["0 3 * * *"]
+
+# NEVER commit secrets; configure with `wrangler secret put`:
+# TURNSTILE_SECRET
+# RESEND_API_KEY
