@@ -1,4 +1,6 @@
 import {verifiedActor} from './access.mjs';
+import {googleAuthRoute,operatorActor,cleanupGoogleAuth} from './auth-google.mjs';
+import {commandRoute} from './command-center.mjs';
 import {adminRoute} from './admin.mjs';
 import {unpublished} from './editorial.mjs';
 import {verifiedOptOut,sendDigestBatch} from './digest.mjs';
@@ -55,7 +57,9 @@ async function confirmAction(req,env,operation){if(!env.DB)return html('<h1>Се
 export default {
   async fetch(req,env){try{const url=new URL(req.url);if(!siteOrigin(env)||url.origin!==siteOrigin(env))return reply({ok:false,error:'Unknown host'},404);const path=url.pathname;const conf=await readiness(env);if(req.method==='GET'&&path===ROOT+'/health')return reply({ok:true,leadsEnabled:conf.leads,subscriptionEnabled:conf.subscription,turnstileSiteKey:conf.turnstileSiteKey});
     if(req.method==='GET'&&path===ROOT+'/public-release'){let published=unpublished();try{if(env.DB){const row=await env.DB.prepare('SELECT public_json FROM editorial_live WHERE slot=1').first();if(row?.public_json)published=await visibleRelease(env.DB,JSON.parse(row.public_json));}}catch{}return new Response(JSON.stringify(published),{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'public, max-age=45, stale-while-revalidate=90','X-Content-Type-Options':'nosniff'}});}
-    if(path.startsWith(ROOT+'/admin/')){const actor=await verifiedActor(req,env,fetch);if(!actor)return reply({ok:false,error:'Доступ разрешён только проверенным сотрудникам.'},403);return adminRoute(req,env,actor,fetch);}
+    if(path.startsWith(ROOT+'/auth/'))return await googleAuthRoute(req,env,fetch);
+    if(path.startsWith(ROOT+'/command/')){const actor=path===ROOT+'/command/public'?null:await operatorActor(req,env,fetch);return await commandRoute(req,env,actor);}
+    if(path.startsWith(ROOT+'/admin/')){const actor=await operatorActor(req,env,fetch);if(!actor)return reply({ok:false,error:'Доступ разрешён только проверенным сотрудникам.'},403);return await adminRoute(req,env,actor,fetch);}
     if(req.method==='GET'&&(path===ROOT+'/confirm'||path===ROOT+'/unsubscribe'))return tokenPage(path.endsWith('/confirm')?'confirm':'unsubscribe',req);
     if(req.method==='POST'&&(path===ROOT+'/confirm'||path===ROOT+'/unsubscribe'))return confirmAction(req,env,path.endsWith('/confirm')?'confirm':'unsubscribe');
     if(req.method!=='POST'||!['/leads','/subscribe'].some(p=>path===ROOT+p))return reply({ok:false,error:'Not found'},404);
@@ -64,7 +68,7 @@ export default {
     return await writeSubscriber(req,env,fetch,conf);
   }catch{return reply({ok:false,error:'Временная ошибка сервера. Попробуйте позже.'},500);}},
   async scheduled(event,env){if(!env.DB)return;await releaseDueEpisodes(env,fetch,new Date());try{await reconcileVisibility(env,fetch);}catch{}
-    if(event?.cron==='0 3 * * *'){try{await env.DB.prepare("DELETE FROM lead_reviews WHERE lead_id IN (SELECT id FROM leads WHERE created_at < datetime('now','-180 days'))").run();}catch{}await env.DB.prepare("DELETE FROM leads WHERE created_at < datetime('now','-180 days')").run();await env.DB.prepare("DELETE FROM subscriptions WHERE status <> 'subscribed' AND created_at < datetime('now','-30 days')").run();}
+    if(event?.cron==='0 3 * * *'){try{await cleanupGoogleAuth(env);}catch{}try{await env.DB.prepare("DELETE FROM lead_reviews WHERE lead_id IN (SELECT id FROM leads WHERE created_at < datetime('now','-180 days'))").run();}catch{}await env.DB.prepare("DELETE FROM leads WHERE created_at < datetime('now','-180 days')").run();await env.DB.prepare("DELETE FROM subscriptions WHERE status <> 'subscribed' AND created_at < datetime('now','-30 days')").run();}
     if(event?.cron==='*/5 * * * *'&&env.DIGEST_DELIVERY_ENABLED==='true'){try{await sendDigestBatch(env,fetch,{batchSize:10});}catch{}}
   }
 };

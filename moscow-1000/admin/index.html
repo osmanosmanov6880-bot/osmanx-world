@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#030a15">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="same-origin">
+  <title>Личный штаб — OSMANX MOSCOW 1000</title>
+  <link rel="stylesheet" href="admin.css">
+  <script src="../command-data.js" defer></script>
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6M8 12h13"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M16 4a4 4 0 0 1 0 8M22 21v-3a6 6 0 0 0-4-5"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 8V5H5a3 3 0 0 0 0 6h16v10H5a3 3 0 0 1-3-3V8M21 14h-6v4h6M6 5V2h12v3"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="11" cy="13" r="9"/><circle cx="11" cy="13" r="5"/><path d="m11 13 8-8M16 3v5h5"/></symbol>
+    <symbol id="i-publish" viewBox="0 0 24 24"><path d="M12 16V2m-5 5 5-5 5 5M4 14v7h16v-7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="12" rx="3"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 15v3"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 24 24"><path d="M9 3H3v18h6m6-14 5 5-5 5M8 12h12"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M3 21l5-1L21 7l-5-5L3 15v6Z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m13 2-8 12h6l-1 8 9-13h-6V2Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 5-6 9-9 10-3-1-9-5-9-10V6l9-4Z"/><path d="m7 12 3 3 7-7"/></symbol>
+  </defs></svg>
+
+  <main id="login" class="login-shell">
+    <a class="back-link" href="../"><svg class="icon"><use href="#i-arrow"/></svg>К экспедиции</a>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">X</span><span>OSMANX<small>MOSCOW 1000</small></span></div>
+    <p class="eyebrow">Личный штаб</p>
+    <h1>Управление<br>экспедицией</h1>
+    <p class="login-description">Контакты. Результаты. Публикации.<br>Всё, что остаётся за кадром.</p>
+    <section class="login-card" aria-labelledby="loginTitle">
+      <span class="login-lock"><svg class="icon"><use href="#i-lock"/></svg></span>
+      <h2 id="loginTitle">Вход для владельца</h2>
+      <p>Используйте Google-аккаунт, которому открыт доступ к штабу.</p>
+      <button id="googleSignIn" class="google-button" type="button" disabled>
+        <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285f4" d="M44.5 24.5c0-1.5-.1-3-.4-4.5H24v8.5h11.5a9.8 9.8 0 0 1-4.3 6.4v5.3h7c4.1-3.8 6.3-9.3 6.3-15.7Z"/><path fill="#34a853" d="M24 45c5.7 0 10.5-1.9 14-5l-7-5.3c-1.9 1.3-4.3 2-7 2-5.6 0-10.3-3.8-12-8.9H4.8v5.5A21 21 0 0 0 24 45Z"/><path fill="#fbbc05" d="M12 27.8a12.6 12.6 0 0 1 0-7.6v-5.5H4.8a21 21 0 0 0 0 18.6l7.2-5.5Z"/><path fill="#ea4335" d="M24 11.3c3.1 0 5.8 1.1 8 3.2l6-6A20.2 20.2 0 0 0 24 3 21 21 0 0 0 4.8 14.7l7.2 5.5c1.7-5.1 6.4-8.9 12-8.9Z"/></svg>
+        Войти через Google
+      </button>
+      <p id="authStatus" class="status" role="status" aria-live="polite">Проверяем доступ…</p>
+      <button id="retryAuth" class="text-button" type="button" hidden>Проверить ещё раз</button>
+    </section>
+    <p class="privacy-note"><svg class="icon"><use href="#i-shield"/></svg>Данные контактов доступны только в личном штабе.</p>
+    <noscript><p class="status error">Для входа и работы штаба включите JavaScript в браузере.</p></noscript>
+  </main>
+
+  <div id="workspace" class="admin-shell" hidden>
+    <header class="admin-header">
+      <a class="brand" href="../" aria-label="OSMANX — открытая экспедиция"><span class="brand-mark" aria-hidden="true">X</span><span>OSMANX<small>MOSCOW 1000</small></span></a>
+      <button id="logout" type="button" class="icon-button" aria-label="Выйти из аккаунта" title="Выйти"><svg class="icon"><use href="#i-exit"/></svg></button>
+    </header>
+    <div class="workspace-intro"><p class="eyebrow">Личный штаб</p><h1 id="sectionHeading">Контакты</h1><p class="actor-line"><svg class="icon"><use href="#i-shield"/></svg><span id="actorEmail"></span></p></div>
+    <div class="day-control"><label for="activeDay">День экспедиции</label><select id="activeDay" aria-label="День экспедиции"><option value="1">День 1</option><option value="2">День 2</option><option value="3">День 3</option><option value="4">День 4</option><option value="5">День 5</option><option value="6">День 6</option><option value="7">День 7</option><option value="8">День 8</option><option value="9">День 9</option><option value="10">День 10</option></select></div>
+    <p id="workspaceStatus" class="status" role="status" aria-live="polite" hidden></p>
+    <main>
+      <section id="contactsPanel" class="panel" aria-labelledby="sectionHeading">
+        <button id="newContact" type="button" class="primary-button full-width"><svg class="icon"><use href="#i-plus"/></svg>Быстро записать контакт</button>
+        <div class="section-bar"><h2>Контакты дня</h2><span id="contactCount" class="count-badge">—</span></div>
+        <div id="contactList" class="record-list" aria-live="polite"></div>
+        <button id="moreContacts" class="secondary-button full-width" type="button" hidden>Показать ещё</button>
+      </section>
+      <section id="expensesPanel" class="panel" aria-labelledby="sectionHeading" hidden>
+        <div class="total-card"><span>Расходы за день</span><strong id="expenseTotal">—</strong><small id="expenseTotalNote">Загрузка записей</small></div>
+        <form id="expenseForm" class="surface compact-form">
+          <h2>Добавить расход</h2>
+          <div class="field-row"><label>Сумма, ₽<input id="expenseAmount" name="amountRub" type="number" min="0.01" max="1000000" step="0.01" placeholder="0" inputmode="decimal" required></label><label>Категория<select id="expenseCategory" name="category"><option value="transport">Транспорт</option><option value="food">Питание</option><option value="production">Съёмка</option><option value="tools">Инструменты</option><option value="other">Другое</option></select></label></div>
+          <label>Комментарий<input id="expenseNote" name="note" maxlength="300" placeholder="Например: такси до точки съёмки" autocomplete="off"></label>
+          <p id="expenseFormStatus" class="status" role="status" aria-live="polite" hidden></p>
+          <button id="saveExpense" class="primary-button full-width" type="submit"><svg class="icon"><use href="#i-plus"/></svg>Добавить расход</button>
+        </form>
+        <div class="section-bar"><h2>Записи</h2><span id="expenseCount" class="count-badge">—</span></div>
+        <div id="expenseList" class="record-list" aria-live="polite"></div>
+        <button id="moreExpenses" class="secondary-button full-width" type="button" hidden>Показать ещё</button>
+      </section>
+      <section id="questsPanel" class="panel" aria-labelledby="sectionHeading" hidden>
+        <div class="quest-summary surface"><span class="quest-ring"><span id="questComplete">0 / 5</span><small>выполнено</small></span><div><h2>Задачи дня</h2><p id="questXp">0 XP</p><p class="muted">Отметьте фактический результат.</p></div></div>
+        <div id="questList" class="record-list" aria-live="polite"></div>
+        <p class="help-text">Изменения сохраняются в штабе. Зрители увидят их после публикации сводки.</p>
+      </section>
+      <section id="publishPanel" class="panel" aria-labelledby="sectionHeading" hidden>
+        <section class="surface publish-card"><span class="publish-icon"><svg class="icon"><use href="#i-publish"/></svg></span><p class="eyebrow">Открытая экспедиция</p><h2>Показать результаты зрителям</h2><p>Публикация обновит сводку за все дни по сохранённым контактам, расходам и выполненным квестам.</p><div class="privacy-box"><svg class="icon"><use href="#i-shield"/></svg><p>Публикуются только общие показатели. Имена людей, названия контактов, каналы связи и заметки остаются в штабе.</p></div><label class="confirmation"><input id="publishConfirm" type="checkbox"><span>Я проверил записи и готов опубликовать общую сводку.</span></label><button id="publish" class="primary-button full-width" type="button" disabled><svg class="icon"><use href="#i-publish"/></svg>Опубликовать сводку</button><p id="publishStatus" class="status" role="status" aria-live="polite" hidden></p><a class="secondary-button full-width" href="../">Посмотреть открытый интерфейс</a></section>
+        <section class="surface secondary-section"><h2>Управление публикацией</h2><p>Снятие с публикации уберёт открытую сводку. Все записи останутся в личном штабе.</p><button id="unpublish" class="secondary-button full-width" type="button">Снять сводку с публикации</button><a class="editor-link" href="../editor/">Редактор эпизодов и медиа <svg class="icon"><use href="#i-chevron"/></svg></a></section>
+      </section>
+    </main>
+    <nav class="bottom-nav" aria-label="Разделы личного штаба"><button type="button" data-tab="contacts" class="active" aria-current="page"><svg class="icon"><use href="#i-users"/></svg><span>Контакты</span></button><button type="button" data-tab="expenses"><svg class="icon"><use href="#i-wallet"/></svg><span>Расходы</span></button><button type="button" data-tab="quests"><svg class="icon"><use href="#i-target"/></svg><span>Квесты</span></button><button type="button" data-tab="publish"><svg class="icon"><use href="#i-publish"/></svg><span>Публикация</span></button></nav>
+  </div>
+
+  <dialog id="contactDialog" class="contact-dialog" aria-labelledby="contactTitle">
+    <div class="dialog-header"><h2 id="contactTitle">Новый контакт</h2><button type="button" class="icon-button" data-close="contactDialog" aria-label="Закрыть форму контакта"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <div class="mode-tabs" aria-label="Режим записи"><button id="quickMode" type="button" class="active" aria-pressed="true"><svg class="icon"><use href="#i-bolt"/></svg>Быстро (30 сек)</button><button id="detailMode" type="button" aria-pressed="false"><svg class="icon"><use href="#i-users"/></svg>Подробно</button></div>
+    <form id="contactForm" novalidate>
+      <label>Название / формат бизнеса <span class="required">*</span><input id="contactName" name="name" placeholder="Кафе, шоурум, студия…" maxlength="120" autocomplete="organization" required></label>
+      <label>Категория<select id="contactCategory" name="category"><option value="">Выберите категорию</option><option value="HoReCa">Кафе и рестораны</option><option value="retail">Магазины и шоурумы</option><option value="services">Услуги</option><option value="creative">Креативные студии</option><option value="technology">Технологии</option><option value="other">Другое</option></select></label>
+      <label>Контактное лицо<input id="contactPerson" name="person" placeholder="Имя и роль (например, собственник)" maxlength="100" autocomplete="name"></label>
+      <fieldset class="outcomes"><legend>Результат встречи</legend><div class="outcome-options"><label><input type="radio" name="outcome" value="dialogue" checked><span>Диалог</span></label><label><input type="radio" name="outcome" value="interest"><span>Интерес</span></label><label><input type="radio" name="outcome" value="refusal"><span>Отказ</span></label></div><div id="extraOutcomes" class="outcome-options extra-outcomes" hidden><label><input type="radio" name="outcome" value="visited"><span>Визит</span></label><label><input type="radio" name="outcome" value="meeting"><span>Встреча</span></label><label><input type="radio" name="outcome" value="pilot"><span>Пилот</span></label><label><input type="radio" name="outcome" value="contract"><span>Договор</span></label></div></fieldset>
+      <label>Проблема / запрос<textarea id="contactProblem" name="problem" rows="2" maxlength="1000" placeholder="Коротко: что обсудили, в чём запрос?"></textarea></label>
+      <label>Следующий шаг<input id="contactNextStep" name="nextStep" maxlength="500" placeholder="Например: отправить презентацию" autocomplete="off"></label>
+      <div id="detailedFields" hidden><label>Канал связи<input id="contactChannel" name="channel" maxlength="200" placeholder="Телефон, email или Telegram" autocomplete="off"></label><label>День экспедиции<select id="contactDay" name="day"><option value="1">День 1</option><option value="2">День 2</option><option value="3">День 3</option><option value="4">День 4</option><option value="5">День 5</option><option value="6">День 6</option><option value="7">День 7</option><option value="8">День 8</option><option value="9">День 9</option><option value="10">День 10</option></select></label></div>
+      <p id="contactFormStatus" class="status" role="status" aria-live="polite" hidden></p>
+      <button id="saveContact" class="primary-button full-width" type="submit"><svg class="icon"><use href="#i-check"/></svg><span>Сохранить контакт</span></button>
+      <p class="private-label"><svg class="icon"><use href="#i-lock"/></svg>Контакт остаётся в личном штабе</p>
+    </form>
+  </dialog>
+
+  <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle"><div class="dialog-header"><h2 id="confirmTitle">Подтвердите действие</h2><button type="button" class="icon-button" data-close="confirmDialog" aria-label="Отменить"><svg class="icon"><use href="#i-close"/></svg></button></div><p id="confirmDescription"></p><p id="confirmStatus" class="status" role="status" aria-live="polite" hidden></p><div class="confirmation-actions"><button type="button" class="secondary-button" data-close="confirmDialog">Отмена</button><button id="confirmAction" class="primary-button" type="button">Подтвердить</button></div></dialog>
+</body>
+</html>
