@@ -19,7 +19,11 @@ export async function sweepCinemaRows(db,tenant){
   const buckets=await db.query(
     "DELETE FROM industry.cinema_rate_limits WHERE tenant_id=$1 AND bucket_hour<now()-interval '48 hours'",[tenant]
   );
-  return {erasedLeads:leads.rowCount,expiredMetrics:events.rowCount,expiredRateBuckets:buckets.rowCount,retentionDays:90};
+  const access=await db.query(
+    "DELETE FROM industry.cinema_access_events WHERE tenant_id=$1 AND created_at<now()-interval '90 days'",[tenant]
+  );
+  return {erasedLeads:leads.rowCount,expiredMetrics:events.rowCount,expiredRateBuckets:buckets.rowCount,
+    expiredAccessReceipts:access.rowCount,retentionDays:90};
 }
 export function sweepCinemaTenant(pool,tenant) {
   return withTenant(pool,tenant,db=>sweepCinemaRows(db,tenant));
