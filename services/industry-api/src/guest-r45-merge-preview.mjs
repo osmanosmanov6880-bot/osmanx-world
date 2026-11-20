@@ -30,7 +30,7 @@ export function assessR45MergeTree({
    blockers.push('CONFLICT_EXIT_BUT_NO_CONFLICT_PATHS');
  if(conflictPaths.length>1000||
    conflictPaths.some(p=>!PATH.test(p)||p.startsWith('/')||
-     p==='.'||p==='..'||p.includes('/../')||p.includes('/./')))
+     p.split('/').some(segment=>segment===''||segment==='.'||segment==='..')))
    blockers.push('CONFLICT_PATHS_UNTRUSTED');
  if(new Set(conflictPaths).size!==conflictPaths.length)
    blockers.push('DUPLICATE_CONFLICT_PATHS');
