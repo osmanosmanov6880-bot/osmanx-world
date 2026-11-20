@@ -44,8 +44,8 @@ jobs:
       - name: Check scripts
         run: |
           node --check assets/stories/cinema.js
-          node --check assets/stories/cinema-r2.mjs
-          node --check assets/stories/story-engine.mjs
+          node --check assets/stories/cinema-r2.js
+          node --check assets/stories/story-engine.js
           node --check assets/sovereign/site.js
       - name: Confirm all media, page links and SHA-256
         run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs
