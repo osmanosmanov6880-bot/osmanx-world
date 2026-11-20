@@ -14,7 +14,7 @@ const showAmount=v=>{
   return (Number(v)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';
 };
 let rows=[],currentRole=null,staff=[],r5Online=false,r6Online=false,r6Cursor=null,r6Total=0,r6Generation=0;
-let r6Signals=new Map(),r7Online=false,r8Online=false,currentAccountId=null;
+let r6Signals=new Map(),r7Online=false,r8Online=false,r9Online=false,currentAccountId=null;
 const csrf=()=>{
   for(const name of ['__Host-osmanx_industry_csrf','osmanx_industry_csrf']){
     const cookie=document.cookie.split('; ').find(row=>row.startsWith(name+'='));
@@ -30,8 +30,14 @@ async function request(path,{method='GET',payload,headers={}}={}){
   }
   const response=await fetch(API+path,options);
   const body=await response.json().catch(()=>({}));
+  if(response.status===409)showConflict(body.error||'Конфликт версии или изменение записи.');
   if(!response.ok)throw new Error(body.error||('HTTP '+response.status));
   return body;
+}
+function showConflict(message){
+  byId('r9-conflict-message').textContent=message+
+    ' Получите актуальные записи перед повтором операции; не нажимайте повторно вслепую.';
+  byId('r9-conflict').hidden=false;
 }
 function line(container,label,number){
   const row=element('div','line');
@@ -52,6 +58,7 @@ function present(bool){
   byId('r6-access-audit').hidden=!(bool&&currentRole==='owner'&&r6Online);
   byId('r7-workload').hidden=!(bool&&r7Online);
   byId('r8-ops').hidden=!(bool&&r8Online&&currentRole==='owner');
+  byId('r9-response').hidden=!(bool&&r9Online);
   updateCsvPermission();
 }
 function fail(message){
@@ -59,7 +66,7 @@ function fail(message){
   byId('login-status').textContent=message;
 }
 function updateCsvPermission(){
-  byId('csv').disabled=!(r8Online&&currentRole==='owner'&&rows.length>0);
+  byId('csv').disabled=!(r9Online&&currentRole==='owner'&&rows.length>0);
 }
 async function refreshR8(){
   const status=byId('r8-runtime-status'),pane=status.closest('.r8-runtime');
@@ -75,9 +82,55 @@ async function refreshR8(){
     r8Online=false;pane.dataset.connected='false';
     status.textContent='API R8 не подтверждён. Публичный сайт доступен, но новые операции кабинета закрыты до запуска сервера.';
   }
+  r9Online=false;
+  if(r8Online){
+    try{
+      const release=await request('/cinema/public/r9-runtime');
+      r9Online=release.apiRelease==='r9'&&release.capabilities?.serverCsvSnapshot===true;
+      if(r9Online)status.textContent+=' Подтверждён R9: серверный CSV и отчёт о скорости реакции.';
+    }catch{
+      status.textContent+=' R9 ещё не подключён: CSV будет закрыт до обновления API.';
+    }
+  }
+  byId('r9-response').hidden=!(r9Online&&currentRole);
   byId('r8-ops').hidden=!(r8Online&&currentRole==='owner');
   updateCsvPermission();
 }
+function renderR9Response(data){
+  const box=byId('r9-response-cards');box.replaceChildren();
+  const c=data.counts||{},p=data.percentages||{};
+  for(const [label,main,details] of [
+    ['Обращения за период',c.total??0,'По дате получения'],
+    ['Первая попытка',p.everAttempted===null?'Нет данных':p.everAttempted+'%',(c.with_attempt??0)+' с зарегистрированным событием'],
+    ['До 60 минут',p.respondedWithin1h===null?'Нет базы':p.respondedWithin1h+'%',(c.responded_within_1h??0)+' из '+(c.eligible_1h??0)+' достаточно старых заявок'],
+    ['Без попытки 24 часа',c.without_attempt_24h??0,'Только ручные записи контактов'],
+    ['Просрочено',c.overdue_active??0,'Открытые заявки с просроченным действием'],
+    ['Среднее до попытки',c.avg_minutes_to_first_attempt===null?'Нет данных':c.avg_minutes_to_first_attempt+' мин','По фактически записанным событиям']
+  ]){
+    const card=element('article','r9-response-card');
+    card.append(element('strong','',String(main)),element('span','',label),element('small','',details));box.append(card);
+  }
+  byId('r9-response-status').textContent='Срез на '+new Date(data.asOf).toLocaleString('ru-RU')+
+    '. Контакты зарегистрированы людьми; факты разговора и оплаты не подтверждаются автоматически.';
+}
+async function refreshR9Response(){
+  if(!r9Online||!currentRole)return;
+  const status=byId('r9-response-status');status.textContent='Загружаем показатели…';
+  try{
+    const data=await request('/cinema/ops/response-review?days='+byId('r9-review-days').value);
+    if(data.schema!=='osmanx.cinema.response-review.v1')throw Error('Неподходящий формат отчёта');
+    renderR9Response(data);
+  }catch(err){status.textContent='Отчёт недоступен: '+err.message;}
+}
+byId('r9-review-days').addEventListener('change',refreshR9Response);
+byId('r9-conflict-reload').addEventListener('click',async()=>{
+  const button=byId('r9-conflict-reload');button.disabled=true;
+  try{
+    await reload();
+    byId('r9-conflict').hidden=true;
+  }catch(err){byId('r9-conflict-message').textContent='Обновление не удалось: '+err.message;}
+  finally{button.disabled=false;}
+});
 async function refreshR8Ops(){
   const box=byId('r8-ops-result');
   if(currentRole!=='owner'||!r8Online){box.textContent='Нет доступа или API не подключён.';return;}
@@ -189,6 +242,8 @@ async function reload(){
   currentRole=currentRole||'manager';
   await refreshR8();
   if(generation!==r6Generation)return;
+  if(r9Online)await refreshR9Response();
+  if(generation!==r6Generation)return;
   byId('r7-workload').hidden=!r7Online;
   byId('r5-subject').hidden=!(currentRole==='owner'&&r5Online);
   byId('r6-workqueue').hidden=!r6Online;
@@ -293,40 +348,42 @@ function csvCell(v){
   return '"'+s.replace(/"/g,'""')+'"';
 }
 async function exportCsv(){
-  const button=byId('csv');
-  if(button.disabled||!r8Online||currentRole!=='owner')return;
-  if(!rows.length||rows.length>500){
-    byId('leads-status').textContent='Для экспорта выберите от 1 до 500 загруженных записей.';
-    return;
+  const button=byId('csv'),status=byId('leads-status');
+  if(button.disabled||!r9Online||currentRole!=='owner')return;
+  const selected=rows.map(x=>x.id);
+  if(selected.length<1||selected.length>500||new Set(selected).size!==selected.length){
+    status.textContent='Выберите от 1 до 500 уникальных загруженных записей. Обновите очередь.';return;
   }
-  if(new Set(rows.map(x=>x.id)).size!==rows.length){
-    byId('leads-status').textContent='Обнаружены повторяющиеся ID. Обновите кабинет.';return;
-  }
-  if(!window.confirm('Экспортировать '+rows.length+
-    ' записей с персональными данными? Храните файл на защищённом устройстве.'))return;
+  if(!window.confirm('Создать защищённый серверный CSV для '+selected.length+
+    ' записей? Данные будут взяты из PostgreSQL заново. Храните файл только на защищённом устройстве.'))return;
   button.disabled=true;
-  byId('leads-status').textContent='Проверяем доступ и регистрируем разрешение…';
+  status.textContent='Сервер формирует новый снимок данных и регистрирует выдачу…';
   try{
-    for(let i=0;i<rows.length;i+=100){
-      const ids=rows.slice(i,i+100).map(row=>row.id);
-      const permission=await request('/cinema/exports/approve',{
-        method:'POST',payload:{confirm:'EXPORT_LOADED',leadIds:ids}});
-      if(!permission.approved||permission.approvedCount!==ids.length)
-        throw Error('Сервер не подтвердил все строки.');
+    const headers={'Accept':'text/csv','Content-Type':'application/json'};
+    const token=csrf();if(!token)throw Error('Сессия устарела. Войдите заново.');
+    headers['x-csrf-token']=token;
+    const response=await fetch(API+'/cinema/exports/csv',{method:'POST',
+      credentials:'same-origin',cache:'no-store',headers,
+      body:JSON.stringify({confirm:'GENERATE_CSV',leadIds:selected})});
+    if(!response.ok){
+      const details=await response.json().catch(()=>({}));
+      if(response.status===409)showConflict(details.error||'Одна из заявок изменилась или удалена.');
+      throw Error(details.error||('HTTP '+response.status));
     }
-  }catch(err){
-    byId('leads-status').textContent='CSV не создан: '+err.message;
-    updateCsvPermission();return;
-  }
-  const headers=['ID','Имя','Email','Компания','Сюжет','Наблюдение','Цель','Источник','Кампания','Стадия','Оценка, коп.','Следующее действие','Срок','Причина отказа','Дата'];
-  const lines=rows.map(x=>[x.id,x.contact_name,x.contact_email,x.organization,x.story_id,x.observation,x.goal,
-    x.source,x.campaign_code,x.state,x.deal_value_minor,x.next_action_kind,x.next_action_at,x.loss_reason_code,x.created_at].map(csvCell).join(';'));
-  const body='\ufeff'+headers.map(csvCell).join(';')+'\r\n'+lines.join('\r\n')+'\r\n';
-  const href=URL.createObjectURL(new Blob([body],{type:'text/csv;charset=utf-8'}));
-  const link=document.createElement('a');link.href=href;link.download='osmanx-cinema-leads.csv';
-  document.body.append(link);link.click();link.remove();URL.revokeObjectURL(href);
-  byId('leads-status').textContent='CSV сформирован после разрешения владельца: '+rows.length+' строк.';
-  updateCsvPermission();
+    if(!(response.headers.get('Content-Type')||'').toLowerCase().includes('text/csv'))
+      throw Error('Сервер вернул неожиданный формат; файл не создан.');
+    const file=await response.blob();
+    if(!file.size||file.size>8*1024*1024)throw Error('Неправдоподобный размер CSV; файл не создан.');
+    const href=URL.createObjectURL(file);
+    try{
+      const link=document.createElement('a');link.href=href;
+      link.download='osmanx-cinema-snapshot.csv';
+      document.body.append(link);link.click();link.remove();
+    }finally{setTimeout(()=>URL.revokeObjectURL(href),1500);}
+    status.textContent='Сервер сформировал CSV для '+selected.length+
+      ' актуальных записей. Сохранение файла зависит от настроек браузера.';
+  }catch(err){status.textContent='Серверный CSV недоступен: '+err.message;}
+  finally{updateCsvPermission();}
 }
 function renderLeads(filter=''){
   const container=byId('leads');container.replaceChildren();
@@ -684,7 +741,8 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;currentAccountId=null;rows=[];staff=[];r5Online=false;r6Online=false;r7Online=false;r8Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  currentRole=null;currentAccountId=null;rows=[];staff=[];r5Online=false;r6Online=false;r7Online=false;r8Online=false;r9Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  byId('r9-conflict').hidden=true;byId('r9-response-cards').replaceChildren();
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
