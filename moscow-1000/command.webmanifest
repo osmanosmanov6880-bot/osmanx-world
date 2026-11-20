@@ -1,0 +1,13 @@
+{
+  "id": "/moscow-1000/",
+  "name": "OSMANX MOSCOW 1000",
+  "short_name": "OSMANX",
+  "description": "Штаб экспедиции: маршруты, квесты и опубликованные итоги.",
+  "lang": "ru",
+  "start_url": "/moscow-1000/",
+  "scope": "/moscow-1000/",
+  "display": "standalone",
+  "background_color": "#030a15",
+  "theme_color": "#030a15",
+  "icons": [{"src": "/moscow-1000/mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
+}

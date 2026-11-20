@@ -3,6 +3,10 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const data = window.OSMANXCommandData;
+  const offline = window.OSMANXPublicOffline;
+  let storage;
+  try { storage = window.localStorage; } catch { storage = null; }
+  const approvedStore = offline.createStore(storage);
   const geo = window.OSMANX_GEO;
   const publicData = window.OSMANX_PUBLIC_DATA;
   const icons = {
@@ -40,7 +44,8 @@
   const format = n => typeof n === 'number' && Number.isFinite(n) ? new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0}).format(n) : '—';
   const views=['hq','map','analytics','journal','quests'];
   const initialDay=Number(new URLSearchParams(location.search).get('day'));
-  const state={view:'hq',day:Number.isInteger(initialDay)&&initialDay>=1&&initialDay<=10?initialDay:1,analysis:'summary',journal:'all',snapshot:data.readSnapshot(window.OSMANX_APPROVED_PUBLICATION),editorial:null,map:null,loading:true};
+  const cachedCommand = approvedStore.read('command'), cachedEditorial = approvedStore.read('editorial');
+  const state={view:'hq',day:Number.isInteger(initialDay)&&initialDay>=1&&initialDay<=10?initialDay:1,analysis:'summary',journal:'all',snapshot:cachedCommand?.snapshot||data.readSnapshot(window.OSMANX_APPROVED_PUBLICATION),editorial:cachedEditorial?.snapshot||null,map:null,loading:true,connection:{command:cachedCommand?'cached':'pending',editorial:cachedEditorial?'cached':'pending'},lastCheck:0};
   function currentRoute(){return geo.days.find(d=>d.number===state.day) || geo.days[0];}
   function totals(){return state.snapshot?.metrics || state.editorial?.metrics || null;}
   function dayMetrics(){return state.snapshot?.days.find(d=>d.day===state.day)?.metrics || null;}
@@ -48,14 +53,35 @@
   function date(value){try{return new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',timeZone:'Europe/Moscow'}).format(new Date(value));}catch{return '';}}
   let toastTimer;
   function toast(message){$('toast').textContent=message;$('toast').classList.add('shown');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('shown'),3500);}
-  function dialog(title,paragraphs,extra){const box=$('dialog-content');box.replaceChildren(el('h2','',title));for(const p of paragraphs)box.append(el('p','',p));if(extra)box.append(extra);paintIcons(box);$('detail-dialog').showModal();}
+  let dialogOpener;
+  function dialog(title,paragraphs,extra){
+    dialogOpener=document.activeElement;
+    const box=$('dialog-content'),heading=el('h2','',title);heading.id='dialog-title';
+    box.replaceChildren(heading);for(const p of paragraphs)box.append(el('p','',p));if(extra)box.append(extra);
+    paintIcons(box);document.documentElement.classList.add('dialog-open');$('detail-dialog').showModal();
+  }
   $('close-dialog').addEventListener('click',()=>$('detail-dialog').close());
+  $('detail-dialog').addEventListener('close',()=>{document.documentElement.classList.remove('dialog-open');(dialogOpener?.isConnected?dialogOpener:$('main')).focus({preventScroll:true});});
   $('detail-dialog').addEventListener('click',e=>{if(e.target===$('detail-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
   function setDay(n){if(!Number.isInteger(n)||n<1||n>10)return;state.day=n;const u=new URL(location.href);u.searchParams.set('day',n);history.replaceState(null,'',u);renderAll();state.map?.setDay(n);}
-  function dayButtons(container){container.replaceChildren();for(const d of geo.days){const b=el('button','',`День ${d.number}`);b.type='button';b.dataset.day=String(d.number);b.setAttribute('aria-pressed',String(d.number===state.day));b.addEventListener('click',()=>setDay(d.number));container.append(b);}}
+  function dayButtons(container){
+    if(!container.children.length){
+      container.setAttribute('role','group');
+      for(const d of geo.days){const b=el('button','',`День ${d.number}`);b.type='button';b.dataset.day=String(d.number);b.addEventListener('click',()=>setDay(d.number));container.append(b);}
+      container.addEventListener('keydown',e=>{
+        if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+        const buttons=[...container.querySelectorAll('button')],index=buttons.indexOf(document.activeElement);if(index<0)return;
+        e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;
+        setDay(Number(buttons[next].dataset.day));buttons[next].focus({preventScroll:true});
+      });
+    }
+    for(const b of container.children){const active=Number(b.dataset.day)===state.day;b.setAttribute('aria-pressed',String(active));b.tabIndex=active?0:-1;}
+    requestAnimationFrame(()=>{const active=container.querySelector('[aria-pressed=true]');if(!active||!container.clientWidth)return;const a=active.getBoundingClientRect(),c=container.getBoundingClientRect();if(a.right>c.right)container.scrollLeft+=a.right-c.right+16;else if(a.left<c.left)container.scrollLeft-=c.left-a.left+16;});
+  }
   function showView(name,{focus=false}={}){
     if(!views.includes(name))name='hq';state.view=name;
     document.querySelectorAll('.screen').forEach(s=>{s.hidden=s.id!==`view-${name}`;});
+    $(`view-${name}`).querySelectorAll('[data-days]').forEach(dayButtons);
     document.querySelectorAll('.bottom-nav a').forEach(a=>{if(a.dataset.view===name)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     if(location.hash!==`#${name}`)history.replaceState(null,'',`${location.pathname}${location.search}#${name}`);
     const titles={hq:'Штаб экспедиции',map:'Карта маршрута',analytics:'Аналитика дня',journal:'Журнал экспедиции',quests:'Квесты и стратегия'};
@@ -77,7 +103,7 @@
     document.querySelectorAll('.metric-card').forEach(card=>{
       let v=m?.[card.dataset.metric];
       if(v===undefined&&card.dataset.metric==='meetings')v=m?.decisionMeetings;
-      const strong=card.querySelector('strong');strong.textContent=format(v);if(card.dataset.metric==='expensesRub')strong.append(document.createTextNode(' '),el('small','','₽'));
+      const strong=card.querySelector('strong');strong.textContent=format(v);strong.classList.toggle('compact',format(v).length>6);if(card.dataset.metric==='expensesRub')strong.append(document.createTextNode(' '),el('small','','₽'));
     });
     $('goal-text').textContent=data.quests(state.day)[0].title+'. Проверь гипотезы дня.';
     const published=state.snapshot?.reviewedAt||state.editorial?.reviewedAt;
@@ -129,9 +155,13 @@
     const archive=el('a','quiet-link','О проекте и архив OSMANX');archive.href='/moscow-1000/serial/';box.append(archive);
   }
   function renderDesktop(){const list=$('desktop-days');list.replaceChildren();for(const d of geo.days){const b=el('button');b.type='button';b.innerHTML=`<b>${String(d.number).padStart(2,'0')}</b><span>${esc(d.title)}</span>`;b.setAttribute('aria-pressed',String(d.number===state.day));b.addEventListener('click',()=>{setDay(d.number);if(state.view==='hq')go('map');});list.append(b);}$('side-day-title').textContent=`День ${state.day} · ${currentRoute().title}`;$('side-day-focus').textContent=currentRoute().focus;$('side-quests').replaceChildren(...data.quests(state.day).slice(0,3).map(buildQuestRow));}
-  function syncTabs(){document.querySelectorAll('[data-analysis]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.analysis===state.analysis)));document.querySelectorAll('[data-journal]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.journal===state.journal)));}
+  function syncTabs(){
+    for(const [kind,key,panel] of [['analysis','analysis','analytics-content'],['journal','journal','journal-content']]){
+      document.querySelectorAll(`[data-${kind}]`).forEach(b=>{const active=b.dataset[kind]===state[key];b.setAttribute('aria-selected',String(active));b.tabIndex=active?0:-1;b.id=`${kind}-tab-${b.dataset[kind]}`;b.setAttribute('aria-controls',panel);if(active)$(panel).setAttribute('aria-labelledby',b.id);});
+    }
+  }
   function renderAll(){document.querySelectorAll('[data-days]').forEach(dayButtons);renderHome();renderQuests();renderAnalytics();renderJournal();renderDesktop();syncTabs();paintIcons();}
-  function chooseDay(){const list=el('div','day-tabs');for(const route of geo.days){const b=el('button','',`День ${route.number}`);b.type='button';b.setAttribute('aria-pressed',String(route.number===state.day));b.addEventListener('click',()=>{setDay(route.number);$('detail-dialog').close();});list.append(b);}dialog('Десять дней Москвы',['Выбери день: штаб, карта, аналитика и квесты переключатся вместе.'],list);}
+  function chooseDay(){const list=el('div','day-picker');for(const route of geo.days){const b=el('button','day-choice');b.type='button';b.append(el('b','',`День ${route.number}`),el('span','',route.title));b.setAttribute('aria-pressed',String(route.number===state.day));b.addEventListener('click',()=>{setDay(route.number);$('detail-dialog').close();toast(`День ${route.number} · ${route.title}`);});list.append(b);}dialog('Десять дней Москвы',['Выбери район: карта, сводка и квесты переключатся вместе.'],list);list.querySelector('[aria-pressed=true]')?.focus({preventScroll:true});}
   $('choose-day').addEventListener('click',chooseDay);$('mission-route').addEventListener('click',()=>go('map'));$('open-route').addEventListener('click',()=>go('map'));$('daily-goal').addEventListener('click',()=>go('quests'));
   document.querySelectorAll('.metric-card').forEach(b=>b.addEventListener('click',()=>{state.analysis=b.dataset.metric==='expensesRub'?'budget':'summary';syncTabs();renderAnalytics();go('analytics');}));
   document.querySelectorAll('[data-analysis]').forEach(b=>b.addEventListener('click',()=>{state.analysis=b.dataset.analysis;syncTabs();renderAnalytics();}));
@@ -142,12 +172,67 @@
   $('journal-info').addEventListener('click',()=>dialog('Десять дней. Десять глав.',['В журнале — план документальных выпусков и опубликованные истории экспедиции. Публикация появляется после проверки материалов автором.']));
   $('quests-info').addEventListener('click',()=>dialog('50 квестов экспедиции',['На каждый день запланировано пять задач: диалоги, партнёры, проверка гипотез, наблюдения и следующий шаг.','Опубликованное выполнение приносит XP и открывает достижения. Зрители следят за результатом; задания отмечает автор.']));
   $('achievements').addEventListener('click',()=>{const list=el('div');achievementData().forEach(a=>{const item=el('div','achievement-item');item.innerHTML=`<span>${icon(a.icon)}</span><div><b>${esc(a.title)}</b><small>${esc(a.text)} · ${a.earned?'получено':'впереди'}</small></div>`;list.append(item);});dialog('Достижения',[],list);});
-  $('export-public').addEventListener('click',()=>{if(!state.snapshot&&!state.editorial)return toast('Опубликованных результатов для экспорта пока нет.');const safe=state.snapshot||state.editorial;const payload={project:'OSMANX MOSCOW 1000',exportedAt:new Date().toISOString(),day:state.day,reviewedAt:safe.reviewedAt,metrics:safe.metrics,days:safe.days};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob);const a=el('a');a.href=url;a.download='OSMANX_PUBLIC_RESULTS.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Опубликованная сводка сохранена.');});
+  $('export-public').addEventListener('click',()=>{
+    if(!state.snapshot&&!state.editorial)return toast('Опубликованных результатов для экспорта пока нет.');
+    const kind=state.snapshot?'command':'editorial',safe=state.snapshot||state.editorial;
+    const payload={project:'OSMANX MOSCOW 1000',exportedAt:new Date().toISOString(),day:state.day,reviewedAt:safe.reviewedAt,
+      source:state.connection[kind]==='current'?'published-online':'last-published-copy',
+      checkedAt:state.connection[kind]==='current'&&state.lastCheck?new Date(state.lastCheck).toISOString():null,metrics:safe.metrics,days:safe.days};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob);const a=el('a');a.href=url;a.download='OSMANX_PUBLIC_RESULTS.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Опубликованная сводка сохранена.');
+  });
   async function loadPublic(path){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);try{const r=await fetch(path,{headers:{Accept:'application/json'},credentials:'omit',signal:controller.signal,cache:'no-store'});if(!r.ok||!r.headers.get('content-type')?.includes('application/json'))return null;const text=await r.text();if(text.length>150000)return null;return JSON.parse(text);}catch{return null;}finally{clearTimeout(timer);}}
-  function readEditorial(raw){const normalized=data.readSnapshot(raw);if(!normalized)return null;return {...normalized,
-    markers:Array.isArray(raw.markers)?raw.markers.filter(m=>m&&Number.isInteger(m.day)&&m.day>=1&&m.day<=10&&Number.isFinite(m.lat)&&Number.isFinite(m.lng)&&typeof m.title==='string'&&typeof m.id==='string').map(m=>({id:m.id.slice(0,80),day:m.day,lat:m.lat,lng:m.lng,title:m.title.slice(0,90),summary:typeof m.summary==='string'?m.summary.slice(0,350):''})):[],
-    episodes:Array.isArray(raw.episodes)?raw.episodes.filter(e=>e&&Number.isInteger(e.day)&&e.day>=1&&e.day<=10&&typeof e.title==='string'&&typeof e.publishedAt==='string').map(e=>({day:e.day,title:e.title.slice(0,120),publishedAt:e.publishedAt})):[]};}
-  renderAll();showView(location.hash.slice(1));
-  Promise.allSettled([loadPublic('/moscow-1000/api/command/public'),loadPublic('/moscow-1000/api/public-release')]).then(results=>{const command=results[0].status==='fulfilled'?data.readSnapshot(results[0].value):null;const editorial=results[1].status==='fulfilled'?readEditorial(results[1].value):null;if(command)state.snapshot=command;if(editorial)state.editorial=editorial;state.loading=false;renderAll();if(editorial&&state.map)state.map.setMarkers(editorial.markers);});
-  window.addEventListener('offline',()=>toast('Нет сети. Открытые экраны остаются доступны.'));
+  function fullDate(value){try{return new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Moscow'}).format(new Date(value))+' МСК';}catch{return '';}}
+  function connectionBanner(){
+    const statuses=Object.values(state.connection),stale=statuses.includes('cached'),unavailable=statuses.includes('unavailable');
+    const disconnected=navigator.onLine===false;
+    const banner=$('connection-banner');banner.hidden=!stale&&!unavailable&&!disconnected;
+    $('retry-public').disabled=state.loading;
+    $('retry-public').textContent=state.loading?'Проверяем…':'Обновить';
+    if(banner.hidden)return;
+    const stamp=[['command','snapshot'],['editorial','editorial']].filter(([kind])=>state.connection[kind]==='cached').map(([,field])=>state[field]?.reviewedAt).filter(Boolean).sort()[0];
+    let copy=disconnected?'Нет сети. ':state.loading?'Проверяем обновления. ':'Не удалось обновить все данные. ';
+    copy+=stale&&stamp?`Сохранённая публикация от ${fullDate(stamp)}. Она может быть устаревшей.`:'План и квесты доступны; свежие итоги появятся после подключения.';
+    $('connection-copy').textContent=copy;
+  }
+  let refreshing;
+  async function refreshPublic(){
+    if(refreshing)return refreshing;
+    state.loading=true;connectionBanner();
+    refreshing=(async()=>{
+      const tickets={command:approvedStore.begin('command'),editorial:approvedStore.begin('editorial')};
+      const values=await Promise.all([loadPublic('/moscow-1000/api/command/public'),loadPublic('/moscow-1000/api/public-release')]);
+      for(const [index,kind,field] of [[0,'command','snapshot'],[1,'editorial','editorial']]){
+        const result=approvedStore.accept(kind,values[index],tickets[kind]);
+        if(result.status==='superseded')continue;
+        if(result.status==='published'){state[field]=result.snapshot;state.connection[kind]='current';}
+        else if(result.status==='unpublished'){state[field]=null;state.connection[kind]='current';}
+        else {const retained=approvedStore.read(kind);state[field]=retained?.snapshot||null;state.connection[kind]=retained?'cached':'unavailable';}
+      }
+      state.lastCheck=Date.now();state.loading=false;renderAll();connectionBanner();
+      if(state.map)state.map.setMarkers(state.editorial?.markers||[]);
+    })().finally(()=>{refreshing=null;state.loading=false;connectionBanner();});
+    return refreshing;
+  }
+  $('retry-public').addEventListener('click',()=>refreshPublic());
+  renderAll();showView(location.hash.slice(1));connectionBanner();refreshPublic();
+  window.addEventListener('online',()=>refreshPublic());
+  function expireRetained(){
+    let changed=false;
+    for(const [kind,field] of [['command','snapshot'],['editorial','editorial']]){
+      if(state.connection[kind]!=='cached')continue;
+      if(!approvedStore.read(kind)){state[field]=null;state.connection[kind]='unavailable';changed=true;}
+    }
+    if(changed){renderAll();state.map?.setMarkers(state.editorial?.markers||[]);}
+    connectionBanner();
+  }
+  window.addEventListener('offline',()=>{
+    for(const kind of ['command','editorial'])state.connection[kind]=approvedStore.read(kind)?'cached':'unavailable';
+    for(const [kind,field] of [['command','snapshot'],['editorial','editorial']])if(state.connection[kind]==='unavailable')state[field]=null;
+    renderAll();state.map?.setMarkers(state.editorial?.markers||[]);connectionBanner();
+  });
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){expireRetained();if(Date.now()-state.lastCheck>60000)refreshPublic();}});
+  setInterval(()=>{if(!document.hidden){expireRetained();if(navigator.onLine!==false&&Date.now()-state.lastCheck>60000)refreshPublic();}},60000);
+  if('serviceWorker' in navigator&&(location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname))){
+    navigator.serviceWorker.register('/moscow-1000/command-sw.js',{scope:'/moscow-1000/',updateViaCache:'none'}).catch(()=>{/* Online interface stays usable when shell caching is unavailable. */});
+  }
 })();

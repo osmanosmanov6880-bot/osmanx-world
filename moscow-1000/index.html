@@ -8,12 +8,16 @@
 <title>OSMANX MOSCOW 1000 — Штаб экспедиции</title>
 <link rel="canonical" href="https://osmanx.world/moscow-1000/">
 <link rel="icon" type="image/svg+xml" href="/moscow-1000/mark.svg">
+<link rel="manifest" href="/moscow-1000/command.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="/moscow-1000/command.css">
 <link rel="stylesheet" href="/moscow-1000/command-map.css">
 <script defer src="/moscow-1000/content.js"></script>
 <script defer src="/moscow-1000/geo.js"></script>
 <script defer src="/moscow-1000/publication.js"></script>
 <script defer src="/moscow-1000/command-data.js"></script>
+<script defer src="/moscow-1000/command-offline.js"></script>
 <script defer src="/moscow-1000/command-map.js"></script>
 <script defer src="/moscow-1000/command.js"></script>
 </head>
@@ -32,6 +36,7 @@
  </aside>
  <div class="app-shell">
   <main id="main" tabindex="-1">
+   <section class="connection-banner" id="connection-banner" role="status" aria-live="polite" hidden><span id="connection-copy"></span><button class="text-button" id="retry-public" type="button">Обновить</button></section>
    <section class="screen" id="view-hq" aria-labelledby="hq-heading">
     <header class="hero">
      <div class="skyline" aria-hidden="true"></div>
@@ -51,8 +56,8 @@
      <button class="goal-card panel" id="daily-goal" type="button"><span class="red-icon" data-icon="target"></span><span><b>Главная цель дня</b><small id="goal-text">Провести 3 содержательных диалога и проверить коммерческие гипотезы</small></span><span data-icon="chevron"></span></button>
      <button class="primary-button" type="button" id="open-route"><span data-icon="plus"></span>Открыть маршрут дня</button>
      <div class="publication-status" id="publication-status"><span class="status-line"></span><span>Подготовка экспедиции · итоги ещё не опубликованы</span></div>
-     <button class="text-button day-selector" id="choose-day" type="button">Выбрать день экспедиции<span data-icon="chevron"></span></button>
-     <a class="mobile-admin-link" href="/moscow-1000/admin/"><span data-icon="lock"></span>Вход автора</a>
+     <div class="hq-meta-actions"><button class="text-button day-selector" id="choose-day" type="button">Выбрать день<span data-icon="chevron"></span></button>
+     <a class="mobile-admin-link" href="/moscow-1000/admin/"><span data-icon="lock"></span>Вход автора</a></div>
     </div>
    </section>
    <section class="screen" id="view-map" aria-labelledby="map-heading" hidden>
@@ -63,12 +68,12 @@
    <section class="screen" id="view-analytics" aria-labelledby="analytics-heading" hidden>
     <header class="screen-heading"><h1 id="analytics-heading">Аналитика дня</h1><button class="icon-button" type="button" id="export-public" aria-label="Скачать опубликованную сводку"><span data-icon="export"></span></button></header>
     <div class="segment-tabs" role="tablist" aria-label="Разделы аналитики"><button role="tab" aria-selected="true" data-analysis="summary">Сводка</button><button role="tab" aria-selected="false" data-analysis="funnel">Воронка</button><button role="tab" aria-selected="false" data-analysis="segments">Сегменты</button><button role="tab" aria-selected="false" data-analysis="budget">Бюджет</button></div>
-    <div class="screen-body analytics-body" id="analytics-content"></div>
+    <div class="screen-body analytics-body" id="analytics-content" role="tabpanel"></div>
    </section>
    <section class="screen" id="view-journal" aria-labelledby="journal-heading" hidden>
     <header class="screen-heading"><h1 id="journal-heading">Журнал экспедиции</h1><button class="icon-button" id="journal-info" aria-label="О журнале" type="button"><span data-icon="book"></span></button></header>
     <div class="segment-tabs journal-filters" role="tablist" aria-label="Выпуски"><button role="tab" aria-selected="true" data-journal="all">Все 10 дней</button><button role="tab" aria-selected="false" data-journal="published">Опубликовано</button><button role="tab" aria-selected="false" data-journal="planned">В планах</button></div>
-    <div class="screen-body" id="journal-content"></div>
+    <div class="screen-body" id="journal-content" role="tabpanel"></div>
    </section>
    <section class="screen" id="view-quests" aria-labelledby="quests-heading" hidden>
     <header class="screen-heading"><h1 id="quests-heading">Квесты и стратегия</h1><button class="icon-button" id="quests-info" aria-label="Как работают квесты" type="button"><span data-icon="info"></span></button></header>
@@ -83,7 +88,7 @@
  <aside class="desktop-side side-right" aria-label="Сводка дня"><div class="side-heading"><span class="eyebrow">ПЛАН НА СЕГОДНЯ</span><h2 id="side-day-title">День 1</h2><p id="side-day-focus">Рестораны и кофейни</p></div><div id="side-quests"></div><button class="secondary-button" type="button" data-go="quests">Все квесты<span data-icon="chevron"></span></button><div class="side-journal panel"><span data-icon="book" class="red-icon"></span><h3>История за каждой дверью</h3><p>Десять дней. Десять глав.<br>Наблюдения без выдуманных побед.</p><button class="text-button" type="button" data-go="journal">Читать журнал<span data-icon="chevron"></span></button></div><a class="desktop-contact" href="mailto:hello@osmanx.world">Предложить сотрудничество<span data-icon="external"></span></a></aside>
 </div>
 <footer class="desktop-footer"><span><i data-icon="pin"></i>Москва · 10 маршрутов</span><span><i data-icon="target"></i>50 квестов</span><span><i data-icon="chart"></i>Проверенные результаты</span><span><i data-icon="shield"></i>Закрытая админка</span></footer>
-<dialog id="detail-dialog"><div class="dialog-top"><span class="eyebrow">OSMANX MOSCOW 1000</span><button class="icon-button" type="button" id="close-dialog" aria-label="Закрыть"><span data-icon="close"></span></button></div><div id="dialog-content"></div></dialog>
+<dialog id="detail-dialog" aria-labelledby="dialog-title"><div class="dialog-top"><span class="eyebrow">OSMANX MOSCOW 1000</span><button class="icon-button" type="button" id="close-dialog" aria-label="Закрыть"><span data-icon="close"></span></button></div><div id="dialog-content"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 <noscript><p class="noscript">Для переключения экранов включите JavaScript. <a href="/moscow-1000/serial/">Открыть страницу экспедиции</a>.</p></noscript>
 </body>

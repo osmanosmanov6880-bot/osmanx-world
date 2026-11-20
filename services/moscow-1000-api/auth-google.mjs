@@ -33,13 +33,24 @@ export function googleConfigured(env) {
     typeof env.GOOGLE_CLIENT_SECRET==='string' && env.GOOGLE_CLIENT_SECRET.length>=8 &&
     typeof env.AUTH_SESSION_SECRET==='string' && env.AUTH_SESSION_SECRET.length>=32 && emails(env.ADMIN_GOOGLE_EMAILS).size);
 }
-async function ready(env) {
-  if (!googleConfigured(env)) return false;
+async function storageReady(env) {
+  if (!env.DB) return false;
   try {
     await env.DB.prepare('SELECT id FROM google_auth_flows LIMIT 1').first();
     await env.DB.prepare('SELECT id_hash FROM google_admin_sessions LIMIT 1').first();
     return true;
   } catch { return false; }
+}
+async function ready(env) { return googleConfigured(env)&&await storageReady(env); }
+export async function googleSetupStatus(env) {
+  const checks={
+    googleClient:/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(String(env.GOOGLE_CLIENT_ID||''))&&typeof env.GOOGLE_CLIENT_SECRET==='string'&&env.GOOGLE_CLIENT_SECRET.length>=8,
+    sessionSecret:typeof env.AUTH_SESSION_SECRET==='string'&&env.AUTH_SESSION_SECRET.length>=32,
+    adminAllowlist:emails(env.ADMIN_GOOGLE_EMAILS).size>0,
+    database:await storageReady(env)
+  };
+  const missing=Object.keys(checks).filter(key=>!checks[key]);
+  return {status:!missing.length?'ready':missing.some(key=>key!=='database')?'needs_configuration':'needs_migration',callbackUrl:originFor(env)?originFor(env)+ROOT+'/google/callback':null,checks,missing};
 }
 function readCookie(req,name) {
   const values=(req.headers.get('Cookie') || '').split(';').map(x=>x.trim()).filter(x=>x.startsWith(name+'='));
@@ -125,8 +136,8 @@ export async function googleAuthRoute(req,env,fetcher=fetch) {
   const url=new URL(req.url),path=url.pathname;
   if (url.origin!==originFor(env)) return json({ok:false,error:'Unknown host'},404);
   if (path===ROOT+'/config' && req.method==='GET') {
-    const configured=await ready(env);
-    return json({ok:true,configured,googleEnabled:configured});
+    const setup=await googleSetupStatus(env),configured=setup.status==='ready';
+    return json({ok:true,configured,googleEnabled:configured,setup});
   }
   if (path===ROOT+'/session' && req.method==='GET') {
     const actor=await operatorActor(req,env,fetcher);

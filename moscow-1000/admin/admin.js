@@ -4,11 +4,17 @@
 
   const API = '/moscow-1000/api';
   const $ = id => document.getElementById(id);
+  const workflow = window.OSMANXContactWorkflow;
+  const draftVault = workflow.browserVault();
+  const authChannel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('osmanx-private-session') : null;
   const state = {
     actor: null, googleReady: false, day: 1, tab: 'contacts', contacts: [], expenses: [],
     contactOffset: null, expenseOffset: null, quests: [], editing: null,
     contactsSeq: 0, expensesSeq: 0, questsSeq: 0, authSeq: 0,
     confirmAction: null, confirmationBusy: false,
+    contactTotal: null, filters: { q: '', outcome: '', followup: 'all' },
+    draft: null, draftTimer: null, draftSeq: 0, draftKey: null, pendingContact: null,
+    contactChanged: false, contactDetailed: false, expenseAttempt: null, draftStorageUsed: false, draftsLoading: false,
   };
   const titles = { contacts: 'Контакты', expenses: 'Расходы', quests: 'Квесты и стратегия', publish: 'Публикация' };
   const outcomes = { visited: 'Визит', dialogue: 'Диалог', interest: 'Интерес', refusal: 'Отказ', meeting: 'Встреча', pilot: 'Пилот', contract: 'Договор' };
@@ -54,12 +60,13 @@
   }
 
   async function api(path, options = {}) {
+    const actorAtRequest = state.actor;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch(API + path, {
         method: options.method || 'GET', credentials: 'same-origin', cache: 'no-store',
-        headers: options.body !== undefined ? { 'Content-Type': 'application/json', 'Accept': 'application/json' } : { 'Accept': 'application/json' },
+        headers: { ...(options.body !== undefined ? { 'Content-Type': 'application/json', 'Accept': 'application/json' } : { 'Accept': 'application/json' }), ...(options.key ? { 'Idempotency-Key': options.key } : {}) },
         body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
         redirect: 'error', signal: controller.signal,
       });
@@ -68,8 +75,12 @@
         try { data = await response.json(); } catch { /* Handled as an invalid server response below. */ }
       }
       if (!response.ok || data?.ok === false || !data) {
-        if (response.status === 401 && !path.startsWith('/auth/')) lock('Сессия завершилась. Войдите через Google ещё раз.');
-        const message = response.status === 409
+        if (response.status === 401 && !path.startsWith('/auth/') && actorAtRequest && state.actor === actorAtRequest) lock('Сессия завершилась. Войдите через Google ещё раз.');
+        const message = data?.code === 'idempotency_conflict'
+          ? 'Сервер уже получил другую версию этой записи. Обновите список контактов перед новой записью.'
+          : data?.code === 'idempotency_target_removed'
+          ? 'Эта запись уже была сохранена, а затем удалена. Повтор не восстановит её.'
+          : response.status === 409
           ? 'Запись уже изменилась. Закройте форму, обновите список и повторите изменение.'
           : response.status === 403
             ? 'У этого аккаунта нет разрешения на действие.'
@@ -82,6 +93,7 @@
                   : 'Сервер не подтвердил действие. Попробуйте ещё раз.';
         const error = new Error(message);
         error.status = response.status;
+        error.code = data?.code;
         throw error;
       }
       return data;
@@ -99,11 +111,18 @@
     $('actorEmail').textContent = '';
     $('contactForm').reset();
     $('expenseForm').reset();
+    $('contactForm').setAttribute('aria-busy', 'false'); $('expenseForm').setAttribute('aria-busy', 'false');
     $('publishConfirm').checked = false;
+    clearTimeout(state.draftTimer); state.draftSeq++;
+    state.draft = null; state.pendingContact = null; state.draftKey = null; state.contactChanged = false;
+    state.expenseAttempt = null; state.draftStorageUsed = false; state.draftsLoading = false;
+    $('contactDraftBanner').hidden = true;
+    $('contactFilters').reset(); state.filters = { q: '', outcome: '', followup: 'all' };
     for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
   }
 
   function lock(message = '') {
+    state.authSeq++;
     state.actor = null;
     clearPrivateViews();
     $('workspace').hidden = true;
@@ -120,12 +139,17 @@
     const [config, session] = await Promise.allSettled([api('/auth/config'), api('/auth/session')]);
     if (seq !== state.authSeq) return;
     state.googleReady = config.status === 'fulfilled' && config.value.googleEnabled === true && config.value.configured === true;
+    renderAuthSetup(config.status === 'fulfilled' ? config.value.setup : null);
     if (session.status === 'fulfilled' && session.value.authenticated === true && session.value.actor?.email) {
       state.actor = session.value.actor;
       $('login').hidden = true;
       $('workspace').hidden = false;
       $('actorEmail').textContent = state.actor.email;
+      state.draftsLoading = true;
       applyPermissions();
+      await restoreAvailableDraft();
+      if (seq !== state.authSeq || state.actor !== session.value.actor) return;
+      state.draftsLoading = false; applyPermissions();
       await switchTab(state.tab);
       return;
     }
@@ -144,10 +168,139 @@
     }
   }
 
+  function renderAuthSetup(setup) {
+    $('authSetup').hidden = !setup || typeof setup !== 'object';
+    if (!setup || typeof setup !== 'object') return;
+    const labels = { googleClient: 'OAuth-приложение Google', sessionSecret: 'Защита сессий', adminAllowlist: 'Аккаунт владельца', database: 'База данных штаба' };
+    $('authSetupDescription').textContent = setup.status === 'ready'
+      ? 'Сервер настроен для входа. Доступ получит только разрешённый аккаунт.'
+      : setup.status === 'needs_migration' ? 'Нужно применить обновление базы данных. Вход пока закрыт.'
+      : 'Вход появится после подключения отмеченных настроек. Ключи вводятся в настройках сервера.';
+    $('authSetupChecks').replaceChildren();
+    for (const [key, label] of Object.entries(labels)) {
+      const configured = setup.checks?.[key] === true;
+      const row = el('li', configured ? 'configured' : 'missing');
+      row.append(el('span', '', label), el('strong', '', configured ? 'Готово' : 'Нужно настроить'));
+      $('authSetupChecks').append(row);
+    }
+    let callback = '';
+    try { const url = new URL(setup.callbackUrl); if (url.protocol === 'https:' && url.pathname === API + '/auth/google/callback' && !url.search && !url.hash) callback = url.href; } catch { /* An invalid callback is never offered for copying. */ }
+    $('googleCallback').value = callback;
+    $('copyCallback').disabled = !callback;
+  }
+
+  function contactFields() {
+    return {
+      day: Number($('contactDay').value), name: $('contactName').value,
+      category: $('contactCategory').value, person: $('contactPerson').value,
+      channel: $('contactChannel').value, outcome: $('contactForm').querySelector('input[name=outcome]:checked')?.value || 'dialogue',
+      problem: $('contactProblem').value, nextStep: $('contactNextStep').value,
+    };
+  }
+
+  function draftBanner() {
+    $('contactDraftBanner').hidden = !state.draft || state.actor?.editor !== true;
+    if (!state.draft) return;
+    $('contactDraftInfo').textContent = `День ${state.draft.body.day} · ${state.draft.body.name || 'Контакт без названия'} · ${dateLabel(state.draft.updatedAt)}` + (state.draft.pending ? ' · Ожидает подтверждения сервера' : '');
+  }
+
+  async function restoreAvailableDraft() {
+    if (state.actor?.editor !== true) return;
+    const actor = state.actor;
+    const seq = state.draftSeq;
+    try {
+      const draft = await draftVault.read(actor);
+      if (state.actor !== actor || state.draftSeq !== seq) return;
+      state.draft = draft; state.draftStorageUsed = !!draft; draftBanner();
+    } catch (error) { if (state.actor === actor) status('workspaceStatus', error.message, 'error'); }
+  }
+
+  async function rememberDraft() {
+    clearTimeout(state.draftTimer);
+    if (!state.actor || !$('contactDialog').open || !state.contactChanged) return;
+    const actor = state.actor;
+    const seq = ++state.draftSeq;
+    const body = contactFields();
+    if (!workflow.meaningful(body)) {
+      state.draft = null; draftBanner();
+      try { if (state.draftStorageUsed) { await draftVault.remove(actor); if (state.actor === actor && seq === state.draftSeq) state.draftStorageUsed = false; } } catch (error) { if (state.actor === actor) $('draftStatus').textContent = error.message; }
+      return;
+    }
+    const draft = workflow.normalizeDraft({ schema: 1, body, key: state.draftKey, editing: state.editing ? { id: state.editing.id, revision: state.editing.revision } : null, detailed: state.contactDetailed, persistent: $('persistDraft').checked, pending: state.pendingContact, updatedAt: Date.now() });
+    if (!draft) { $('draftStatus').textContent = 'Черновик не сохранён: проверьте поля формы.'; return; }
+    state.draft = draft; draftBanner();
+    if (!draft.persistent) {
+      try { if (state.draftStorageUsed) { await draftVault.remove(actor); if (state.actor === actor && seq === state.draftSeq) state.draftStorageUsed = false; } } catch (error) { if (state.actor === actor) $('draftStatus').textContent = error.message; return; }
+      if (state.actor === actor && seq === state.draftSeq) $('draftStatus').textContent = 'Черновик хранится в этой вкладке. При закрытии вкладки он исчезнет.';
+      return;
+    }
+    try {
+      state.draftStorageUsed = true;
+      await draftVault.write(actor, draft);
+      if (state.actor === actor && seq === state.draftSeq) $('draftStatus').textContent = 'Черновик сохранён на этом устройстве · ' + dateLabel(draft.updatedAt);
+    } catch (error) { if (state.actor === actor && seq === state.draftSeq) $('draftStatus').textContent = error.message; }
+  }
+
+  function draftChanged() {
+    if (!state.actor || state.pendingContact) return;
+    state.contactChanged = true;
+    state.draftSeq++;
+    clearTimeout(state.draftTimer);
+    state.draftTimer = setTimeout(rememberDraft, 300);
+  }
+
+  async function discardCurrentDraft() {
+    if (!state.actor) return;
+    clearTimeout(state.draftTimer); state.draftSeq++;
+    const actor = state.actor;
+    if (state.draftStorageUsed) await draftVault.remove(actor);
+    if (state.actor !== actor) return;
+    state.draft = null; state.pendingContact = null; state.contactChanged = false; state.draftStorageUsed = false;
+    draftBanner();
+  }
+
+  function resumeDraft() {
+    if (!state.draft || state.actor?.editor !== true) return;
+    const draft = state.draft;
+    openContact(draft.editing ? { ...draft.body, ...draft.editing } : null);
+    for (const [key, id] of Object.entries({ name: 'contactName', category: 'contactCategory', person: 'contactPerson', channel: 'contactChannel', problem: 'contactProblem', nextStep: 'contactNextStep', day: 'contactDay' })) $(id).value = draft.body[key];
+    for (const radio of $('contactForm').querySelectorAll('input[name=outcome]')) radio.checked = radio.value === draft.body.outcome;
+    state.draftKey = draft.key; state.pendingContact = draft.pending; state.contactChanged = true;
+    $('persistDraft').checked = draft.persistent;
+    setContactMode(draft.detailed);
+    $('draftStatus').textContent = draft.persistent ? 'Восстановлен черновик с этого устройства. Отправка выполняется только кнопкой ниже.' : 'Продолжение записи из этой вкладки.';
+    setContactPending();
+    if (draft.pending) {
+      status('contactFormStatus', 'Предыдущая отправка не подтверждена. Повторите её с теми же данными: вторая запись не создастся.', 'error');
+      $('saveContact').focus();
+    }
+  }
+
+  function startContact(contact = null) {
+    if (state.actor?.editor !== true) return;
+    if (state.draft) {
+      confirmation('Открыть другую запись?', 'Уже есть незавершённый контакт. Открытие другой записи удалит черновик. Если прошлое сохранение не подтверждено, сначала продолжите черновик и повторите отправку. Для этого нажмите «Отмена», затем «Продолжить».', 'Открыть другую', async () => {
+        await discardCurrentDraft();
+        // The confirmation dialog is closed by its action handler before focus is moved.
+        setTimeout(() => { if (state.actor?.editor === true) openContact(contact); }, 0);
+      });
+      return;
+    }
+    openContact(contact);
+  }
+
+  function setContactPending() {
+    const pending = !!state.pendingContact;
+    for (const field of $('contactForm').querySelectorAll('input:not(#persistDraft),select,textarea')) field.disabled = pending;
+    $('quickMode').disabled = pending; $('detailMode').disabled = pending;
+    $('saveContact').querySelector('span').textContent = pending ? 'Повторить сохранение' : state.editing ? 'Сохранить изменения' : 'Сохранить контакт';
+  }
+
   function applyPermissions() {
     const canEdit = state.actor?.editor === true;
-    $('newContact').disabled = !canEdit;
-    for (const node of $('expenseForm').querySelectorAll('input,select,button')) node.disabled = !canEdit;
+    $('newContact').disabled = !canEdit || state.draftsLoading;
+    const expenseBusy = $('expenseForm').getAttribute('aria-busy') === 'true';
+    for (const node of $('expenseForm').querySelectorAll('input,select,button')) node.disabled = !canEdit || expenseBusy || (node.tagName !== 'BUTTON' && !!state.expenseAttempt);
     $('publishConfirm').disabled = state.actor?.approver !== true;
     $('publish').disabled = state.actor?.approver !== true || !$('publishConfirm').checked;
     $('unpublish').disabled = state.actor?.approver !== true;
@@ -223,11 +376,12 @@
       emptyView($('contactList'), 'users', 'Загрузка контактов', 'Получаем сохранённые записи штаба.');
     }
     try {
-      const data = await api(`/command/contacts?day=${day}&offset=${offset || 0}`);
+      const data = await api('/command/contacts?' + workflow.contactQuery({ day, ...state.filters }, offset || 0));
       if (seq !== state.contactsSeq || !state.actor) return;
       if (!Array.isArray(data.contacts)) throw new Error('Не удалось прочитать список контактов.');
       state.contacts = append ? [...state.contacts, ...data.contacts] : data.contacts;
       state.contactOffset = Number.isInteger(data.nextOffset) ? data.nextOffset : null;
+      state.contactTotal = Number.isSafeInteger(data.total) && data.total >= 0 ? data.total : null;
       renderContacts();
     } catch (error) {
       if (seq !== state.contactsSeq || !state.actor) return;
@@ -239,10 +393,16 @@
   function renderContacts() {
     const list = $('contactList');
     list.replaceChildren();
-    $('contactCount').textContent = state.contacts.length + (state.contactOffset !== null ? '+' : '');
+    $('contactCount').textContent = state.contactTotal ?? state.contacts.length + (state.contactOffset !== null ? '+' : '');
     $('moreContacts').hidden = state.contactOffset === null;
+    const filtered = !!state.filters.q || !!state.filters.outcome || state.filters.followup !== 'all';
+    $('resetContactFilters').hidden = !filtered;
+    $('contactFilterHint').textContent = state.filters.followup === 'pending'
+      ? 'Контакты с записанным следующим шагом, кроме отказов и договоров. Даты исполнения не заданы.'
+      : state.filters.followup === 'none' ? 'Контакты без следующего шага, а также отказы и завершённые договоры.'
+      : `Поиск по контактам дня ${state.day}.`;
     if (!state.contacts.length) {
-      emptyView(list, 'users', 'Пока нет контактов', `Запишите первый диалог за день ${state.day}. Контакт будет виден только в личном штабе.`);
+      emptyView(list, 'users', filtered ? 'Контакты не найдены' : 'Пока нет контактов', filtered ? 'Измените запрос или сбросьте фильтры. Поиск учитывает весь список за выбранный день.' : `Запишите первый диалог за день ${state.day}. Контакт будет виден только в личном штабе.`);
       return;
     }
     for (const contact of state.contacts) {
@@ -262,7 +422,7 @@
       const time = el('time', '', dateLabel(contact.updatedAt || contact.createdAt));
       if (contact.updatedAt || contact.createdAt) time.dateTime = contact.updatedAt || contact.createdAt;
       const actions = el('div', 'record-actions');
-      actions.append(actionButton('edit', `Изменить контакт «${contact.name}»`, () => openContact(contact)), actionButton('trash', `Удалить контакт «${contact.name}»`, () => confirmDeleteContact(contact), true));
+      actions.append(actionButton('edit', `Изменить контакт «${contact.name}»`, () => startContact(contact)), actionButton('trash', `Удалить контакт «${contact.name}»`, () => confirmDeleteContact(contact), true));
       footer.append(time, actions);
       card.append(footer);
       list.append(card);
@@ -270,6 +430,7 @@
   }
 
   function setContactMode(detailed) {
+    state.contactDetailed = detailed;
     $('quickMode').classList.toggle('active', !detailed);
     $('detailMode').classList.toggle('active', detailed);
     $('quickMode').setAttribute('aria-pressed', String(!detailed));
@@ -288,9 +449,17 @@
   function openContact(contact = null) {
     if (state.actor?.editor !== true) return;
     state.editing = contact;
+    state.draftSeq++;
+    state.contactChanged = false; state.pendingContact = null; state.draftKey = crypto.randomUUID();
     $('contactForm').reset();
+    $('contactForm').setAttribute('aria-busy', 'false');
+    for (const control of $('contactForm').querySelectorAll('input,select,textarea,button')) control.disabled = false;
+    $('quickMode').disabled = false; $('detailMode').disabled = false;
+    $('contactNameError').hidden = true;
+    $('contactName').removeAttribute('aria-invalid');
     $('contactName').setCustomValidity('');
     status('contactFormStatus');
+    $('draftStatus').textContent = 'Черновик пока хранится только в этой вкладке.';
     $('contactTitle').textContent = contact ? 'Изменить контакт' : 'Новый контакт';
     $('saveContact').querySelector('span').textContent = contact ? 'Сохранить изменения' : 'Сохранить контакт';
     $('contactName').value = contact?.name || '';
@@ -319,26 +488,48 @@
     if (state.actor?.editor !== true || $('saveContact').disabled) return;
     const form = $('contactForm');
     $('contactName').value = $('contactName').value.trim();
-    $('contactName').setCustomValidity($('contactName').value ? '' : 'Укажите название или формат бизнеса.');
-    if (!form.reportValidity()) return;
-    const data = Object.fromEntries(new FormData(form));
-    const body = {
-      day: Number(data.day), name: data.name.trim(), category: data.category,
-      person: data.person.trim(), channel: data.channel.trim(), outcome: data.outcome,
-      problem: data.problem.trim(), nextStep: data.nextStep.trim(),
-    };
+    const nameError = $('contactName').value ? '' : 'Укажите название или формат бизнеса.';
+    $('contactName').setCustomValidity(nameError);
+    $('contactName').setAttribute('aria-invalid', String(!!nameError));
+    $('contactNameError').textContent = nameError; $('contactNameError').hidden = !nameError;
+    if (!state.pendingContact && !form.reportValidity()) return;
+    const data = contactFields();
+    const body = state.pendingContact ? { ...state.pendingContact.body } : Object.fromEntries(Object.entries(data).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]));
     const editing = state.editing;
     if (editing) body.expectedRevision = editing.revision;
+    if (!editing && !state.pendingContact) state.pendingContact = { key: state.draftKey, body };
+    const actor = state.actor;
+    const draftKey = state.draftKey;
+    state.contactChanged = true;
     busyForm(form, true);
+    await rememberDraft();
+    if (state.actor !== actor) return;
     status('contactFormStatus', 'Сохраняем контакт…');
     try {
-      await api('/command/contacts' + (editing ? '/' + encodeURIComponent(editing.id) : ''), { method: editing ? 'PATCH' : 'POST', body });
+      const result = await api('/command/contacts' + (editing ? '/' + encodeURIComponent(editing.id) : ''), { method: editing ? 'PATCH' : 'POST', body, key: editing ? undefined : state.pendingContact.key });
+      if (state.actor !== actor || state.draftKey !== draftKey) return;
+      await discardCurrentDraft();
+      if (state.actor !== actor || state.draftKey !== draftKey) return;
       $('contactDialog').close();
       state.editing = null;
-      status('workspaceStatus', 'Контакт сохранён в личном штабе.', 'success');
+      status('workspaceStatus', result.idempotency_replayed ? 'Сервер подтвердил ранее сохранённый контакт. Повторная запись не создана.' : 'Контакт сохранён в личном штабе.', 'success');
       await loadContacts();
-    } catch (error) { status('contactFormStatus', error.message, 'error'); }
-    finally { busyForm(form, false); }
+    } catch (error) {
+      if (state.actor !== actor) return;
+      if ([400, 403, 404, 409, 410, 415, 422].includes(error.status)) {
+        state.pendingContact = null;
+        if (['idempotency_conflict', 'idempotency_target_removed'].includes(error.code)) {
+          await discardCurrentDraft();
+          if (state.actor !== actor || state.draftKey !== draftKey) return;
+          $('contactDialog').close(); await loadContacts();
+          status('workspaceStatus', error.message, 'error');
+          return;
+        }
+      }
+      status('contactFormStatus', error.message + (state.pendingContact ? ' Исход отправки не подтверждён. Повторите сохранение с теми же данными.' : ''), 'error');
+      await rememberDraft();
+    }
+    finally { if (state.actor === actor && state.draftKey === draftKey) { busyForm(form, false); setContactPending(); } }
   }
 
   function confirmation(title, description, actionLabel, action) {
@@ -418,15 +609,28 @@
     event.preventDefault();
     if (state.actor?.editor !== true || $('saveExpense').disabled) return;
     const form = $('expenseForm');
-    if (!form.reportValidity()) return;
-    const body = { day: state.day, amountRub: Number($('expenseAmount').value), category: $('expenseCategory').value, note: $('expenseNote').value.trim() };
+    if (!state.expenseAttempt && !form.reportValidity()) return;
+    if (!state.expenseAttempt) state.expenseAttempt = { key: crypto.randomUUID(), body: { day: state.day, amountRub: Number($('expenseAmount').value), category: $('expenseCategory').value, note: $('expenseNote').value.trim() } };
+    const attempt = state.expenseAttempt;
+    const actor = state.actor;
     busyForm(form, true); status('expenseFormStatus', 'Сохраняем расход…');
     try {
-      await api('/command/expenses', { method: 'POST', body });
-      form.reset(); status('expenseFormStatus', 'Расход сохранён.', 'success');
+      const result = await api('/command/expenses', { method: 'POST', body: attempt.body, key: attempt.key });
+      if (state.actor !== actor || state.expenseAttempt !== attempt) return;
+      state.expenseAttempt = null;
+      form.reset(); status('expenseFormStatus', result.idempotency_replayed ? 'Сервер подтвердил расход. Повторная запись не создана.' : 'Расход сохранён.', 'success');
       await loadExpenses();
-    } catch (error) { status('expenseFormStatus', error.message, 'error'); }
-    finally { busyForm(form, false); }
+    } catch (error) {
+      if (state.actor !== actor || state.expenseAttempt !== attempt) return;
+      if ([400, 403, 404, 409, 410, 415, 422].includes(error.status)) state.expenseAttempt = null;
+      status('expenseFormStatus', error.message + (state.expenseAttempt ? ' Повторите отправку: поля сохранены до подтверждения.' : ''), 'error');
+    }
+    finally {
+      if (state.actor !== actor || (state.expenseAttempt && state.expenseAttempt !== attempt)) return;
+      busyForm(form, false);
+      for (const field of form.querySelectorAll('input,select')) field.disabled = !!state.expenseAttempt || state.actor?.editor !== true;
+      $('saveExpense').textContent = state.expenseAttempt ? `Повторить запись дня ${state.expenseAttempt.body.day}` : 'Добавить расход';
+    }
   }
 
   async function loadQuests() {
@@ -497,18 +701,37 @@
     location.assign(API + '/auth/google/start');
   });
   $('retryAuth').addEventListener('click', bootstrap);
+  $('copyCallback').addEventListener('click', async () => {
+    if (!$('googleCallback').value) return;
+    try { await navigator.clipboard.writeText($('googleCallback').value); status('callbackStatus', 'Адрес скопирован.', 'success'); }
+    catch { $('googleCallback').select(); status('callbackStatus', 'Выделен адрес — скопируйте его вручную.'); }
+  });
   $('logout').addEventListener('click', async () => {
     $('logout').disabled = true;
-    try { await api('/auth/logout', { method: 'POST', body: {} }); lock('Вы вышли из личного штаба.'); }
+    let erased = true;
+    try { await discardCurrentDraft(); } catch { erased = false; }
+    try { await api('/auth/logout', { method: 'POST', body: {} }); authChannel?.postMessage({ type: 'signed-out' }); lock(erased ? 'Вы вышли из личного штаба. Черновик удалён с этого устройства.' : 'Вы вышли из личного штаба. Браузер не подтвердил удаление черновика; очистите данные этого сайта на устройстве.'); }
     catch (error) { status('workspaceStatus', error.message, 'error'); }
     finally { $('logout').disabled = false; }
   });
   for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => switchTab(button.dataset.tab));
   $('activeDay').addEventListener('change', () => { state.day = Number($('activeDay').value); switchTab(state.tab); });
-  $('newContact').addEventListener('click', () => openContact());
+  $('newContact').addEventListener('click', () => startContact());
   $('quickMode').addEventListener('click', () => setContactMode(false));
   $('detailMode').addEventListener('click', () => setContactMode(true));
-  $('contactName').addEventListener('input', () => $('contactName').setCustomValidity(''));
+  $('contactName').addEventListener('input', () => { $('contactName').setCustomValidity(''); $('contactName').removeAttribute('aria-invalid'); $('contactNameError').hidden = true; });
+  $('contactForm').addEventListener('input', draftChanged);
+  $('contactForm').addEventListener('change', draftChanged);
+  $('persistDraft').addEventListener('change', () => { state.contactChanged = true; rememberDraft(); });
+  $('restoreDraft').addEventListener('click', resumeDraft);
+  $('discardDraft').addEventListener('click', () => confirmation('Удалить черновик?', 'Незавершённая запись будет удалена с этого устройства. Сохранённые в штабе контакты не изменятся.', 'Удалить черновик', discardCurrentDraft));
+  $('contactFilters').addEventListener('submit', event => {
+    event.preventDefault();
+    state.filters = { q: $('contactSearch').value.trim(), outcome: $('contactOutcomeFilter').value, followup: $('contactFollowupFilter').value };
+    loadContacts();
+  });
+  for (const id of ['contactOutcomeFilter', 'contactFollowupFilter']) $(id).addEventListener('change', () => $('contactFilters').requestSubmit());
+  $('resetContactFilters').addEventListener('click', () => { $('contactFilters').reset(); $('contactFilters').requestSubmit(); });
   $('contactForm').addEventListener('submit', saveContact);
   $('expenseForm').addEventListener('submit', saveExpense);
   $('moreContacts').addEventListener('click', () => loadContacts(true));
@@ -522,12 +745,17 @@
       status('publishStatus', 'Сводка снята с публикации. Записи штаба сохранены.', 'success');
     });
   });
-  for (const button of document.querySelectorAll('[data-close]')) button.addEventListener('click', () => {
+  for (const button of document.querySelectorAll('[data-close]')) button.addEventListener('click', async () => {
     if (button.dataset.close === 'confirmDialog' && state.confirmationBusy) return;
     if (button.dataset.close === 'contactDialog' && $('contactForm').getAttribute('aria-busy') === 'true') return;
+    if (button.dataset.close === 'contactDialog') await rememberDraft();
     $(button.dataset.close).close();
   });
-  $('contactDialog').addEventListener('cancel', event => { if ($('contactForm').getAttribute('aria-busy') === 'true') event.preventDefault(); });
+  $('contactDialog').addEventListener('cancel', event => {
+    event.preventDefault();
+    if ($('contactForm').getAttribute('aria-busy') === 'true') return;
+    rememberDraft().finally(() => $('contactDialog').close());
+  });
   $('confirmDialog').addEventListener('cancel', event => { if (state.confirmationBusy) event.preventDefault(); });
   $('confirmAction').addEventListener('click', async () => {
     if (!state.confirmAction || state.confirmationBusy) return;
@@ -541,7 +769,18 @@
       for (const button of $('confirmDialog').querySelectorAll('[data-close]')) button.disabled = false;
     }
   });
-  window.addEventListener('pagehide', () => { state.authSeq++; lock(); });
+  window.addEventListener('pagehide', () => { rememberDraft(); state.authSeq++; lock(); });
+  window.addEventListener('beforeunload', event => { if ($('contactDialog').open && state.contactChanged && !$('persistDraft').checked) { event.preventDefault(); event.returnValue = ''; } });
+  window.addEventListener('offline', () => {
+    if (state.actor) status('workspaceStatus', 'Нет соединения. Можно продолжить черновик контакта. После восстановления связи сохраните его кнопкой в форме.');
+  });
+  window.addEventListener('online', () => { if (state.actor) status('workspaceStatus', 'Соединение восстановлено. Незавершённые записи отправляются только после нажатия «Сохранить».'); });
+  if (authChannel) authChannel.addEventListener('message', event => {
+    if (event.data?.type !== 'signed-out') return;
+    const actor = state.actor;
+    lock('Вы вышли из штаба в другой вкладке.');
+    if (actor) draftVault.remove(actor).catch(() => status('authStatus', 'Сессия закрыта. Очистите данные сайта, если браузер не смог удалить черновик.', 'error'));
+  });
   window.addEventListener('pageshow', event => { if (event.persisted) bootstrap(); });
   bootstrap();
 })();

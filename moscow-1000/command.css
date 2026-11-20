@@ -10,3 +10,45 @@
 .section-label>span svg{width:15px;height:15px}
 
 .mobile-admin-link{display:flex;align-items:center;justify-content:center;gap:5px;width:max-content;margin:7px auto 0;min-height:30px;color:#8395ae;font-size:11px}.mobile-admin-link svg{width:12px;height:12px}@media(min-width:1000px){.mobile-admin-link{display:none}}
+
+/* R7: thumb-friendly controls, stable numeric cards and a real mobile day sheet. */
+:root{--safe-top:env(safe-area-inset-top,0px)}
+body{overscroll-behavior-y:contain}.app-shell{overflow-wrap:break-word}
+.hero{height:calc(188px + var(--safe-top));padding-top:calc(16px + var(--safe-top))}
+.hero-copy{margin-top:39px}.hero h1{font-weight:750}
+.metric-card strong,.mission-progress strong,.result-grid strong,.quest-ring strong{font-variant-numeric:tabular-nums}
+.metric-card strong.compact{font-size:20px;line-height:1.25;letter-spacing:-.5px;overflow-wrap:anywhere}
+.metric-card strong.compact small{font-size:18px}
+.quest-icon{display:flex;flex:none}.quest-check{margin-left:1px}
+.icon-button{min-width:44px;min-height:44px}.day-tabs button,.segment-tabs button{min-height:42px}
+.day-tabs{overscroll-behavior-x:contain;scroll-padding-inline:var(--gutter)}
+.hq-meta-actions{display:flex;align-items:center;justify-content:center;gap:26px;margin-top:4px}
+.hq-meta-actions .day-selector,.hq-meta-actions .mobile-admin-link{margin:0;min-height:44px;font-size:12px}
+.publication-status{font-size:11px;margin-top:12px}
+.connection-banner{display:flex;align-items:center;gap:12px;margin:0;padding:calc(12px + var(--safe-top)) var(--gutter) 12px;background:#211723;border-bottom:1px solid #70344a;color:#f0ccd5;font-size:12px;line-height:1.45}
+.connection-banner>span{flex:1;min-width:0}.connection-banner>button{min-height:44px;flex:none;color:#fff;font-size:12px}
+.connection-banner:not([hidden])~.screen{--safe-top:0px}
+.dialog-open{overflow:hidden}dialog{overscroll-behavior:contain;scrollbar-width:thin}
+.day-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px}
+.day-choice{min-height:74px;padding:11px 12px;text-align:left;border:1px solid #34425a;border-radius:11px;background:linear-gradient(140deg,#152236,#091422);display:flex;flex-direction:column;gap:5px}
+.day-choice b{font-size:14px}.day-choice span{font-size:12px;line-height:1.35;color:#acbbce}
+.day-choice[aria-pressed=true]{border-color:#ff3656;background:linear-gradient(130deg,#65162d,#271625);box-shadow:inset 0 0 18px #ee12351a}
+.day-choice[aria-pressed=true] span{color:#f3c9d2}
+@media(max-width:479px){
+  dialog{position:fixed;top:auto;bottom:0;margin:0 auto;width:100%;max-width:none;max-height:calc(100dvh - 20px - var(--safe-top));border-radius:20px 20px 0 0;padding:17px 16px calc(20px + var(--safe-bottom));box-shadow:0 -12px 70px #0009}
+  .dialog-top{margin:0 0 14px}.dialog-top .eyebrow{font-size:11px}
+  #dialog-content h2{font-size:25px}#dialog-content p{font-size:14px}
+  .screen-heading{padding-top:calc(15px + var(--safe-top))}
+}
+@media(max-width:359px){
+  .hero{height:calc(181px + var(--safe-top))}.hero-copy{margin-top:36px}.hero h1{font-size:27px}
+  .mission-progress{width:48%;padding-right:10px}
+  .mission-day{width:52%;padding:0 17px 0 9px;font-size:11.5px;overflow-wrap:normal;word-break:normal}
+  .mission-day b{font-size:14px}.mission-day .route-chevron{right:-2px}
+  .publication-status{font-size:10px}.hq-meta-actions{gap:20px}
+  .day-picker{gap:7px}.day-choice{padding:10px;min-height:78px}.day-choice span{font-size:11px}
+  .metric-card strong.compact{font-size:17px}.metric-card strong.compact small{font-size:16px}
+}
+@media(min-width:480px) and (max-width:999px){.hero{height:205px;padding-top:20px}.hero-copy{margin-top:50px}}
+@media(min-width:1000px){.hero{height:197px;padding-top:20px}.hero-copy{margin-top:43px}.hq-meta-actions .mobile-admin-link{display:none}.hq-meta-actions .day-selector{min-height:32px}.connection-banner{font-size:11px}}
+@media(orientation:landscape) and (max-width:999px){.screen-body,.screen-heading,.hero,.day-tabs,.segment-tabs,.connection-banner{padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}.bottom-nav{padding-left:max(7px,env(safe-area-inset-left,0px));padding-right:max(7px,env(safe-area-inset-right,0px))}}

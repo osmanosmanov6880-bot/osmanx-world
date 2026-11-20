@@ -188,3 +188,59 @@ body:has(dialog[open]){overflow:hidden}
 @media(min-width:600px){body{background:radial-gradient(ellipse at 50% 0,#19314950,transparent 700px),radial-gradient(ellipse at 45% 90%,#600c2117,transparent 600px),#030a15}.login-shell{padding-top:38px}.login-shell>.brand{margin-bottom:64px}.admin-shell{margin-top:18px;max-width:480px;min-height:calc(100dvh - 18px);border-left:1px solid #18263a;border-right:1px solid #18263a;padding-left:22px;padding-right:22px;background:#030a1577}.admin-header{padding-top:25px}.bottom-nav{border-left:1px solid #18263a;border-right:1px solid #18263a}.contact-dialog{padding:21px}.back-link{margin-bottom:34px}}
 @media(max-width:359px){.login-shell{padding-left:16px;padding-right:16px}.login-shell h1{font-size:34px}.login-card{padding:18px 15px}.admin-shell{padding-left:12px;padding-right:12px}.record-top{gap:7px}.quest-row{gap:7px;padding:10px 8px}.quest-row .quest-icon{width:30px;height:32px}.quest-row .quest-copy{font-size:12px}.quest-row .quest-reward{font-size:9px}.contact-dialog{width:calc(100% - 12px);padding:17px 13px}.mode-tabs button{font-size:11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+/* R7 — mobile contact capture, private drafts and server-backed filters. */
+.contact-filters{margin-top:18px;padding:14px;border:1px solid #26394f;border-radius:12px;background:linear-gradient(125deg,#0e1a29,#07111d)}
+.contact-filters>label{margin-bottom:10px}
+.contact-filters .field-row{gap:9px}
+.contact-filters .field-row label{font-size:12px;margin-bottom:0}
+.contact-filters .field-row select{font-size:13px;min-height:42px;padding-left:9px}
+.filter-actions{display:flex;align-items:center;gap:14px;margin-top:12px}
+.filter-actions>.secondary-button{font-size:13px;min-height:39px;padding:7px 20px}
+.filter-hint{color:#8699b1;font-size:12px;line-height:1.5;margin-top:12px}
+.draft-banner{border:1px solid #665333;border-radius:11px;background:linear-gradient(115deg,#2b211b70,#0b1623);padding:13px;margin-top:14px}
+.draft-banner strong{font-size:14px;color:#f3dcad;font-weight:600}
+.draft-banner p{color:#b8ac94;font-size:12px;line-height:1.6;margin-top:5px;overflow-wrap:anywhere}
+.draft-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:11px}
+.draft-actions .secondary-button{font-size:13px;min-height:39px;padding:6px 15px;border-color:#766045;background:#30251f80}
+.draft-actions .text-button{font-size:12px;color:#c4b49e}
+.draft-choice{display:flex!important;gap:10px;align-items:flex-start;border-top:1px solid #243248;padding-top:13px;margin:18px 0 8px!important;font-size:12px!important;line-height:1.45}
+.draft-choice>input{width:18px!important;min-width:18px!important;height:18px!important;min-height:18px!important;margin:2px 0 0!important}
+.draft-choice>span{flex:1}
+.draft-choice small{display:block;color:#8293aa;font-size:11px;line-height:1.5;margin-top:4px}
+.draft-status{font-size:11px;color:#8398af;line-height:1.5;margin:0 0 11px;overflow-wrap:anywhere}
+.field-error{display:block;color:#ff8295;font-size:12px;line-height:1.5;margin:6px 0 0}
+.contact-save-bar{position:sticky;bottom:-14px;background:linear-gradient(180deg,#050d17ef,#050d17 28%);border-top:1px solid #263448;padding:10px 0 13px;margin:15px -1px -13px;z-index:2;box-shadow:0 -10px 18px #050d1780}
+.contact-save-bar #saveContact{margin:0}
+.contact-save-bar .private-label{margin-top:9px}
+.contact-dialog input:disabled,.contact-dialog textarea:disabled,.contact-dialog select:disabled{opacity:.75}
+.contact-dialog input[aria-invalid=true]{border-color:#ff526b}
+.auth-setup{margin-top:20px;border-top:1px solid #344257;padding-top:16px}
+.auth-setup summary{font-size:13px;color:#c9d5e6;cursor:pointer;font-weight:600}
+.auth-setup>p{font-size:12px;color:#99aac1;line-height:1.6;margin-top:11px}
+.auth-setup ul{list-style:none;padding:0;margin:14px 0}
+.auth-setup li{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #26354a;padding:9px 0;font-size:12px;color:#a6b7cd}
+.auth-setup li strong{font-size:11px;text-align:right;font-weight:500;color:#d6ac77}
+.auth-setup li.configured strong{color:#62d8b2}
+.auth-setup label{font-size:12px;margin:0 0 7px}
+.callback-row{display:flex;gap:7px;min-width:0}
+.callback-row input{min-width:0;flex:1;font-size:12px;height:40px}
+.callback-row .secondary-button{font-size:11px;padding:8px;min-height:40px;flex:none}
+.auth-setup>.text-button{display:block;margin-top:8px;font-size:12px}
+.setup-page{max-width:640px;margin:auto;padding:28px 20px 50px}
+.setup-page h1{font-size:30px;margin:20px 0}
+.setup-page h2{font-size:20px;margin:27px 0 12px}
+.setup-page p,.setup-page li{font-size:15px;line-height:1.7;color:#b6c4d6}
+.setup-page ol{padding-left:21px}
+.setup-page li+li{margin-top:14px}
+.setup-page code{font-size:12px;padding:3px 5px;background:#132338;border-radius:4px;overflow-wrap:anywhere}
+.setup-page a{color:#ff7a8f;text-decoration:underline;text-underline-offset:4px}
+.setup-page .help-text{font-size:13px;margin:15px 0 0}
+@media(max-width:599px){
+ .contact-dialog{width:100%;max-width:480px;height:100dvh;max-height:100dvh;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(13px + env(safe-area-inset-bottom));border-radius:0;border-top:0;border-bottom:0}
+ .contact-dialog .dialog-header{margin-bottom:17px}
+ .contact-dialog .dialog-header h2{font-size:22px}
+ .contact-dialog .mode-tabs{margin-bottom:17px}
+ .contact-dialog label{font-size:13px}
+ .contact-save-bar{padding-bottom:calc(13px + env(safe-area-inset-bottom));bottom:calc(-13px - env(safe-area-inset-bottom));margin-bottom:calc(-13px - env(safe-area-inset-bottom))}
+}
+@media(max-width:359px){.contact-filters{padding:12px}.contact-filters .field-row{grid-template-columns:1fr}.contact-filters .field-row label{font-size:12px}.contact-dialog{padding-left:14px;padding-right:14px}.callback-row{flex-direction:column}.callback-row .secondary-button{align-self:flex-start}}

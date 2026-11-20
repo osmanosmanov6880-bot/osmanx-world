@@ -2,13 +2,14 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#030a15">
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="same-origin">
   <title>Личный штаб — OSMANX MOSCOW 1000</title>
   <link rel="stylesheet" href="admin.css">
   <script src="../command-data.js" defer></script>
+  <script src="contact-workflow.js" defer></script>
   <script src="admin.js" defer></script>
 </head>
 <body>
@@ -46,6 +47,7 @@
       </button>
       <p id="authStatus" class="status" role="status" aria-live="polite">Проверяем доступ…</p>
       <button id="retryAuth" class="text-button" type="button" hidden>Проверить ещё раз</button>
+      <details id="authSetup" class="auth-setup" hidden><summary>Подключение Google-входа</summary><p id="authSetupDescription">Доступ откроется после настройки владельцем.</p><ul id="authSetupChecks"></ul><label for="googleCallback">Адрес возврата Google</label><div class="callback-row"><input id="googleCallback" type="text" readonly spellcheck="false"><button id="copyCallback" type="button" class="secondary-button">Копировать</button></div><p id="callbackStatus" class="status" role="status" hidden></p><a href="google-setup.html" class="text-button">Инструкция по подключению</a></details>
     </section>
     <p class="privacy-note"><svg class="icon"><use href="#i-shield"/></svg>Данные контактов доступны только в личном штабе.</p>
     <noscript><p class="status error">Для входа и работы штаба включите JavaScript в браузере.</p></noscript>
@@ -62,6 +64,8 @@
     <main>
       <section id="contactsPanel" class="panel" aria-labelledby="sectionHeading">
         <button id="newContact" type="button" class="primary-button full-width"><svg class="icon"><use href="#i-plus"/></svg>Быстро записать контакт</button>
+        <aside id="contactDraftBanner" class="draft-banner" hidden><div><strong>Есть незавершённая запись</strong><p id="contactDraftInfo"></p></div><div class="draft-actions"><button id="restoreDraft" type="button" class="secondary-button">Продолжить</button><button id="discardDraft" type="button" class="text-button">Удалить черновик</button></div></aside>
+        <form id="contactFilters" class="contact-filters" role="search" aria-label="Поиск контактов"><label for="contactSearch">Найти контакт<input id="contactSearch" type="search" maxlength="120" placeholder="Название, имя, запрос…" autocomplete="off"></label><div class="field-row"><label for="contactOutcomeFilter">Результат<select id="contactOutcomeFilter"><option value="">Все результаты</option><option value="visited">Визит</option><option value="dialogue">Диалог</option><option value="interest">Интерес</option><option value="refusal">Отказ</option><option value="meeting">Встреча</option><option value="pilot">Пилот</option><option value="contract">Договор</option></select></label><label for="contactFollowupFilter">Следующий шаг<select id="contactFollowupFilter"><option value="all">Все контакты</option><option value="pending">Есть следующий шаг</option><option value="none">Без активного шага</option></select></label></div><div class="filter-actions"><button type="submit" class="secondary-button">Найти</button><button id="resetContactFilters" type="button" class="text-button" hidden>Сбросить фильтры</button></div><p id="contactFilterHint" class="filter-hint">Поиск по контактам выбранного дня.</p></form>
         <div class="section-bar"><h2>Контакты дня</h2><span id="contactCount" class="count-badge">—</span></div>
         <div id="contactList" class="record-list" aria-live="polite"></div>
         <button id="moreContacts" class="secondary-button full-width" type="button" hidden>Показать ещё</button>
@@ -96,16 +100,18 @@
     <div class="dialog-header"><h2 id="contactTitle">Новый контакт</h2><button type="button" class="icon-button" data-close="contactDialog" aria-label="Закрыть форму контакта"><svg class="icon"><use href="#i-close"/></svg></button></div>
     <div class="mode-tabs" aria-label="Режим записи"><button id="quickMode" type="button" class="active" aria-pressed="true"><svg class="icon"><use href="#i-bolt"/></svg>Быстро (30 сек)</button><button id="detailMode" type="button" aria-pressed="false"><svg class="icon"><use href="#i-users"/></svg>Подробно</button></div>
     <form id="contactForm" novalidate>
-      <label>Название / формат бизнеса <span class="required">*</span><input id="contactName" name="name" placeholder="Кафе, шоурум, студия…" maxlength="120" autocomplete="organization" required></label>
+      <label>Название / формат бизнеса <span class="required">*</span><input id="contactName" name="name" placeholder="Кафе, шоурум, студия…" maxlength="120" autocomplete="organization" aria-describedby="contactNameError" required><span id="contactNameError" class="field-error" hidden></span></label>
       <label>Категория<select id="contactCategory" name="category"><option value="">Выберите категорию</option><option value="HoReCa">Кафе и рестораны</option><option value="retail">Магазины и шоурумы</option><option value="services">Услуги</option><option value="creative">Креативные студии</option><option value="technology">Технологии</option><option value="other">Другое</option></select></label>
       <label>Контактное лицо<input id="contactPerson" name="person" placeholder="Имя и роль (например, собственник)" maxlength="100" autocomplete="name"></label>
       <fieldset class="outcomes"><legend>Результат встречи</legend><div class="outcome-options"><label><input type="radio" name="outcome" value="dialogue" checked><span>Диалог</span></label><label><input type="radio" name="outcome" value="interest"><span>Интерес</span></label><label><input type="radio" name="outcome" value="refusal"><span>Отказ</span></label></div><div id="extraOutcomes" class="outcome-options extra-outcomes" hidden><label><input type="radio" name="outcome" value="visited"><span>Визит</span></label><label><input type="radio" name="outcome" value="meeting"><span>Встреча</span></label><label><input type="radio" name="outcome" value="pilot"><span>Пилот</span></label><label><input type="radio" name="outcome" value="contract"><span>Договор</span></label></div></fieldset>
       <label>Проблема / запрос<textarea id="contactProblem" name="problem" rows="2" maxlength="1000" placeholder="Коротко: что обсудили, в чём запрос?"></textarea></label>
       <label>Следующий шаг<input id="contactNextStep" name="nextStep" maxlength="500" placeholder="Например: отправить презентацию" autocomplete="off"></label>
       <div id="detailedFields" hidden><label>Канал связи<input id="contactChannel" name="channel" maxlength="200" placeholder="Телефон, email или Telegram" autocomplete="off"></label><label>День экспедиции<select id="contactDay" name="day"><option value="1">День 1</option><option value="2">День 2</option><option value="3">День 3</option><option value="4">День 4</option><option value="5">День 5</option><option value="6">День 6</option><option value="7">День 7</option><option value="8">День 8</option><option value="9">День 9</option><option value="10">День 10</option></select></label></div>
+      <label class="draft-choice"><input id="persistDraft" type="checkbox"><span>Сохранять черновик на этом устройстве<small>Восстановление в течение 7 дней. Только на своём телефоне. При выходе из аккаунта черновик удаляется.</small></span></label>
+      <p id="draftStatus" class="draft-status" role="status" aria-live="polite">Черновик пока хранится только в этой вкладке.</p>
       <p id="contactFormStatus" class="status" role="status" aria-live="polite" hidden></p>
-      <button id="saveContact" class="primary-button full-width" type="submit"><svg class="icon"><use href="#i-check"/></svg><span>Сохранить контакт</span></button>
-      <p class="private-label"><svg class="icon"><use href="#i-lock"/></svg>Контакт остаётся в личном штабе</p>
+      <div class="contact-save-bar"><button id="saveContact" class="primary-button full-width" type="submit"><svg class="icon"><use href="#i-check"/></svg><span>Сохранить контакт</span></button>
+      <p class="private-label"><svg class="icon"><use href="#i-lock"/></svg>Контакт остаётся в личном штабе</p></div>
     </form>
   </dialog>
 

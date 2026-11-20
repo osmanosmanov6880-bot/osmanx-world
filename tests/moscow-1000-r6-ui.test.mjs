@@ -181,7 +181,7 @@ test('R6 UI: viewer only fetches public snapshots and never requests private cre
   const endpoints = [...source.matchAll(/loadPublic\('([^']+)'\)/g)].map(match => match[1]);
   assert.deepEqual(endpoints, ['/moscow-1000/api/command/public', '/moscow-1000/api/public-release']);
   assert.match(source, /credentials:'omit'/);
-  assert.doesNotMatch(source, /localStorage|sessionStorage|\/command\/(?:contacts|expenses)|\/auth\/session/);
+  assert.doesNotMatch(source, /sessionStorage|\/command\/(?:contacts|expenses)|\/auth\/session/); // R7 retains only the allowlisted public snapshot; behavioral cache tests cover it.
   assert.match(source, /open\.href=`\/moscow-1000\/episodes\/\$\{ep\.id\}\//);
   assert.match(file('moscow-1000/command-map.js'), /noopener noreferrer/);
 });

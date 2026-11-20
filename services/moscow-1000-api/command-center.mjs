@@ -19,6 +19,69 @@ const invalid=()=>reply({ok:false,error:'Проверьте поля формы.
 const conflict=()=>reply({ok:false,error:'Запись изменилась. Обновите данные и повторите действие.'},409);
 const contactDto=row=>({id:row.id,revision:row.revision,day:row.day,name:row.name,category:row.category,person:row.person,channel:row.channel,outcome:row.outcome,problem:row.problem,nextStep:row.next_step,createdAt:row.created_at,updatedAt:row.updated_at});
 const expenseDto=row=>({id:row.id,day:row.day,amountRub:row.amount_kopecks/100,category:row.category,note:row.note,createdAt:row.created_at});
+const hash=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))),x=>x.toString(16).padStart(2,'0')).join('');
+const idempotencyConflict=()=>reply({ok:false,code:'idempotency_conflict',error:'Этот ключ уже использован для другой записи. Обновите состояние черновика перед новой отправкой.'},409);
+function russianFoldSql(expression) {
+  // SQLite lower() folds ASCII only. Explicit Cyrillic folding keeps Russian
+  // search correct for existing rows, without a data-changing backfill on read.
+  for (const upper of 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ') expression=`replace(${expression},'${upper}','${upper.toLowerCase()}')`;
+  return 'lower('+expression+')';
+}
+const contactSearchSql=russianFoldSql("name||' '||category||' '||person||' '||channel||' '||problem||' '||next_step");
+function contactFilters(url) {
+  const page=pagination(url);if (!page) return null;
+  const q=(url.searchParams.get('q')||'').trim();
+  const outcome=url.searchParams.get('outcome')||'all';
+  const followup=url.searchParams.get('followup')||'all';
+  if (!clean(q,120)||!(outcome==='all'||outcomes.has(outcome))||!['all','pending','none'].includes(followup)) return null;
+  const clauses=[],args=[];
+  if (page.day!==null) {clauses.push('day=?');args.push(page.day);}
+  if (outcome!=='all') {clauses.push('outcome=?');args.push(outcome);}
+  if (followup!=='all') {
+    const pending="(TRIM(next_step)<>'' AND outcome NOT IN ('refusal','contract'))";
+    clauses.push(followup==='pending'?pending:'NOT '+pending);
+  }
+  if (q) {clauses.push(`instr(${contactSearchSql},?)>0`);args.push(q.toLowerCase());}
+  return {...page,where:clauses.length?' WHERE '+clauses.join(' AND '):'',args};
+}
+
+async function createCommandRecord(req,db,actor,{operation,value,table,dto,insert,event}) {
+  const key=req.headers.get('Idempotency-Key');
+  if (key!==null&&!/^[A-Za-z0-9._:-]{16,128}$/.test(key)) return reply({ok:false,code:'invalid_idempotency_key',error:'Некорректный ключ отправки.'},400);
+  const id=uuid(),at=stamp();
+  if (key===null) {
+    await db.batch([insert(id,at),stateChange(db,actor,at),audit(db,event,actor,id,at)]);
+    return reply({ok:true,[operation]:dto(await db.prepare(`SELECT * FROM ${table} WHERE id=?`).bind(id).first())},201);
+  }
+  const actorId=await hash(JSON.stringify([actor.provider||'access',actor.subject||actor.email.toLowerCase()]));
+  const keyHash=await hash(key),payloadHash=await hash(JSON.stringify(value));
+  const identity=[actorId,operation,keyHash];
+  const readReceipt=()=>db.prepare('SELECT payload_hash,record_id FROM command_requests WHERE actor_id=? AND operation=? AND key_hash=?').bind(...identity).first();
+  const respond=async (receipt,replayed)=>{
+    if (receipt.payload_hash!==payloadHash) return idempotencyConflict();
+    const row=await db.prepare(`SELECT * FROM ${table} WHERE id=?`).bind(receipt.record_id).first();
+    // Deleting a record must never allow an old queued request to recreate it.
+    if (!row) return reply({ok:false,code:'idempotency_target_removed',error:'Эта запись уже была сохранена, затем удалена. Повторная отправка её не восстановит.'},410);
+    return reply({ok:true,[operation]:dto(row),idempotency_replayed:replayed},replayed?200:201);
+  };
+  let prior;
+  try {prior=await readReceipt();} catch {return reply({ok:false,code:'migration_required',error:'Сначала примените миграцию R7. Черновик можно отправить после обновления сервиса.'},503);}
+  if (prior) return respond(prior,true);
+  // INSERT OR IGNORE reserves a scoped key in the same transaction as the
+  // record, revision and audit. Every later write is guarded by our unique ID,
+  // so concurrent identical or conflicting requests can commit only once.
+  const guard='EXISTS(SELECT 1 FROM command_requests WHERE actor_id=? AND operation=? AND key_hash=? AND record_id=?)';
+  const args=[...identity,id];
+  await db.batch([
+    db.prepare('INSERT OR IGNORE INTO command_requests(actor_id,operation,key_hash,payload_hash,record_id,created_at) VALUES(?,?,?,?,?,?)').bind(...identity,payloadHash,id,at),
+    insert(id,at,' WHERE '+guard,args),
+    stateChange(db,actor,at,' AND '+guard,args),
+    audit(db,event,actor,id,at,' WHERE '+guard,args)
+  ]);
+  const receipt=await readReceipt();
+  if (!receipt) throw Error('Missing committed request receipt');
+  return respond(receipt,receipt.record_id!==id);
+}
 async function body(req) {
   if (!req.headers.get('Content-Type')?.startsWith('application/json') || Number(req.headers.get('Content-Length') || 0)>8192) return null;
   const reader=req.body?.getReader();
@@ -59,21 +122,20 @@ function audit(db,event,actor,id,at,condition='',args=[]) {
 }
 async function contacts(req,db,actor,rest,url) {
   if (rest==='/contacts'&&req.method==='GET') {
-    const page=pagination(url);if (!page) return invalid();
-    const where=page.day===null?'':' WHERE day=?';
-    const rows=(await db.prepare('SELECT * FROM command_contacts'+where+' ORDER BY created_at DESC,id DESC LIMIT 26 OFFSET ?').bind(...(page.day===null?[]:[page.day]),page.offset).all()).results||[];
-    return reply({ok:true,contacts:rows.slice(0,25).map(contactDto),nextOffset:rows.length>25?page.offset+25:null});
+    const page=contactFilters(url);if (!page) return invalid();
+    const result=await db.batch([
+      db.prepare('SELECT * FROM command_contacts'+page.where+' ORDER BY created_at DESC,id DESC LIMIT 26 OFFSET ?').bind(...page.args,page.offset),
+      db.prepare('SELECT COUNT(*) AS total FROM command_contacts'+page.where).bind(...page.args)
+    ]);
+    const rows=result[0].results||[];
+    return reply({ok:true,contacts:rows.slice(0,25).map(contactDto),nextOffset:rows.length>25?page.offset+25:null,total:result[1].results?.[0]?.total||0});
   }
   if (rest==='/contacts'&&req.method==='POST') {
     if (!actor.editor) return denied();
     const value=contactInput(await body(req));if (!value) return invalid();
-    const id=uuid(),at=stamp();
-    await db.batch([
-      db.prepare('INSERT INTO command_contacts(id,day,name,category,person,channel,outcome,problem,next_step,created_at,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').bind(id,value.day,value.name,value.category,value.person,value.channel,value.outcome,value.problem,value.nextStep,at,at,actor.email),
-      stateChange(db,actor,at),audit(db,'command_contact_created',actor,id,at)
-    ]);
-    const row=await db.prepare('SELECT * FROM command_contacts WHERE id=?').bind(id).first();
-    return reply({ok:true,contact:contactDto(row)},201);
+    return createCommandRecord(req,db,actor,{operation:'contact',value,table:'command_contacts',dto:contactDto,event:'command_contact_created',
+      insert:(id,at,condition='',args=[])=>db.prepare('INSERT INTO command_contacts(id,day,name,category,person,channel,outcome,problem,next_step,created_at,updated_at,updated_by) SELECT ?,?,?,?,?,?,?,?,?,?,?,?'+condition).bind(id,value.day,value.name,value.category,value.person,value.channel,value.outcome,value.problem,value.nextStep,at,at,actor.email,...args)
+    });
   }
   const match=/^\/contacts\/([0-9a-f-]{36})$/.exec(rest);if (!match) return null;
   if (!actor.editor) return denied();
@@ -113,12 +175,10 @@ async function expenses(req,db,actor,rest,url) {
     if (!actor.editor) return denied();
     const value=await body(req),amount=Math.round((value?.amountRub||0)*100);
     if (!only(value,['day','amountRub','category','note'])||!dayValid(value.day)||typeof value.amountRub!=='number'||!Number.isSafeInteger(amount)||amount<1||amount>100000000||Math.abs(value.amountRub*100-amount)>1e-6||!clean(value.category,80,true)||(value.note!==undefined&&!clean(value.note,300))) return invalid();
-    const id=uuid(),at=stamp();
-    await db.batch([
-      db.prepare('INSERT INTO command_expenses(id,day,amount_kopecks,category,note,created_at,created_by) VALUES(?,?,?,?,?,?,?)').bind(id,value.day,amount,value.category.trim(),(value.note||'').trim(),at,actor.email),
-      stateChange(db,actor,at),audit(db,'command_expense_created',actor,id,at)
-    ]);
-    return reply({ok:true,expense:expenseDto(await db.prepare('SELECT * FROM command_expenses WHERE id=?').bind(id).first())},201);
+    const canonical={day:value.day,amountKopecks:amount,category:value.category.trim(),note:(value.note||'').trim()};
+    return createCommandRecord(req,db,actor,{operation:'expense',value:canonical,table:'command_expenses',dto:expenseDto,event:'command_expense_created',
+      insert:(id,at,condition='',args=[])=>db.prepare('INSERT INTO command_expenses(id,day,amount_kopecks,category,note,created_at,created_by) SELECT ?,?,?,?,?,?,?'+condition).bind(id,canonical.day,amount,canonical.category,canonical.note,at,actor.email,...args)
+    });
   }
   const match=/^\/expenses\/([0-9a-f-]{36})$/.exec(rest);
   if (match&&req.method==='DELETE') {
