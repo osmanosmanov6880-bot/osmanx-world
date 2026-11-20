@@ -6,6 +6,7 @@ import {campaignCode,planFollowup,followupWindow} from './cinema-r4.mjs';
 import {sweepCinemaRows} from './cinema-retention.mjs';
 import {assigneeValue,registerCinemaR5Routes} from './cinema-r5.mjs';
 import {registerCinemaR6Routes} from './cinema-r6.mjs';
+import {registerCinemaR7Routes} from './cinema-r7.mjs';
 
 const STATES=['new','contacted','qualified','proposal','won','lost'];
 const PATHS={
@@ -203,7 +204,7 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     );
     return {window:windowName,items:data.rows};
   }));
-  app.patch(base+'/leads/:id',req=>protectOwner(req,['owner','manager'],async(db,s)=>{
+  app.patch(base+'/leads/:id',req=>protectOwner(req,['owner','manager'],async(db,s,role)=>{
     const id=requireUUID(req.params.id);
     const b=only(req.body,['expectedVersion','state','dealValueMinor','nextActionAt','nextActionKind','lossReasonCode','assignedTo']);
     const version=b.expectedVersion;
@@ -228,6 +229,10 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     const changedFollowup=plan.nextActionAt!==oldDue||plan.nextActionKind!==old.next_action_kind;
     const changedReason=plan.lossReasonCode!==old.loss_reason_code;
     const assigned=b.assignedTo===undefined?old.assigned_to:assigneeValue(b.assignedTo);
+    if(b.assignedTo!==undefined && role!=='owner' &&
+       ((old.assigned_to!==null&&old.assigned_to!==s.account_id) ||
+        (assigned!==null&&assigned!==s.account_id)))
+      throw error(403,'Назначения других менеджеров разрешены только владельцу');
     if(assigned!==null){
       const person=await db.query(
         "SELECT 1 FROM industry.memberships m JOIN industry.accounts a ON a.id=m.account_id WHERE m.tenant_id=$1 AND m.account_id=$2 AND m.role IN ('owner','manager') AND NOT a.disabled",
@@ -273,4 +278,5 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
   }));
   registerCinemaR5Routes(app,{base,protectOwner});
   registerCinemaR6Routes(app,{base,protectOwner});
+  registerCinemaR7Routes(app,{base,protectOwner});
 }
