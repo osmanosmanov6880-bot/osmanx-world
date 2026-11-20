@@ -1,0 +1,42 @@
+# R4: do not deploy this template unedited. Manual staging only; no production route.
+name = "osmanx-moscow-1000-api-staging"
+main = "index.mjs"
+compatibility_date = "2026-11-20"
+workers_dev = false
+
+[[routes]]
+pattern = "staging.osmanx.world/moscow-1000/api/*"
+zone_name = "osmanx.world"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "osmanx-moscow-1000-staging"
+database_id = "REPLACE_WITH_DISTINCT_STAGING_D1_ID"
+
+[[r2_buckets]]
+binding = "BACKUP_BUCKET"
+bucket_name = "osmanx-moscow-editorial-staging"
+
+[vars]
+SITE_ORIGIN = "https://staging.osmanx.world"
+TURNSTILE_SITE_KEY = "REPLACE_WITH_STAGING_TURNSTILE_KEY"
+EMAIL_FROM = "OSMANX <updates@osmanx.world>"
+NOTIFY_EMAIL = "REPLACE_WITH_PRIVATE_STAGING_RECEIVER"
+ACCESS_TEAM_DOMAIN = "https://REPLACE_WITH_TEAM.cloudflareaccess.com"
+ACCESS_AUD = "REPLACE_WITH_STAGING_ACCESS_APP_AUD"
+EDITOR_EMAILS = "REPLACE_WITH_EDITOR_EMAIL"
+APPROVER_EMAILS = "REPLACE_WITH_APPROVER_EMAIL"
+MODERATOR_EMAILS = "REPLACE_WITH_MODERATOR_EMAIL"
+REQUIRE_TWO_PERSON_REVIEW = "true"
+DIGEST_DELIVERY_ENABLED = "false"
+STREAM_UPLOAD_ENABLED = "false"
+STREAM_ACCOUNT_ID = "REPLACE_WITH_ACCOUNT_ID"
+STREAM_CUSTOMER_CODE = "REPLACE_WITH_CUSTOMER_CODE"
+
+[triggers]
+crons = ["*/5 * * * *", "0 3 * * *"]
+
+# Secrets: TURNSTILE_SECRET, RESEND_API_KEY, UNSUB_SIGNING_KEY,
+# STREAM_API_TOKEN (Stream Write), EDITORIAL_BACKUP_KEY (32 random bytes as base64).
+# Configure independent Cloudflare Access policy for staging /moscow-1000/editor/*
+# and /moscow-1000/api/admin/*; JWT verification happens again inside Worker.
