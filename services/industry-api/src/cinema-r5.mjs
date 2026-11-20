@@ -122,21 +122,35 @@ export function registerCinemaR5Routes(app,{base,protectOwner}){
     const rows=await db.query(
       'SELECT id,contact_email,created_at,state FROM industry.cinema_leads WHERE tenant_id=$1 AND contact_email=$2 ORDER BY created_at DESC LIMIT 50',
       [session.tenant_id,email]);
+    // Receipt includes neither the searched email nor its hash.
+    await db.query(
+      "INSERT INTO industry.cinema_access_events(tenant_id,actor_id,action,result_count) VALUES($1,$2,'subject_search',$3)",
+      [session.tenant_id,session.account_id,rows.rowCount]);
     return {items:rows.rows,requiresIdentityVerification:true};
   }));
   app.get(base+'/leads/:id/export',(req,reply)=>protectOwner(req,['owner'],async(db,session)=>{
     const id=checkedUuid(req.params.id);
+    const q=only(req.query||{},['afterVersion']);
+    if(q.afterVersion!==undefined&&(typeof q.afterVersion!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(q.afterVersion)))
+      throw fail(400,'Некорректный курсор выгрузки');
+    const afterVersion=q.afterVersion===undefined?0:Number(q.afterVersion);
+    if(!Number.isSafeInteger(afterVersion)||afterVersion>2147483646)throw fail(400,'Некорректная версия');
     const rows=await db.query(
       'SELECT id,contact_name,contact_email,organization,story_id,observation,goal,source,campaign_code,consent_at,state,deal_value_minor::text,currency,created_at,updated_at,assigned_to,contact_count,first_contact_at,last_contact_at,loss_reason_code,next_action_at,next_action_kind,version FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2',
       [session.tenant_id,id]);
     if(!rows.rowCount)throw fail(404,'Заявка не найдена');
     const audit=await db.query(
-      'SELECT event_type,version,old_state,new_state,next_action_at,next_action_kind,loss_reason_code,contact_channel,contact_outcome,occurred_at FROM industry.cinema_lead_events WHERE tenant_id=$1 AND lead_id=$2 ORDER BY version ASC LIMIT 1001',
-      [session.tenant_id,id]);
+      'SELECT event_type,version,old_state,new_state,next_action_at,next_action_kind,loss_reason_code,contact_channel,contact_outcome,occurred_at FROM industry.cinema_lead_events WHERE tenant_id=$1 AND lead_id=$2 AND version>$3 ORDER BY version ASC LIMIT 1001',
+      [session.tenant_id,id,afterVersion]);
+    const hasMore=audit.rows.length>1000,events=audit.rows.slice(0,1000);
+    await db.query(
+      "INSERT INTO industry.cinema_access_events(tenant_id,actor_id,lead_id,action,result_count) VALUES($1,$2,$3,'subject_export',$4)",
+      [session.tenant_id,session.account_id,id,events.length]);
     reply.header('Cache-Control','private, no-store, max-age=0');
     reply.header('Content-Disposition','attachment; filename="cinema-lead-'+id+'.json"');
-    return {schema:'osmanx.cinema.subject-export.v1',lead:rows.rows[0],events:audit.rows.slice(0,1000),
-      truncated:audit.rows.length>1000,verifiedByOperator:false,
-      note:'Оператор обязан отдельно проверить право заявителя на получение данных'};
+    return {schema:'osmanx.cinema.subject-export.v2',lead:rows.rows[0],events,
+      truncated:hasMore,nextAfterVersion:hasMore?events[events.length-1].version:null,
+      verifiedByOperator:false,exportPageLimit:1000,
+      note:'Выгрузка полная только после последней страницы; оператор обязан проверить личность'};
   }));
 }
