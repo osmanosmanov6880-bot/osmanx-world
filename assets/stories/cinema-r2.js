@@ -188,6 +188,7 @@ function init(){
     },{threshold:.05});observer.observe(document.querySelector('.film-shell'));
   }
   if(navigator.connection?.saveData)film.preload='none';
+  window.dispatchEvent(new Event('osmanx:cinema-r2-ready'));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
 else init();
