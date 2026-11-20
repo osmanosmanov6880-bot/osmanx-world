@@ -42,8 +42,10 @@ export function checkR39TargetSnapshot(snapshot,{expectedDb}={}){
     problems.push('WRONG_DISPOSABLE_DATABASE');
   // PostgreSQL inet::text includes the host mask (e.g. 172.18.0.2/32).
   // Strip only a full-length single-host mask; reject any wider network.
-  const reportedIp=typeof snapshot?.server_ip==='string'?
-    snapshot.server_ip.replace(/\/(?:32|128)$/,'').replace(/^::ffff:/i,''):null;
+  const address=typeof snapshot?.server_ip==='string'?snapshot.server_ip:null;
+  const reportedIp=address?
+    address.replace(address.includes(':')?/\/128$/:/\/32$/,'')
+      .replace(/^::ffff:/i,''):null;
   if(!safeBackendIp(reportedIp))
     problems.push('NON_PRIVATE_BACKEND_ADDRESS');
   if(Number(snapshot?.server_port)!==5432)
