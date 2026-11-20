@@ -24,11 +24,11 @@ import {auditR42Dependencies}
   from '../src/guest-r42-dependency-audit.mjs';
 const HEAD='840bb083e606058a9a32450f3b3a3e881a34891e';
 const MAIN='85e9fe290e354d113fd62787f5e8db90406f0961';
-const URL='postgres://postgres:synthetic@127.0.0.1:5432/industry_ci';
+const PG_URL='postgres://postgres:synthetic@127.0.0.1:5432/industry_ci';
 const PUB1='age1'+'a'.repeat(58),PUB2='age1'+'b'.repeat(58);
 const ACK='CONFIRM_LOCAL_ENCRYPTED_BACKUP_NO_CUSTOMERS';
 const sha64='c'.repeat(64);
-const source=()=>({dbUrl:URL,recipient1:PUB1,
+const source=()=>({dbUrl:PG_URL,recipient1:PUB1,
   recipient2:PUB2,acknowledgment:ACK});
 function merge(){
   const pr={number:47,head:{sha:HEAD},base:{ref:'main',
@@ -97,9 +97,9 @@ test('R42 backup source refuses remote databases, unapproved runs and repeated A
     {...source(),acknowledgment:''},
     {...source(),recipient2:PUB1},
     {...source(),recipient2:'garbage'},
-    {...source(),dbUrl:URL.replace('127.0.0.1','db.company.internal')},
-    {...source(),dbUrl:URL.replace('industry_ci','production')},
-    {...source(),dbUrl:URL+'?sslmode=disable'}
+    {...source(),dbUrl:PG_PG_URL.replace('127.0.0.1','db.company.internal')},
+    {...source(),dbUrl:PG_PG_URL.replace('industry_ci','production')},
+    {...source(),dbUrl:PG_PG_URL+'?sslmode=disable'}
   ];
   for(const x of invalid)
     assert.equal(inspectR42BackupSource(x).valid,false,JSON.stringify(x));
@@ -109,7 +109,7 @@ test('R42 owner-private preexisting directory preflight rejects symlinks, chmod 
   try{
     const dest=join(folder,'safe');
     await mkdir(dest,{mode:0o700});
-    const args={destination:dest,dbUrl:URL,
+    const args={destination:dest,dbUrl:PG_URL,
       recipient1:PUB1,recipient2:PUB2,acknowledgment:ACK};
     const report=await preflightR42Backup(args);
     assert.equal(report.valid,true);
