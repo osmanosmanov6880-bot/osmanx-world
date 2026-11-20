@@ -6,6 +6,16 @@
 export const R39_DR_SCHEMA='osmanx.guest.r39.direct-dr-local-only.v1';
 const DB=/^industry_dr_[a-z0-9_]{6,48}$/;
 const HOSTS=new Set(['127.0.0.1','::1','localhost']);
+// Server-side inet_server_addr() reports a Docker bridge IP when the client
+// connects through the local host's 127.0.0.1 published port. Accept only
+// loopback/RFC1918 here; URL routing must ALSO be loopback. This is not
+// independent physical-host attestation.
+const safeBackendIp=ip=>typeof ip==='string'&&(
+  ip==='::1'||/^127\.(?:\d{1,3}\.){2}\d{1,3}$/.test(ip)||
+  /^10\.(?:\d{1,3}\.){2}\d{1,3}$/.test(ip)||
+  /^192\.168\.(?:\d{1,3}\.)\d{1,3}$/.test(ip)||
+  /^172\.(?:1[6-9]|2\d|3[01])\.(?:\d{1,3}\.)\d{1,3}$/.test(ip)
+);
 const HEX40=/^[a-f0-9]{40}$/;
 export function checkR39TargetUrl(url){
   const problems=[];let dbName=null,host=null;
@@ -30,7 +40,7 @@ export function checkR39TargetSnapshot(snapshot,{expectedDb}={}){
   if(!snapshot||!DB.test(expectedDb||'')||
     snapshot.database_name!==expectedDb)
     problems.push('WRONG_DISPOSABLE_DATABASE');
-  if(!['127.0.0.1','::1'].includes(snapshot?.server_ip)||
+  if(!safeBackendIp(snapshot?.server_ip)||
     Number(snapshot?.server_port)!==5432||snapshot?.in_recovery!==false)
     problems.push('NOT_LOOPBACK_PRIMARY_POSTGRES');
   if(typeof snapshot?.server_started!=='string'||
