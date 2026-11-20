@@ -28,17 +28,17 @@ export function validateDraft(doc,{strict=false}={}){
     !ref(m.id)||!isDay(m.day)||!safe(m.title,90)||!safe(m.summary,350)||!Number.isFinite(m.lat)||!Number.isFinite(m.lng)||
     m.lat<55.3||m.lat>56.2||m.lng<36.5||m.lng>38.5||!isDay(m.episode)||m.day!==m.episode||!ref(m.evidenceRef)||m.permissionChecked!==true)problems.push('Unverified or unsafe public marker');}
   for(const e of doc.episodes){if(!exact(e,['day','title','videoUrl','publishedAt','rightsConfirmed','evidenceRef'])||
-    !isDay(e.day)||!safe(e.title,120)||typeof e.videoUrl!=='string'||!/^\/assets\/[-\w/.]+\.(mp4|webm)$/.test(e.videoUrl)||
+    !isDay(e.day)||!safe(e.title,120)||typeof e.videoUrl!=='string'||!(/^\/assets\/[-\w/.]+\.(mp4|webm)$/.test(e.videoUrl)||/^stream:[a-f0-9]{32}$/i.test(e.videoUrl))||
     e.videoUrl.includes('..')||!/^20\d{2}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/.test(e.publishedAt||'')||
     !ref(e.evidenceRef)||e.rightsConfirmed!==true)problems.push('Unverified documentary episode');}
   if(strict&&!doc.metrics&&!doc.days.length&&!doc.markers.length&&!doc.episodes.length)problems.push('Nothing to publish');
   return problems;
 }
-export function buildPublicRelease(draft,version,reviewedAt){
+export function buildPublicRelease(draft,version,reviewedAt,{streamHost=null,streamMetadata={}}={}){
   return {schemaVersion:3,status:'published',version,reviewedAt,method:draft.method,
     metrics:draft.metrics?Object.fromEntries(metricKeys.map(k=>[k,draft.metrics[k]])):null,
     days:draft.days.map(d=>({day:d.day,summary:d.summary,lesson:d.lesson,approvedForWeb:true})),
     markers:draft.markers.map(m=>({id:m.id,day:m.day,title:m.title,lat:Math.round(m.lat*1000)/1000,lng:Math.round(m.lng*1000)/1000,summary:m.summary,episode:m.episode})),
-    episodes:draft.episodes.map(e=>({day:e.day,title:e.title,videoUrl:e.videoUrl,publishedAt:e.publishedAt}))};
+    episodes:draft.episodes.map(e=>{const record={day:e.day,title:e.title,videoUrl:e.videoUrl,publishedAt:e.publishedAt};if(e.videoUrl.startsWith('stream:')&&/^customer-[a-z0-9]{6,40}\.cloudflarestream\.com$/.test(streamHost||'')){const uid=e.videoUrl.slice(7);record.iframeUrl='https://'+streamHost+'/'+uid+'/iframe';record.posterUrl='https://'+streamHost+'/'+uid+'/thumbnails/thumbnail.jpg';if(Array.isArray(streamMetadata[uid]?.chapters))record.chapters=streamMetadata[uid].chapters;}return record;})};
 }
 export const unpublished=()=>({schemaVersion:3,status:'unpublished',version:null,reviewedAt:null,method:null,metrics:null,days:[],markers:[],episodes:[]});
