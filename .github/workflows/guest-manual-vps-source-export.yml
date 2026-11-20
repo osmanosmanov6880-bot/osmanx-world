@@ -1,0 +1,60 @@
+name: Guest Intelligence R47 manual VPS source export (NO DEPLOY)
+on:
+  push:
+    branches: [prep/guest-manual-vps-source-export-20261120]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Export only Guest Intelligence tracked source for OFFLINE manual packaging
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/source/industry-api out/source/guest-existing
+          git ls-files -z -- services/industry-api | while IFS= read -r -d '' file; do
+            relative="${file#services/industry-api/}"
+            install -d "out/source/industry-api/$(dirname "$relative")"
+            cp -p -- "$file" "out/source/industry-api/$relative"
+          done
+          git ls-files -z -- assets/guest | while IFS= read -r -d '' file; do
+            relative="${file#assets/guest/}"
+            install -d "out/source/guest-existing/$(dirname "$relative")"
+            cp -p -- "$file" "out/source/guest-existing/$relative"
+          done
+          test -s out/source/industry-api/package.json
+          test -s out/source/industry-api/package-lock.json
+          test -s out/source/industry-api/src/server.mjs
+          test -s out/source/guest-existing/offer.html
+          if find out/source -type l -print -quit | grep -q .; then
+            echo "Symlinks forbidden"; exit 2
+          fi
+          if find out/source -type f \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name '*.age' \) -print -quit | grep -q .; then
+            echo "Credential-shaped file forbidden"; exit 2
+          fi
+          printf '%s\n' 'Origin: osmanosmanov6880-bot/osmanx-world' \
+            'Product: OSMANX Guest Intelligence R47 (Draft, no customer release approval)' \
+            'Source checked: 724ebded6c4d1135fd3ae5749dfa958fa1beef4b' \
+            "Export commit: $(git rev-parse HEAD)" \
+            'No deployment. No customer-write enable.' > out/source/SOURCE_PROVENANCE.txt
+          (
+            cd out
+            find source -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum > SOURCE_SHA256SUMS
+          )
+          tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -C out -cf - source SOURCE_SHA256SUMS | gzip -n -9 > out/osmanx-guest-r47-source.tgz
+          sha256sum out/osmanx-guest-r47-source.tgz > out/osmanx-guest-r47-source.tgz.sha256
+          echo "Source export bytes: $(stat -c %s out/osmanx-guest-r47-source.tgz)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: osmanx-guest-r47-manual-source
+          path: |
+            out/osmanx-guest-r47-source.tgz
+            out/osmanx-guest-r47-source.tgz.sha256
+          if-no-files-found: error
+          retention-days: 7
