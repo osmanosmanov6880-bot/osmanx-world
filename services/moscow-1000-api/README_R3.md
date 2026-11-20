@@ -29,7 +29,7 @@ Only a verified `MODERATOR_EMAILS` actor can GET `/admin/leads`, PATCH `/admin/l
 1. The editorial release must already include a real, checked and approved video episode.
 2. Email recipients come **only** from D1 `subscriptions` with `status='subscribed'` (explicit double opt-in R2). Consent from one category never authorizes unrelated promotional mail.
 3. An editor creates a **draft campaign**, a permitted approver queues it. Sending is impossible if `DIGEST_DELIVERY_ENABLED` is not exactly `true`, or required email and unsubscribe configuration is absent.
-4. Scheduled/explicit sending uses up to ten deliveries per Worker invocation, atomic DB claims and a stable `Idempotency-Key` per campaign and subscriber (supported by Resend). Unsubscribed addresses are filtered again at send time.
+4. Scheduled delivery runs every five minutes only when the explicit send flag is true; nightly retention uses the separate daily cron. Each invocation uses up to ten deliveries, atomic DB claims and a stable `Idempotency-Key` per campaign and subscriber (supported by Resend). Unsubscribed addresses are filtered again at send time.
 5. Each email includes an HTTPS unsubscribe link. GET only displays a confirmation page; POST verifies an HMAC-signed token and unsubscribes. Preserve `UNSUB_SIGNING_KEY` across deploys so older links remain valid.
 6. For a crashed job leaving `processing` rows, **do not auto-resend** until reconciled with Resend delivery history; idempotency keys have a retention window. Failed rows retry at most three attempts; permanently failed rows remain for operator review. A completed queue can contain unsuccessful deliveries; do not infer all recipients received the email.
 
