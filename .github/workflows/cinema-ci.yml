@@ -7,6 +7,8 @@ on:
       - "tests/cinema-media.test.mjs"
       - "tests/stories-gallery.test.mjs"
       - "tests/cinema-r2.test.mjs"
+      - "tests/cinema-r3.test.mjs"
+      - "tests/cinema_r3_browser.py"
       - "tests/cinema_r2_browser.py"
       - "assets/industry/index.html"
       - "assets/catalog/index.html"
@@ -45,10 +47,12 @@ jobs:
         run: |
           node --check assets/stories/cinema.js
           node --check assets/stories/cinema-r2.js
+          node --check assets/stories/cinema-r3.js
+          node --check assets/stories/manager.js
           node --check assets/stories/story-engine.js
           node --check assets/sovereign/site.js
       - name: Confirm all media, page links and SHA-256
-        run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs
+        run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs tests/cinema-r3.test.mjs
       - name: Check playable MP4 containers
         run: |
           set -euo pipefail
@@ -83,11 +87,15 @@ jobs:
           command -v google-chrome || command -v chromium
           (google-chrome --version || chromium --version)
       - name: Run mobile and desktop cinematic conversion tests
-        run: python tests/cinema_r2_browser.py
+        run: |
+          python tests/cinema_r2_browser.py
+          python tests/cinema_r3_browser.py
       - name: Upload cinematic browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: osmanx-cinema-r2-browser
-          path: qa/cinema-r2/*.png
+          path: |
+            qa/cinema-r2/*.png
+            qa/cinema-r3/*.png
           if-no-files-found: ignore
