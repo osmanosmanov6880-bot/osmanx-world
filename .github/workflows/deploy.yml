@@ -90,7 +90,7 @@ jobs:
           test -s assets/stories/captions-ru.vtt
           test -s robots.txt
           test -s sitemap.xml
-          node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs tests/cinema-r3.test.mjs tests/cinema-r4.test.mjs tests/cinema-r5.test.mjs tests/cinema-r6.test.mjs tests/cinema-r7.test.mjs tests/cinema-r8.test.mjs
+          node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs tests/cinema-r3.test.mjs tests/cinema-r4.test.mjs tests/cinema-r5.test.mjs tests/cinema-r6.test.mjs tests/cinema-r7.test.mjs tests/cinema-r8.test.mjs tests/cinema-r9.test.mjs
 
       - name: Configure SSH
         env:
@@ -166,11 +166,14 @@ jobs:
           grep -Fq 'r7-workload' /tmp/osmanx-r4-manager.html || { echo "::error::R7 team workload board missing on public HTTPS"; exit 1; }
           grep -Fq 'r8-runtime-status' /tmp/osmanx-r4-manager.html || { echo "::error::R8 honest API runtime indicator missing from public manager"; exit 1; }
           grep -Fq 'r8-ops' /tmp/osmanx-r4-manager.html || { echo "::error::R8 owner retention dashboard missing on public HTTPS"; exit 1; }
+          grep -Fq 'r9-response-cards' /tmp/osmanx-r4-manager.html || { echo "::error::R9 response evidence panel missing on public HTTPS"; exit 1; }
+          grep -Fq 'r9-conflict-reload' /tmp/osmanx-r4-manager.html || { echo "::error::R9 conflict recovery missing on public HTTPS"; exit 1; }
           curl -fLsS --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 35 -H 'Cache-Control: no-cache' "https://osmanx.world/assets/stories/manager.js?release=$GITHUB_SHA" -o /tmp/osmanx-r5-manager.js
           grep -Fq 'r5Online' /tmp/osmanx-r5-manager.js || { echo "::error::R5 manager JS missing on public HTTPS"; exit 1; }
           grep -Fq 'r6Online' /tmp/osmanx-r5-manager.js || { echo "::error::R6 manager JS missing on public HTTPS"; exit 1; }
           grep -Fq 'r7Online' /tmp/osmanx-r5-manager.js || { echo "::error::R7 manager JS missing on public HTTPS"; exit 1; }
           grep -Fq 'r8Online' /tmp/osmanx-r5-manager.js || { echo "::error::R8 runtime and guarded CSV logic missing on public HTTPS"; exit 1; }
+          grep -Fq 'r9Online' /tmp/osmanx-r5-manager.js || { echo "::error::R9 server snapshot and response logic missing on public HTTPS"; exit 1; }
           curl -fLsS --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 35 -H 'Cache-Control: no-cache' "https://osmanx.world/assets/stories/cinema-r3.js?release=$GITHUB_SHA" -o /tmp/osmanx-r4-campaign.js
           grep -Fq 'utm_campaign' /tmp/osmanx-r4-campaign.js || { echo "::error::R4 campaign attribution code missing on public HTTPS"; exit 1; }
           echo 'Cinema page and all 13 MP4 files available on public HTTPS.' >> "$GITHUB_STEP_SUMMARY"
