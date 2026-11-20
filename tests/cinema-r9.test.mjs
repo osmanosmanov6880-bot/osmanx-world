@@ -12,12 +12,11 @@ test('R9 generated CSV audit and efficient contact evidence index retain tenant 
   assert(sql.includes("WHERE event_type='contact_logged'"));
   assert(!/DISABLE ROW LEVEL SECURITY|DROP TABLE/.test(sql));
   const src=read('services/industry-api/src/cinema-r9.mjs');
-  for(const s of ['/exports/csv','/ops/response-review','/public/r9-runtime',
-    'protectOwner(req,[\\'owner\\']','FOR SHARE','bulk_export_generated',
-    'GENERATE_CSV','application/json','first_attempt AS','eligible_1h',
-    'contact_logged','no-store','attachment','nosniff']){
-    if(s==='application/json')continue;assert(src.includes(s.replaceAll("\\'","'")),s);
-  }
+  for(const token of ['/exports/csv','/ops/response-review','/public/r9-runtime',
+    'FOR SHARE','bulk_export_generated','GENERATE_CSV','first_attempt AS',
+    'eligible_1h','contact_logged','no-store','attachment','nosniff'])
+    assert(src.includes(token),token);
+  assert(src.includes("protectOwner(req,['owner']"));
   assert(src.includes('return reply.send(body.csv)'));
   assert(src.includes('id=ANY($2::uuid[])'));
   assert(read('services/industry-api/src/cinema.mjs').includes('registerCinemaR9Routes'));
