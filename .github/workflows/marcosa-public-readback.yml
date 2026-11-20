@@ -1,0 +1,49 @@
+name: "OSMANX | MARCOSA public HTTPS release inspection (read-only)"
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/marcosa-public-readback.yml"
+permissions:
+  contents: read
+jobs:
+  public-readback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare checked-out OSMANX design against real HTTPS
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "SOURCE_SHA=$GITHUB_SHA"
+          echo "SOURCE_MARCOSA_INVITE=$(grep -Fc 'id=\"marcosa-membership\"' index.html)"
+          sha256sum index.html | sed 's/ index.html/ source_index.html/'
+          for domain in osmanx.world www.osmanx.world; do
+            echo "### HOST $domain"
+            set +e
+            curl --retry 1 --connect-timeout 10 --max-time 22 -sSL \
+              -H 'Cache-Control: no-cache' -H 'Accept: text/html' \
+              -D "/tmp/$domain.headers" \
+              -o "/tmp/$domain.html" \
+              -w 'http_code=%{http_code} final_url=%{url_effective} remote_ip=%{remote_ip} bytes=%{size_download}\n' \
+              "https://$domain/?__marcosa_public_inspect=$GITHUB_SHA"
+            rc=$?
+            set -e
+            echo "CURL_EXIT=$rc"
+            if [[ "$rc" -eq 0 ]]; then
+              python3 - "/tmp/$domain.html" "/tmp/$domain.headers" <<'PY'
+          import sys,re,hashlib,pathlib
+          text=pathlib.Path(sys.argv[1]).read_text('utf-8',errors='replace')
+          headers=pathlib.Path(sys.argv[2]).read_text('utf-8',errors='replace')
+          print('BODY_SHA256='+hashlib.sha256(text.encode()).hexdigest())
+          for key,needle in [('EXPECTED_SOURCE_MARKER','osmanx-sovereign-live-v1'),('MARCOSA_INVITATION','id="marcosa-membership"'),('OLD_SITE_HINT','OSMANX WORLD'),('CAPTCHA_HINT','cf-chl')]:
+              print(key+'='+str(needle in text))
+          title=re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S)
+          print('HTML_TITLE='+re.sub(r'\s+',' ',title.group(1).strip())[:140] if title else 'NONE')
+          for key in ['server','cf-cache-status','cf-mitigated','content-type','cache-control','location']:
+              m=re.search(r'(?im)^'+re.escape(key)+r':\s*(.*)$',headers)
+              print('HEADER_'+key.upper()+'='+(m.group(1).strip()[:160] if m else 'UNKNOWN'))
+          PY
+            fi
+          done
