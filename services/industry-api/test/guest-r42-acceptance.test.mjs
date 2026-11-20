@@ -77,6 +77,13 @@ test('R42 current main divergence measured, not misrepresented as permission to 
   assert.equal(r.firstPrBehindCommits,2);
   assert.equal(r.firstPrAheadCommits,4);
   assert.equal(r.githubMergeableObserved,true);
+  // Real GitHub compare omits head_commit but returns a complete commits page.
+  const noHead={...f.compare,head_commit:undefined,
+    commits:[{sha:'1'.repeat(40)},{sha:'2'.repeat(40)},
+      {sha:'3'.repeat(40)},{sha:HEAD}]};
+  assert.equal(inspectR42Merge({...f,compare:noHead}).canHandOffToReviewer,true);
+  assert.equal(inspectR42Merge({...f,compare:{
+    ...noHead,commits:noHead.commits.slice(1)}}).canHandOffToReviewer,false);
   assert.equal(r.branchProtectionReadable,false);
   assert.equal(r.canMergeNow,false);
   assert.equal(r.productionAuthorized,false);
