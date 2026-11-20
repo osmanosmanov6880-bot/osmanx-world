@@ -1,0 +1,98 @@
+/* Map styling belongs to the public OSMANX command interface. */
+.ox-command-map{--map-ink:#f5f6fb;--map-muted:#a4afbf;--map-line:#2b3c50;--map-red:#ff1638;color:var(--map-ink);min-width:0;font-family:inherit}
+.ox-command-map *{box-sizing:border-box}
+.ox-command-map button,.ox-command-map a{-webkit-tap-highlight-color:transparent}
+.ox-command-map button{font:inherit;cursor:pointer}
+.ox-command-map [hidden]{display:none!important}
+.ox-command-map button:focus-visible,.ox-command-map a:focus-visible,.ox-map-canvas:focus-visible{outline:2px solid #ff8c9e;outline-offset:3px}
+.ox-map-canvas{position:relative;isolation:isolate;height:clamp(340px,52svh,520px);min-height:340px;overflow:hidden;background:#081626;border:1px solid #2a3b4f;border-radius:12px 12px 0 0;touch-action:none;cursor:grab}
+.ox-map-canvas.is-dragging{cursor:grabbing}
+.ox-map-grid{position:absolute;inset:0;background:radial-gradient(ellipse at 45% 40%,#13263c,#06111d);z-index:-1}
+.ox-map-tiles,.ox-map-pins,.ox-map-connections{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ox-map-tiles{filter:grayscale(1) invert(1) sepia(.72) saturate(1.8) hue-rotate(164deg) brightness(.70) contrast(1.13)}
+.is-light .ox-map-tiles{filter:none}
+.ox-map-tile{position:absolute;left:0;top:0;width:256px!important;height:256px!important;max-width:none!important;user-select:none;pointer-events:none}
+.ox-map-connections{overflow:visible;z-index:1}
+.ox-map-connections path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ox-map-line-glow{stroke:#ff214b;stroke-width:10;opacity:.28;filter:blur(4px)}
+.ox-map-line{stroke:#ff4266;stroke-width:2;stroke-dasharray:6 5}
+.ox-map-pins{z-index:2}
+.ox-map-pin{position:absolute;transform:translate(-50%,-100%);display:grid;place-items:center;border:0;background:none;width:44px;height:48px;padding:6px 10px 2px;pointer-events:auto;filter:drop-shadow(0 0 9px #ff174c9c);transition:filter .18s,scale .18s}
+.ox-map-pin svg{display:block;width:27px;height:37px;overflow:visible}
+.ox-map-pin path{fill:#f31542;stroke:#ff95a9;stroke-width:1.1}
+.ox-map-pin circle{fill:#fff;stroke:#f31542;stroke-width:1}
+.ox-map-pin.is-selected{filter:drop-shadow(0 0 13px #ff164ad9);scale:1.14;z-index:2}
+.ox-map-pin.is-selected path{fill:#ff3a5e;stroke:#fff;stroke-width:1.6}
+.ox-map-pin.is-reviewed path{fill:#c71b58}
+.ox-map-pin:hover{filter:drop-shadow(0 0 12px #ff174ccf)}
+.ox-map-plan-label{position:absolute;left:12px;top:13px;z-index:3;padding:6px 8px;border:1px solid #33445bb3;border-radius:6px;background:#071320da;color:#d8e2ed;letter-spacing:.1em;font-size:10px;font-weight:700;pointer-events:none}
+.ox-map-tool{display:grid;place-items:center;width:43px;min-height:43px;padding:10px;border:1px solid #42526b;border-radius:8px;color:#f2f5fc;background:linear-gradient(135deg,#172536f0,#06111eef);box-shadow:0 3px 10px #0005}
+.ox-map-tool svg{width:22px;height:22px;display:block}
+.ox-map-tool:hover{background:#1c2c41;border-color:#a0acc1}
+.ox-map-tool:disabled{opacity:.4;cursor:default}
+.ox-map-layer{position:absolute;top:12px;right:12px;z-index:4}
+.ox-map-tools{position:absolute;right:12px;bottom:37px;display:grid;gap:12px;z-index:4}
+.ox-map-zoom{border:1px solid #42526b;border-radius:8px;overflow:hidden;background:#0b1725}
+.ox-map-zoom .ox-map-tool{border:0;border-radius:0;box-shadow:none;width:41px}
+.ox-map-zoom .ox-map-tool+button{border-top:1px solid #42526b}
+.ox-map-attribution{position:absolute;bottom:0;right:0;z-index:5;padding:4px 7px;background:#030b14dd;color:#c4cfdd;line-height:1.3;font-size:10px;cursor:default;max-width:100%}
+.ox-map-attribution a{color:#e2e9f3;text-decoration:underline;text-underline-offset:2px}
+.ox-map-route{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:12px 13px;border:1px solid var(--map-line);border-top:0;border-radius:0 0 11px 11px;color:var(--map-ink);background:linear-gradient(110deg,#101b2a,#07131e);min-height:65px}
+.ox-map-route>svg:first-child{width:23px;height:27px;flex:0 0 23px;color:var(--map-red);filter:drop-shadow(0 0 7px #ff163830)}
+.ox-map-route>span{min-width:0;flex:1}
+.ox-map-route strong{display:block;font-size:15px;font-weight:650;line-height:1.3;overflow-wrap:anywhere}
+.ox-map-route small{display:block;font-size:11px;font-weight:400;color:#b8c4d3;line-height:1.45;margin-top:3px}
+.ox-map-route>svg:last-child{width:18px;height:18px;flex:0 0 18px;transition:transform .16s}
+.ox-map-route[aria-expanded=true]>svg:last-child{transform:rotate(90deg)}
+.ox-map-list-toggle{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:1px solid #46516b;border-radius:8px;min-height:41px;padding:9px 12px;margin-top:8px;background:linear-gradient(#1b2738,#101927);color:#f5f6fb;font-size:13px;font-weight:600;box-shadow:inset 0 1px #ffffff05}
+.ox-map-list-toggle svg{width:17px;height:17px}
+.ox-map-point-list{margin-top:10px;border:1px solid var(--map-line);border-radius:10px;background:linear-gradient(135deg,#0f1b2a,#08131f);padding:16px 13px}
+.ox-map-point-list h3{font-size:16px;font-weight:650;margin:0 0 12px;color:#fff}
+.ox-map-point-list ol{display:grid;gap:14px;list-style:none;padding:0;margin:0}
+.ox-map-point-list li{min-width:0;padding-bottom:13px;border-bottom:1px solid #293648}
+.ox-map-point-list li:last-child{padding-bottom:0;border-bottom:0}
+.ox-map-point-focus{border:0;padding:0;display:flex;gap:10px;align-items:center;background:none;color:#dce5f0;width:100%;text-align:left;min-height:44px}
+.ox-map-point-focus>svg{width:21px;height:25px;flex:0 0 21px;color:var(--map-red)}
+.ox-map-point-focus strong{display:block;font-size:14px;font-weight:600;line-height:1.4}
+.ox-map-point-focus small{display:block;font-size:11px;line-height:1.5;margin-top:4px;color:var(--map-muted)}
+.ox-map-point-list li.is-selected .ox-map-point-focus strong{color:#ff637f}
+.ox-map-point-list li>a{display:inline-block;font-size:12px;line-height:1.5;margin-top:7px;padding:7px 0 0 31px;min-height:34px;text-decoration:underline;text-underline-offset:3px;color:#d1dcea}
+.ox-map-point-list li>p{font-size:13px;line-height:1.5;color:#b3c0d0;margin:10px 0 0 31px;overflow-wrap:anywhere}
+.ox-map-note{font-size:11px!important;line-height:1.5!important;color:#8f9eb2!important;margin:12px 2px 0!important}
+.ox-map-unavailable{position:absolute;z-index:3;left:14px;right:66px;top:50%;transform:translateY(-50%);padding:16px;background:#081320f2;border:1px solid #415268;border-radius:10px;box-shadow:0 12px 40px #0007;cursor:default;max-width:330px}
+.ox-map-unavailable strong{display:block;color:#f8f9fb;font-size:16px;line-height:1.4;font-weight:650}
+.ox-map-unavailable span{display:block;margin-top:6px;color:#b5c2d4;font-size:12px;line-height:1.6}
+.ox-map-unavailable button{margin-top:12px;padding:8px 10px;min-height:38px;border-radius:6px;border:1px solid #6a3c51;background:#321624;color:#ffe1e8;font-size:12px}
+.ox-map-no-tiles .ox-map-connections,.ox-map-no-tiles .ox-map-pins{opacity:.3}
+@media(min-width:760px){.ox-map-canvas{height:500px}.ox-map-route{padding:15px 17px}.ox-map-route strong{font-size:17px}.ox-map-route small{font-size:12px}.ox-map-note{font-size:12px!important}.ox-map-list-toggle{min-height:44px;font-size:14px}}
+@media(prefers-reduced-motion:reduce){.ox-command-map *{transition:none!important;scroll-behavior:auto}}
+
+/* R8: a real point card and searchable public route, sized for touch. */
+.ox-map-tool{width:44px;min-height:44px}
+.ox-map-zoom .ox-map-tool{width:44px}
+.ox-map-list-toggle,.ox-map-unavailable button{min-height:44px}
+.ox-map-point-list li>a{font-size:14px;min-height:44px;padding-top:10px;padding-bottom:8px}
+.ox-map-point-focus strong,.ox-map-route strong{overflow-wrap:anywhere}
+.ox-map-point-focus small{font-size:12px}
+.ox-map-point-detail{margin-top:10px;padding:10px 16px 16px;border:1px solid #80324b;border-radius:12px;background:radial-gradient(ellipse at top left,#4b182438,transparent 75%),linear-gradient(135deg,#111d2c,#07121e);box-shadow:inset 0 1px #ffffff08}
+.ox-map-detail-top{display:flex;gap:10px;align-items:center;justify-content:space-between;min-width:0}
+.ox-map-point-status{font-size:12px;color:#ff8da1;font-weight:600;line-height:1.5}
+.ox-map-detail-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;margin-right:-6px;border:0;border-radius:8px;color:#d3dce8;background:transparent}
+.ox-map-detail-close:hover{background:#233246}
+.ox-map-detail-close svg{width:22px;height:22px}
+.ox-map-detail-title{margin:0;font-size:20px;font-weight:650;line-height:1.3;overflow-wrap:anywhere;scroll-margin-top:16px}
+.ox-map-detail-title:focus,.ox-map-list-heading:focus{outline:none}
+.ox-map-detail-summary{font-size:14px;line-height:1.6;margin:10px 0;color:#c0cad7;overflow-wrap:anywhere}
+.ox-map-detail-coordinates{font-size:14px;line-height:1.5;color:#a9b8cc;font-variant-numeric:tabular-nums;margin:0 0 14px;overflow-wrap:anywhere}
+.ox-map-detail-link{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;padding:10px 12px;border:1px solid #763346;border-radius:8px;color:#ffe5ea;background:linear-gradient(#3c1726,#241320);font-size:14px;line-height:1.4;font-weight:600;text-align:center;text-decoration:none}
+.ox-map-detail-link:hover{border-color:#ff718d;background:#461d2c}
+.ox-map-detail-note{font-size:12px;line-height:1.5;color:#8f9eb2;margin:9px 0 0}
+.ox-map-search{display:grid;gap:8px;margin:0 0 12px;min-width:0}
+.ox-map-search label{display:grid;gap:7px;color:#cbd5e3;font-size:14px;line-height:1.4}
+.ox-map-search input{appearance:none;min-width:0;width:100%;min-height:46px;padding:10px 12px;border:1px solid #3a4d65;border-radius:8px;background:#071321;color:#f4f6fa;font:inherit;font-size:16px;line-height:1.4;box-shadow:inset 0 2px 5px #0003}
+.ox-map-search input::placeholder{color:#8e9db1}
+.ox-map-search input:focus-visible{outline:2px solid #ff8c9e;outline-offset:2px}
+.ox-map-search-clear{justify-self:start;min-height:44px;padding:8px 12px;border:1px solid #34455d;border-radius:8px;color:#d7e1ed;background:#162334;font-size:14px}
+.ox-map-search-status{font-size:12px;line-height:1.5;color:#a6b4c7;margin:0 0 12px}
+.ox-map-search-empty{font-size:14px;line-height:1.6;color:#bdc8d7;margin:0;padding:12px 0}
+@media(max-width:359px){.ox-map-point-detail{padding-left:12px;padding-right:12px}.ox-map-detail-title{font-size:18px}.ox-map-detail-link{font-size:14px}.ox-map-tools{right:9px}.ox-map-layer{right:9px}}

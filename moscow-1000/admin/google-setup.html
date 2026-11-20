@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex, nofollow"><meta name="theme-color" content="#030a15"><title>Подключение Google — OSMANX</title><link rel="stylesheet" href="admin.css"></head>
+<body><main class="setup-page">
+<a href="./">Вернуться ко входу</a><p class="eyebrow" style="margin-top:32px">Настройка владельцем</p><h1>Подключить Google-вход</h1>
+<p>Эта страница объясняет настройку. Она не предоставляет доступ к контактам и не принимает секретные ключи.</p>
+<h2>В Google Cloud</h2>
+<ol>
+<li>Откройте Google Auth Platform для проекта, который принадлежит вам. Создайте OAuth-клиент типа <strong>Web application</strong>.</li>
+<li>На странице входа в штаб раскройте «Подключение Google-входа» и скопируйте <strong>адрес возврата</strong>. Добавьте его в Authorized redirect URIs вашего OAuth-клиента без изменений. Протокол, путь и завершающий слеш должны совпадать.</li>
+<li>Сохраните Client ID и Client secret. Секрет используется только сервером. Не добавляйте его в исходники или публичный репозиторий.</li>
+</ol>
+<p class="help-text">Основание: <a href="https://developers.google.com/identity/protocols/oauth2/web-server" target="_blank" rel="noopener noreferrer">официальная инструкция Google для серверных приложений</a>.</p>
+<h2>На сервере штаба</h2>
+<p>В настройках окружения сайта укажите <code>GOOGLE_CLIENT_ID</code> и <code>GOOGLE_CLIENT_SECRET</code>. Для сессий нужен отдельный случайный <code>AUTH_SESSION_SECRET</code> длиной не менее 32 символов; для владельца — его точный Google-адрес в <code>ADMIN_GOOGLE_EMAILS</code>. Эти значения не вводятся на странице сайта.</p>
+<p class="help-text">Текущая реализация разрешает Gmail или подтверждённый аккаунт Google Workspace. Адрес из списка разрешённых пользователей сам по себе не заменяет вход в Google.</p>
+<h2>Проверка</h2>
+<ol><li>После применения настроек и миграций заново откройте страницу входа и нажмите «Проверить ещё раз».</li><li>Когда все четыре проверки готовы, нажмите «Войти через Google» и выберите разрешённый аккаунт.</li><li>Проверьте сохранение контакта, выход и повторный вход. Пока реальный вход не завершён, готовность настроек не считается проверкой вашего Google-аккаунта.</li></ol>
+<p class="help-text">У закрытого предпросмотра может отдельно запрашиваться вход через ChatGPT. Он даёт доступ к просмотру сайта и не заменяет вход владельца в личный штаб.</p>
+</main></body></html>

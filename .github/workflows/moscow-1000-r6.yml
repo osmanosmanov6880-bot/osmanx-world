@@ -1,0 +1,44 @@
+name: OSMANX MOSCOW 1000 R6-R8 command center QA
+on:
+  pull_request:
+    paths:
+      - 'moscow-1000/**'
+      - 'services/moscow-1000-api/**'
+      - 'editorial/moscow-1000/**'
+      - 'scripts/**'
+      - 'tests/moscow-1000-*.test.mjs'
+      - '.github/workflows/moscow-1000-r6.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-r6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate public UI, admin and Worker module syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in moscow-1000/{command,command-data,command-map,command-offline,command-navigation,command-sw}.js moscow-1000/admin/{admin,contact-workflow,ledger-workflow}.js services/moscow-1000-api/{index,auth-google,command-center,command-export}.mjs; do
+            node --check "$f"
+          done
+          test -s services/moscow-1000-api/migrations/0005_r6_command_center.sql
+          test -s services/moscow-1000-api/migrations/0006_r7_command_requests.sql
+          test -s services/moscow-1000-api/migrations/0007_r8_command_ledger.sql
+          test -s moscow-1000/serial/index.html
+      - name: Full Node regression and integration suite
+        run: node --test tests/moscow-1000-*.test.mjs
+      - name: Guard configuration boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e services/moscow-1000-api/.dev.vars
+          test ! -e services/moscow-1000-api/wrangler.toml
+          test -s services/moscow-1000-api/README_R6_AUTH.md
+          test -s moscow-1000/README_R6.md
+          echo 'Node checks validate source and synthetic fixtures. They do not prove live Google sign-in, real account deployment or physical-device acceptance.' >> "$GITHUB_STEP_SUMMARY"
