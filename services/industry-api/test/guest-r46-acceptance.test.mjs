@@ -199,6 +199,8 @@ test('R46 integrated handoff reports 32 green source CI but ZERO authority',()=>
  assert.equal(result.firstManualBlockerPr,47);
  assert.equal(result.previewCompleteWithoutConflicts,true);
  assert.equal(result.actions.automaticMergeAllowed,false);
+ assert.ok(result.blockers.includes('DRAFT_PRS_REQUIRE_HUMAN_READY_TRANSITION'));
+ assert.ok(result.blockers.includes('TWO_TRUSTED_CURRENT_HEAD_APPROVALS_MISSING'));
  assert.equal(result.actions.customerGo,false);
  assert.match(renderR46ReviewerPacket(result),/NO APPROVALS, NO MERGES/);
 });
