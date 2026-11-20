@@ -13,7 +13,7 @@ const showAmount=v=>{
   if(v===null||v===undefined)return '—';
   return (Number(v)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';
 };
-let rows=[],currentRole=null;
+let rows=[],currentRole=null,staff=[],r5Online=false;
 const csrf=()=>{
   for(const name of ['__Host-osmanx_industry_csrf','osmanx_industry_csrf']){
     const cookie=document.cookie.split('; ').find(row=>row.startsWith(name+'='));
@@ -46,6 +46,7 @@ function present(bool){
   byId('login').hidden=bool;
   byId('workspace').hidden=!bool;
   byId('signout').hidden=!bool;
+  byId('r5-subject').hidden=!(bool&&currentRole==='owner'&&r5Online);
 }
 function fail(message){
   present(false);
@@ -57,8 +58,18 @@ async function reload(){
     request('/cinema/metrics'),
     request('/cinema/followups?window='+encodeURIComponent(byId('r4-followup-window').value))
   ]);
+  // Static R5 may precede server activation: optional calls never break the R4 operator desk.
+  const optional=await Promise.allSettled([
+    request('/cinema/assignees'),
+    request('/cinema/performance?days='+byId('r5-report-days').value)
+  ]);
+  r5Online=optional.every(x=>x.status==='fulfilled');
+  staff=r5Online?(optional[0].value.items||[]):[];
+  if(r5Online)renderPerformance(optional[1].value);
+  else byId('r5-report').textContent='Серверный модуль R5 ещё не подключён. Возможности R4 остаются доступными.';
   rows=data.items||[];
   currentRole=currentRole||'manager';
+  byId('r5-subject').hidden=!(currentRole==='owner'&&r5Online);
   const stage=byId('state').value;
   renderLeads(stage);
   renderMetrics(metricData);
@@ -95,6 +106,25 @@ function renderMetrics(data){
   const follow=data.followups||{};
   box.append(metric('Просроченные действия',Number(follow.overdue||0)));
   box.append(metric('Следующие сегодня (UTC)',Number(follow.due_today||0)));
+}
+function renderPerformance(report){
+  const box=byId('r5-report');box.replaceChildren();
+  const list=element('div','r5-report-list');
+  const totals=Object.fromEntries((report.actions||[]).map(row=>[row.campaign_code+':'+row.event_type,Number(row.actions||0)]));
+  for(const row of report.campaigns||[]){
+    const card=element('article','r5-performance-card');
+    card.append(element('strong','',row.campaign_code));
+    card.append(element('div','r5-numbers',row.leads+' обращений'));
+    const agreed=Number(row.agreed||0),leads=Number(row.leads||0);
+    card.append(element('small','',agreed+' согласованных вручную · '+(leads?Math.round(100*agreed/leads):0)+'% от заявок в этой кампании'));
+    card.append(element('small','',row.with_attempt+' с попыткой контакта · '+row.connected+' отмечены как состоявшийся контакт'));
+    card.append(element('small','',String(row.attempts||0)+' попыток · среднее до первого отмеченного контакта '+(row.avg_hours_to_connection===null?'не определено':row.avg_hours_to_connection+' ч')));
+    card.append(element('small','',String(totals[row.campaign_code+':film_started']||0)+' запусков фильма · '+String(totals[row.campaign_code+':brief_created']||0)+' действий с брифом (не уникальные люди)'));
+    list.append(card);
+  }
+  box.append(list);
+  if(!(report.campaigns||[]).length)box.append(element('p','hint','За выбранный период обращений ещё нет.'));
+  box.append(element('p','hint','Данные считаются раздельно: событие просмотра нельзя интерпретировать как уникального посетителя, а статус сделки — как платёж.'));
 }
 function renderFollowups(data){
   const box=byId('r4-followup-items');box.replaceChildren();
@@ -235,6 +265,7 @@ function renderLeads(filter=''){
 }
 byId('state').addEventListener('change',e=>renderLeads(e.target.value));
 byId('r4-followup-window').addEventListener('change',()=>reload().catch(e=>byId('leads-status').textContent=e.message));
+byId('r5-report-days').addEventListener('change',()=>reload().catch(e=>byId('r5-report').textContent=e.message));
 byId('r4-link-form').addEventListener('submit',async event=>{
   event.preventDefault();
   const name=byId('r4-campaign-name').value,story=byId('r4-campaign-story').value;
@@ -262,7 +293,7 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;rows=[];byId('metrics').replaceChildren();byId('leads').replaceChildren();
+  currentRole=null;rows=[];staff=[];r5Online=false;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
