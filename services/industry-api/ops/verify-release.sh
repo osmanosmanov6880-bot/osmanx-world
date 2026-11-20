@@ -417,6 +417,19 @@ if grep -Fq '"resolvedComposeAndDbReviewR38":true' "$root/RELEASE.json"; then
     test -f "$root/$f" || { echo "Missing R38 file $f" >&2; exit 3; }
   done
 fi
+# R39 direct restore safeguards and independent reviewer packet.
+if grep -Fq '"operatorDrAndPrReviewR39":true' "$root/RELEASE.json"; then
+  grep -Fq '"resolvedComposeAndDbReviewR38":true' "$root/RELEASE.json" || exit 3
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || exit 3
+  for f in src/guest-r39-dr-guard.mjs scripts/r39-dr-preflight.mjs \
+    src/guest-r39-compose-boundaries.mjs \
+    src/guest-r39-review-packet.mjs scripts/r39-first-pr-review.mjs \
+    src/guest-r39-operator-handoff.mjs scripts/r39-operator-handoff.mjs; do
+    test -f "$root/$f" || { echo "Missing R39 source component $f" >&2; exit 3; }
+  done
+  grep -Fq 'pg_restore --single-transaction' "$root/ops/restore-dr.sh" || exit 3
+  grep -Fq 'r39-dr-preflight.mjs' "$root/ops/restore-dr.sh" || exit 3
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi
