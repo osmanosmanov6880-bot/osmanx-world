@@ -1,0 +1,129 @@
+name: OSMANX Guest R45 real merge preview and 31-PR independent review gate
+on:
+  pull_request:
+    branches: [feat/guest-r44-complete-review-offline-supply-proof-20261120]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r45-acceptance.yml"
+  push:
+    branches: [feat/guest-r45-commit-proof-merge-preview-ci-review-20261120]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+jobs:
+  r45-source-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exact npm lock and clean installation
+        working-directory: services/industry-api
+        run: |
+          node scripts/r43-supply-verify.mjs --lock
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: R45 syntax and previous R43-R44 regressions
+        working-directory: services/industry-api
+        run: |
+          for f in src/guest-r45-*.mjs scripts/r45-*.mjs; do node --check "$f"; done
+          node --test test/guest-r43-acceptance.test.mjs test/guest-r44-acceptance.test.mjs test/guest-r45-acceptance.test.mjs
+      - name: Current advisory feed must remain high-critical free
+        working-directory: services/industry-api
+        run: |
+          npm audit --omit=dev --json > "$RUNNER_TEMP/r45-npm-audit.json" || true
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            import {verifyR44NpmAudit} from "./src/guest-r44-npm-audit.mjs";
+            const report=verifyR44NpmAudit(JSON.parse(readFileSync(process.argv[1],"utf8")));
+            console.log(JSON.stringify({valid:report.valid,counters:report.advisoryCounters,
+              blockers:report.blockers,productionAuthorized:false}));
+            if(!report.valid)process.exit(2);
+          ' "$RUNNER_TEMP/r45-npm-audit.json"
+  r45-real-merge-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Refresh disposable origin/main reference, no checkout or merge
+        run: git fetch --no-tags origin main
+      - name: Run real merge-tree on disposable runner only
+        working-directory: services/industry-api
+        run: |
+          node scripts/r45-merge-preview.mjs --json > "$RUNNER_TEMP/r45-merge-preview.json"
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            if(!r.valid||r.branchRefsChanged!==false||
+              r.productionAuthorized!==false)process.exit(2);
+            console.log(JSON.stringify({main:r.mainSha,source:r.sourceSha,
+              previewValid:r.valid,conflictCount:r.actualConflictCount,
+              conflicts:r.conflictPaths,branchesModified:false,
+              productionAuthorized:false}));
+          ' "$RUNNER_TEMP/r45-merge-preview.json"
+      - name: Save real local git merge-tree proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guest-r45-real-merge-preview
+          path: ${{ runner.temp }}/r45-merge-preview.json
+          if-no-files-found: warn
+          retention-days: 7
+  r45-live-human-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify disposable current origin/main and real conflicts
+        run: |
+          git fetch --no-tags origin main
+          cd services/industry-api
+          node scripts/r45-merge-preview.mjs --json > "$RUNNER_TEMP/r45-local-preview.json"
+      - name: Recheck 31 exact PR SHAs, CI and independent reviewer state using only GET
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: services/industry-api
+        run: |
+          node scripts/r45-live-release-audit.mjs --json "$RUNNER_TEMP/r45-local-preview.json" > "$RUNNER_TEMP/r45-review-evidence.json"
+          node --input-type=module -e '
+            import {readFileSync,writeFileSync} from "node:fs";
+            import {renderR45OperatorHandoff} from "./src/guest-r45-manual-gate.mjs";
+            const r=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            const p=r.report;
+            if(p.expectedSourcePrs!==31||p.verifiedSourcePrs!==31||
+              !p.comparisonEvidenceValid||!p.mergePreviewValid||
+              r.githubMutationCalls!==0||p.decisions.productionAuthorized!==false)
+              process.exit(2);
+            writeFileSync(process.argv[2],renderR45OperatorHandoff(p));
+            console.log(JSON.stringify({verifiedSources:p.verifiedSourcePrs,
+              firstHumanBlocker:p.firstManualBlockerPr,
+              behind:p.firstPrBehindMain,mergeConflicts:p.mergePreviewConflictCount,
+              approvals:p.independentCurrentHeadApprovals,greenSourceCi:p.greenSourceCheckPrs,
+              blockers:p.blockers,productionAuthorized:false}));
+          ' "$RUNNER_TEMP/r45-review-evidence.json" "$RUNNER_TEMP/r45-reviewer-handoff.md"
+      - name: Store fully read-only manual release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guest-r45-31-pr-manual-review
+          path: |
+            ${{ runner.temp }}/r45-local-preview.json
+            ${{ runner.temp }}/r45-review-evidence.json
+            ${{ runner.temp }}/r45-reviewer-handoff.md
+          if-no-files-found: warn
+          retention-days: 7
