@@ -24,7 +24,8 @@ function snapshot(){
 function compose(){
   const services={};
   for(const name of ['db','provision','migrate','bootstrap','api'])
-    services[name]={networks:{r14_private:{}},ports:[]};
+    services[name]={networks:{r14_private:{}},ports:[],
+      security_opt:['no-new-privileges:true']};
   services.db.volumes=[{type:'volume',
     source:'osmanx-guest-r14-canary_guest_r14_data',
     target:'/var/lib/postgresql/data'}];
@@ -137,7 +138,8 @@ test('R39 injected PG preflight never touches remote target or leaks connection 
   }),/NONEMPTY_USER_SCHEMAS/);
 });
 test('R39 Compose accepts approved canary and forbids host/system privileges',()=>{
-  const good=inspectR39ComposePrivileges(compose());
+  const good=inspectR39ComposePrivileges(compose(),{
+    expectedProvisionPath:'/private/checkout/ops/provision-roles.sh'});
   assert.equal(good.valid,true,JSON.stringify(good.blockers));
   assert.equal(good.credentialValuesReturned,false);
   const scenarios=[
@@ -155,7 +157,8 @@ test('R39 Compose accepts approved canary and forbids host/system privileges',()
   ];
   for(const change of scenarios){
     const c=compose();change(c);
-    assert.equal(inspectR39ComposePrivileges(c).valid,false,
+    assert.equal(inspectR39ComposePrivileges(c,{
+      expectedProvisionPath:'/private/checkout/ops/provision-roles.sh'}).valid,false,
       'Must refuse dangerous runtime drift');
   }
 });
@@ -207,6 +210,6 @@ test('R39 actual restore shell mandates both DB probes and atomic restore',async
   assert.match(script,/pg_restore --single-transaction --exit-on-error/);
   assert.match(script,/test ! -L "\$archive"/);
   assert.match(script,/test ! -L "\$AGE_IDENTITY_FILE"/);
-  assert.match(script,/sha256sum -c/);
+  assert.match(script,/r40-archive-check\.mjs/);
   assert.doesNotMatch(script,/pg_restore --jobs/);
 });
