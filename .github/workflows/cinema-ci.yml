@@ -23,6 +23,7 @@ on:
       - "assets/catalog/index.html"
       - "assets/guest/offer.html"
       - ".github/workflows/cinema-ci.yml"
+      - ".github/workflows/deploy.yml"
   push:
     branches:
       - feature/osmanx-video-stories-20261119
@@ -32,6 +33,7 @@ on:
       - "tests/cinema-media.test.mjs"
       - "tests/stories-gallery.test.mjs"
       - ".github/workflows/cinema-ci.yml"
+      - ".github/workflows/deploy.yml"
       - "tests/cinema-r2.test.mjs"
       - "tests/cinema-r4.test.mjs"
       - "tests/cinema-r5.test.mjs"
