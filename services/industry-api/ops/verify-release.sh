@@ -473,6 +473,21 @@ if grep -Fq '"readOnlyMergeAndSignedBackupReviewR42":true' "$root/RELEASE.json";
   grep -Fq 'r42-backup-preflight.mjs' "$root/ops/backup-encrypted.sh" || exit 3
   grep -Fq 'ln "$temp_dir/$name"' "$root/ops/backup-encrypted.sh" || exit 3
 fi
+# R43 exact lock bytes, dependency policy, Docker build context and no writes.
+if grep -Fq '"committedDependencyLockAndImageSmokeR43":true' "$root/RELEASE.json"; then
+  grep -Fq '"readOnlyMergeAndSignedBackupReviewR42":true' "$root/RELEASE.json" || exit 3
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || exit 3
+  test -f "$root/package-lock.json" && test -f "$root/.dockerignore" || exit 3
+  printf '%s  %s\n' 'd0453f56f370d9d5822ccb2116148e56f07acaccff66deb01d5fc280cbc4321a' "$root/package-lock.json" | sha256sum --check --status || {
+    echo 'R43 committed npm lock identity mismatch' >&2; exit 3;
+  }
+  grep -Fq 'npm ci --omit=dev --ignore-scripts' "$root/Dockerfile" || exit 3
+  for f in src/guest-r43-lock.mjs src/guest-r43-audit-policy.mjs \
+    src/guest-r43-review-chain.mjs scripts/r43-supply-verify.mjs \
+    scripts/r43-review-chain.mjs; do
+    test -f "$root/$f" || { echo "Missing R43 source: $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

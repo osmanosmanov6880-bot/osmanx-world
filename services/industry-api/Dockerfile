@@ -6,9 +6,11 @@ WORKDIR /app
 # assertion, not cryptographic supply-chain proof.
 ARG OSMANX_SOURCE_SHA=""
 LABEL org.opencontainers.image.revision="${OSMANX_SOURCE_SHA}" \
-      io.osmanx.guest.writes-default="false"
-COPY --chown=node:node package.json ./
-RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund \
+      io.osmanx.guest.writes-default="false" \
+      io.osmanx.guest.lock-sha256="d0453f56f370d9d5822ccb2116148e56f07acaccff66deb01d5fc280cbc4321a"
+# R43: immutable transitive registry graph, verified by npm ci integrity.
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund \
     && npm cache clean --force
 COPY --chown=node:node src/ ./src/
 COPY --chown=node:node shared/ ./shared/
