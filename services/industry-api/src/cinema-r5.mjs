@@ -1,8 +1,10 @@
 // OSMANX CINEMA R5: staff contact activity, private subject rights,
 // and sales performance without cookies or unique-visitor tracking.
+import {createHash} from 'node:crypto';
 const fail=(status,message)=>Object.assign(new Error(message),{statusCode:status});
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL=/^[^\s@<>/?#]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i;
+const KEY=/^[a-zA-Z0-9._:-]{16,80}$/;
 const CHANNELS=new Set(['email','phone','whatsapp','in_person']);
 const OUTCOMES=new Set(['attempted','connected','no_reply','invalid_contact']);
 const only=(value,keys)=>{
@@ -25,6 +27,14 @@ export function parseContactActivity(value){
   if(b.completeFollowup!==undefined && typeof b.completeFollowup!=='boolean')throw fail(400,'Недопустимое подтверждение выполнения');
   return {...b,completeFollowup:b.completeFollowup===true};
 }
+export function contactRequest(value,activity){
+  if(value===undefined)return {key:null,digest:null};
+  if(typeof value!=='string'||!KEY.test(value))throw fail(400,'Некорректный Idempotency-Key');
+  return {key:value,digest:createHash('sha256').update(JSON.stringify({
+    expectedVersion:activity.expectedVersion,channel:activity.channel,
+    outcome:activity.outcome,completeFollowup:activity.completeFollowup
+  })).digest('hex')};
+}
 export function exactEmail(value){
   if(typeof value!=='string'||value.length>254||value.length<5||!EMAIL.test(value.trim()))
     throw fail(400,'Требуется точный email');
@@ -45,11 +55,23 @@ export function registerCinemaR5Routes(app,{base,protectOwner}){
   }));
   app.post(base+'/leads/:id/contacts',req=>protectOwner(req,['owner','manager'],async(db,session)=>{
     const id=checkedUuid(req.params.id),activity=parseContactActivity(req.body);
+    const replay=contactRequest(req.headers['idempotency-key'],activity);
+    // FOR UPDATE serializes simultaneous edits and replays on this lead.
     const result=await db.query(
-      'SELECT id,version,state FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
+      'SELECT id,version,state,contact_count,first_contact_at,last_contact_at,next_action_at,next_action_kind FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
       [session.tenant_id,id]);
     if(!result.rowCount)throw fail(404,'Заявка не найдена');
     const row=result.rows[0];
+    if(replay.key){
+      const event=await db.query(
+        'SELECT contact_request_digest FROM industry.cinema_lead_events WHERE tenant_id=$1 AND lead_id=$2 AND contact_request_key=$3',
+        [session.tenant_id,id,replay.key]);
+      if(event.rowCount){
+        if(event.rows[0].contact_request_digest!==replay.digest)
+          throw fail(409,'Ключ уже использован с другими данными');
+        return {item:row,recorded:true,duplicate:true,verification:'manual_manager_record'};
+      }
+    }
     if(row.version!==activity.expectedVersion)throw fail(409,'Карточка изменена другим менеджером');
     if(['won','lost'].includes(row.state))throw fail(409,'Нельзя записать контакт по закрытой заявке');
     const changed=await db.query(
@@ -57,9 +79,9 @@ export function registerCinemaR5Routes(app,{base,protectOwner}){
       [session.tenant_id,id,activity.outcome,activity.completeFollowup]);
     const saved=changed.rows[0];
     await db.query(
-      "INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version,contact_channel,contact_outcome,next_action_at,next_action_kind) VALUES($1,$2,$3,'contact_logged',$4,$4,$5,$6,$7,$8,$9)",
-      [session.tenant_id,id,session.account_id,row.state,saved.version,activity.channel,activity.outcome,saved.next_action_at,saved.next_action_kind]);
-    return {item:saved,recorded:true,verification:'manual_manager_record'};
+      "INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version,contact_channel,contact_outcome,next_action_at,next_action_kind,contact_request_key,contact_request_digest) VALUES($1,$2,$3,'contact_logged',$4,$4,$5,$6,$7,$8,$9,$10,$11)",
+      [session.tenant_id,id,session.account_id,row.state,saved.version,activity.channel,activity.outcome,saved.next_action_at,saved.next_action_kind,replay.key,replay.digest]);
+    return {item:saved,recorded:true,duplicate:false,verification:'manual_manager_record'};
   }));
   app.get(base+'/performance',req=>protectOwner(req,['owner','manager'],async(db,session)=>{
     const qs=only(req.query||{},['days']),days=reportDays(qs.days);
