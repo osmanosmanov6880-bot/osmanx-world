@@ -38,7 +38,7 @@ Files: `digest.mjs`, `admin.mjs`, `index.mjs`, migration.
 
 - Per-episode email campaign draft → separate approval → queued delivery with explicit `DIGEST_DELIVERY_ENABLED` flag default false.
 - Campaign can be created only for an already published documentary episode. Subscribers must have confirmed their email (R2 double opt-in).
-- Persistent campaign and recipient-level delivery state in D1, bounded batches <=10, DB claim before send, Resend stable Idempotency-Key.
+- Persistent campaign and recipient-level delivery state in D1, bounded batches <=10 on a five-minute opt-in cron, DB claim before send, Resend stable Idempotency-Key.
 - Each email contains an HMAC-signed unsubscribe link; GET has no side effect, POST validates signature and changes status. Existing R2 legacy unsubscribe tokens continue to work.
 - Interrupted `processing` rows are intentionally not resent automatically; require review of Resend history. Resend idempotency retention is finite. Permanently failed sends are not represented as successful.
 
