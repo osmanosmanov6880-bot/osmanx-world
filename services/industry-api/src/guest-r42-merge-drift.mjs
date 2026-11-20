@@ -15,10 +15,17 @@ export function inspectR42Merge({pr,mainRef,compare,protection,
   if(!validSource)blockers.push('FIRST_PR_HEAD_OR_MAIN_DRIFT');
   if(mainAfter?.object?.sha!==main)
     blockers.push('MAIN_CHANGED_DURING_GITHUB_CHECK');
+  // Compare REST may omit head_commit. If it does, accept the last
+  // source SHA ONLY when the complete commit page is present.
+  const completeCommits=Array.isArray(compare?.commits)&&
+    compare.commits.length===compare.total_commits&&
+    compare.commits.length>0&&compare.commits.length<=250;
+  const observedHead=compare?.head_commit?.sha||
+    (completeCommits?compare.commits.at(-1)?.sha:null);
   const comparisonValid=compare&&
     ['ahead','behind','diverged','identical'].includes(compare.status)&&
     compare?.base_commit?.sha===main&&
-    compare?.head_commit?.sha===HEAD&&
+    observedHead===HEAD&&
     Number.isSafeInteger(compare.ahead_by)&&compare.ahead_by>=0&&
     Number.isSafeInteger(compare.behind_by)&&compare.behind_by>=0&&
     Number.isSafeInteger(compare.total_commits)&&
