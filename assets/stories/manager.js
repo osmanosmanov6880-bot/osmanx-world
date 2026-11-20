@@ -14,7 +14,7 @@ const showAmount=v=>{
   return (Number(v)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';
 };
 let rows=[],currentRole=null,staff=[],r5Online=false,r6Online=false,r6Cursor=null,r6Total=0,r6Generation=0;
-let r6Signals=new Map();
+let r6Signals=new Map(),r7Online=false,currentAccountId=null;
 const csrf=()=>{
   for(const name of ['__Host-osmanx_industry_csrf','osmanx_industry_csrf']){
     const cookie=document.cookie.split('; ').find(row=>row.startsWith(name+'='));
@@ -50,6 +50,7 @@ function present(bool){
   byId('r5-subject').hidden=!(bool&&currentRole==='owner'&&r5Online);
   byId('r6-workqueue').hidden=!(bool&&r6Online);
   byId('r6-access-audit').hidden=!(bool&&currentRole==='owner'&&r6Online);
+  byId('r7-workload').hidden=!(bool&&r7Online);
 }
 function fail(message){
   present(false);
@@ -74,6 +75,17 @@ function renderTeamFilter(){
     const option=element('option','',person.email);option.value=person.id;select.append(option);
   }
   select.value=[...select.options].some(x=>x.value===old)?old:'all';
+}
+function renderWorkload(data){
+  const box=byId('r7-staff-overview');box.replaceChildren();
+  for(const member of data.items||[]){
+    const card=element('article','r7-staff-card');
+    card.append(element('strong','',member.email),
+      element('span','',member.active+' открытых · '+member.overdue+' просрочено · '+
+        member.awaiting_first_attempt+' без первой попытки'));
+    box.append(card);
+  }
+  if(!(data.items||[]).length)box.textContent='Действующих менеджеров пока нет.';
 }
 function renderQueueSummary(data){
   const box=byId('r6-queue-summary');box.replaceChildren();
@@ -105,7 +117,7 @@ async function reload(){
   staff=r5Online?(optional[0].value.items||[]):[];
   if(r5Online)renderPerformance(optional[1].value);
   else byId('r5-report').textContent='Серверный модуль R5 ещё не подключён. Возможности R4 остаются доступными.';
-  rows=data.items||[];r6Online=false;r6Cursor=null;r6Total=rows.length;r6Signals=new Map();
+  rows=data.items||[];r6Online=false;r7Online=false;r6Cursor=null;r6Total=rows.length;r6Signals=new Map();
   byId('r6-workqueue').hidden=true;
   byId('r6-access-audit').hidden=true;
   if(r5Online){
@@ -124,7 +136,16 @@ async function reload(){
       queueStatus();
     }
   }
+  if(r6Online){
+    try{
+      const workload=await request('/cinema/team/workload');
+      if(generation!==r6Generation)return;
+      r7Online=true;
+      renderWorkload(workload);
+    }catch{r7Online=false;}
+  }
   currentRole=currentRole||'manager';
+  byId('r7-workload').hidden=!r7Online;
   byId('r5-subject').hidden=!(currentRole==='owner'&&r5Online);
   byId('r6-workqueue').hidden=!r6Online;
   byId('r6-access-audit').hidden=!(currentRole==='owner'&&r6Online);
@@ -297,6 +318,7 @@ function renderLeads(filter=''){
     assignedSelect.value=item.assigned_to||'';
     assignedLabel.append(assignedSelect);staffRow.append(assignedLabel);
     if(r5Online)card.append(staffRow);
+    if(r7Online&&currentRole!=='owner')assignedSelect.disabled=true;
     function refreshActionState(){
       const closed=['won','lost'].includes(selector.value);
       due.disabled=closed;actionKind.disabled=closed;loss.disabled=selector.value!=='lost';
@@ -365,7 +387,7 @@ function renderLeads(filter=''){
         status.textContent='Введите целое число рублей или оставьте поле пустым.';return;
       }
       const payload={state,dealValueMinor:amount,expectedVersion:item.version,nextActionAt:newDue,nextActionKind:kind,lossReasonCode:lossReason};
-      if(r5Online)payload.assignedTo=assignedSelect.value||null;
+      if(r5Online&&(!r7Online||currentRole==='owner'))payload.assignedTo=assignedSelect.value||null;
       save.disabled=true;
       try{
         await request('/cinema/leads/'+item.id,{method:'PATCH',payload});
@@ -488,7 +510,10 @@ byId('r5-subject-form').addEventListener('submit',async event=>{
   byId('r5-subject-results').replaceChildren();
   byId('r5-subject-status').textContent='Ищем обращения…';
   try{
-    const found=await request('/cinema/privacy/search?email='+encodeURIComponent(byId('r5-subject-email').value.trim()));
+    const email=byId('r5-subject-email').value.trim();
+    const found=r7Online
+      ?await request('/cinema/privacy/search',{method:'POST',payload:{email}})
+      :await request('/cinema/privacy/search?email='+encodeURIComponent(email));
     subjectRows(found);
     byId('r5-subject-status').textContent='Перед экспортом или удалением подтвердите проверку личности.';
   }catch(err){byId('r5-subject-status').textContent=err.message;}
@@ -522,20 +547,20 @@ byId('login-form').addEventListener('submit',async e=>{
     }});
     byId('password').value='';
     const user=await request('/auth/me');
-    currentRole=user.role;
+    currentRole=user.role;currentAccountId=user.account?.id||null;
     if(!['owner','manager'].includes(currentRole))throw new Error('Требуется роль владельца или менеджера');
     await reload();present(true);state.textContent='';
   }catch(err){byId('password').value='';fail(err.message);}
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;rows=[];staff=[];r5Online=false;r6Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  currentRole=null;currentAccountId=null;rows=[];staff=[];r5Online=false;r6Online=false;r7Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
   try{
     const user=await request('/auth/me');
-    currentRole=user.role;
+    currentRole=user.role;currentAccountId=user.account?.id||null;
     if(!['owner','manager'].includes(currentRole))return;
     await reload();present(true);
   }catch(err){present(false);}
