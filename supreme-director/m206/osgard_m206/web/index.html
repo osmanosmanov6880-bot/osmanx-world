@@ -1,0 +1,103 @@
+<!doctype html><html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090e19">
+<title>OSGARD M206 — Контроль достоверности</title>
+<link rel="stylesheet" href="/assurance/styles.css">
+<script defer src="/assurance/app.js"></script>
+</head><body>
+<section id="login" class="login"><form id="loginForm" class="login-card">
+<div class="brand"><span class="sigil">◈</span><span><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></span></div>
+<p class="eyebrow">M206 · ASSURANCE ENGINE</p>
+<h1>Цифры требуют<br><em>доказательств.</em></h1>
+<p class="muted">Контроль противоречий в расходах, неизменяемая история проверок и сравнение зафиксированных прогнозов с ручными наблюдениями.</p>
+<label>Токен владельца<input id="token" type="password" minlength="20" autocomplete="off" spellcheck="false" required placeholder="Локальный Bearer-токен"></label>
+<button class="primary full" type="submit">Войти в систему</button>
+<p id="loginError" class="error" role="alert"></p>
+<p class="tiny muted">Токен остаётся в оперативной памяти вкладки. Нет банковских подключений и production-деплоя.</p>
+</form></section>
+<div id="shell" class="shell" hidden>
+<aside class="sidebar">
+<div class="brand"><span class="sigil">◈</span><span><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></span></div>
+<p class="nav-cap">РАБОЧАЯ СРЕДА</p>
+<a href="/studio/">CRM / задачи сотрудников</a>
+<a href="/projects/">Проекты</a>
+<a href="/finance/">Расходы M198</a>
+<a href="/portfolio/">Финансовый портфель</a>
+<a href="/cashflow/">Денежные потоки</a>
+<a href="/risks/">Финансовые риски</a>
+<a href="/watch/">Наблюдения M202</a>
+<a href="/actions/">Планы M203</a>
+<a href="/economics/">Экономика M204</a>
+<a href="/cost-control/">Сверка M205</a>
+<span class="selected">Достоверность M206</span>
+<div class="side-bottom">LOCAL ASSURANCE<br>Нет банковской сверки<br>Нет независимой подписи<br>Production NO-GO</div>
+</aside>
+<div class="workspace">
+<header class="topbar"><div><p class="eyebrow">OSGARD / EVIDENCE OPERATIONS</p><strong>Контроль источников и прогнозов</strong></div>
+<div class="toolbar"><span class="muted" id="actor"></span><button id="refresh" type="button">Обновить</button><button id="logout" type="button">Выйти</button></div></header>
+<main>
+<section class="hero"><p class="eyebrow">M206 · EVIDENCE OVER IMPRESSION</p>
+<h1>Предположение.<br><em>Источник. Проверка.</em></h1>
+<p class="muted">Обнаруживайте противоречия, документируйте своё решение, фиксируйте прогноз до наблюдений и измеряйте ошибку без подмены реальных результатов.</p></section>
+<div class="stats">
+<div><span>Планов M203</span><strong id="statPlans">—</strong></div>
+<div><span>Предупреждений последнего скана</span><strong id="statWarnings">—</strong></div>
+<div><span>Планов без проверки</span><strong id="statUnscanned">—</strong></div>
+<div><span>Зафиксированных прогнозов</span><strong id="statForecasts">—</strong></div>
+</div>
+<section class="panel">
+<div class="section-head"><div><p class="eyebrow">01 · ОБЪЕКТ ПРОВЕРКИ</p><h2>Выберите план</h2>
+<p class="muted">Все диагностические снимки, наблюдения и ручные рецензии привязаны к конкретному плану и организации.</p></div><a href="/actions/">Создать план в M203</a></div>
+<div class="selector"><label>Финансовое решение<select id="planSelect"></select></label><p id="planHint" class="muted small"></p></div>
+</section>
+<div id="planSections">
+<section class="panel">
+<div class="section-head"><div><p class="eyebrow">02 · DATA INTEGRITY</p><h2>Противоречия и пробелы источников</h2>
+<p class="muted">Точный снимок сохраняется в отдельный журнал. Фактическое исправление проверяется новым сканированием — подтверждение прочтения не скрывает предупреждение.</p></div><button id="runScan" class="primary" type="button">Запустить проверку</button></div>
+<div class="status-line" id="diagnosticStatus">Проверка ещё не выполнялась.</div>
+<div id="findingList" class="records"></div>
+<div class="muted small" id="diagnosticHash"></div>
+</section>
+<section class="panel">
+<div class="section-head"><div><p class="eyebrow">03 · FROZEN FORECAST</p><h2>Зафиксировать исходную гипотезу</h2><p class="muted">Снимок сохраняет ожидаемые значения по каждому месяцу и контрольные суммы M204/M205. Он не изменяется при последующих корректировках исходных данных.</p></div></div>
+<form id="forecastForm" class="input-grid">
+<label>Разовая стоимость<select id="costBasis"><option value="planned">Плановая M204</option><option value="incurred">Заявленная понесённая M204</option></select></label>
+<label>Регулярные расходы<select id="recurringBasis"><option value="planned">Плановые M205</option><option value="reported">Заявленные M205</option></select></label>
+<label>Горизонт, месяцев<input id="horizon" type="number" min="1" max="36" step="1" value="12" required></label>
+<label>Сценарий 1, реализация %<input id="rateLow" type="number" min="0" max="100" step="1" value="40" required></label>
+<label>Сценарий 2, реализация %<input id="rateMid" type="number" min="0" max="100" step="1" value="70" required></label>
+<label>Сценарий 3, реализация %<input id="rateHigh" type="number" min="0" max="100" step="1" value="100" required></label>
+<label>Какой сценарий фиксировать?<select id="scenarioIndex"><option value="0">Сценарий 1</option><option value="1" selected>Сценарий 2</option><option value="2">Сценарий 3</option></select></label>
+<label class="check"><input id="requireReconciled" type="checkbox" checked> Требовать сопоставления всех разовых затрат с M198</label>
+<label class="check"><input id="assumeZero" type="checkbox"> Я явно принимаю допущение о нулевых регулярных расходах выбранного типа</label>
+<label class="wide">Почему эти допущения обоснованы?<textarea id="forecastRationale" rows="2" maxlength="600" placeholder="Основание для расчёта, минимум 10 символов" required></textarea></label>
+<div class="form-action"><button class="primary" type="submit">Зафиксировать прогноз</button></div>
+</form>
+<p class="muted small">Без действительного расчёта M205 и явно заданных расходов/допущений прогноз не будет зафиксирован.</p>
+</section>
+<section class="panel">
+<div class="section-head"><div><p class="eyebrow">04 · MONTHLY EVIDENCE</p><h2>Наблюдения по месяцам</h2><p class="muted">Это ручные сведения владельца, а не банковские поступления. Незаполненные месяцы остаются неизвестными, ноль можно указать только явно.</p></div></div>
+<div class="selector"><label>Зафиксированный прогноз<select id="baselineSelect"></select></label>
+<p id="baselineHint" class="muted small"></p></div>
+<form id="observationForm" class="input-grid">
+<label>Модельный месяц<select id="monthSelect"></select></label>
+<label>Заявленная выгода за месяц, ₽<input id="reportedGross" type="text" inputmode="decimal" required placeholder="0.00"></label>
+<label>Заявленные расходы за месяц, ₽<input id="reportedOperating" type="text" inputmode="decimal" required placeholder="0.00"></label>
+<label>Идентификатор источника<input id="observationReference" maxlength="160" required placeholder="Например, отчёт 2026-11"></label>
+<label class="wide">Основание наблюдения<textarea id="observationEvidence" maxlength="700" rows="2" required placeholder="Что именно измерялось, откуда цифры?"></textarea></label>
+<div class="form-action"><button class="primary" type="submit">Сохранить наблюдение</button></div>
+</form>
+<div id="qualityStatus" class="status-line">Выберите прогноз для сравнения.</div>
+<div id="qualityStats" class="stats compact"></div>
+<div id="monthRows" class="records"></div>
+<p class="muted small">Средняя ошибка считается только по месяцам с ручным наблюдением. Новые записи не меняют изначальный прогноз.</p>
+</section>
+</div>
+<section class="panel">
+<div class="section-head"><div><p class="eyebrow">05 · LEADERSHIP</p><h2>Портфель проверок и пакет доказательств</h2><p class="muted">Отчёты содержат локальные хеши, источник гипотез и отметку об отсутствии внешнего подтверждения.</p></div><div class="actions"><button id="reloadPortfolio" type="button">Обновить</button><button id="csv" type="button">Экспорт CSV</button><button class="primary" id="packet" type="button">Пакет JSON выбранного плана</button></div></div>
+<div id="portfolio" class="records"></div>
+</section>
+<div class="disclaimer"><strong>Ограничения независимости</strong><p>Контрольные суммы защищают от незамеченных обычных изменений локальных записей, но не заменяют внешнюю подпись, банковскую выписку или аудит. «Рассмотрено» не означает «исправлено». Ошибка прогнозов измеряется по ручным данным — не по доказанной фактической прибыли.</p></div>
+</main><footer>OSGARD SUPREME DIRECTOR M206 · Local-only · No bank verification · Upstream 180: independently accepted 0/180 · Production NO-GO</footer>
+</div></div><div id="toast" role="status" class="toast" hidden></div>
+</body></html>

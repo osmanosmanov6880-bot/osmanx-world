@@ -1,0 +1,9 @@
+[project]
+name = "osgard-supreme-director-m194"
+version = "0.1.0"
+description = "Offline CRM operations for OSGARD Supreme Director"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["osgard_m194*"]

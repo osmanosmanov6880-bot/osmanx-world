@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090f19">
+<title>OSGARD M204 — Экономика решений</title>
+<link rel="stylesheet" href="/economics/styles.css">
+<script defer src="/economics/app.js"></script>
+</head><body>
+<section class="login" id="login">
+<form id="loginForm" class="login-card">
+<div class="brand"><span class="emblem">◈</span><div><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></div></div>
+<p class="eyebrow">M204 / DECISION ECONOMICS</p>
+<h1>Цена решения.<br>Цена результата.</h1>
+<p class="muted">Затраты, ожидаемая выгода, сценарии окупаемости и очередь приоритетов — только на основании локально введённых данных.</p>
+<label>Токен владельца организации<input id="token" type="password" minlength="20" autocomplete="off" spellcheck="false" placeholder="Ваш локальный Bearer-токен" required></label>
+<button type="submit" class="primary wide">Открыть экономику решений</button>
+<p id="loginError" class="error" role="alert"></p>
+<p class="tiny muted">Токен хранится только в памяти вкладки. Без внешних запросов.</p>
+</form></section>
+<div class="shell" id="shell" hidden>
+<aside class="sidebar">
+<div class="brand"><span class="emblem">◈</span><div><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></div></div>
+<p class="nav-cap">ПЛАТФОРМА</p>
+<a href="/studio/">CRM / Задачи команды</a>
+<a href="/projects/">Проекты</a>
+<a href="/finance/">Финансы проектов</a>
+<a href="/portfolio/">Портфель финансов</a>
+<a href="/cashflow/">Денежные потоки</a>
+<a href="/risks/">Риски M201</a>
+<a href="/watch/">Мониторинг M202</a>
+<a href="/actions/">Решения M203</a>
+<span class="selected">Экономика решений M204</span>
+<div class="sidebar-bottom">Данные вводятся владельцем<br>Ни платежей, ни внешних сообщений<br>Production NO-GO</div>
+</aside>
+<div class="page"><header class="topbar">
+<div><p class="eyebrow">OSGARD / LOCAL ECONOMICS STUDIO</p><strong>Управление экономикой решений</strong></div>
+<div class="toolbar"><span id="actor" class="muted"></span>
+<button id="refresh" type="button">Обновить</button>
+<button id="logout" type="button">Выйти</button></div>
+</header>
+<main>
+<section class="hero">
+<p class="eyebrow">M204 · 4 ENGINEERING SYSTEMS</p>
+<h1>Не обещать окупаемость.<br><em>Считать её условия.</em></h1>
+<p class="muted">Мы отделяем смету от заявленных затрат, прогноз ежемесячной выгоды от единичных заявлений и субъективные приоритеты от реальных финансовых результатов.</p>
+</section>
+<div class="stats">
+<div><span>Планы решений</span><strong id="statPlans">—</strong></div>
+<div><span>Плановые затраты</span><strong id="statPlanned">—</strong></div>
+<div><span>Заявленные расходы</span><strong id="statIncurred">—</strong></div>
+<div><span>Прогноз выгоды / мес.</span><strong id="statBenefit">—</strong></div>
+</div>
+<section class="panel">
+<div class="panel-head"><div><p class="eyebrow">01 / ИСТОЧНИК</p><h2>Выберите финансовое решение</h2>
+<p class="muted">Все записи M204 привязаны к реальному плану M203. Без плана сначала создайте его в разделе «Решения».</p></div><a href="/actions/">Перейти к планам</a></div>
+<div class="selector"><label>План<select id="planSelect"></select></label><div id="planDetail" class="selection-hint muted"></div></div>
+</section>
+<div id="planPanels">
+<section class="panel">
+<div class="panel-head"><div><p class="eyebrow">02 / ФИНАНСОВЫЕ ЗАПИСИ</p><h2>Стоимость и заявленный эффект</h2>
+<p class="muted">Четыре независимых типа записи. Каждой требуется описание источника или допущения. Отменённые записи остаются в проверяемом журнале.</p></div><span class="tag">Только ввод вручную</span></div>
+<form class="grid-form" id="entryForm">
+<label>Тип записи<select id="kind" required>
+<option value="cost_planned">Плановые разовые затраты</option>
+<option value="cost_incurred">Уже понесённые затраты (со слов владельца)</option>
+<option value="benefit_forecast_monthly">Ожидаемая выгода в месяц</option>
+<option value="benefit_reported_once">Заявленная разовая выгода</option>
+</select></label>
+<label>Сумма в рублях<input id="amount" inputmode="decimal" type="text" placeholder="12000.00" required></label>
+<label>Номер основания / источник<input id="reference" type="text" maxlength="120" placeholder="Например, смета 2026-11"></label>
+<label class="span2">Название<input id="entryTitle" type="text" maxlength="160" required placeholder="Например, стоимость тестирования"></label>
+<label class="span2">На основании каких данных?<textarea id="evidence" rows="3" maxlength="600" required placeholder="Укажите источник суммы и почему он релевантен"></textarea></label>
+<div class="submit"><button class="primary" type="submit">Добавить запись</button></div>
+</form>
+<p id="reportedWarning" class="small muted">Заявленная разовая выгода доступна только после принятого владельцем модельного результата M203; всё равно не считается банковским подтверждением.</p>
+<h3>Журнал записей</h3>
+<div id="entries" class="records"><p class="muted">Выберите план.</p></div>
+</section>
+<section class="panel">
+<div class="panel-head"><div><p class="eyebrow">03 / ЭКОНОМИЧЕСКАЯ МОДЕЛЬ</p><h2>Сценарии окупаемости</h2><p class="muted">Задайте срок, базу затрат и три собственных коэффициента реализации прогнозной выгоды. Ни одна цифра не подставляется из внешнего источника.</p></div></div>
+<form id="scenarioForm" class="grid-form">
+<label>База стоимости<select id="costBasis"><option value="planned">Плановые затраты</option><option value="incurred">Заявленные понесённые затраты</option></select></label>
+<label>Горизонт, месяцев<input id="horizon" type="number" min="1" max="36" step="1" value="12" required></label>
+<label>Сдержанный сценарий, %<input id="rate1" type="number" min="0" max="100" step="1" value="30" required></label>
+<label>Средний сценарий, %<input id="rate2" type="number" min="0" max="100" step="1" value="65" required></label>
+<label>Верхний сценарий, %<input id="rate3" type="number" min="0" max="100" step="1" value="100" required></label>
+<div class="submit"><button class="primary" type="submit">Рассчитать сценарии</button></div>
+</form>
+<div id="scenarios" class="scenario-grid"><p class="muted">Расчёт будет выполнен по вашему запросу.</p></div>
+<p class="muted small">Срок окупаемости условен: предполагаются стабильная месячная выгода и разовый расход. Повторяющиеся издержки, сезонность и банковская проверка автоматически не учитываются.</p>
+</section>
+<section class="panel">
+<div class="panel-head"><div><p class="eyebrow">04 / ПОРЯДОК РАБОТ</p><h2>Приоритет решения</h2><p class="muted">Это управленческий рейтинг, а не нейросетевая оценка прибыли. Оцените четыре показателя от 1 до 5, укажите причину и сохраните версию.</p></div></div>
+<form id="priorityForm" class="grid-form">
+<label>Срочность<select id="urgency"></select></label>
+<label>Важность эффекта<select id="impact"></select></label>
+<label>Уверенность в оценке<select id="confidence"></select></label>
+<label>Трудоёмкость<select id="effort"></select></label>
+<label class="span2">Почему именно такой приоритет?<textarea id="rationale" rows="2" maxlength="600" required placeholder="Приведите факты или допущения, минимум 10 символов"></textarea></label>
+<div class="submit"><button class="primary" type="submit">Сохранить приоритет</button></div>
+</form>
+<p class="muted small">Формула: (срочность × важность × уверенность) / трудоёмкость. При отсутствии оценки план остаётся без ранга.</p>
+</section>
+</div>
+<section class="panel">
+<div class="panel-head"><div><p class="eyebrow">05 / ВСЯ ОРГАНИЗАЦИЯ</p><h2>Портфель решений</h2><p class="muted">Рейтинг собственных оценок, прозрачная обеспеченность данными и отдельные планы без ранга.</p></div><div class="actions"><button id="reloadBoard" type="button">Обновить рейтинг</button><button id="export" class="primary" type="button">Экспорт CSV</button></div></div>
+<div id="board" class="records"><p class="muted">Рейтинг появится после загрузки.</p></div>
+</section>
+<div class="disclaimer"><strong>Финансовое предупреждение</strong>
+<p>«Заявленный расход» и «заявленная выгода» не являются банковской проводкой. Прогнозная окупаемость не означает реальную прибыль. Платформа не определяет причинность, не выполняет платежи и не связывается с контрагентами без отдельного согласованного механизма.</p></div>
+</main><footer>OSGARD M204 · Local-only · No bank verification · Исходные 180 заданий: независимо принятых 0/180</footer>
+</div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+</body></html>

@@ -1,0 +1,5 @@
+[project]
+name = "osgard-supreme-director-m202"
+version = "0.202.0"
+requires-python = ">=3.11"
+description = "Local financial monitoring, immutable snapshots, SLA and executive reports"

@@ -1,0 +1,22 @@
+{
+  "schema": "osgard.m198.source-manifest/1",
+  "files": {
+    "M198_RELEASE_CHECKLIST_RU.md": "f1ee655158d64cb5b3e6afa959b0e4c516e726580de6e57765c3f6445a181ffe",
+    "README.md": "de5e1aa8edb0263a0ded03854cb3b22e45484dd43c80b24dd024b51e83a2c2d1",
+    "build_manifest.py": "6c3ee076ca891465a2f32e6f33ba45df7ce104d1f5fe7f1d3e1de69b371d1b05",
+    "docs/M198_ENGINEERING_JOURNAL_RU.md": "555785f0fa861c0951b8f90c91f8c5eb48bd5912148107b009e4678ae3943210",
+    "osgard_m198/__init__.py": "f53ea129347dae68129d04efdd654449aac5548614fd61b6fb164dde6b0db55f",
+    "osgard_m198/__main__.py": "71ba671b8ea342d635bb2da0baef414f750b39740ec85ffb363ba9d04614588f",
+    "osgard_m198/runtime.py": "cacdce6acab24c89d85e8f04278cb4f15822847b96ab8ed4f1b369b1691a1b21",
+    "osgard_m198/server.py": "d420121b4527477d533de1e1f9ddd64f76b6615da3b7b87652c750e57e49d0a0",
+    "osgard_m198/web/app.js": "6556b68cd6944ea3dc9d38c5bcb14d4c9198ed403d6427f55436df080f834fbe",
+    "osgard_m198/web/index.html": "39c73633d0d6ac4f91ec394bc832ed66dcf5fa4472bd73069e35264f7547ba7e",
+    "osgard_m198/web/styles.css": "34356ffd7f9e8bc2fa71e504224a3358cd804fdba2e85d6487f3890d8a6a40bb",
+    "pyproject.toml": "6d581f1548b3b924806f2cbf53234ea8813458b583255f3eafaa1d0c5f7ad249",
+    "smoke.py": "11135376c2ea08cf3a6fb5fa7b51665b12cab7b8eff578c1b37817150a3ff02e",
+    "tests/test_http.py": "32ede3049040cf9703ee15846f64e29eae3775af58336f876e676ccfe7fced0d",
+    "tests/test_integrity.py": "334ff804a53e4d81cd73aa1b922c548bde3367dc4dba224a1eb071db3fac4855",
+    "tests/test_m198.py": "23029c62140db061f8861dcd3dd9175e5bfd8da0dcd85c80a02af490751296ca",
+    "verify_source.py": "81c02fcd61d90a27372bbd045778980f6ba55e4b0ab23f6acdd32b6f2469e9da"
+  }
+}

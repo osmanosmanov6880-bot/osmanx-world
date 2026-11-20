@@ -1,0 +1,5 @@
+[project]
+name = "osgard-supreme-director-m198"
+version = "0.198.0"
+requires-python = ">=3.11"
+description = "Local-only, audited project budget and finance forecasting"

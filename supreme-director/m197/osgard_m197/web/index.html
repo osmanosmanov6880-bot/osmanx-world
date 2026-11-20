@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080e18"><title>OSGARD — Карточка проекта</title>
+<link rel="stylesheet" href="/projects/styles.css"><script defer src="/projects/app.js"></script>
+</head>
+<body>
+<div id="login" class="login"><form id="loginForm" class="login-card">
+  <div class="brand"><div class="brand-sign">O</div><div><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></div></div>
+  <p class="eyebrow">M197 / PROJECT INTELLIGENCE</p>
+  <h1>Карточка проекта</h1><p class="muted">Документы, обязательства и отклонения по срокам. Данные хранятся только в локальной базе.</p>
+  <label for="token">Локальный токен доступа</label>
+  <input id="token" type="password" autocomplete="off" spellcheck="false" required minlength="20" maxlength="128" placeholder="Токен владельца или сотрудника">
+  <button class="primary full" type="submit">Открыть рабочую область</button>
+  <p id="loginError" class="error" role="alert" hidden></p>
+  <p class="tiny muted">Токен используется только в памяти этой вкладки. Внешние подключения отключены.</p>
+</form></div>
+<div id="shell" class="shell" hidden>
+  <aside class="sidebar">
+   <div class="brand"><div class="brand-sign">O</div><div><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></div></div>
+   <div class="side-label">ПРОЕКТЫ И КЛИЕНТЫ</div>
+   <div class="search-box"><input id="search" type="search" placeholder="Найти проект..." aria-label="Найти проект"></div>
+   <div id="projects" class="projects-list" aria-label="Список проектов"></div>
+   <div class="sidebar-bottom"><a href="/studio/">Основная CRM</a><p>Локальная SQLite · без production</p></div>
+  </aside>
+  <div class="workspace">
+   <header class="topbar"><div><div class="eyebrow">РАБОЧАЯ ОБЛАСТЬ / ДОСТАВКА ПРОЕКТА</div><div class="page-title">Управление проектами</div></div>
+   <div class="top-right"><span id="actor" class="actor"></span><button id="refresh" class="secondary">Обновить</button><button id="logout" class="secondary">Выйти</button></div></header>
+   <main id="content" class="content" aria-live="polite"><p>Выберите проект слева.</p></main>
+   <footer>OSGARD M197 · Нет внешних платежей, сообщений и автоматической приёмки · Оригинальные 180 задач не приняты</footer>
+  </div>
+</div>
+<dialog id="editDialog"><form id="editForm"><div class="modal-head"><div><div class="eyebrow">OSGARD / M197</div><h2 id="formTitle"></h2></div><button id="closeDialog" class="icon-button" type="button" aria-label="Закрыть">×</button></div>
+  <div id="formFields" class="form-fields"></div><p id="formError" class="error" role="alert" hidden></p>
+  <div class="dialog-actions"><button type="button" id="cancelDialog" class="secondary">Отмена</button><button type="submit" class="primary">Сохранить</button></div>
+</form></dialog>
+<div id="toast" class="toast" hidden role="status"></div>
+</body>
+</html>

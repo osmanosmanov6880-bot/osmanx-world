@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090f1a">
+<title>OSGARD M201 — Центр финансовых рисков</title>
+<link rel="stylesheet" href="/risks/styles.css"><script defer src="/risks/app.js"></script>
+</head><body>
+<section id="login" class="login">
+<form id="loginForm" class="login-card">
+  <div class="brand"><span class="emblem">◈</span><div><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></div></div>
+  <p class="eyebrow">M201 / RISK INTELLIGENCE</p>
+  <h1>Центр финансовых рисков</h1>
+  <p class="muted">Контролируйте гипотетические денежные разрывы. Работает только с вашей локальной базой — без реальных банковских операций.</p>
+  <label for="token">Локальный токен доступа</label>
+  <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Токен владельца или сотрудника" required minlength="20">
+  <button class="primary wide" type="submit">Открыть рабочую область</button>
+  <p id="loginError" class="error" role="alert"></p>
+  <p class="muted tiny">Токен хранится только в памяти вкладки.</p>
+</form></section>
+<div id="shell" class="shell" hidden>
+  <aside class="sidebar"><div class="brand"><span class="emblem">◈</span><div><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></div></div>
+    <p class="nav-caption">РАБОЧАЯ ОБЛАСТЬ</p>
+    <a href="/studio/">CRM и задачи</a>
+    <a href="/projects/">Карточки проектов</a>
+    <a href="/finance/">Финансы проектов</a>
+    <a href="/portfolio/">Портфель</a>
+    <a href="/cashflow/">Денежные потоки</a>
+    <span class="selected">Центр рисков</span>
+    <div class="sidebar-footer">M201 · Только localhost<br>Нет автоматических сообщений<br>Не подтверждено банком</div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div><p class="eyebrow">ЛОКАЛЬНАЯ ПАНЕЛЬ / OSGARD M201</p><strong>Финансовые предупреждения</strong></div>
+      <div class="top-actions"><span id="actor" class="muted"></span><button id="refresh" type="button">Обновить</button><button id="logout" type="button">Выйти</button></div></header>
+    <main class="main">
+      <section class="hero"><p class="eyebrow">КОНТРОЛЬ РИСКОВ ПОРТФЕЛЯ</p><h1>Не пропускайте <em>критические отклонения.</em></h1>
+      <p class="muted">Пять проверок финансовых порогов. Запуск вручную; новые риски сохраняются, повторные не дублируются. Сотрудники получают задачи только после назначения владельцем.</p></section>
+      <section class="stats" id="stats"><div><span>Новые</span><strong id="countOpen">—</strong></div><div><span>В работе</span><strong id="countAck">—</strong></div><div><span>Сняты</span><strong id="countDismiss">—</strong></div><div><span>Исчезли</span><strong id="countCleared">—</strong></div></section>
+      <div id="ownerArea">
+        <section class="panel"><div class="panel-head"><div><h2>Пороги предупреждений</h2><p class="muted">Укажите границы риска. Суммы — в рублях, внутри системы — в целых копейках.</p></div><span class="tag" id="policyVersion">Политика не настроена</span></div>
+          <form id="policyForm" class="form-grid">
+            <label>Горизонт прогноза<select id="months"><option value="3">3 месяца</option><option value="6" selected>6 месяцев</option><option value="12">12 месяцев</option><option value="18">18 месяцев</option></select></label>
+            <label>Условный начальный баланс, ₽<input id="opening" type="text" inputmode="decimal" value="0"></label>
+            <label>Минимальный резерв, ₽<input id="floor" type="text" inputmode="decimal" value="0"></label>
+            <label>Допустимые просрочки поступлений, ₽<input id="overdue" type="text" inputmode="decimal" value="0"></label>
+            <label>Допустимые расходы без срока, ₽<input id="undated" type="text" inputmode="decimal" value="0"></label>
+            <label>Допустимое число проектов сверх бюджета<input id="overbudget" type="number" min="0" max="1000" step="1" value="0"></label>
+            <label>Поступит от ожидаемого, %<input id="collection" type="number" min="0" max="100" step="1" value="100"></label>
+            <label>Возможный перерасход, %<input id="overrun" type="number" min="0" max="100" step="1" value="0"></label>
+            <label>Состояние проектов<select id="projectState"><option value="">Все</option><option value="planned">Планируются</option><option value="active">Активные</option><option value="completed">Завершённые</option><option value="cancelled">Отменённые</option></select></label>
+            <div class="form-action"><button class="primary" type="submit">Сохранить правила</button></div>
+          </form>
+        </section>
+        <section class="panel"><div class="panel-head"><div><h2>Проверка рисков</h2><p class="muted">Сначала предварительный расчёт, затем явное сохранение предупреждений.</p></div>
+            <div class="actions"><button id="preview" type="button">Предварительный расчёт</button><button id="scan" type="button" class="primary">Проверить и сохранить</button></div></div>
+            <div id="previewResults" class="rule-grid"><p class="muted">Сохраните правила и выполните предварительный расчёт.</p></div>
+        </section>
+        <section class="panel"><div class="panel-head"><div><h2>Журнал предупреждений</h2><p class="muted">Каждый эпизод сохраняет версию, основание и локальную историю действий.</p></div>
+          <select id="statusFilter" aria-label="Фильтр статуса"><option value="">Все предупреждения</option><option value="open">Новые</option><option value="acknowledged">В работе</option><option value="dismissed">Снятые</option><option value="cleared">Исчезнувшие</option></select></div>
+          <div id="alertList" class="alert-list"><p class="muted">Сканирование ещё не запускалось.</p></div>
+        </section>
+      </div>
+      <section class="panel" id="employeeArea" hidden><div class="panel-head"><div><h2>Назначенные мне финансовые задачи</h2><p class="muted">Без доступа к чужим суммам и финансовым настройкам.</p></div></div><div id="mineList" class="alert-list"></div></section>
+      <section class="note panel"><h2>Как понимать эти результаты</h2><p class="muted">Входные суммы и начальный остаток могут быть указаны вручную. SHA-256 подтверждает лишь неизменность локальной истории в рамках проверки, не подпись банка. Автоматического мониторинга, писем и платежей нет. Просроченные и недатированные суммы выносятся за пределы будущего календаря.</p></section>
+    </main>
+    <footer>OSGARD M201 · Только локальное моделирование · Production NO-GO · Независимая приёмка исходных 180 задач: 0/180</footer>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+</body></html>

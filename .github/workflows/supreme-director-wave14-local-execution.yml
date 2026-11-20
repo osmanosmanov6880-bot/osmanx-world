@@ -1,0 +1,71 @@
+name: OSGARD Original 180 Wave14 Local Execution Security
+# This does NOT authorize any protected-source or production release.
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/workflows/supreme-director-wave14-local-execution.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: original180-wave14-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  permit-quota-checkpoint:
+    name: local-permit-checkpoint (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile local modules (fail on any syntax issue)
+        run: python -m compileall -q supreme-director/campaign180
+      - name: Run signed-permit, atomic-quota, evidence and OCI planning regression
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave14_*.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_sandbox.py' -v
+      - name: Real subprocess acceptance with synthetic data only
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m campaign180.wave14_acceptance > "$RUNNER_TEMP/wave14_evidence.json"
+          python - <<'PY'
+          import json,os,pathlib
+          report=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"wave14_evidence.json").read_text())
+          assert report["checks_passed"] >= 9 and all(report["checks"].values())
+          assert report["local_only"] and not report["physical_oci_isolation_tested"]
+          assert not report["production_authorized"] and not report["independent_acceptance"]
+          print("WAVE14_REAL_LOCAL_EXECUTION_PASS",report["checks_passed"])
+          PY
+      - name: Retain scrubbed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave14-local-evidence-${{ matrix.python-version }}
+          path: ${{ runner.temp }}/wave14_evidence.json
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Original 180 gate remains NO-GO
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python - <<'PY'
+          from campaign180.audit import audit_original
+          from pathlib import Path
+          result=audit_original(Path("."))
+          assert result["counts"]["independently_accepted"]==0
+          assert result["counts"]["production_accepted"]==0
+          assert result["counts"]["upstream_approved"]==0
+          print("WAVE14_LOCAL_PASS_ORIGINAL_PRODUCTION_NO_GO")
+          PY

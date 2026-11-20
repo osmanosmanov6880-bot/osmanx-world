@@ -1,0 +1,56 @@
+<!doctype html><html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a101c"><title>OSGARD M202 — Контроль рисков</title>
+<link rel="stylesheet" href="/watch/styles.css"><script defer src="/watch/app.js"></script>
+</head><body>
+<section id="login" class="login"><form id="loginForm" class="login-card">
+<div class="brand"><span class="logo">◈</span><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+<p class="eyebrow">M202 · MONITORING CENTER</p><h1>Контроль рисков</h1>
+<p class="muted">Локальное расписание, история финансовых сценариев и задачи ответственных. Без банковских подключений.</p>
+<label>Локальный токен владельца<input id="token" type="password" autocomplete="off" spellcheck="false" required minlength="20" placeholder="Вставьте токен"></label>
+<button class="primary wide" type="submit">Открыть панель</button><p id="loginError" class="error" role="alert"></p>
+<p class="footnote">Токен не сохраняется в браузере. Доступ только на этом компьютере.</p>
+</form></section>
+<div id="shell" class="shell" hidden><aside class="sidebar">
+<div class="brand"><span class="logo">◈</span><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+<p class="cap">УПРАВЛЕНИЕ</p>
+<a href="/studio/">CRM и задачи</a><a href="/projects/">Проекты</a>
+<a href="/finance/">Бюджеты проектов</a><a href="/portfolio/">Портфель</a>
+<a href="/cashflow/">Денежные потоки</a><a href="/risks/">Риски M201</a>
+<span class="selected">Мониторинг M202</span>
+<div class="sidebar-bottom">Только localhost<br>Нет внешних платежей и уведомлений<br>Production NO-GO</div>
+</aside><div class="page"><header class="topbar">
+<div><p class="eyebrow">OSGARD / ЛОКАЛЬНЫЙ МОНИТОРИНГ</p><strong>Финансовый контроль</strong></div>
+<div class="toolbar"><span id="actor" class="muted"></span><button id="refresh" type="button">Обновить</button><button id="logout" type="button">Выйти</button></div>
+</header><main>
+<div class="hero"><p class="eyebrow">M202 · ТЕХНОЛОГИЧЕСКОЕ ЯДРО</p>
+<h1>Предупредить риск.<br><em>Зафиксировать решение.</em></h1>
+<p class="muted">Расписание проверок, история изменений показателей, контроль сроков реакции и отчёт руководителю — на одной панели.</p></div>
+<div class="stats">
+<div><span>Активные предупреждения</span><strong id="statActive">—</strong></div>
+<div><span>Текущие SLA-нарушения</span><strong id="statSla">—</strong></div>
+<div><span>Исторические снимки</span><strong id="statSnaps">—</strong></div>
+<div><span>Следующая проверка</span><strong id="statNext">—</strong></div>
+</div>
+<section class="panel"><div class="section-top"><div><p class="eyebrow">01 · РАСПИСАНИЕ</p><h2>Проверки по расписанию</h2><p class="muted">Настройки определяют, когда проверка считается просроченной. Для запуска нужен CLI из системного планировщика; встроенного фонового сервиса нет.</p></div><span id="scheduleBadge" class="chip">Не настроено</span></div>
+<form id="scheduleForm" class="settings">
+<label>Интервал<select id="interval"><option value="3600">Каждый час</option><option value="21600">Каждые 6 часов</option><option value="86400">Ежедневно</option><option value="604800">Раз в неделю</option></select></label>
+<label>Реакция на риск, часы<input id="ackHours" type="number" min="1" max="168" step="1" value="4"></label>
+<label>Решение проблемы, часы<input id="resolveHours" type="number" min="1" max="720" step="1" value="48"></label>
+<label class="toggle"><input type="checkbox" id="enabled"> Включено</label>
+<button type="submit" class="primary">Сохранить настройки</button>
+</form><div class="btns"><button type="button" id="runDue">Проверить, наступил ли срок</button><button type="button" id="manualScan">Запустить проверку вручную</button><span id="runInfo" class="muted small"></span></div>
+</section>
+<section class="panel"><div class="section-top"><div><p class="eyebrow">02 · ДИНАМИКА</p><h2>История изменений рисков</h2><p class="muted">Снимки вычислены из локальных финансовых данных, без искусственного заполнения.</p></div><button id="loadHistory" type="button">Обновить историю</button></div>
+<div id="snapshotList" class="snapshots"><p class="muted">История пока не загружена.</p></div>
+<div class="comparison"><label>Предыдущий снимок<select id="previous"></select></label><label>Новый снимок<select id="current"></select></label><button id="compare" type="button">Сравнить показатели</button></div>
+<div id="compareOutput" class="trend"><p class="muted">Выберите два снимка.</p></div>
+</section>
+<section class="panel"><div class="section-top"><div><p class="eyebrow">03 · РЕАКЦИЯ КОМАНДЫ</p><h2>Контроль сроков и просрочек</h2><p class="muted">Проверяются подтверждение риска, срок решения и сроки задач M195. Нарушения фиксируются после ручного обновления или запуска проверки по расписанию.</p></div><button id="refreshSla" type="button">Проверить SLA</button></div>
+<div id="slaList" class="records"><p class="muted">Нет данных о сроках реакции.</p></div></section>
+<section class="panel"><div class="section-top"><div><p class="eyebrow">04 · ОТЧЁТ РУКОВОДИТЕЛЮ</p><h2>Финансовая сводка и экспорт</h2><p class="muted">Только для владельца организации. Данные условные, отсутствует сверка с банком.</p></div><div class="btns"><button id="viewReport" type="button">Сформировать отчёт</button><button id="exportCsv" class="primary" type="button">Экспорт CSV</button></div></div>
+<div id="reportArea" class="records"><p class="muted">Сформируйте отчёт из текущих показателей.</p></div></section>
+<div class="notice"><strong>Граница достоверности</strong><p>Начальный баланс и суммы могут быть введены вручную. SHA-256 локального журнала не заменяет независимую подпись. Автоматического оповещения по почте/WhatsApp и выполнения платежей здесь нет.</p></div>
+</main><footer>OSGARD M202 · Проверка только по запросу или внешнему системному планировщику · Исходные 180 задач: 0/180 независимо приняты</footer></div></div>
+<div id="toast" class="toast" role="status" hidden></div>
+</body></html>

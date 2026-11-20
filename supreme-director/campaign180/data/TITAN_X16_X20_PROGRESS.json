@@ -1,0 +1,82 @@
+{
+  "schema": "osgard.original180.titan-x16-x20-evidence/1",
+  "date": "2026-11-10",
+  "branch": "recovery/supreme-director-m187-20261104",
+  "code_sha": "c9346e5200c65f5208be7b794bdeb2ce53413d19",
+  "source_master": "supreme-director/originals/DIRECTOR_MASTER_180.md",
+  "scope_exact": [
+    "TITAN-X16",
+    "TITAN-X17",
+    "TITAN-X18",
+    "TITAN-X19",
+    "TITAN-X20"
+  ],
+  "test_file": "supreme-director/campaign180/tests/test_titan_x16_x20.py",
+  "test_count": 16,
+  "python_ci_url": "https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126765",
+  "python_ci_status": "PASSED_PY311_AND_PY313",
+  "browser_ci_url": "https://github.com/osmanosmanov6880-bot/osmanx-world/actions/runs/42838126405",
+  "browser_ci_status": "PASSED_REAL_CHROMIUM_320PX",
+  "upstream_canonical_sha_verified": false,
+  "external_reviewer_identity_verified": false,
+  "production_release_authorized": false,
+  "independently_accepted": 0,
+  "tasks": [
+    {
+      "id": "TITAN-X16",
+      "local_code_paths": [
+        "supreme-director/campaign180/campaign180/workflow.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
+      ],
+      "original_status": "BLOCKED_UPSTREAM",
+      "local_implementation_present": true,
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X17",
+      "local_code_paths": [
+        "supreme-director/campaign180/campaign180/builder.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
+      ],
+      "original_status": "BLOCKED_UPSTREAM",
+      "local_implementation_present": true,
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X18",
+      "local_code_paths": [
+        "supreme-director/campaign180/campaign180/review.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
+      ],
+      "original_status": "BLOCKED_UPSTREAM",
+      "local_implementation_present": true,
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X19",
+      "local_code_paths": [
+        "supreme-director/campaign180/campaign180/repair.py",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py"
+      ],
+      "original_status": "BLOCKED_UPSTREAM",
+      "local_implementation_present": true,
+      "independently_accepted": false
+    },
+    {
+      "id": "TITAN-X20",
+      "local_code_paths": [
+        "supreme-director/campaign180/campaign180/structure.py",
+        "supreme-director/campaign180/campaign180/app_runtime.py",
+        "supreme-director/campaign180/campaign180/local_http.py",
+        "supreme-director/campaign180/assets/index.html",
+        "supreme-director/campaign180/assets/console.js",
+        "supreme-director/campaign180/assets/console.css",
+        "supreme-director/campaign180/tests/test_titan_x16_x20.py",
+        "supreme-director/campaign180/tests/browser-console.mjs"
+      ],
+      "original_status": "BLOCKED_UPSTREAM",
+      "local_implementation_present": true,
+      "independently_accepted": false
+    }
+  ]
+}

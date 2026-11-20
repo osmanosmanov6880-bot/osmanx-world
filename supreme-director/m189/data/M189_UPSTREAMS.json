@@ -1,0 +1,11 @@
+{
+  "schema": "osgard.m189.upstream-registry/1",
+  "teams": [
+    {"team": "TITAN", "repo": null, "commit": null, "tree": null, "owner_approval": null},
+    {"team": "NEXUS", "repo": null, "commit": null, "tree": null, "owner_approval": null},
+    {"team": "COMMERCE", "repo": null, "commit": null, "tree": null, "owner_approval": null},
+    {"team": "EXPERIENCE", "repo": null, "commit": null, "tree": null, "owner_approval": null},
+    {"team": "GENESIS", "repo": null, "commit": null, "tree": null, "owner_approval": null},
+    {"team": "ORBITAL", "repo": null, "commit": null, "tree": null, "owner_approval": null}
+  ]
+}

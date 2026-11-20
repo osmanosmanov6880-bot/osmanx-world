@@ -1,0 +1,69 @@
+name: OSGARD Original 180 Wave13 Local Security Acceptance
+# Local engineering validation is NOT the original plan's protected-source gate.
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/**"
+      - ".github/workflows/supreme-director-wave13-local-security.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: original180-wave13-local-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  local-closed-worker:
+    name: local-worker-and-quota (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile local modules and reject accidental Python syntax errors
+        run: python -m compileall -q supreme-director/campaign180
+      - name: Test actual closed subprocesses and durable budget races
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave13_*.py' -v
+      - name: Run standalone synthetic chaos acceptance
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m campaign180.sandbox_resilience > "$RUNNER_TEMP/wave13_chaos.json"
+          python - <<'PY'
+          import json,os,pathlib
+          data=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"wave13_chaos.json").read_text())
+          assert data["checks_passed"]>=10 and all(data["checks"].values())
+          assert data["local_only"] is True and data["network_actions"]==0
+          assert data["independent_acceptance"] is False
+          print("WAVE13_LOCAL_SECURITY_CHECKS_PASS",data["checks_passed"])
+          PY
+      - name: Retain machine-readable local evidence (never user data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave13-local-security-${{ matrix.python-version }}
+          path: ${{ runner.temp }}/wave13_chaos.json
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Assert NO-GO on original external products
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.audit import audit_original
+          audit=audit_original(Path("."))
+          assert audit["counts"]["independently_accepted"]==0
+          assert audit["counts"]["production_accepted"]==0
+          assert audit["counts"]["upstream_approved"]==0
+          print("WAVE13_LOCAL_ONLY_PASSED_ORIGINAL_RELEASE_GATE_NO_GO")
+          PY

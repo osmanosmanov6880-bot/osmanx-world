@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a101d"><title>OSGARD — Сводная аналитика · M199</title>
+<link rel="stylesheet" href="/portfolio/styles.css"></head>
+<body>
+<div class="login-screen" id="loginView">
+  <form id="loginForm" class="login-card">
+    <div class="wordmark"><span class="symbol">O</span><span><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></span></div>
+    <div class="eyebrow">FINANCIAL COMMAND / M199</div>
+    <h1>Сводная аналитика</h1>
+    <p>Единый обзор финансов проектов по данным вашей локальной базы. Без банковских подключений и вымышленных цифр.</p>
+    <label for="tokenInput">Локальный токен доступа</label>
+    <input id="tokenInput" type="password" required autocomplete="off" placeholder="Вставьте токен владельца или сотрудника">
+    <p class="error" id="loginError" hidden role="alert"></p>
+    <button class="primary full" type="submit">Войти в систему <span aria-hidden="true">→</span></button>
+    <div class="privacy"><span class="status-dot"></span>Токен хранится только в памяти текущей вкладки</div>
+  </form>
+</div>
+<div class="shell" id="workspace" hidden>
+  <aside class="sidebar">
+    <div class="wordmark"><span class="symbol">O</span><span><strong>OSGARD</strong><small>SUPREME DIRECTOR</small></span></div>
+    <div class="side-label">РАБОЧАЯ ОБЛАСТЬ</div>
+    <nav aria-label="Разделы"><a class="nav active" href="/portfolio/"><span class="nav-icon">◉</span> Сводная аналитика</a>
+      <a class="nav" href="/finance/"><span class="nav-icon">▤</span> Финансы проекта</a>
+      <a class="nav" href="/projects/"><span class="nav-icon">◇</span> Проекты</a>
+      <a class="nav" href="/studio/"><span class="nav-icon">▦</span> CRM / Команда</a></nav>
+    <div class="side-note"><span class="note-title">ЗАКРЫТАЯ СРЕДА</span><p>Показатели основаны только на локальной SQLite. Внешние переводы, платежи и команды отключены.</p></div>
+    <div class="identity"><div class="avatar">OS</div><div><strong id="sessionName">Сотрудник</strong><small id="sessionRole">Локальный доступ</small></div><button id="logout" type="button" title="Выйти" aria-label="Выйти из системы">↪</button></div>
+  </aside>
+  <main class="main">
+    <header class="top"><span class="breadcrumbs">ОБЗОР / <strong>СВОДНАЯ АНАЛИТИКА</strong></span>
+      <span class="local-label"><span class="status-dot"></span> LOCAL ONLY · M199</span></header>
+    <div class="main-inner">
+      <section class="hero"><div><div class="eyebrow">ФИНАНСОВЫЙ КОНТУР ОРГАНИЗАЦИИ</div>
+        <h1>Вся финансовая картина.<br><span>Без лишнего шума.</span></h1>
+        <p>Бюджеты, затраты, ожидаемые поступления и риски по всем доступным проектам — в одном пространстве.</p></div>
+        <div class="hero-mark" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orb">O</div></div></section>
+      <div class="toolbar"><div class="filters"><label for="projectState">Проекты<select id="projectState"><option value="">Все состояния</option>
+        <option value="planned">Запланированы</option><option value="active">В работе</option><option value="completed">Завершены</option><option value="cancelled">Отменены</option></select></label>
+        <label for="asOf">На дату (UTC)<input id="asOf" type="date"></label>
+        <label for="months">Горизонт<select id="months"><option value="3">3 месяца</option><option value="6" selected>6 месяцев</option><option value="12">12 месяцев</option><option value="18">18 месяцев</option></select></label></div>
+        <div class="actions"><button class="outline" id="refresh" type="button">↻ Обновить</button><button class="primary" id="export" type="button">↓ Экспорт CSV</button></div></div>
+      <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
+      <section class="metrics" aria-label="Финансовые показатели">
+        <article class="metric"><span>Совокупные бюджеты</span><strong id="budget">—</strong><small id="coverage">Ожидается загрузка</small></article>
+        <article class="metric"><span>Фактические расходы</span><strong id="actual">—</strong><small>По локальным записям</small></article>
+        <article class="metric"><span>Прогноз затрат</span><strong id="forecast">—</strong><small>Факт + оставшийся план</small></article>
+        <article class="metric"><span>Ожидаемые поступления</span><strong id="pending">—</strong><small>Не подтверждены банком</small></article>
+      </section>
+      <section class="panel timeline-panel"><div class="section-heading"><div><div class="eyebrow">ПРОГНОЗ ПО МЕСЯЦАМ</div><h2>Календарь поступлений</h2><p>Ожидаемые оплаты по датам и фактически учтённые вручную записи — разные величины.</p></div><span class="legend"><i class="legend-dot future"></i> Ожидается <i class="legend-dot manual"></i> Вручную учтено</span></div>
+        <div id="timeline" class="timeline" aria-live="polite"><p class="empty">Войдите для загрузки календаря.</p></div>
+        <div class="reconcile"><span>Просрочено: <strong id="overdue">—</strong></span><span>Без даты: <strong id="undated">—</strong></span><span>За горизонтом: <strong id="future">—</strong></span></div></section>
+      <section class="panel"><div class="section-heading"><div><div class="eyebrow">ПРОЕКТЫ И РИСКИ</div><h2>Портфель проектов</h2><p>Только записи, доступные текущему пользователю.</p></div><div class="count" id="projectCount">— проектов</div></div>
+        <div class="table-scroll"><table><thead><tr><th scope="col">ПРОЕКТ / КЛИЕНТ</th><th scope="col">СОСТОЯНИЕ</th><th scope="col">БЮДЖЕТ</th><th scope="col">ПРОГНОЗ ЗАТРАТ</th><th scope="col">РИСК</th></tr></thead><tbody id="projects"><tr><td colspan="5" class="empty">Нет загруженных проектов</td></tr></tbody></table></div></section>
+      <footer><span>OSGARD SUPREME DIRECTOR · M199 · Локальная аналитика, не бухгалтерская выписка</span><span>Исторические 180 задач: независимая приёмка 0/180</span></footer>
+    </div>
+  </main>
+</div><script src="/portfolio/app.js" defer></script></body></html>

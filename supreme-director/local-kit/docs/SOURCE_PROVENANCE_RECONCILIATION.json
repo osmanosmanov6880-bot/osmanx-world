@@ -1,0 +1,24 @@
+{
+  "schema": "osgard.m182.provenance-observations/1",
+  "date": "2026-10-27",
+  "status": "UNATTRIBUTED_REPOSITORIES_NOT_SIX_TEAM_UPSTREAMS",
+  "origin": "connected GitHub repository and commit search (read-only)",
+  "claims": {
+    "m180_local_commit": {"value": "e8f88465d98c966bd6931883cc5c873b9fcd94a1", "status": "USER_REPORTED_NOT_FETCHED"},
+    "m181_local_commit": {"value": "ff5e6de7e9614add995d11a7330fc2f13d2c1206", "status": "USER_REPORTED_NOT_FETCHED"},
+    "m181_original_zip_sha256": {"value": "c6d0ff3ff9caa435e6928244ab70ecee8156747306ac3174faca82702be2969a", "status": "USER_REPORTED_NOT_RECOMPUTED"},
+    "c9_180_task_reference": {"status": "SEPARATE_LINEAGE_UNRECONCILED", "library_document": "OSGARD_C9_FINAL_REPORT_RU.md", "reason": "matching task counts are not byte-level provenance"},
+    "w48_w58_world_game": {"status": "SEPARATE_PRODUCT_STREAM", "library_document": "OSGARD_W58_COMPLETION_GATE_PLAN_2026-10-26.md"}
+  },
+  "observed_repositories": [
+    {"repo": "HADJAL001/osgardos", "branch": "main", "observed_head_sha": "269914113dca1d35e41501c5cc24d8848cdef26b", "url": "https://github.com/HADJAL001/osgardos/commit/269914113dca1d35e41501c5cc24d8848cdef26b", "scope_hint": "OSGARDOS frontend / deployment; boundary document segregates dist-osgard from GG Empire", "team_assignment": null},
+    {"repo": "osmanosmanov6880-bot/osgard-world", "branch": "master", "observed_head_sha": "48cb8573efc4d1340c2b180cd0ff36961a9b3964", "url": "https://github.com/osmanosmanov6880-bot/osgard-world/commit/48cb8573efc4d1340c2b180cd0ff36961a9b3964", "scope_hint": "game/cinema and deployed world work; NOT demonstrated as DIRECTOR six-team repo", "team_assignment": null},
+    {"repo": "HADJAL001/osgard-world", "branch": "master", "observed_head_sha": "0c0621f40f628e6818a0c38799a06e9f92723d60", "url": "https://github.com/HADJAL001/osgard-world/commit/0c0621f40f628e6818a0c38799a06e9f92723d60", "scope_hint": "game stream", "team_assignment": null},
+    {"repo": "HADJAL001/osgard-new-world", "branch": "master", "observed_head_sha": "d40dd097af1a2f2f5eb283820e7f98e158854243", "url": "https://github.com/HADJAL001/osgard-new-world/commit/d40dd097af1a2f2f5eb283820e7f98e158854243", "scope_hint": "new-world deployment", "team_assignment": null},
+    {"repo": "HADJAL001/osgard-infra-backups", "branch": "main", "observed_head_sha": "89335796ce34f4c1bfd4f3725aaad4e75b2038a9", "url": "https://github.com/HADJAL001/osgard-infra-backups/commit/89335796ce34f4c1bfd4f3725aaad4e75b2038a9", "scope_hint": "backups", "team_assignment": null},
+    {"repo": "osmanosmanov6880-bot/osgard-universe", "branch": "main", "observed_head_sha": "5b7eeed9ab8e4f2084bea7925fb591a6f677bcbb", "url": "https://github.com/osmanosmanov6880-bot/osgard-universe/commit/5b7eeed9ab8e4f2084bea7925fb591a6f677bcbb", "scope_hint": "initial small repository", "team_assignment": null}
+  ],
+  "intended_six_upstreams": ["TITAN", "NEXUS", "COMMERCE", "EXPERIENCE", "GENESIS", "ORBITAL"],
+  "confirmed_team_to_repository_mappings": 0,
+  "verdict": "DO_NOT_AUTO_MERGE_OR_DEPLOY"
+}

@@ -1,0 +1,65 @@
+name: TITAN Original X16-X20 Exact Tasks
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/campaign180/workflow.py"
+      - "supreme-director/campaign180/campaign180/builder.py"
+      - "supreme-director/campaign180/campaign180/review.py"
+      - "supreme-director/campaign180/campaign180/repair.py"
+      - "supreme-director/campaign180/campaign180/structure.py"
+      - "supreme-director/campaign180/campaign180/app_runtime.py"
+      - "supreme-director/campaign180/campaign180/local_http.py"
+      - "supreme-director/campaign180/assets/**"
+      - "supreme-director/campaign180/tests/test_titan_x16_x20.py"
+      - ".github/workflows/titan-original-x16-x20.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: titan-original-x16-x20-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  original-next-five:
+    name: Verified workflow, static build, patch review, repair and editor (${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11','3.13']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Compile X16-X20 source
+        run: python -m compileall -q supreme-director/campaign180/campaign180
+      - name: Compile real no-AI editor browser client
+        run: node --check supreme-director/campaign180/assets/console.js
+      - name: Direct first-five tests including real Ed25519 and WSGI
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x16_x20.py' -v
+      - name: Existing stage, builder, repair and editor regressions
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_gateway_flow.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_builder_drafts_records_preview.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave6_repair.py' -v
+          python -m unittest discover -s supreme-director/campaign180/tests -p 'test_wave6_structure_automatic.py' -v
+      - name: Original upstream acceptance remains blocked
+        env:
+          PYTHONPATH: ${{ github.workspace }}/supreme-director/campaign180
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.audit import audit_original
+          x=audit_original(Path("."))
+          assert x["counts"]["independently_accepted"]==0
+          assert x["counts"]["production_accepted"]==0
+          assert x["counts"]["upstream_approved"]==0
+          print("TITAN_X16_X20_LOCAL_ONLY_NO_PRODUCTION_RELEASE")
+          PY

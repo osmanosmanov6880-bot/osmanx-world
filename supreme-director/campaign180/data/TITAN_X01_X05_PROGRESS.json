@@ -1,0 +1,58 @@
+{
+  "schema": "osgard.original180.titan-first-five-progress/1",
+  "source_master": "supreme-director/originals/DIRECTOR_MASTER_180.md",
+  "branch": "recovery/supreme-director-m187-20261104",
+  "source_sha": "32f735e273798ae6a9c5ec9c4e9c7d353ce5d6a4",
+  "original_tasks": [
+    {
+      "id": "TITAN-X01",
+      "title": "Канонические Git baseline всех инженерных компонентов",
+      "local_files": [
+        "supreme-director/campaign180/campaign180/titan_baseline.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
+      ],
+      "status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X02",
+      "title": "Реестр исходников, пакетов и зависимостей",
+      "local_files": [
+        "supreme-director/campaign180/campaign180/titan_dependencies.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
+      ],
+      "status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X03",
+      "title": "CODEOWNERS и контроль конфликтов изменений",
+      "local_files": [
+        "supreme-director/campaign180/campaign180/titan_codeowners.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
+      ],
+      "status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X04",
+      "title": "Воспроизводимые сборки и подписанные артефакты",
+      "local_files": [
+        "supreme-director/campaign180/campaign180/titan_artifacts.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
+      ],
+      "status": "BLOCKED_UPSTREAM"
+    },
+    {
+      "id": "TITAN-X05",
+      "title": "Восстановление отсутствующих test dependencies",
+      "local_files": [
+        "supreme-director/campaign180/campaign180/offline_deps.py",
+        "supreme-director/campaign180/tests/test_titan_first_five.py"
+      ],
+      "status": "BLOCKED_UPSTREAM"
+    }
+  ],
+  "blocker": "No owner-approved immutable KRAKEN/DevSwarm/Command canonical Git repository/source, trusted release public key or upstream wheelhouse and test manifest.",
+  "test_workflow": ".github/workflows/titan-original-x01-x05.yml",
+  "CI_result": "PENDING",
+  "independently_accepted": 0,
+  "production_released": false
+}

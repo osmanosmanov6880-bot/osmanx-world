@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>OSGARD | Director Studio M185</title>
+<link rel="stylesheet" href="/assets/studio.css">
+<script defer src="/assets/studio.js"></script>
+</head>
+<body>
+<div class="halo halo-a" aria-hidden="true"></div><div class="halo halo-b" aria-hidden="true"></div>
+<div class="shell">
+  <aside class="sidebar" aria-label="Navigation">
+    <div class="brand"><span class="brandmark" aria-hidden="true">&Omega;</span><span><b>OSGARD</b><small>DIRECTOR STUDIO</small></span></div>
+    <div class="sidebar-label">COMMAND CENTER</div>
+    <nav class="nav" aria-label="Sections">
+      <button class="nav-item selected" data-page="overview"><span class="nav-icon">01</span><span>Overview</span></button>
+      <button class="nav-item" data-page="tasks"><span class="nav-icon">02</span><span>Task board</span></button>
+      <button class="nav-item" data-page="conflicts"><span class="nav-icon">03</span><span>Conflict room</span></button>
+      <button class="nav-item" data-page="contracts"><span class="nav-icon">04</span><span>API contracts</span></button>
+      <button class="nav-item" data-page="sources"><span class="nav-icon">05</span><span>Source ledger</span></button>
+      <button class="nav-item" data-page="reviews"><span class="nav-icon">06</span><span>Evidence reviews</span></button>
+      <button class="nav-item" data-page="audit"><span class="nav-icon">07</span><span>Audit trail</span></button>
+    </nav>
+    <div class="side-foot"><div class="tiny-light"></div><div><b>LOCAL CONTROL PLANE</b><small>No external deployment enabled</small></div></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="crumb">OSGARD <span class="slash">/</span> DIRECTOR <span class="slash">/</span> <b id="crumb-page">OVERVIEW</b></div><div class="header-actions"><span class="tiny-pill">M185</span><span class="tiny-pill danger">PRODUCTION HOLD</span><button class="ghost mini" id="refresh-button" title="Reload local state">Refresh</button></div></header>
+    <section class="hero"><div><div class="eyebrow"><span class="star-point">&#9670;</span> WORLD-CLASS ENGINEERING / CONTROL ENVIRONMENT</div><h1>Command the <em>complexity.</em><br><span>Prove the progress.</span></h1><p>One operational view of six teams, 180 planning tasks, evidence, safety gates and the work still blocking real deployment.</p><div class="hero-actions"><button class="primary" id="connect-button">Connect local database <span aria-hidden="true">&#8594;</span></button><button class="outline" id="export-button" disabled>Export snapshot</button></div></div><div class="hero-emblem" aria-hidden="true"><div class="ring ring1"></div><div class="ring ring2"></div><div class="ring ring3"></div><div class="emblem-core">&Omega;</div><span class="emblem-caption">TRUST &bull; CONTROL &bull; EVIDENCE</span></div></section>
+    <div class="strip"><div><span class="dot warning"></span><b id="connection-label">NOT CONNECTED</b><span class="dot-divider">&#8226;</span><span id="connection-detail">Start the local server to enable live data</span></div><div class="strip-right" id="updated-label">OFFLINE</div></div>
+    <section id="page-overview" class="page active" aria-label="Overview">
+      <div class="section-title"><div><div class="eyebrow muted">LIVE LOCAL METRICS</div><h2>Engineering pulse</h2></div><small>Measured on this local database, not product production</small></div>
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-top">PLANNING TASKS <span>01/04</span></div><div class="metric-number" id="metric-tasks">180</div><div class="metric-sub">Not independently accepted <b>180</b></div><div class="line-progress"><i></i></div></div>
+        <div class="metric"><div class="metric-top">SOURCE CONFLICTS <span>02/04</span></div><div class="metric-number" id="metric-conflicts">28</div><div class="metric-sub">Placeholder conflicts awaiting source evidence</div><div class="line-progress"><i></i></div></div>
+        <div class="metric"><div class="metric-top">API CONTRACTS <span>03/04</span></div><div class="metric-number" id="metric-contracts">09</div><div class="metric-sub">Provider/consumer E2E not performed</div><div class="line-progress"><i></i></div></div>
+        <div class="metric highlight"><div class="metric-top">PRODUCT ACCEPTANCE <span>04/04</span></div><div class="metric-number gold" id="metric-accepted">0<span class="small-suffix">/180</span></div><div class="metric-sub">No fake green builds. Evidence first.</div><div class="line-progress"><i></i></div></div>
+      </div>
+      <div class="two-col"><div class="panel"><div class="panel-head"><div><div class="eyebrow muted">SIX ENGINEERING DIVISIONS</div><h3>Team coordination</h3></div><span class="soft-tag">6 WORKSTREAMS</span></div><div id="team-list" class="team-list"><div class="placeholder">Connect to inspect real local plan data.</div></div></div>
+      <div class="panel"><div class="panel-head"><div><div class="eyebrow muted">SAFETY & RELEASE</div><h3>Critical gates</h3></div><span class="soft-tag amber">FAIL CLOSED</span></div><div class="gate-list"><div class="gate"><span class="gate-sym blocked">&times;</span><div><b>Original M181 provenance</b><small>Missing pinned original archive and Git ancestry</small></div><span class="gate-state">BLOCKED</span></div><div class="gate"><span class="gate-sym blocked">&times;</span><div><b>Six canonical upstream sources</b><small>Not owner-confirmed</small></div><span class="gate-state">BLOCKED</span></div><div class="gate"><span class="gate-sym blocked">&times;</span><div><b>End-to-end product contracts</b><small>Nine placeholder interfaces, no upstream testing</small></div><span class="gate-state">BLOCKED</span></div><div class="gate"><span class="gate-sym okay">&#10003;</span><div><b>Local control plane</b><small>SQLite state, audit verification, authenticated loopback API</small></div><span class="gate-state neutral">LOCAL</span></div></div></div></div>
+      <div class="section-title lower"><div><div class="eyebrow muted">FROM CODE TO PRODUCT VALUE</div><h2>Release trajectory</h2></div></div>
+      <div class="roadmap"><div><span class="round">184</span><b>Control plane</b><small>Working local studio</small></div><div><span class="round">185</span><b>Verified sources</b><small>Lineage & conflict reviews</small></div><div><span class="round">186</span><b>User outcome</b><small>Six-system integration</small></div><div><span class="round">187</span><b>Reliability</b><small>Security & recovery tests</small></div><div><span class="round">188</span><b>Market proof</b><small>Real pilots & retention</small></div><div><span class="round">189</span><b>Release decision</b><small>Independent sign-off</small></div></div>
+    </section>
+    <section id="page-tasks" class="page" aria-label="Task board"><div class="section-title"><div><div class="eyebrow muted">PROPOSED WORK PLAN</div><h2>Task command board</h2></div><span class="soft-tag">READ-ONLY ACCEPTANCE</span></div><div class="panel full"><div class="controls"><label class="field">Team<select id="task-team"><option value="">All teams</option><option>TITAN</option><option>NEXUS</option><option>COMMERCE</option><option>EXPERIENCE</option><option>GENESIS</option><option>ORBITAL</option></select></label><label class="field wide">Search<input id="task-query" placeholder="Search ID or description" autocomplete="off"></label><button id="task-search" class="outline">Find tasks</button></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>TEAM</th><th>PHASE</th><th>TASK</th><th>STATE</th><th>ACTION</th></tr></thead><tbody id="tasks-table"><tr><td colspan="6">Connect to load actual local task records.</td></tr></tbody></table></div></div></section>
+    <section id="page-conflicts" class="page" aria-label="Conflict room"><div class="section-title"><div><div class="eyebrow muted">FAIL-CLOSED MERGE REVIEW</div><h2>Conflict resolution room</h2></div><span class="soft-tag amber">28 PROVISIONAL</span></div><div class="panel full"><p class="intro">M181 conflict identifiers are provisional slots; no actual conflicting file or author is known until the original source is verified. Triage never means accepted.</p><div id="conflict-list" class="conflict-list"></div></div></section>
+    <section id="page-contracts" class="page" aria-label="API contracts"><div class="section-title"><div><div class="eyebrow muted">INTEGRATION CHECKPOINTS</div><h2>Nine API contracts</h2></div></div><div class="panel full"><div id="contract-list" class="contract-grid"></div></div></section>
+    <section id="page-sources" class="page" aria-label="Source ledger"><div class="section-title"><div><div class="eyebrow muted">OBSERVATIONS / NOT CANONICAL ASSIGNMENTS</div><h2>Git provenance ledger</h2></div></div><div class="panel full"><p class="intro">Observed repository references are informational. The canonical upstream owner for each Director team is unknown.</p><div id="source-list" class="source-list"></div><form id="source-form" class="source-form"><h3>Record an unverified observation</h3><div class="form-grid"><label class="field">Actor<input name="actor" placeholder="Local operator" required maxlength="60"></label><label class="field">Repository<input name="repo" placeholder="owner/repo" required></label><label class="field">Branch<input name="branch" placeholder="main" required></label><label class="field">40-character commit SHA<input name="sha" placeholder="abcdef..." required maxlength="40" minlength="40"></label></div><button type="submit" class="primary">Record observation</button></form></div></section>
+    <section id="page-reviews" class="page" aria-label="Evidence review desk">
+      <div class="section-title"><div><div class="eyebrow muted">M185 / ED25519 VERIFIABLE LOCAL EVIDENCE</div><h2>Independent Review Desk</h2></div><span class="soft-tag amber">PRODUCTION NO-GO</span></div>
+      <p class="intro">Real signed review of local evidence, separate from author-submitted notes. A valid signature proves control of a pinned reviewer key; it does not certify human identity, six-product integration or production readiness.</p>
+      <div class="review-metrics">
+        <div class="review-stat"><span>REGISTERED LOCAL FILES</span><strong id="review-stat-files">0</strong><small>SHA-256 pinned, no upload</small></div>
+        <div class="review-stat"><span>OPEN REVIEW CASES</span><strong id="review-stat-open">0</strong><small>Immutable evidence references</small></div>
+        <div class="review-stat"><span>SIGNED LOCAL REVIEWS</span><strong id="review-stat-signed">0</strong><small>Never product acceptance</small></div>
+        <div class="review-stat"><span>TRUSTED REVIEWER KEYS</span><strong id="review-stat-keys">0</strong><small>Only external operator enrollment</small></div>
+      </div>
+      <div class="two-col review-two-col">
+        <div class="panel"><div class="panel-head"><div><div class="eyebrow muted">STEP 01 / SOURCE EVIDENCE</div><h3>Pin local artifact</h3></div><span class="soft-tag">READ &amp; HASH</span></div>
+          <p class="intro">Place a file in the configured private evidence folder. Enter its exact relative path and SHA-256. Only the file reference is stored in SQLite.</p>
+          <form id="review-evidence-form" class="review-form">
+            <label class="field">Target ID<input name="target" required maxlength="80" placeholder="platform or M181-CONFLICT-01"></label>
+            <label class="field">Relative evidence path<input name="relative_path" required maxlength="200" placeholder="my-report.json"></label>
+            <label class="field">SHA-256 (64 hexadecimal characters)<input name="sha256" required minlength="64" maxlength="64" pattern="[0-9a-f]{64}" placeholder="SHA-256 of the exact file"></label>
+            <label class="field">Proposer / local operator<input name="actor" required maxlength="50" placeholder="engineer-01"></label>
+            <button class="primary" type="submit">Register checked artifact</button>
+          </form>
+          <div id="review-evidence-list" class="review-stack" aria-live="polite"><div class="placeholder">Connect to list local evidence.</div></div>
+        </div>
+        <div class="panel"><div class="panel-head"><div><div class="eyebrow muted">STEP 02 / CASE CREATION</div><h3>Request review</h3></div><span class="soft-tag">IMMUTABLE CASE</span></div>
+          <p class="intro">A review case freezes the registered evidence SHA and proposer identifier. Reviewer and proposer must be distinct.</p>
+          <form id="review-case-form" class="review-form">
+            <label class="field">Registered evidence ID<input name="evidence_id" inputmode="numeric" type="number" min="1" required placeholder="1"></label>
+            <label class="field">Proposer ID<input name="proposer" required maxlength="50" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{2,49}" placeholder="engineer-01"></label>
+            <label class="field">What needs verification?<textarea name="description" required maxlength="1000" rows="4" placeholder="What does this local artifact prove? What remains outside scope?"></textarea></label>
+            <button class="primary" type="submit">Create locked review case</button>
+          </form>
+          <div class="review-hint">A case can remain open without a reviewer. No fake signatures or autogenerated approvals.</div>
+        </div>
+      </div>
+      <div class="panel full review-panel"><div class="panel-head"><div><div class="eyebrow muted">STEP 03 / INDEPENDENT CRYPTOGRAPHIC REVIEW</div><h3>Challenge &amp; detached signature</h3></div><span class="soft-tag amber">ED25519 REQUIRED</span></div>
+        <div class="review-form-grid"><div class="review-form">
+          <label class="field">Case<select id="vote-case"><option value="">Select case</option></select></label>
+          <label class="field">Trusted reviewer<select id="vote-reviewer"><option value="">No trusted keys configured</option></select></label>
+          <label class="field">Local review verdict<select id="vote-verdict"><option value="PASS_LOCAL_EVIDENCE">PASS LOCAL EVIDENCE</option><option value="REQUEST_CHANGES">REQUEST CHANGES</option><option value="REJECT_EVIDENCE">REJECT EVIDENCE</option></select></label>
+          <label class="field">Reviewer's explanation<textarea id="vote-reason" rows="3" maxlength="1200" placeholder="Only factual, scoped claims about this artifact"></textarea></label>
+          <button id="prepare-challenge" class="outline" type="button">Prepare canonical challenge</button>
+        </div><div class="review-form">
+          <label class="field">Canonical JSON to sign<textarea id="vote-challenge" rows="7" readonly placeholder="Prepared challenge appears here. Give this to a separately trusted reviewer."></textarea></label>
+          <button id="download-challenge" class="outline" type="button" disabled>Save challenge JSON</button>
+          <label class="field">Detached Ed25519 signature (base64)<textarea id="vote-signature" rows="3" placeholder="Paste a signature created with the reviewer's external private key"></textarea></label>
+          <button id="submit-vote" class="primary" type="button" disabled>Verify and record signed vote</button>
+        </div></div>
+        <p class="review-hint">Private keys never go to the browser or API. Signing happens offline via <code>python -m osgard_m185 sign-offline</code>. Reviewers must be pinned in the operator-managed trust registry when the local database is initialized.</p>
+      </div>
+      <div class="panel full review-panel"><div class="panel-head"><div><div class="eyebrow muted">CASE LEDGER / NO PRODUCT ACCEPTANCE</div><h3>Submitted &amp; reviewed cases</h3></div><span class="soft-tag">EVIDENCE ONLY</span></div><div id="review-case-list" class="review-case-grid"></div></div>
+    </section>
+    <section id="page-audit" class="page" aria-label="Audit trail"><div class="section-title"><div><div class="eyebrow muted">LOCAL APPEND-ONLY LOG</div><h2>Audit & integrity</h2></div><button class="outline" id="run-doctor">Verify integrity</button></div><div id="doctor-output" class="doctor-output">Connect to run the local consistency verifier. This is not an independent cryptographic attestation.</div><div class="panel full"><div id="audit-list" class="audit-list"></div></div></section>
+    <footer class="footer">OSGARD DIRECTOR STUDIO <span>M185 SIGNED REVIEW / LOCAL ONLY / NEVER PRODUCTION AUTHORITY</span></footer>
+  </main>
+</div>
+<dialog id="token-dialog" class="dialog"><form method="dialog" id="token-form"><div class="eyebrow">SESSION SECURITY</div><h2>Connect to local control plane</h2><p>Run the M185 Python server on your computer and paste the temporary token printed in your terminal. The token is held in page memory only.</p><label class="field">Local bearer token<input id="token-input" type="password" autocomplete="off" required minlength="24" placeholder="Paste session token"></label><div class="dialog-actions"><button class="ghost" value="cancel">Cancel</button><button class="primary" id="token-confirm" value="ok">Connect</button></div></form></dialog>
+<dialog id="note-dialog" class="dialog"><form method="dialog" id="note-form"><div class="eyebrow">LOCAL WORK JOURNAL</div><h2 id="note-title">Add note</h2><p>Notes document operator work; they never change original acceptance or production state.</p><input id="note-kind" type="hidden"><input id="note-target" type="hidden"><label class="field">Actor<input id="note-actor" required maxlength="60" placeholder="Your reviewer identifier"></label><label class="field">Note<textarea id="note-text" required maxlength="2000" rows="4" placeholder="Evidence needed, decision, or next action"></textarea></label><label class="field" id="triage-wrap">Conflict triage<select id="triage-status"><option value="">Add note only</option><option value="TRIAGED">TRIAGED</option><option value="REVIEW_PENDING">REVIEW_PENDING</option><option value="QUARANTINED">QUARANTINED</option></select></label><div class="dialog-actions"><button class="ghost" value="cancel">Cancel</button><button class="primary" id="note-save" value="save">Save local record</button></div></form></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body></html>

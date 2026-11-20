@@ -1,0 +1,91 @@
+<!doctype html><html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080f1b">
+<title>OSGARD M203 — Решения и результат</title>
+<link rel="stylesheet" href="/actions/styles.css">
+<script defer src="/actions/app.js"></script>
+</head><body>
+<section class="login" id="login"><form id="loginForm" class="login-card">
+<div class="brand"><span class="emblem">◈</span><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+<p class="eyebrow">M203 / EXECUTION INTELLIGENCE</p>
+<h1>От решения<br>к результату.</h1>
+<p class="muted">Планы, ответственные, выполненные задачи и проверка гипотез по локальным данным. Без искусственных показателей и банковских подключений.</p>
+<label>Токен доступа<input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Локальный Bearer-токен" minlength="20" required></label>
+<button class="primary wide" type="submit">Открыть систему</button>
+<p role="alert" class="error" id="loginError"></p>
+<p class="muted tiny">Токен хранится только в памяти текущей вкладки.</p>
+</form></section>
+<div id="shell" class="shell" hidden>
+<aside class="sidebar"><div class="brand"><span class="emblem">◈</span><div><b>OSGARD</b><small>SUPREME DIRECTOR</small></div></div>
+<p class="nav-caption">РАБОЧАЯ СРЕДА</p>
+<a href="/studio/">CRM / Задачи команды</a><a href="/projects/">Управление проектами</a>
+<a href="/finance/">Финансы проектов</a><a href="/portfolio/">Финансовый портфель</a>
+<a href="/cashflow/">Денежные потоки</a><a href="/risks/">Журнал рисков M201</a>
+<a href="/watch/">Мониторинг M202</a><span class="selected">Решения и результат M203</span>
+<div class="side-bottom">Только локальные данные<br>Нет банковской верификации<br>Production NO-GO</div>
+</aside>
+<div class="page"><header class="topbar">
+<div><p class="eyebrow">OSGARD / LOCAL EXECUTION OS</p><strong>Управление решениями</strong></div>
+<div class="toolbar"><span class="muted" id="actor"></span>
+<button id="refresh" type="button">Обновить</button>
+<button id="logout" type="button">Выйти</button></div>
+</header>
+<main>
+<section class="hero"><p class="eyebrow">M203 · DELIVERY AND EVIDENCE</p>
+<h1>Предложить — мало.<br><em>Нужно проверить результат.</em></h1>
+<p class="muted">Каждое решение связано с конкретным предупреждением, ответственными задачами M195 и наблюдениями M202. Подтверждение владельца относится только к результату модели.</p>
+</section>
+<div class="stats" id="stats">
+<div><span>Всего планов</span><strong id="statTotal">—</strong></div>
+<div><span>Активных решений</span><strong id="statActive">—</strong></div>
+<div><span>Выполнено задач</span><strong id="statTasks">—</strong></div>
+<div><span>Проверено в модели</span><strong id="statReviewed">—</strong></div>
+</div>
+<section id="employeeView" class="panel" hidden>
+<div class="panel-head"><div><p class="eyebrow">ВАША РОЛЬ · ИСПОЛНИТЕЛЬ</p><h2>Назначенные задачи</h2><p class="muted">Сводные финансовые показатели доступны только владельцу. Вам показываются собственные поручения без денег и метрик.</p></div><a href="/studio/">Открыть задачи в CRM</a></div>
+<div id="employeeItems" class="item-list"></div>
+</section>
+<div id="ownerView">
+<section class="panel"><div class="panel-head"><div><p class="eyebrow">01 / ГИПОТЕЗА</p><h2>Создать план устранения риска</h2><p class="muted">Для начала выберите существующее финансовое предупреждение и снимок с исходными показателями.</p></div></div>
+<form id="createForm" class="form-grid">
+<label>Предупреждение<select id="riskSelect" required></select></label>
+<label>Исходный снимок<select id="baselineSelect" required></select></label>
+<label>Цель — число проектов или сумма, ₽<input id="target" type="text" inputmode="decimal" value="0" required></label>
+<label class="wide-field">Название решения<input id="title" maxlength="160" placeholder="Пример: уточнить сроки плановых расходов" required></label>
+<label class="wide-field">Гипотеза и ожидаемый эффект<textarea id="hypothesis" maxlength="1200" rows="3" placeholder="Что должно измениться и почему?" required></textarea></label>
+<label>Срок плана<input id="planDue" type="datetime-local" required></label>
+<div class="form-action"><button class="primary" type="submit">Создать план</button></div>
+</form><p id="riskInfo" class="muted small"></p>
+</section>
+<section class="panel"><div class="panel-head"><div><p class="eyebrow">02 / ИСПОЛНЕНИЕ</p><h2>Планы и ответственность</h2><p class="muted">Без назначенных задач план нельзя активировать. Исполнитель завершает работу через существующий модуль M195.</p></div><button id="reloadPlans" type="button">Обновить планы</button></div>
+<div class="plan-grid" id="planCards"><p class="muted">Планы пока не созданы.</p></div>
+</section>
+<section class="panel" id="detailsPanel" hidden><div class="panel-head"><div><p class="eyebrow">03 / РЕАЛИЗАЦИЯ</p><h2 id="selectedTitle">Выбранный план</h2><p class="muted" id="planMeta"></p></div><div class="button-group"><button id="activate" type="button">Активировать</button><button id="cancel" type="button">Отменить план</button></div></div>
+<h3>Поручения исполнителям</h3>
+<div id="steps" class="item-list"></div>
+<form id="stepForm" class="form-grid step-form">
+<label>Сотрудник<select id="assignee" required></select></label>
+<label>Дедлайн поручения<input id="stepDue" type="datetime-local" required></label>
+<label class="wide-field">Название задачи<input id="stepTitle" maxlength="160" placeholder="Проверить и исправить источник риска" required></label>
+<label class="wide-field">Что выполнить<textarea id="stepDescription" maxlength="1200" rows="2" placeholder="Проверяемое действие, а не абстрактное пожелание" required></textarea></label>
+<div class="form-action"><button id="addStep" class="primary" type="submit">Назначить задачу</button></div>
+</form>
+<hr>
+<h3>Проверка «до / после»</h3>
+<p class="muted small">Выберите более поздний снимок при той же версии финансовой политики. Изменение показателя само по себе не доказывает, что его вызвал именно этот план.</p>
+<div class="comparison"><label>Новый снимок для проверки<select id="outcomeSelect"></select></label><button id="evaluate" type="button">Сравнить с базой</button></div>
+<div id="result" class="result"><p class="muted">Наблюдения для оценки ещё не выбраны.</p></div>
+<form id="reviewForm" class="form-grid review-form">
+<label>Решение владельца<select id="reviewChoice"><option value="reject">Вернуть на доработку</option><option value="accept">Принять результат модели</option></select></label>
+<label class="wide-field">Обоснование проверки<textarea id="reviewReason" maxlength="600" rows="2" required placeholder="Почему решение принято или отклонено"></textarea></label>
+<div class="form-action"><button id="review" class="primary" type="submit">Зафиксировать решение</button></div>
+</form>
+</section>
+<section class="panel"><div class="panel-head"><div><p class="eyebrow">04 / РУКОВОДИТЕЛЬ</p><h2>Отчёт об исполнении</h2><p class="muted">Фактический статус задач, наблюдённые изменения метрик и принятые решения, без выдуманного финансового эффекта.</p></div><div class="button-group"><button id="buildReport" type="button">Сформировать</button><button id="csv" class="primary" type="button">Экспорт CSV</button></div></div>
+<div class="item-list" id="report"><p class="muted">Отчёт появится после загрузки локальных данных.</p></div></section>
+</div>
+<div class="disclaimer"><strong>Методологическое ограничение</strong>
+<p>Факт выполнения задачи и улучшение показателя не подтверждают причинно-следственную связь. «Принято» означает ручную проверку модельного результата владельцем. Банковский остаток, платежи и внешняя независимая оценка в M203 не реализованы.</p></div>
+</main><footer>OSGARD M203 · Local model review only · Без движения денежных средств · Исходные 180 upstream-заданий: независимо принятых 0/180</footer>
+</div></div><div class="toast" id="toast" role="status" hidden></div>
+</body></html>

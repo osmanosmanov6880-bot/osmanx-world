@@ -1,0 +1,3377 @@
+{
+  "authorship_status": "HISTORICAL_USER_PROVIDED_PLAN",
+  "counts": {
+    "explicit_references_in_this_document": 294,
+    "priorities": {
+      "P0": 60,
+      "P1": 90,
+      "P2": 30
+    },
+    "teams": {
+      "COMMERCE": 30,
+      "EXPERIENCE": 30,
+      "GENESIS": 30,
+      "NEXUS": 30,
+      "ORBITAL": 30,
+      "TITAN": 30
+    },
+    "total": 180
+  },
+  "original_294_dependency_edges": "UNVERIFIED_WITHOUT_M180_M181",
+  "original_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
+  "original_task_acceptance": 0,
+  "production": "NO_GO",
+  "relationship_to_M180_M181_task_board": "NOT_PROVEN",
+  "schema": "osgard.original-180-oct17.recovered/1",
+  "source_document": "DIRECTOR_MASTER_180.md",
+  "tasks": [
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "права чтения исходников",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [],
+      "id": "TITAN-X01",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 1,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 32,
+      "team": "TITAN",
+      "title": "Канонические Git baseline всех инженерных компонентов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X02",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 2,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 45,
+      "team": "TITAN",
+      "title": "Реестр исходников, пакетов и зависимостей"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X03",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 3,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 58,
+      "team": "TITAN",
+      "title": "CODEOWNERS и контроль конфликтов изменений"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X04",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 4,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 71,
+      "team": "TITAN",
+      "title": "Воспроизводимые сборки и подписанные артефакты"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X05",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 5,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 84,
+      "team": "TITAN",
+      "title": "Восстановление отсутствующих test dependencies"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X06",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 6,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 97,
+      "team": "TITAN",
+      "title": "Унифицированный контракт TaskEnvelope / ResultEnvelope"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X07",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 7,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 110,
+      "team": "TITAN",
+      "title": "Identity, tenant mapping и scopes"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X08",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 8,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 123,
+      "team": "TITAN",
+      "title": "RBAC и deny-by-default authorization"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X09",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 9,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 136,
+      "team": "TITAN",
+      "title": "Защищённый sandbox исполнения задач"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01"
+      ],
+      "id": "TITAN-X10",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 10,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 149,
+      "team": "TITAN",
+      "title": "Лимиты CPU, RAM, диска и сети"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X02 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X02"
+      ],
+      "id": "TITAN-X11",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 11,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 162,
+      "team": "TITAN",
+      "title": "DevSwarm durable queue и транзакционные leases"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X02 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X02"
+      ],
+      "id": "TITAN-X12",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 12,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 175,
+      "team": "TITAN",
+      "title": "Fencing и exactly-once-effect через идемпотентность"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X03 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X03"
+      ],
+      "id": "TITAN-X13",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 13,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 188,
+      "team": "TITAN",
+      "title": "Восстановление после сбоя worker"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X04 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X04"
+      ],
+      "id": "TITAN-X14",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 14,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 201,
+      "team": "TITAN",
+      "title": "Многопроцессный и многосерверный scheduler"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X05 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X05"
+      ],
+      "id": "TITAN-X15",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 15,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 214,
+      "team": "TITAN",
+      "title": "Планирование ресурсов и admission control"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X06 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X06"
+      ],
+      "id": "TITAN-X16",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 16,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 227,
+      "team": "TITAN",
+      "title": "Этапы brief-to-spec-to-code-to-release"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X07 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X07"
+      ],
+      "id": "TITAN-X17",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 17,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 240,
+      "team": "TITAN",
+      "title": "Генерация кода из проверяемой спецификации"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X08 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X08"
+      ],
+      "id": "TITAN-X18",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 18,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 253,
+      "team": "TITAN",
+      "title": "Независимая проверка патчей и policy gates"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X09 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X09"
+      ],
+      "id": "TITAN-X19",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 19,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 266,
+      "team": "TITAN",
+      "title": "Автоматизированное исправление ошибок с лимитами"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X10 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X10"
+      ],
+      "id": "TITAN-X20",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 20,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 279,
+      "team": "TITAN",
+      "title": "Полноценный no-AI редактор страниц"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X11 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X11"
+      ],
+      "id": "TITAN-X21",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 21,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 292,
+      "team": "TITAN",
+      "title": "Визуальные формы, таблицы и связи данных"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X12 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X12"
+      ],
+      "id": "TITAN-X22",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 22,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 305,
+      "team": "TITAN",
+      "title": "API и workflows в визуальном конструкторе"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X13 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X13"
+      ],
+      "id": "TITAN-X23",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 23,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 318,
+      "team": "TITAN",
+      "title": "Политики и разрешения в созданных приложениях"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X14 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X14"
+      ],
+      "id": "TITAN-X24",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 24,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 331,
+      "team": "TITAN",
+      "title": "Версионирование, импорт и экспорт проектов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X15 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X15"
+      ],
+      "id": "TITAN-X25",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 25,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 344,
+      "team": "TITAN",
+      "title": "Система превью, тестовых окружений и публикации"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X16 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X16"
+      ],
+      "id": "TITAN-X26",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 26,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 357,
+      "team": "TITAN",
+      "title": "CI/CD, dependency и secrets scanning"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X17 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X17"
+      ],
+      "id": "TITAN-X27",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 27,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 370,
+      "team": "TITAN",
+      "title": "Observability, SLO, трассировка и audit"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X18 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X18"
+      ],
+      "id": "TITAN-X28",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 28,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 383,
+      "team": "TITAN",
+      "title": "Backup/restore и сценарии аварийного возврата"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X19 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X19"
+      ],
+      "id": "TITAN-X29",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 29,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 396,
+      "team": "TITAN",
+      "title": "Нагрузочные, хаос- и security-испытания"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация TITAN-X01; договорённости и тестовые контракты Wave 1 (включая TITAN-X20 по применимости)",
+      "edit_scope_ru": "только KRAKEN / DevSwarm / Command",
+      "explicit_deps": [
+        "TITAN-X01",
+        "TITAN-X20"
+      ],
+      "id": "TITAN-X30",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 30,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 409,
+      "team": "TITAN",
+      "title": "Интеграционный KRAKEN–NEXUS–Command релиз-кандидат"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "права чтения исходников",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [],
+      "id": "NEXUS-X01",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 1,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 425,
+      "team": "NEXUS",
+      "title": "Канонические Git baseline и реестр моделей"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X02",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 2,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 438,
+      "team": "NEXUS",
+      "title": "Утверждённый DecisionRef и capability intent contract"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X03",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 3,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 451,
+      "team": "NEXUS",
+      "title": "Trusted identity binding для всех операций"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X04",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 4,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 464,
+      "team": "NEXUS",
+      "title": "Tenant isolation и document-level ACL"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X05",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 5,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 477,
+      "team": "NEXUS",
+      "title": "Версионированный граф решений ÆTHERION"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X06",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 6,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 490,
+      "team": "NEXUS",
+      "title": "Система альтернатив и критериев решений"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X07",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 7,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 503,
+      "team": "NEXUS",
+      "title": "Provenance, digest и воспроизводимость ссылок"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X08",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 8,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 516,
+      "team": "NEXUS",
+      "title": "Независимые checkpoints журнала доказательств"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X09",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 9,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 529,
+      "team": "NEXUS",
+      "title": "Revocation и expiry принятых полномочий"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01"
+      ],
+      "id": "NEXUS-X10",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 10,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 542,
+      "team": "NEXUS",
+      "title": "Защищённый gateway инструментов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X02 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X02"
+      ],
+      "id": "NEXUS-X11",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 11,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 555,
+      "team": "NEXUS",
+      "title": "Ограничения запросов, размеров, времени и бюджетов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X02 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X02"
+      ],
+      "id": "NEXUS-X12",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 12,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 568,
+      "team": "NEXUS",
+      "title": "Защита от prompt injection и untrusted retrieval"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X03 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X03"
+      ],
+      "id": "NEXUS-X13",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 13,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 581,
+      "team": "NEXUS",
+      "title": "Jarvis: память с изоляцией пользователей"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X04 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X04"
+      ],
+      "id": "NEXUS-X14",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 14,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 594,
+      "team": "NEXUS",
+      "title": "Jarvis: разрешённые workflows и подтверждения"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X05 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X05"
+      ],
+      "id": "NEXUS-X15",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 15,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 607,
+      "team": "NEXUS",
+      "title": "Jarvis: offline fallback и восстановление"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X06 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X06"
+      ],
+      "id": "NEXUS-X16",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 16,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 620,
+      "team": "NEXUS",
+      "title": "Jarvis: безопасный голосовой интерфейс"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X07 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X07"
+      ],
+      "id": "NEXUS-X17",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 17,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 633,
+      "team": "NEXUS",
+      "title": "MAGNEX: конвейер загрузки документов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X08 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X08"
+      ],
+      "id": "NEXUS-X18",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 18,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 646,
+      "team": "NEXUS",
+      "title": "MAGNEX: версионированный индекс и обновление"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X09 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X09"
+      ],
+      "id": "NEXUS-X19",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 19,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 659,
+      "team": "NEXUS",
+      "title": "MAGNEX: гибридный retrieval и reranking"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X10 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X10"
+      ],
+      "id": "NEXUS-X20",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 20,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 672,
+      "team": "NEXUS",
+      "title": "MAGNEX: цитирование и проверяемые evidence IDs"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X11 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X11"
+      ],
+      "id": "NEXUS-X21",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 21,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 685,
+      "team": "NEXUS",
+      "title": "MAGNEX: revocation и удаление из кэша"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X12 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X12"
+      ],
+      "id": "NEXUS-X22",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 22,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 698,
+      "team": "NEXUS",
+      "title": "Реальный retrieval evaluation corpus"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X13 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X13"
+      ],
+      "id": "NEXUS-X23",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 23,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 711,
+      "team": "NEXUS",
+      "title": "Ollama: инвентаризация моделей и аппаратуры"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X14 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X14"
+      ],
+      "id": "NEXUS-X24",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 24,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 724,
+      "team": "NEXUS",
+      "title": "CPU/GPU benchmark и контроль VRAM"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X15 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X15"
+      ],
+      "id": "NEXUS-X25",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 25,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 737,
+      "team": "NEXUS",
+      "title": "Model router по качеству, затратам и правам"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X16 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X16"
+      ],
+      "id": "NEXUS-X26",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 26,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 750,
+      "team": "NEXUS",
+      "title": "Fallback, timeouts и circuit breakers моделей"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X17 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X17"
+      ],
+      "id": "NEXUS-X27",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 27,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 763,
+      "team": "NEXUS",
+      "title": "Модельные адаптеры для GENESIS/HUMAN"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X18 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X18"
+      ],
+      "id": "NEXUS-X28",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 28,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 776,
+      "team": "NEXUS",
+      "title": "Read-only интеграция с TITAN execution"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X19 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X19"
+      ],
+      "id": "NEXUS-X29",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 29,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 789,
+      "team": "NEXUS",
+      "title": "Staging E2E, attack tests и restore"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация NEXUS-X01; договорённости и тестовые контракты Wave 1 (включая NEXUS-X20 по применимости)",
+      "edit_scope_ru": "только ÆTHERION / JARVIS / MAGNEX / Ollama",
+      "explicit_deps": [
+        "NEXUS-X01",
+        "NEXUS-X20"
+      ],
+      "id": "NEXUS-X30",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 30,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 802,
+      "team": "NEXUS",
+      "title": "Независимый аудит интеллектуального ядра"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "права чтения исходников",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [],
+      "id": "COMMERCE-X01",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 1,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 818,
+      "team": "COMMERCE",
+      "title": "Канонические исходники всех бизнес-продуктов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X02",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 2,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 831,
+      "team": "COMMERCE",
+      "title": "Схемы PostgreSQL и безопасные миграции"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X03",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 3,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 844,
+      "team": "COMMERCE",
+      "title": "Row-Level Security и отрицательные тесты"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X04",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 4,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 857,
+      "team": "COMMERCE",
+      "title": "Подключение общего identity и tenant mapping"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X05",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 5,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 870,
+      "team": "COMMERCE",
+      "title": "Серверные RBAC, аудит и управление сессиями"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X06",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 6,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 883,
+      "team": "COMMERCE",
+      "title": "Модель клиентов и организаций"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X07",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 7,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 896,
+      "team": "COMMERCE",
+      "title": "CRM: воронка продаж, сделки и задачи"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X08",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 8,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 909,
+      "team": "COMMERCE",
+      "title": "CRM: проекты, этапы и обязательства"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X09",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 9,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 922,
+      "team": "COMMERCE",
+      "title": "Клиентский кабинет с независимым доступом"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01"
+      ],
+      "id": "COMMERCE-X10",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 10,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 935,
+      "team": "COMMERCE",
+      "title": "Документы, версии и безопасные вложения"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X02 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X02"
+      ],
+      "id": "COMMERCE-X11",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 11,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 948,
+      "team": "COMMERCE",
+      "title": "Предложения и протокол согласований"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X02 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X02"
+      ],
+      "id": "COMMERCE-X12",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 12,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 961,
+      "team": "COMMERCE",
+      "title": "Событийная интеграция CRM и приложений"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X03 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X03"
+      ],
+      "id": "COMMERCE-X13",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 13,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 974,
+      "team": "COMMERCE",
+      "title": "Privacy: экспорт клиентских данных"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X04 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X04"
+      ],
+      "id": "COMMERCE-X14",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 14,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 987,
+      "team": "COMMERCE",
+      "title": "Privacy: удаление, retention и backup policy"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X05 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X05"
+      ],
+      "id": "COMMERCE-X15",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 15,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1000,
+      "team": "COMMERCE",
+      "title": "Outreach: consent provenance и версии"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X06 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X06"
+      ],
+      "id": "COMMERCE-X16",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 16,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1013,
+      "team": "COMMERCE",
+      "title": "Outreach: expiry, revocation и suppression"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X07 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X07"
+      ],
+      "id": "COMMERCE-X17",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 17,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1026,
+      "team": "COMMERCE",
+      "title": "Outreach: атомарный send-time authorization"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X08 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X08"
+      ],
+      "id": "COMMERCE-X18",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 18,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1039,
+      "team": "COMMERCE",
+      "title": "Outreach: durable outbox и восстановление"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X09 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X09"
+      ],
+      "id": "COMMERCE-X19",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 19,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1052,
+      "team": "COMMERCE",
+      "title": "Outreach: idempotency и frequency caps"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X10 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X10"
+      ],
+      "id": "COMMERCE-X20",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 20,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1065,
+      "team": "COMMERCE",
+      "title": "Outreach: провайдерский mock и receipts"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X11 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X11"
+      ],
+      "id": "COMMERCE-X21",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 21,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1078,
+      "team": "COMMERCE",
+      "title": "Outreach: конкурентные проверки и гонки"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X12 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X12"
+      ],
+      "id": "COMMERCE-X22",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 22,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1091,
+      "team": "COMMERCE",
+      "title": "SOULMATCH: карточки с evidence и provenance"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X13 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X13"
+      ],
+      "id": "COMMERCE-X23",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 23,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1104,
+      "team": "COMMERCE",
+      "title": "SOULMATCH: ручная проверка и объяснения"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X14 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X14"
+      ],
+      "id": "COMMERCE-X24",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 24,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1117,
+      "team": "COMMERCE",
+      "title": "SOULMATCH: интеграция read-only с MAGNEX"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X15 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X15"
+      ],
+      "id": "COMMERCE-X25",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 25,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1130,
+      "team": "COMMERCE",
+      "title": "FluxSend: Decimal и minor-unit арифметика"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X16 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X16"
+      ],
+      "id": "COMMERCE-X26",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 26,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1143,
+      "team": "COMMERCE",
+      "title": "FluxSend: валютные exponent, rounding, invariants"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X17 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X17"
+      ],
+      "id": "COMMERCE-X27",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 27,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1156,
+      "team": "COMMERCE",
+      "title": "FluxSend: audit, reconciliation и sandbox reports"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X18 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X18"
+      ],
+      "id": "COMMERCE-X28",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 28,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1169,
+      "team": "COMMERCE",
+      "title": "Русскоязычный premium CRM UI с реальными API"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X19 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X19"
+      ],
+      "id": "COMMERCE-X29",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 29,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1182,
+      "team": "COMMERCE",
+      "title": "HTTP E2E, mobile accessibility и performance"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация COMMERCE-X01; договорённости и тестовые контракты Wave 1 (включая COMMERCE-X20 по применимости)",
+      "edit_scope_ru": "только Founder / Client / SOULMATCH / Outreach / FluxSend",
+      "explicit_deps": [
+        "COMMERCE-X01",
+        "COMMERCE-X20"
+      ],
+      "id": "COMMERCE-X30",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 30,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1195,
+      "team": "COMMERCE",
+      "title": "Staging, backup/restore и security acceptance"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "права чтения исходников",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [],
+      "id": "EXPERIENCE-X01",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 1,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1211,
+      "team": "EXPERIENCE",
+      "title": "Канонические источники и SHA шести продуктов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X02",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 2,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1224,
+      "team": "EXPERIENCE",
+      "title": "Раздельные доменные схемы, tenant и RBAC"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X03",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 3,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1237,
+      "team": "EXPERIENCE",
+      "title": "PHANTOM: транзакционная модель бронирования"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X04",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 4,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1250,
+      "team": "EXPERIENCE",
+      "title": "PHANTOM: конкуренция и защита от double booking"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X05",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 5,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1263,
+      "team": "EXPERIENCE",
+      "title": "PHANTOM: idempotency и восстановление"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X06",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 6,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1276,
+      "team": "EXPERIENCE",
+      "title": "PHANTOM: русский booking UX и E2E"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X07",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 7,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1289,
+      "team": "EXPERIENCE",
+      "title": "PHANTOM: админ-панель расписаний и мест"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X08",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 8,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1302,
+      "team": "EXPERIENCE",
+      "title": "STYLO: реальные экспорт/импорт данных"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X09",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 9,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1315,
+      "team": "EXPERIENCE",
+      "title": "STYLO: конфликты версий и rollback"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01"
+      ],
+      "id": "EXPERIENCE-X10",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 10,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1328,
+      "team": "EXPERIENCE",
+      "title": "STYLO: изоляция нескольких аккаунтов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X02 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X02"
+      ],
+      "id": "EXPERIENCE-X11",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 11,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1341,
+      "team": "EXPERIENCE",
+      "title": "STYLO: гардероб, каталогизация, фильтры"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X02 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X02"
+      ],
+      "id": "EXPERIENCE-X12",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 12,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1354,
+      "team": "EXPERIENCE",
+      "title": "STYLO: рекомендации с offline fallback"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X03 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X03"
+      ],
+      "id": "EXPERIENCE-X13",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 13,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1367,
+      "team": "EXPERIENCE",
+      "title": "SkillCred: подписанный формат удостоверений"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X04 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X04"
+      ],
+      "id": "EXPERIENCE-X14",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 14,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1380,
+      "team": "EXPERIENCE",
+      "title": "SkillCred: независимый verifier"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X05 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X05"
+      ],
+      "id": "EXPERIENCE-X15",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 15,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1393,
+      "team": "EXPERIENCE",
+      "title": "SkillCred: revocation, expiry и key rotation"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X06 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X06"
+      ],
+      "id": "EXPERIENCE-X16",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 16,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1406,
+      "team": "EXPERIENCE",
+      "title": "SkillCred: privacy, portable credentials и UX"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X07 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X07"
+      ],
+      "id": "EXPERIENCE-X17",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 17,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1419,
+      "team": "EXPERIENCE",
+      "title": "EchoTrace: pilot schema и data provenance"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X08 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X08"
+      ],
+      "id": "EXPERIENCE-X18",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 18,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1432,
+      "team": "EXPERIENCE",
+      "title": "EchoTrace: безопасный ingestion и ACL"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X09 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X09"
+      ],
+      "id": "EXPERIENCE-X19",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 19,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1445,
+      "team": "EXPERIENCE",
+      "title": "EchoTrace: тесты качества и false-positive policy"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X10 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X10"
+      ],
+      "id": "EXPERIENCE-X20",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 20,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1458,
+      "team": "EXPERIENCE",
+      "title": "EchoTrace: UX отчёта без диагностических заявлений"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X11 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X11"
+      ],
+      "id": "EXPERIENCE-X21",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 21,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1471,
+      "team": "EXPERIENCE",
+      "title": "Noor: восстановление исходников и исходных данных"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X12 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X12"
+      ],
+      "id": "EXPERIENCE-X22",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 22,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1484,
+      "team": "EXPERIENCE",
+      "title": "Noor: курсы, уроки и прогресс"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X13 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X13"
+      ],
+      "id": "EXPERIENCE-X23",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 23,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1497,
+      "team": "EXPERIENCE",
+      "title": "Noor: подсказки через ограниченный NEXUS API"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X14 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X14"
+      ],
+      "id": "EXPERIENCE-X24",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 24,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1510,
+      "team": "EXPERIENCE",
+      "title": "Noor: офлайн обучение и проверка прогресса"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X15 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X15"
+      ],
+      "id": "EXPERIENCE-X25",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 25,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1523,
+      "team": "EXPERIENCE",
+      "title": "CIVIC: deterministic replay и журнал событий"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X16 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X16"
+      ],
+      "id": "EXPERIENCE-X26",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 26,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1536,
+      "team": "EXPERIENCE",
+      "title": "CIVIC: инварианты и fault injection"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X17 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X17"
+      ],
+      "id": "EXPERIENCE-X27",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 27,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1549,
+      "team": "EXPERIENCE",
+      "title": "CIVIC: визуальный редактор сценариев"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X18 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X18"
+      ],
+      "id": "EXPERIENCE-X28",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 28,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1562,
+      "team": "EXPERIENCE",
+      "title": "Единая русская UX-база и локализация"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X19 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X19"
+      ],
+      "id": "EXPERIENCE-X29",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 29,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1575,
+      "team": "EXPERIENCE",
+      "title": "Accessibility, mobile/browser и реальные E2E"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация EXPERIENCE-X01; договорённости и тестовые контракты Wave 1 (включая EXPERIENCE-X20 по применимости)",
+      "edit_scope_ru": "только STYLO / PHANTOM / Noor / EchoTrace / SkillCred / CIVIC",
+      "explicit_deps": [
+        "EXPERIENCE-X01",
+        "EXPERIENCE-X20"
+      ],
+      "id": "EXPERIENCE-X30",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 30,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1588,
+      "team": "EXPERIENCE",
+      "title": "Restore, негативные тесты и release-ready review"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "права чтения исходников",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [],
+      "id": "GENESIS-X01",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 1,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1604,
+      "team": "GENESIS",
+      "title": "Гит-baseline и восстановление архитектуры продуктов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X02",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 2,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1617,
+      "team": "GENESIS",
+      "title": "Версионированная семантическая scene schema"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X03",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 3,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1630,
+      "team": "GENESIS",
+      "title": "Миграции старых сцен и обратимая конвертация"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X04",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 4,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1643,
+      "team": "GENESIS",
+      "title": "3D редактор: дерево объектов и инспектор"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X05",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 5,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1656,
+      "team": "GENESIS",
+      "title": "3D редактор: манипуляторы, трансформации, undo"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X06",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 6,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1669,
+      "team": "GENESIS",
+      "title": "3D редактор: материалы, свет, камеры"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X07",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 7,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1682,
+      "team": "GENESIS",
+      "title": "3D редактор: события и интерактивное поведение"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X08",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 8,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1695,
+      "team": "GENESIS",
+      "title": "3D редактор: коллизии и навигация"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X09",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 9,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1708,
+      "team": "GENESIS",
+      "title": "3D редактор: импорт/экспорт ассетов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01"
+      ],
+      "id": "GENESIS-X10",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 10,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1721,
+      "team": "GENESIS",
+      "title": "Безопасные ZIP и filesystem boundaries"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X02 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X02"
+      ],
+      "id": "GENESIS-X11",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 11,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1734,
+      "team": "GENESIS",
+      "title": "История проектов и конфликтующие сохранения"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X02 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X02"
+      ],
+      "id": "GENESIS-X12",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 12,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1747,
+      "team": "GENESIS",
+      "title": "World Studio: multi-user permissions"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X03 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X03"
+      ],
+      "id": "GENESIS-X13",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 13,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1760,
+      "team": "GENESIS",
+      "title": "World Studio: оптимизация 5k+ сцен"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X04 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X04"
+      ],
+      "id": "GENESIS-X14",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 14,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1773,
+      "team": "GENESIS",
+      "title": "LOD, culling и streaming ассетов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X05 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X05"
+      ],
+      "id": "GENESIS-X15",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 15,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1786,
+      "team": "GENESIS",
+      "title": "GPU и VRAM профилирование движка"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X06 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X06"
+      ],
+      "id": "GENESIS-X16",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 16,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1799,
+      "team": "GENESIS",
+      "title": "Русскоязычный браузерный World Studio E2E"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X07 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X07"
+      ],
+      "id": "GENESIS-X17",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 17,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1812,
+      "team": "GENESIS",
+      "title": "CineVault: индекс ассетов и метаданных"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X08 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X08"
+      ],
+      "id": "GENESIS-X18",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 18,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1825,
+      "team": "GENESIS",
+      "title": "CineVault: поиск, теги и provenance"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X09 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X09"
+      ],
+      "id": "GENESIS-X19",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 19,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1838,
+      "team": "GENESIS",
+      "title": "CINEOS: монтажные таймлайны и EDL"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X10 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X10"
+      ],
+      "id": "GENESIS-X20",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 20,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1851,
+      "team": "GENESIS",
+      "title": "Video Forge: FFmpeg pipeline integration"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X11 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X11"
+      ],
+      "id": "GENESIS-X21",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 21,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1864,
+      "team": "GENESIS",
+      "title": "Видео QC: ffprobe, decode, integrity receipt"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X12 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X12"
+      ],
+      "id": "GENESIS-X22",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 22,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1877,
+      "team": "GENESIS",
+      "title": "Версионирование источников и лицензий контента"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X13 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X13"
+      ],
+      "id": "GENESIS-X23",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 23,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1890,
+      "team": "GENESIS",
+      "title": "Cinema: durable job queue и worker leases"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X14 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X14"
+      ],
+      "id": "GENESIS-X24",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 24,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1903,
+      "team": "GENESIS",
+      "title": "Cinema: отмена, повторы и crash recovery"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X15 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X15"
+      ],
+      "id": "GENESIS-X25",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 25,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 1916,
+      "team": "GENESIS",
+      "title": "Ресурсный admission-контракт TITAN"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X16 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X16"
+      ],
+      "id": "GENESIS-X26",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 26,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1929,
+      "team": "GENESIS",
+      "title": "AI-adapter NEXUS с измеренными ограничениями"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X17 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X17"
+      ],
+      "id": "GENESIS-X27",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 27,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1942,
+      "team": "GENESIS",
+      "title": "Очереди CPU/GPU без взаимного starvation"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X18 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X18"
+      ],
+      "id": "GENESIS-X28",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 28,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1955,
+      "team": "GENESIS",
+      "title": "Бенчмарки кодеков и аппаратной совместимости"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X19 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X19"
+      ],
+      "id": "GENESIS-X29",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 29,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1968,
+      "team": "GENESIS",
+      "title": "Безопасность загрузок и медиапесочница"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация GENESIS-X01; договорённости и тестовые контракты Wave 1 (включая GENESIS-X20 по применимости)",
+      "edit_scope_ru": "только World Studio / CINEOS / CineVault / Video Forge / Cinema",
+      "explicit_deps": [
+        "GENESIS-X01",
+        "GENESIS-X20"
+      ],
+      "id": "GENESIS-X30",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 30,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 1981,
+      "team": "GENESIS",
+      "title": "Полный сценарий scene→render→QC→export"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "права чтения исходников",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [],
+      "id": "ORBITAL-X01",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 1,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 1997,
+      "team": "ORBITAL",
+      "title": "Исходный baseline и разделение research/production"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X02",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 2,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2010,
+      "team": "ORBITAL",
+      "title": "Определить threat model канала и ledger"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X03",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 3,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2023,
+      "team": "ORBITAL",
+      "title": "Формат версионированного command envelope"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X04",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 4,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2036,
+      "team": "ORBITAL",
+      "title": "Проверка identity терминала в sandbox"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X05",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 5,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2049,
+      "team": "ORBITAL",
+      "title": "Аутентификация команд и подтверждений ACK"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X06",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 6,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2062,
+      "team": "ORBITAL",
+      "title": "TTL, nonce и устойчивый replay register"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X07",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 7,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2075,
+      "team": "ORBITAL",
+      "title": "Отделение transport ACK от execution ACK"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X08",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 8,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2088,
+      "team": "ORBITAL",
+      "title": "Durable queue, outbox и транзакционная запись"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X09",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 9,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2101,
+      "team": "ORBITAL",
+      "title": "Idempotency, fencing и конкурентные receivers"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01"
+      ],
+      "id": "ORBITAL-X10",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 10,
+      "original_status": "PLANNED",
+      "priority": "P0",
+      "source_line": 2114,
+      "team": "ORBITAL",
+      "title": "Virtual-time transport simulator"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X02 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X02"
+      ],
+      "id": "ORBITAL-X11",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 11,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2127,
+      "team": "ORBITAL",
+      "title": "Loss, duplication и out-of-order delivery"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X02 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X02"
+      ],
+      "id": "ORBITAL-X12",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 12,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2140,
+      "team": "ORBITAL",
+      "title": "Partition, disconnect и delayed ACK"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X03 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X03"
+      ],
+      "id": "ORBITAL-X13",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 13,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2153,
+      "team": "ORBITAL",
+      "title": "Bandwidth, byte budget, cost model"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X04 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X04"
+      ],
+      "id": "ORBITAL-X14",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 14,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2166,
+      "team": "ORBITAL",
+      "title": "Seeded reproducible scenario suite"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X05 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X05"
+      ],
+      "id": "ORBITAL-X15",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 15,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2179,
+      "team": "ORBITAL",
+      "title": "Crash/restart/corruption transport tests"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X06 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X06"
+      ],
+      "id": "ORBITAL-X16",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 16,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2192,
+      "team": "ORBITAL",
+      "title": "Модель provider API без реального подключения"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X07 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X07"
+      ],
+      "id": "ORBITAL-X17",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 17,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2205,
+      "team": "ORBITAL",
+      "title": "Тесты устойчивости под высокой нагрузкой"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X08 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X08"
+      ],
+      "id": "ORBITAL-X18",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 18,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2218,
+      "team": "ORBITAL",
+      "title": "Контракт command authorization с NEXUS/TITAN"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X09 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X09"
+      ],
+      "id": "ORBITAL-X19",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 19,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2231,
+      "team": "ORBITAL",
+      "title": "Ledger: сравнительная архитектурная оценка"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X10 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X10"
+      ],
+      "id": "ORBITAL-X20",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 20,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2244,
+      "team": "ORBITAL",
+      "title": "Ledger: документирование доверенных сторон"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X11 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X11"
+      ],
+      "id": "ORBITAL-X21",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 21,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2257,
+      "team": "ORBITAL",
+      "title": "Ledger: баланс и nonce state machine"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X12 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X12"
+      ],
+      "id": "ORBITAL-X22",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 22,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2270,
+      "team": "ORBITAL",
+      "title": "Ledger: инварианты и property-based tests"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X13 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X13"
+      ],
+      "id": "ORBITAL-X23",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 23,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2283,
+      "team": "ORBITAL",
+      "title": "Ledger: fault injection и проверка хранения"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X14 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X14"
+      ],
+      "id": "ORBITAL-X24",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 24,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2296,
+      "team": "ORBITAL",
+      "title": "Ledger: изолированная модель валидаторов"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X15 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X15"
+      ],
+      "id": "ORBITAL-X25",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 25,
+      "original_status": "PLANNED",
+      "priority": "P1",
+      "source_line": 2309,
+      "team": "ORBITAL",
+      "title": "Ledger: BFT failure and partition experiments"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X16 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X16"
+      ],
+      "id": "ORBITAL-X26",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 26,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 2322,
+      "team": "ORBITAL",
+      "title": "Ledger: конфликты веток и модель финальности"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X17 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X17"
+      ],
+      "id": "ORBITAL-X27",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 27,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 2335,
+      "team": "ORBITAL",
+      "title": "Ledger: криптографические ключи в тестовой модели"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X18 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X18"
+      ],
+      "id": "ORBITAL-X28",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 28,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 2348,
+      "team": "ORBITAL",
+      "title": "Ledger: экономические допущения и затраты"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X19 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X19"
+      ],
+      "id": "ORBITAL-X29",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 29,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 2361,
+      "team": "ORBITAL",
+      "title": "Ledger: независимая проверка и audit report"
+    },
+    {
+      "current_verified_integration": false,
+      "dependency_clause_ru": "базовая инвентаризация ORBITAL-X01; договорённости и тестовые контракты Wave 1 (включая ORBITAL-X20 по применимости)",
+      "edit_scope_ru": "только Satellite transport emulator / Ledger research",
+      "explicit_deps": [
+        "ORBITAL-X01",
+        "ORBITAL-X20"
+      ],
+      "id": "ORBITAL-X30",
+      "independent_acceptance": false,
+      "local_recovery_status": "BLOCKED_UPSTREAM",
+      "m181_task_board_correspondence": "NOT_ESTABLISHED",
+      "ordinal": 30,
+      "original_status": "PLANNED",
+      "priority": "P2",
+      "source_line": 2374,
+      "team": "ORBITAL",
+      "title": "Решение research GO/NO-GO по доказательствам"
+    }
+  ]
+}

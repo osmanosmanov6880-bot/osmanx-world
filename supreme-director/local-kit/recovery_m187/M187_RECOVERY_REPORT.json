@@ -1,0 +1,63 @@
+{
+  "accepted_original_tasks": 0,
+  "local_reference_lab": {
+    "actual_product_integrations": 0,
+    "blocked_steps": 5,
+    "doctor": "LOCAL_INTEGRITY_PASS",
+    "failure_injected_at": "CONTRACT-05",
+    "healthy_steps": 9,
+    "original_task_acceptance": 0,
+    "real_payments_or_external_AI_called": false,
+    "status": "PASS_LOCAL_REFERENCE_ONLY"
+  },
+  "local_suite": {
+    "exit_code": 0,
+    "status": "PASS",
+    "tail": "\n----------------------------------------------------------------------\nRan 402 tests in 31.867s\n\nOK\n"
+  },
+  "m186_git_bundle": {
+    "bundle_sha256": "c3c18da539c83e49691e4437a5779efb3f0d2b4f08e4b0bed0abb48684140d5a",
+    "m180_commit_found": false,
+    "m181_commit_found": false,
+    "m186_commit_found": true,
+    "status": "LOCAL_GIT_BUNDLE_INSPECTED"
+  },
+  "original_M180_M181_canonical_board": "NOT_PROVEN",
+  "original_M180_git_commit_expected": "e8f88465d98c966bd6931883cc5c873b9fcd94a1",
+  "original_M180_snapshot": {
+    "archive": null,
+    "reason": "Original archive bytes unavailable",
+    "sha256": null,
+    "status": "MISSING"
+  },
+  "original_M181_git_commit_expected": "ff5e6de7e9614add995d11a7330fc2f13d2c1206",
+  "original_M181_sha256_expected": "c6d0ff3ff9caa435e6928244ab70ecee8156747306ac3174faca82702be2969a",
+  "original_M181_snapshot": {
+    "archive": null,
+    "reason": "Original archive bytes unavailable",
+    "sha256": null,
+    "status": "MISSING"
+  },
+  "recovered_historical_tasks": {
+    "explicit_references_in_this_document": 294,
+    "priorities": {
+      "P0": 60,
+      "P1": 90,
+      "P2": 30
+    },
+    "teams": {
+      "COMMERCE": 30,
+      "EXPERIENCE": 30,
+      "GENESIS": 30,
+      "NEXUS": 30,
+      "ORBITAL": 30,
+      "TITAN": 30
+    },
+    "total": 180
+  },
+  "recovered_plan_not_product_integration": true,
+  "release": "PRODUCTION_NO_GO",
+  "schema": "osgard.m187.restore-verification/1",
+  "source_master_sha256": "71fdda8231e1cb627a36fa683eaab1c28e4bdff2da9c95e0e6f6df83624a4b6c",
+  "verified_live_integrations": 0
+}

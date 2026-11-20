@@ -1,0 +1,38 @@
+{
+  "schema": "osgard.m183.github-default-branch-observations/1",
+  "observed_date_utc": "2026-10-27",
+  "method": "Connected GitHub fetch of REST /repos/{owner}/{repo}/git/ref/heads/{branch}",
+  "scope": "Read-only observation, not ownership mapping or cryptographic review",
+  "observed_repositories": [
+    {
+      "repo": "HADJAL001/osgardos", "branch": "main",
+      "observed_head_sha": "269914113dca1d35e41501c5cc24d8848cdef26b", "team_assignment": null,
+      "url": "https://github.com/HADJAL001/osgardos/commit/269914113dca1d35e41501c5cc24d8848cdef26b"
+    },
+    {
+      "repo": "HADJAL001/osgard-world", "branch": "master",
+      "observed_head_sha": "0c0621f40f628e6818a0c38799a06e9f92723d60", "team_assignment": null,
+      "url": "https://github.com/HADJAL001/osgard-world/commit/0c0621f40f628e6818a0c38799a06e9f92723d60"
+    },
+    {
+      "repo": "osmanosmanov6880-bot/osgard-world", "branch": "master",
+      "observed_head_sha": "01d37190520e36e8abff9e5ccebb0bdc4df4ff28", "team_assignment": null,
+      "url": "https://github.com/osmanosmanov6880-bot/osgard-world/commit/01d37190520e36e8abff9e5ccebb0bdc4df4ff28"
+    },
+    {
+      "repo": "HADJAL001/osgard-new-world", "branch": "master",
+      "observed_head_sha": "d40dd097af1a2f2f5eb283820e7f98e158854243", "team_assignment": null,
+      "url": "https://github.com/HADJAL001/osgard-new-world/commit/d40dd097af1a2f2f5eb283820e7f98e158854243"
+    },
+    {
+      "repo": "osmanosmanov6880-bot/osgard-universe", "branch": "main",
+      "observed_head_sha": "5b7eeed9ab8e4f2084bea7925fb591a6f677bcbb", "team_assignment": null,
+      "url": "https://github.com/osmanosmanov6880-bot/osgard-universe/commit/5b7eeed9ab8e4f2084bea7925fb591a6f677bcbb"
+    },
+    {
+      "repo": "HADJAL001/osgard-infra-backups", "branch": "main",
+      "observed_head_sha": "89335796ce34f4c1bfd4f3725aaad4e75b2038a9", "team_assignment": null,
+      "url": "https://github.com/HADJAL001/osgard-infra-backups/commit/89335796ce34f4c1bfd4f3725aaad4e75b2038a9"
+    }
+  ]
+}

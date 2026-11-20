@@ -1,0 +1,6 @@
+[project]
+name = "osgard-supreme-director-m199-local"
+version = "0.199.0"
+description = "Local portfolio analytics, strict tenant isolation, cash calendar"
+requires-python = ">=3.11"
+dependencies = []

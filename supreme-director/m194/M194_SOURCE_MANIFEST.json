@@ -1,0 +1,61 @@
+{
+  "schema": "osgard.m194.source-manifest/1",
+  "files": {
+    "README.md": {
+      "bytes": 4110,
+      "sha256": "6b3f2ddcf22891f9865d56c7be88cd34adaffa93b2698a669a2629d0b87e5861"
+    },
+    "docs/M194_ENGINEERING_JOURNAL_RU.md": {
+      "bytes": 4337,
+      "sha256": "a6ee2009708877200eeaaada4a6f8f8407a227e4c0f66a8475fea803f09d01a0"
+    },
+    "osgard_m194/__init__.py": {
+      "bytes": 127,
+      "sha256": "bbd7ad2fdc46bbe7f96987c2f8b1936f57c3032beb083da5cdb469a57b2fa0bf"
+    },
+    "osgard_m194/__main__.py": {
+      "bytes": 1781,
+      "sha256": "adbf9345ce567439523dd79b25a41869f6e0a0fa08d1ce6038591de40f886e91"
+    },
+    "osgard_m194/runtime.py": {
+      "bytes": 13274,
+      "sha256": "11c7c8727cda084793bbbfb04c73371ea396553f0d888a2d4c18412f74a160dc"
+    },
+    "osgard_m194/server.py": {
+      "bytes": 2090,
+      "sha256": "8465ecc0679bda91b0dba4972cc934c5c00f7b326ff2c2cce85ef42171430310"
+    },
+    "osgard_m194/web/app.js": {
+      "bytes": 26563,
+      "sha256": "ca12aad969b475fa1653dd17b620100e92ff6de1be5f358f1ded5145a67286be"
+    },
+    "osgard_m194/web/index.html": {
+      "bytes": 5276,
+      "sha256": "22a84d4f1693f3c2a85a62c81b04397c7ab9a2057b6368de8ac0059e3b50c92a"
+    },
+    "osgard_m194/web/ru.json": {
+      "bytes": 5886,
+      "sha256": "03ac7ce0f0e4c25ab5d1614f6202250362ee1091c08a0db3cd7083ec77c5ca39"
+    },
+    "osgard_m194/web/styles.css": {
+      "bytes": 11573,
+      "sha256": "d84882e229dbc16e3651ca099d99bc3e44f7f4a50139d80ca706cd89cc635d4c"
+    },
+    "pyproject.toml": {
+      "bytes": 238,
+      "sha256": "817f2056dd5e97e8f7acb0f9e7b5d655b0268eeca26ebd9b390c0573e2415ab9"
+    },
+    "tests/browser_smoke.py": {
+      "bytes": 3458,
+      "sha256": "2ff892c398c8944179e44160170f05d8c5e9371423f2a67172f9843bf6e0a790"
+    },
+    "tests/test_m194.py": {
+      "bytes": 16506,
+      "sha256": "a1e0e5655ab2f122217d1e8a6fe0d8d8e25691f4b7b138943d5e4c222fd7983f"
+    },
+    "verify_source.py": {
+      "bytes": 1206,
+      "sha256": "421ead94ea8de8b06273fa25d614ec5e50daaabb5a6226ce7be3104e6bb5e099"
+    }
+  }
+}

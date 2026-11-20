@@ -1,0 +1,5 @@
+[project]
+name = "osgard-supreme-director-m203"
+version = "0.203.0"
+requires-python = ">=3.11"
+description = "Local financial action plans, M195 tasks, before/after evidence and owner review"

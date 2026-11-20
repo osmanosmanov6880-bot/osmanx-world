@@ -1,0 +1,53 @@
+name: TITAN X01 Canonical Source Baselines
+on:
+  pull_request:
+    paths:
+      - "supreme-director/campaign180/campaign180/titan_source_provenance.py"
+      - "supreme-director/campaign180/tests/test_titan_x01_canonical.py"
+      - ".github/workflows/titan-original-x01-canonical.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: titan-original-x01-canonical
+  cancel-in-progress: true
+jobs:
+  canonical-source-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Compile source code
+        run: python -m compileall -q supreme-director/campaign180/campaign180
+      - name: Real signed Git-baseline tests
+        env:
+          PYTHONPATH: supreme-director/campaign180
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_x01_canonical.py' -v
+      - name: Existing X01-X05 regression
+        env:
+          PYTHONPATH: supreme-director/campaign180
+        run: python -m unittest discover -s supreme-director/campaign180/tests -p 'test_titan_first_five.py' -v
+      - name: Confirm owner-approved upstream is still missing
+        env:
+          PYTHONPATH: supreme-director/campaign180
+        run: |
+          python -m campaign180.titan_baseline --root .
+          python - <<'PY'
+          from pathlib import Path
+          from campaign180.registry import load_upstreams
+          from campaign180.audit import audit_original
+          root=Path(".")
+          assert load_upstreams(root)["teams"]["TITAN"]["owner_approved"] is False
+          assert audit_original(root)["counts"]["independently_accepted"]==0
+          print("TITAN_X01_BLOCKED_UPSTREAM")
+          PY

@@ -1,0 +1,12 @@
+{
+  "schema": "osgard.original180.team-upstreams/1",
+  "policy": "No team source may be treated as canonical without an owner-approved repository SHA and separate independent reviewer.",
+  "teams": {
+    "TITAN": {"repository_url": null, "commit_sha": null, "owner_approved": false, "approved_by": null, "independent_reviewer": null},
+    "NEXUS": {"repository_url": null, "commit_sha": null, "owner_approved": false, "approved_by": null, "independent_reviewer": null},
+    "COMMERCE": {"repository_url": null, "commit_sha": null, "owner_approved": false, "approved_by": null, "independent_reviewer": null},
+    "EXPERIENCE": {"repository_url": null, "commit_sha": null, "owner_approved": false, "approved_by": null, "independent_reviewer": null},
+    "GENESIS": {"repository_url": null, "commit_sha": null, "owner_approved": false, "approved_by": null, "independent_reviewer": null},
+    "ORBITAL": {"repository_url": null, "commit_sha": null, "owner_approved": false, "approved_by": null, "independent_reviewer": null}
+  }
+}
