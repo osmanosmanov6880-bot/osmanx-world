@@ -7,7 +7,7 @@ function requireConfiguration(env=process.env){
   if(env.CINEMA_RETENTION_ENABLED!=='true')throw Error('CINEMA_RETENTION_ENABLED must be explicitly true');
   if(!UUID.test(env.CINEMA_TENANT_ID||''))throw Error('CINEMA_TENANT_ID must be a configured tenant UUID');
   if(!env.DATABASE_URL)throw Error('DATABASE_URL required: use least-privilege Industry OS app role');
-  if(env.CINEMA_PUBLIC_WRITE_ENABLED!=='true')throw Error('Public intake not approved; disable timer for inactive system');
+  // Retention MUST keep running after a public-intake rollback; existing records still expire.
   return env.CINEMA_TENANT_ID;
 }
 export {requireConfiguration};
