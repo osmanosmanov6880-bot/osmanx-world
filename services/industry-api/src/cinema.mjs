@@ -2,6 +2,7 @@
 // Public intake is strictly opt-in for operations: disabled by default in every environment.
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { withTenant } from './database.mjs';
+import {campaignCode,planFollowup,followupWindow} from './cinema-r4.mjs';
 
 const STATES=['new','contacted','qualified','proposal','won','lost'];
 const PATHS={
@@ -49,7 +50,7 @@ const only=(obj,allowed)=>{
   return obj;
 };
 export function parseLead(data,requestKey){
-  const b=only(data,['storyId','contactName','contactEmail','organization','observation','goal','source','consent','website']);
+  const b=only(data,['storyId','contactName','contactEmail','organization','observation','goal','source','consent','website','campaignCode']);
   if(b.website!==undefined && typeof b.website!=='string')throw error(400,'Проверьте поле website');
   if(b.consent!==true)throw error(400,'Для запроса необходимо согласие на обработку данных');
   const storyId=bounded(b.storyId,'storyId',40,{min:8});
@@ -63,7 +64,7 @@ export function parseLead(data,requestKey){
   const source=b.source??'cinema';
   if(!SOURCES.has(source))throw error(400,'Некорректный источник');
   if(typeof requestKey!=='string'||!KEY.test(requestKey))throw error(400,'Требуется корректный Idempotency-Key');
-  const item={storyId,contactName,contactEmail,organization,observation,goal,source};
+  const item={storyId,contactName,contactEmail,organization,observation,goal,source,campaignCode:campaignCode(b.campaignCode)};
   return {
     ...item,key:requestKey,
     fingerprint:digest(JSON.stringify(item)),
@@ -71,11 +72,11 @@ export function parseLead(data,requestKey){
   };
 }
 export function parseEvent(data){
-  const b=only(data,['eventType','storyId']);
+  const b=only(data,['eventType','storyId','campaignCode']);
   if(!EVENTS.has(b.eventType))throw error(400,'Неизвестное событие');
   const storyId=b.storyId??'all';
   if(storyId!=='all'&&!STORY_IDS.has(storyId))throw error(400,'Неизвестный сюжет');
-  return {eventType:b.eventType,storyId};
+  return {eventType:b.eventType,storyId,campaignCode:campaignCode(b.campaignCode)};
 }
 const tokenHash=(secret,value)=>createHmac('sha256',secret).update(value).digest('hex');
 const constantEqual=(a,b)=>{
@@ -120,6 +121,10 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     const data=parseLead(req.body,req.headers['idempotency-key']);
     if(data.honeypot){reply.code(202);return {accepted:false};}
     const result=await withTenant(pool,cfg.tenant,async(db)=>{
+      // Serialize same-key submissions across API processes before charging rate-limit buckets.
+      // PostgreSQL transaction-scoped advisory lock avoids racing on UNIQUE(tenant,idempotency_key).
+      await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',
+        ['cinema:lead:'+cfg.tenant+':'+data.key]);
       const previous=await db.query(
         'SELECT id,payload_digest FROM industry.cinema_leads WHERE tenant_id=$1 AND idempotency_key=$2',
         [cfg.tenant,data.key]
@@ -132,8 +137,8 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
       await incrementBucket(db,cfg.tenant,cfg.secret,'global:leads',250);
       await incrementBucket(db,cfg.tenant,cfg.secret,'email:'+data.contactEmail,4);
       const created=await db.query(
-        "INSERT INTO industry.cinema_leads(tenant_id,contact_name,contact_email,organization,story_id,observation,goal,source,idempotency_key,payload_digest) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id",
-        [cfg.tenant,data.contactName,data.contactEmail,data.organization,data.storyId,data.observation,data.goal,data.source,data.key,data.fingerprint]
+        "INSERT INTO industry.cinema_leads(tenant_id,contact_name,contact_email,organization,story_id,observation,goal,source,idempotency_key,payload_digest,campaign_code) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id",
+        [cfg.tenant,data.contactName,data.contactEmail,data.organization,data.storyId,data.observation,data.goal,data.source,data.key,data.fingerprint,data.campaignCode]
       );
       const id=created.rows[0].id;
       await db.query(
@@ -152,61 +157,80 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     await withTenant(pool,cfg.tenant,async db=>{
       await incrementBucket(db,cfg.tenant,cfg.secret,'global:events',10000);
       await db.query(
-        "INSERT INTO industry.cinema_daily_events(tenant_id,date_utc,event_type,story_id,total) VALUES($1,(now() AT TIME ZONE 'UTC')::date,$2,$3,1) ON CONFLICT(tenant_id,date_utc,event_type,story_id) DO UPDATE SET total=industry.cinema_daily_events.total+1",
-        [cfg.tenant,event.eventType,event.storyId]
+        "INSERT INTO industry.cinema_daily_events(tenant_id,date_utc,event_type,story_id,campaign_code,total) VALUES($1,(now() AT TIME ZONE 'UTC')::date,$2,$3,$4,1) ON CONFLICT(tenant_id,date_utc,event_type,story_id,campaign_code) DO UPDATE SET total=industry.cinema_daily_events.total+1",
+        [cfg.tenant,event.eventType,event.storyId,event.campaignCode]
       );
     });
     reply.code(202);return {recorded:true,uniqueVisitor:false};
   });
   app.get(base+'/leads',req=>protectOwner(req,['owner','manager'],async(db,session)=>{
-    const query=only(req.query||{},['limit','offset','state']);
+    const query=only(req.query||{},['limit','offset','state','campaign']);
     const limit=Number(query.limit??40),offset=Number(query.offset??0);
     if(!Number.isInteger(limit)||limit<1||limit>100||!Number.isInteger(offset)||offset<0||offset>10000)
       throw error(400,'Некорректная пагинация');
     const state=query.state;
     if(state!==undefined&&!STATES.includes(state))throw error(400,'Некорректный статус');
+    const campaign=query.campaign===undefined?null:campaignCode(query.campaign);
     const records=await db.query(
-      "SELECT id,contact_name,contact_email,organization,story_id,observation,goal,source,state,deal_value_minor::text,version,created_at,updated_at FROM industry.cinema_leads WHERE tenant_id=$1 AND ($2::text IS NULL OR state=$2) ORDER BY created_at DESC,id DESC LIMIT $3 OFFSET $4",
-      [session.tenant_id,state??null,limit,offset]
+      "SELECT id,contact_name,contact_email,organization,story_id,observation,goal,source,campaign_code,state,deal_value_minor::text,version,next_action_at,next_action_kind,loss_reason_code,created_at,updated_at FROM industry.cinema_leads WHERE tenant_id=$1 AND ($2::text IS NULL OR state=$2) AND ($5::text IS NULL OR campaign_code=$5) ORDER BY created_at DESC,id DESC LIMIT $3 OFFSET $4",
+      [session.tenant_id,state??null,limit,offset,campaign]
     );
     return {items:records.rows,limit,offset};
   }));
   app.get(base+'/metrics',req=>protectOwner(req,['owner','manager'],async(db,session)=>{
-    const [stages,sources,stories,events]=await Promise.all([
+    const [stages,sources,stories,events,campaigns,followups]=await Promise.all([
       db.query("SELECT state,count(*)::int AS leads,COALESCE(sum(CASE WHEN state='won' THEN deal_value_minor ELSE 0 END),0)::text AS won_value_minor FROM industry.cinema_leads WHERE tenant_id=$1 GROUP BY state ORDER BY state",[session.tenant_id]),
       db.query('SELECT source,count(*)::int AS leads FROM industry.cinema_leads WHERE tenant_id=$1 GROUP BY source ORDER BY source',[session.tenant_id]),
       db.query('SELECT story_id,count(*)::int AS leads FROM industry.cinema_leads WHERE tenant_id=$1 GROUP BY story_id ORDER BY leads DESC,story_id LIMIT 12',[session.tenant_id]),
-      db.query("SELECT date_utc::text,event_type,story_id,total::text FROM industry.cinema_daily_events WHERE tenant_id=$1 AND date_utc>=(now() AT TIME ZONE 'UTC')::date-interval '29 days' ORDER BY date_utc DESC,event_type,story_id LIMIT 300",[session.tenant_id])
+      db.query("SELECT date_utc::text,event_type,story_id,campaign_code,total::text FROM industry.cinema_daily_events WHERE tenant_id=$1 AND date_utc>=(now() AT TIME ZONE 'UTC')::date-interval '29 days' ORDER BY date_utc DESC,event_type,story_id,campaign_code LIMIT 300",[session.tenant_id]),
+      db.query("SELECT campaign_code,count(*)::int AS leads,count(*) FILTER(WHERE state='won')::int AS won,COALESCE(sum(CASE WHEN state='won' THEN deal_value_minor ELSE 0 END),0)::text AS won_estimate_minor FROM industry.cinema_leads WHERE tenant_id=$1 GROUP BY campaign_code ORDER BY leads DESC,campaign_code LIMIT 50",[session.tenant_id]),
+      db.query("SELECT count(*) FILTER(WHERE next_action_at<now() AND state NOT IN ('won','lost'))::int AS overdue,count(*) FILTER(WHERE next_action_at>=now() AND next_action_at<(date_trunc('day',now() AT TIME ZONE 'UTC')+interval '1 day') AT TIME ZONE 'UTC' AND state NOT IN ('won','lost'))::int AS due_today FROM industry.cinema_leads WHERE tenant_id=$1",[session.tenant_id])
     ]);
-    return {schema:'osmanx.cinema.metrics.v1',stages:stages.rows,sources:sources.rows,stories:stories.rows,events:events.rows,
+    return {schema:'osmanx.cinema.metrics.v2',stages:stages.rows,sources:sources.rows,stories:stories.rows,events:events.rows,campaigns:campaigns.rows,followups:followups.rows[0],
       warning:'События — количество действий, не уникальных посетителей. Выручка — только вручную подтверждённые сделки.'};
+  }));
+  app.get(base+'/followups',req=>protectOwner(req,['owner','manager'],async(db,s)=>{
+    const query=only(req.query||{},['window','limit']);
+    const windowName=query.window??'overdue',limit=Number(query.limit??50);
+    if(!Number.isInteger(limit)||limit<1||limit>100)throw error(400,'Неверный размер страницы');
+    const bounds=followupWindow(windowName);
+    const data=await db.query(
+      "SELECT id,contact_name,organization,story_id,state,campaign_code,next_action_at,next_action_kind,version FROM industry.cinema_leads WHERE tenant_id=$1 AND next_action_at IS NOT NULL AND next_action_at<$2::timestamptz AND ($3::timestamptz IS NULL OR next_action_at>=$3::timestamptz) AND state NOT IN ('won','lost') ORDER BY next_action_at ASC,id ASC LIMIT $4",
+      [s.tenant_id,bounds.before,bounds.after,limit]
+    );
+    return {window:windowName,items:data.rows};
   }));
   app.patch(base+'/leads/:id',req=>protectOwner(req,['owner','manager'],async(db,s)=>{
     const id=requireUUID(req.params.id);
-    const b=only(req.body,['expectedVersion','state','dealValueMinor']);
+    const b=only(req.body,['expectedVersion','state','dealValueMinor','nextActionAt','nextActionKind','lossReasonCode']);
     const version=b.expectedVersion;
     if(!Number.isSafeInteger(version)||version<1)throw error(400,'Некорректная версия');
-    if(b.state===undefined && b.dealValueMinor===undefined)throw error(400,'Нет изменений');
+    if(!Object.keys(b).some(k=>k!=='expectedVersion'))throw error(400,'Нет изменений');
     if(b.state!==undefined&&!STATES.includes(b.state))throw error(400,'Неизвестный статус');
     if(b.dealValueMinor!==undefined && b.dealValueMinor!==null &&
-      (!Number.isSafeInteger(b.dealValueMinor)||b.dealValueMinor<0||b.dealValueMinor>100000000000))
-      throw error(400,'Некорректная стоимость сделки');
-    const old=(await db.query('SELECT state,version,deal_value_minor FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2 FOR UPDATE',[s.tenant_id,id])).rows[0];
+       (!Number.isSafeInteger(b.dealValueMinor)||b.dealValueMinor<0||b.dealValueMinor>100000000000))
+       throw error(400,'Некорректная стоимость сделки');
+    const old=(await db.query('SELECT state,version,deal_value_minor,next_action_at,next_action_kind,loss_reason_code FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2 FOR UPDATE',[s.tenant_id,id])).rows[0];
     if(!old)throw error(404,'Заявка не найдена');
     if(old.version!==version)throw error(409,'Заявка изменена другим пользователем');
-    const target=b.state??old.state;
-    if(target!==old.state && !permittedTransition(old.state,target))throw error(409,'Недопустимый переход статуса');
-    if(b.dealValueMinor!==undefined && !['qualified','proposal','won'].includes(target))
+    const plan=planFollowup(old,b);
+    if(b.dealValueMinor!==undefined && !['qualified','proposal','won'].includes(plan.state))
       throw error(409,'Сумма возможна только для квалифицированной или согласованной сделки');
     const amount=b.dealValueMinor===undefined?old.deal_value_minor:b.dealValueMinor;
-    if(target===old.state && String(amount)===String(old.deal_value_minor))throw error(409,'Изменения отсутствуют');
+    const oldDue=old.next_action_at?new Date(old.next_action_at).toISOString():null;
+    const changedState=plan.state!==old.state;
+    const changedValue=String(amount)!==String(old.deal_value_minor);
+    const changedFollowup=plan.nextActionAt!==oldDue||plan.nextActionKind!==old.next_action_kind;
+    const changedReason=plan.lossReasonCode!==old.loss_reason_code;
+    if(!changedState&&!changedValue&&!changedFollowup&&!changedReason)throw error(409,'Изменения отсутствуют');
     const row=await db.query(
-      'UPDATE industry.cinema_leads SET state=$3,deal_value_minor=$4,version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING id,state,deal_value_minor::text,version,updated_at',
-      [s.tenant_id,id,target,amount]
+      'UPDATE industry.cinema_leads SET state=$3,deal_value_minor=$4,next_action_at=$5,next_action_kind=$6,loss_reason_code=$7,version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING id,state,deal_value_minor::text,version,next_action_at,next_action_kind,loss_reason_code,updated_at',
+      [s.tenant_id,id,plan.state,amount,plan.nextActionAt,plan.nextActionKind,plan.lossReasonCode]
     );
+    const eventType=changedState?'state_changed':changedValue?'value_changed':changedFollowup?'followup_changed':'outcome_coded';
     await db.query(
-      'INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version) VALUES($1,$2,$3,$4,$5,$6,$7)',
-      [s.tenant_id,id,s.account_id,target!==old.state?'state_changed':'value_changed',old.state,target,row.rows[0].version]
+      'INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version,next_action_at,next_action_kind,loss_reason_code) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
+      [s.tenant_id,id,s.account_id,eventType,old.state,plan.state,row.rows[0].version,plan.nextActionAt,plan.nextActionKind,plan.lossReasonCode]
     );
     return {item:row.rows[0]};
   }));
@@ -214,7 +238,7 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     const id=requireUUID(req.params.id);
     const exists=await db.query('SELECT 1 FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2',[s.tenant_id,id]);
     if(!exists.rowCount)throw error(404,'Заявка не найдена');
-    const rows=await db.query('SELECT event_type,old_state,new_state,version,occurred_at FROM industry.cinema_lead_events WHERE tenant_id=$1 AND lead_id=$2 ORDER BY version ASC LIMIT 100',[s.tenant_id,id]);
+    const rows=await db.query('SELECT event_type,old_state,new_state,version,next_action_at,next_action_kind,loss_reason_code,occurred_at FROM industry.cinema_lead_events WHERE tenant_id=$1 AND lead_id=$2 ORDER BY version ASC LIMIT 100',[s.tenant_id,id]);
     return {items:rows.rows};
   }));
   app.delete(base+'/leads/:id',req=>protectOwner(req,['owner'],async(db,s)=>{
