@@ -31,9 +31,10 @@ export function exactEmail(value){
   return value.trim().toLowerCase();
 }
 export function reportDays(raw){
-  const days=raw===undefined?30:Number(raw);
-  if(![7,30,90].includes(days)||!Number.isInteger(days))throw fail(400,'Период отчёта должен быть 7, 30 или 90 дней');
-  return days;
+  if(raw===undefined)return 30;
+  if(typeof raw==='string'&&['7','30','90'].includes(raw))return Number(raw);
+  if(typeof raw==='number'&&[7,30,90].includes(raw))return raw;
+  throw fail(400,'Период отчёта должен быть 7, 30 или 90 дней');
 }
 export function registerCinemaR5Routes(app,{base,protectOwner}){
   app.get(base+'/assignees',req=>protectOwner(req,['owner','manager'],async(db,session)=>{
