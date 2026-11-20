@@ -2,6 +2,8 @@
 import {emptyDraft,validateDraft,buildPublicRelease,unpublished} from './editorial.mjs';
 import {sendDigestBatch} from './digest.mjs';
 import {mediaRoute,checkStreamReady,exposeStream,streamFrame} from './media.mjs';
+import {createTusUpload} from './tus.mjs';
+import {recordVisibility} from './visibility.mjs';
 import {recoveryRoute} from './recovery.mjs';
 import {calendarRoute,visibleRelease} from './calendar.mjs';
 const base='/moscow-1000/api/admin';
@@ -77,17 +79,19 @@ async function editorial(req,env,actor,rest,fetcher){
       db.prepare('INSERT INTO editorial_audit(id,action,actor,revision,at) VALUES (?,?,?,?,?)').bind(eventId(),'approved',actor.email,d.revision,release.reviewedAt),
       ...(hasHistory?[db.prepare('INSERT INTO editorial_versions(version,public_json,reviewed_by,reviewed_at) VALUES (?,?,?,?)').bind(version,JSON.stringify(release),actor.email,release.reviewedAt)]:[])
     ];
-    await db.batch(operations);
+    try{await db.batch(operations);}catch{for(const uid of exposed)await exposeStream(env,fetcher,uid,false);return reply({ok:false,error:'Публикация в D1 не завершена. Публичные ссылки отозваны по возможности; проверьте Stream вручную.'},503);}
+    for(const uid of exposed)await recordVisibility(db,uid,'public',true,'editorial-approve');
+    for(const ep of d.document.episodes.filter(e=>e.videoUrl.startsWith('stream:'))){const c=schedule.get(ep.day);if(c&&c.status!=='released')await recordVisibility(db,ep.videoUrl.slice(7),'private',true,'embargo');}
     // Revocation after commit: old removed Stream UIDs must not remain playable by their direct URLs.
     const currentUids=new Set(release.episodes.filter(e=>e.videoUrl?.startsWith('stream:')).map(e=>e.videoUrl.slice(7)));
     let retiredStreamRevoked=true;
     for(const old of previousRelease.episodes||[]){if(old.videoUrl?.startsWith('stream:')&&!currentUids.has(old.videoUrl.slice(7)))
-      if(!await exposeStream(env,fetcher,old.videoUrl.slice(7),false))retiredStreamRevoked=false;
+      {const uid=old.videoUrl.slice(7),ok=await exposeStream(env,fetcher,uid,false);if(!ok)retiredStreamRevoked=false;await recordVisibility(db,uid,'private',ok,'retired');}
     }
     return reply({ok:true,version,published:release,retiredStreamRevoked},retiredStreamRevoked?200:207);
   }
   if(req.method==='POST'&&rest==='/editorial/unpublish'){
-    if(!permission(actor,'approver'))return unauthorized();const prior=await live(db);let revoked=true;for(const ep of prior.episodes||[]){if(ep.videoUrl?.startsWith('stream:')&&!await exposeStream(env,fetcher,ep.videoUrl.slice(7),false))revoked=false;}await db.batch([
+    if(!permission(actor,'approver'))return unauthorized();const prior=await live(db);let revoked=true;for(const ep of prior.episodes||[]){if(ep.videoUrl?.startsWith('stream:')){const uid=ep.videoUrl.slice(7),ok=await exposeStream(env,fetcher,uid,false);if(!ok)revoked=false;await recordVisibility(db,uid,'private',ok,'unpublish');}}await db.batch([
       db.prepare('DELETE FROM editorial_live WHERE slot=1'),
       db.prepare('INSERT INTO editorial_audit(id,action,actor,revision,at) VALUES (?,?,?,?,?)').bind(eventId(),'unpublished',actor.email,null,now())
     ]);return reply({ok:true,status:'unpublished',streamAccessRevoked:revoked},revoked?200:207);
@@ -165,6 +169,7 @@ export async function adminRoute(req,env,actor,fetcher=fetch){
   if(rest==='/session'&&req.method==='GET')return reply({ok:true,actor});
   if(!['GET','HEAD'].includes(req.method) && (req.headers.get('Origin')!==new URL(req.url).origin||!req.headers.get('content-type')?.startsWith('application/json')))
     return reply({ok:false,error:'Неверный Origin или Content-Type.'},403);
+  if(rest==='/media/tus'&&req.method==='POST')return createTusUpload(req,env,actor,fetcher);
   if(rest.startsWith('/media'))return await mediaRoute(req,env,actor,rest,fetcher)||reply({ok:false,error:'Route not found'},404);
   if(rest.startsWith('/calendar'))return await calendarRoute(req,env,actor,rest)||reply({ok:false,error:'Route not found'},404);
   if(rest.startsWith('/backups')||rest.startsWith('/versions'))return await recoveryRoute(req,env,actor,rest,fetcher)||reply({ok:false,error:'Route not found'},404);

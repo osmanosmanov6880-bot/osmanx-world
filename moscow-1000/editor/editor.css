@@ -7,3 +7,11 @@
 .r4-check-grid label{display:flex;align-items:center;gap:8px;border:1px solid #283b51;padding:10px;border-radius:8px;background:#0c1523}
 .r4-check-grid input{width:20px;height:20px;min-height:20px}
 @media(max-width:640px){.r4-item{padding:13px}.r4-item button{width:100%}}
+
+/* R5 touch-first uploader and real progress semantics */
+.r5-progress{display:grid;gap:10px;margin:16px 0;padding:14px;border:1px solid #354761;background:#101c30;border-radius:12px}
+.r5-progress progress{width:100%;height:16px;accent-color:#e0385c}
+.r5-progress .row{display:flex;gap:10px;flex-wrap:wrap}
+.r5-progress button{min-height:46px;min-width:130px}
+#media-upload-percent{color:#f2f5fb;font-variant-numeric:tabular-nums;font-weight:700}
+@media(max-width:640px){.r5-progress .row button{flex:1}}

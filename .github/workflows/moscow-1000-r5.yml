@@ -1,0 +1,45 @@
+name: OSMANX MOSCOW 1000 R5 release QA
+on:
+  pull_request:
+    paths:
+      - 'moscow-1000/**'
+      - 'services/moscow-1000-api/**'
+      - 'scripts/r5_*.mjs'
+      - 'tests/moscow-1000-r5.test.mjs'
+      - 'tests/smoke_r5_browser.py'
+      - '.github/workflows/moscow-1000-r5.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-r5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JS syntax and static staging gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in services/moscow-1000-api/{index,admin,calendar,visibility,tus,media}.mjs moscow-1000/editor/{editor,media-studio,tus-client}.js scripts/{r5_preflight,r5_d1_restore_drill,r5_staging_gate}.mjs; do node --check "$f"; done
+          node scripts/r5_preflight.mjs
+          node scripts/r5_d1_restore_drill.mjs
+          test -s services/moscow-1000-api/migrations/0004_r5_visibility.sql
+      - name: All R1 - R5 Node regression and integration tests
+        run: |
+          node --test tests/moscow-1000-r1.test.mjs tests/moscow-1000-r2.test.mjs tests/moscow-1000-api.test.mjs tests/moscow-1000-r3.test.mjs tests/moscow-1000-r4.test.mjs tests/moscow-1000-r5.test.mjs
+      - name: Guard against unintended publishing and secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e services/moscow-1000-api/.dev.vars
+          test ! -e services/moscow-1000-api/wrangler.toml
+          grep -Fq 'STREAM_UPLOAD_ENABLED = "false"' services/moscow-1000-api/wrangler.staging.toml.example
+          grep -Fq 'DIGEST_DELIVERY_ENABLED = "false"' services/moscow-1000-api/wrangler.staging.toml.example
+          grep -Fq 'REQUIRE_TWO_PERSON_REVIEW = "true"' services/moscow-1000-api/wrangler.staging.toml.example
+          test -s moscow-1000/editor/tus-client.js
+          test -s services/moscow-1000-api/README_R5.md
+          echo 'SOURCE-ONLY gate. No staging/production deployment performed.' >> "$GITHUB_STEP_SUMMARY"

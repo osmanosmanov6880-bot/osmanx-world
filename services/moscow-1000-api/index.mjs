@@ -3,6 +3,7 @@ import {adminRoute} from './admin.mjs';
 import {unpublished} from './editorial.mjs';
 import {verifiedOptOut,sendDigestBatch} from './digest.mjs';
 import {visibleRelease,releaseDueEpisodes} from './calendar.mjs';
+import {reconcileVisibility} from './visibility.mjs';
 /** OSMANX 1000 DOORS R2 intake API. Deploy as a dedicated Cloudflare Worker route only after configuring D1, Turnstile and verified email. */
 const ROOT='/moscow-1000/api';
 const siteOrigin=env=>{const value=String(env.SITE_ORIGIN||'https://osmanx.world').replace(/\/$/,'');try{const url=new URL(value);return url.protocol==='https:'&&(/^osmanx\.world$/.test(url.hostname)||/^[a-z0-9-]+\.osmanx\.world$/.test(url.hostname))&&url.origin===value?url.origin:null;}catch{return null;}};
@@ -62,7 +63,7 @@ export default {
     if(path===ROOT+'/leads')return await writeLead(req,env,fetch,conf);
     return await writeSubscriber(req,env,fetch,conf);
   }catch{return reply({ok:false,error:'Временная ошибка сервера. Попробуйте позже.'},500);}},
-  async scheduled(event,env){if(!env.DB)return;await releaseDueEpisodes(env,fetch,new Date());
+  async scheduled(event,env){if(!env.DB)return;await releaseDueEpisodes(env,fetch,new Date());try{await reconcileVisibility(env,fetch);}catch{}
     if(event?.cron==='0 3 * * *'){try{await env.DB.prepare("DELETE FROM lead_reviews WHERE lead_id IN (SELECT id FROM leads WHERE created_at < datetime('now','-180 days'))").run();}catch{}await env.DB.prepare("DELETE FROM leads WHERE created_at < datetime('now','-180 days')").run();await env.DB.prepare("DELETE FROM subscriptions WHERE status <> 'subscribed' AND created_at < datetime('now','-30 days')").run();}
     if(event?.cron==='*/5 * * * *'&&env.DIGEST_DELIVERY_ENABLED==='true'){try{await sendDigestBatch(env,fetch,{batchSize:10});}catch{}}
   }
