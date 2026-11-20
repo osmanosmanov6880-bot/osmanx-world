@@ -29,10 +29,14 @@ test('R8 browser disallows offline/manager CSV and renders honest operator state
   for(const id of ['r8-runtime-status','r8-ops','r8-refresh','r8-ops-result','csv'])
     assert(h.includes('id="'+id+'"'),id);
   assert.match(h,/<button id="csv"[^>]*disabled/);
-  for(const fragment of ['refreshR8','refreshR8Ops','r8Online','updateCsvPermission',
-    '/cinema/exports/approve',"confirm:'EXPORT_LOADED'",'approvedCount',
-    'window.confirm','rows.length>500','r8-ops'])
+  // R8 remains backward compatible, while R9 deliberately blocks the stale
+  // client-generated CSV path until a fresh server snapshot is available.
+  for(const fragment of ['refreshR8','refreshR8Ops','r8Online','r9Online',
+    'updateCsvPermission','window.confirm','selected.length>500','r8-ops',
+    '/cinema/exports/csv',"confirm:'GENERATE_CSV'"])
     assert(js.includes(fragment),fragment);
+  assert(read('services/industry-api/src/cinema-r8.mjs').includes('/exports/approve'),
+    'Legacy R8 API endpoint must remain compatible with older deployed clients');
   assert.doesNotMatch(js,/localStorage|sessionStorage|innerHTML\s*=\s*item\./i);
   assert(read('assets/stories/manager.css').includes('@media(max-width:650px)'));
 });
