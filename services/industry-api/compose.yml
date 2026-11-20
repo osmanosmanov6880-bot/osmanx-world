@@ -99,6 +99,24 @@ services:
     security_opt: ["no-new-privileges:true"]
     networks: [industry_private]
     init: true
+  cinema-retention:
+    <<: *api-image
+    profiles: ["cinema-retention"]
+    command: ["node","scripts/cinema-retention.mjs"]
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://industry_app:${INDUSTRY_APP_PASSWORD:?}@db:5432/industry_prod
+      CINEMA_TENANT_ID: ${CINEMA_TENANT_ID:-}
+      CINEMA_RETENTION_ENABLED: ${CINEMA_RETENTION_ENABLED:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [industry_private]
+    init: true
   worker:
     <<: *api-image
     profiles: [integrations]

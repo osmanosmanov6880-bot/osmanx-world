@@ -1,0 +1,14 @@
+# TEMPLATE: change WorkingDirectory to the verified Industry OS deployment location.
+# Install only AFTER legal, backup and staging approval.
+[Unit]
+Description=OSMANX CINEMA R4 expired lead and aggregate deletion
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/osmanx-world/services/industry-api
+EnvironmentFile=/etc/osmanx/industry.env
+ExecStart=/usr/bin/docker compose --profile cinema-retention run --rm cinema-retention
+TimeoutStartSec=600
+NoNewPrivileges=true

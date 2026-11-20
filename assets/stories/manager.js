@@ -52,15 +52,17 @@ function fail(message){
   byId('login-status').textContent=message;
 }
 async function reload(){
-  const [data,metricData]=await Promise.all([
+  const [data,metricData,followups]=await Promise.all([
     request('/cinema/leads?limit=100'),
-    request('/cinema/metrics')
+    request('/cinema/metrics'),
+    request('/cinema/followups?window='+encodeURIComponent(byId('r4-followup-window').value))
   ]);
   rows=data.items||[];
   currentRole=currentRole||'manager';
   const stage=byId('state').value;
   renderLeads(stage);
   renderMetrics(metricData);
+  renderFollowups(followups);
   byId('leads-status').textContent='Показаны первые '+rows.length+' записей, сортировка по дате. Операции защищены сессией и CSRF.';
 }
 function renderMetrics(data){
@@ -82,7 +84,37 @@ function renderMetrics(data){
     line(events,x.date_utc+' · '+x.event_type+(x.story_id==='all'?'':' · '+x.story_id),x.total);
   }
   if(!(data.events||[]).length)events.textContent='Анонимных счётчиков пока нет.';
+  const campaigns=byId('r4-campaign-metrics');campaigns.replaceChildren();
+  for(const row of data.campaigns||[]){
+    const card=element('div','r4-campaign-card');
+    card.append(element('strong','',row.campaign_code),
+      element('small','',row.leads+' запросов · '+row.won+' согласовано · оценка '+showAmount(row.won_estimate_minor)));
+    campaigns.append(card);
+  }
+  if(!(data.campaigns||[]).length)campaigns.textContent='Кампаний с заявками пока нет.';
+  const follow=data.followups||{};
+  box.append(metric('Просроченные действия',Number(follow.overdue||0)));
+  box.append(metric('Следующие сегодня (UTC)',Number(follow.due_today||0)));
 }
+function renderFollowups(data){
+  const box=byId('r4-followup-items');box.replaceChildren();
+  for(const item of data.items||[]){
+    const card=element('article','r4-followup');
+    card.append(element('strong','',item.contact_name+(item.organization?' · '+item.organization:'')));
+    card.append(element('span','',item.story_id+' · '+item.campaign_code+' · '+(item.next_action_kind||'')));
+    card.append(element('time','',new Date(item.next_action_at).toLocaleString('ru-RU')));
+    box.append(card);
+  }
+  if(!(data.items||[]).length)box.append(element('p','hint','Нет задач на выбранный период.'));
+}
+function asLocalInput(value){
+  if(!value)return '';
+  const date=new Date(value);if(!Number.isFinite(date.getTime()))return '';
+  const pad=x=>String(x).padStart(2,'0');
+  return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate())+'T'+pad(date.getHours())+':'+pad(date.getMinutes());
+}
+const FOLLOWUP_NAMES={call:'Позвонить',email:'Написать',proposal:'Подготовить предложение',review:'Проверить данные'};
+const LOSS_NAMES={price:'Цена',timing:'Не вовремя',competitor:'Конкурент',no_response:'Нет ответа',out_of_scope:'Не наш профиль',other:'Другая'};
 function csvCell(v){
   let s=value(v);
   // Prevent CSV injection in spreadsheet software, including whitespace-prefixed formulas.
@@ -90,9 +122,9 @@ function csvCell(v){
   return '"'+s.replace(/"/g,'""')+'"';
 }
 function exportCsv(){
-  const headers=['ID','Имя','Email','Компания','Сюжет','Наблюдение','Цель','Источник','Стадия','Оценка, коп.','Дата'];
+  const headers=['ID','Имя','Email','Компания','Сюжет','Наблюдение','Цель','Источник','Кампания','Стадия','Оценка, коп.','Следующее действие','Срок','Причина отказа','Дата'];
   const lines=rows.map(x=>[x.id,x.contact_name,x.contact_email,x.organization,x.story_id,x.observation,x.goal,
-    x.source,x.state,x.deal_value_minor,x.created_at].map(csvCell).join(';'));
+    x.source,x.campaign_code,x.state,x.deal_value_minor,x.next_action_kind,x.next_action_at,x.loss_reason_code,x.created_at].map(csvCell).join(';'));
   const body='\ufeff'+headers.map(csvCell).join(';')+'\r\n'+lines.join('\r\n')+'\r\n';
   const href=URL.createObjectURL(new Blob([body],{type:'text/csv;charset=utf-8'}));
   const link=document.createElement('a');link.href=href;link.download='osmanx-cinema-leads.csv';
@@ -109,7 +141,7 @@ function renderLeads(filter=''){
     const date=element('time','',new Date(item.created_at).toLocaleString('ru-RU'));
     head.append(who,date);card.append(head);
     const contact=element('p','contact');const link=element('a','',item.contact_email);link.href='mailto:'+encodeURIComponent(item.contact_email);contact.append('Email: ',link);card.append(contact);
-    card.append(element('p','',item.observation),element('p','',item.goal||'Цель не указана'));
+    card.append(element('p','',item.observation),element('p','',item.goal||'Цель не указана'),element('p','hint','Кампания: '+(item.campaign_code||'direct')));
     const tools=element('div','lead-tools');
     const selector=element('select');
     selector.setAttribute('aria-label','Следующий статус заявки '+item.contact_name);
@@ -122,6 +154,30 @@ function renderLeads(filter=''){
     const price=element('input');price.type='number';price.min='0';price.max='1000000000';price.step='1';price.inputMode='numeric';
     price.placeholder='Не указана';price.value=item.deal_value_minor===null?'':String(Number(item.deal_value_minor)/100);
     label.append(price);
+    const actionFields=element('div','r4-fields');
+    const actionKindLabel=element('label','','Следующее действие');
+    const actionKind=element('select');actionKind.setAttribute('aria-label','Следующее действие по заявке');
+    for(const [kind,title] of Object.entries({none:'Не назначено',...FOLLOWUP_NAMES})){
+      const option=element('option','',title);option.value=kind==='none'?'':kind;actionKind.append(option);
+    }
+    actionKind.value=item.next_action_kind||'';
+    actionKindLabel.append(actionKind);
+    const dueLabel=element('label','','Дата и время следующего действия');
+    const due=element('input');due.type='datetime-local';due.value=asLocalInput(item.next_action_at);
+    dueLabel.append(due);
+    const lossLabel=element('label','','Причина отказа (для статуса «Не состоялась»)');
+    const loss=element('select');loss.setAttribute('aria-label','Причина несостоявшейся сделки');
+    for(const [code,title] of Object.entries({none:'Не выбрана',...LOSS_NAMES})){
+      const option=element('option','',title);option.value=code==='none'?'':code;loss.append(option);
+    }
+    loss.value=item.loss_reason_code||'';
+    lossLabel.append(loss);
+    actionFields.append(actionKindLabel,dueLabel,lossLabel);card.append(actionFields);
+    function refreshActionState(){
+      const closed=['won','lost'].includes(selector.value);
+      due.disabled=closed;actionKind.disabled=closed;loss.disabled=selector.value!=='lost';
+    }
+    selector.addEventListener('change',refreshActionState);refreshActionState();
     const save=element('button','','Сохранить');save.type='button';
     const status=element('p','actions-status');status.setAttribute('aria-live','polite');
     const canDelete=currentRole==='owner';
@@ -130,14 +186,21 @@ function renderLeads(filter=''){
     tools.append(selector,label,save,history,erase);card.append(tools,status);
     save.addEventListener('click',async()=>{
       const state=selector.value,raw=price.value.trim();
-      if(state===item.state && raw===(item.deal_value_minor===null?'':String(Number(item.deal_value_minor)/100))){
+      const kind=['won','lost'].includes(state)?null:(actionKind.value||null);
+      const newDue=['won','lost'].includes(state)?null:(due.value?new Date(due.value).toISOString():null);
+      const lossReason=state==='lost'?loss.value||null:null;
+      const oldDue=item.next_action_at?new Date(item.next_action_at).toISOString():null;
+      if(state===item.state && raw===(item.deal_value_minor===null?'':String(Number(item.deal_value_minor)/100)) &&
+         kind===(item.next_action_kind||null) && newDue===oldDue && lossReason===(item.loss_reason_code||null)){
         status.textContent='Нет изменений.';return;
       }
+      if(state==='lost'&&!lossReason){status.textContent='Выберите причину отказа.';loss.focus();return;}
+      if((kind===null)!==(newDue===null)){status.textContent='Укажите одновременно действие и дату либо очистите оба поля.';return;}
       const amount=raw===''?null:Number(raw)*100;
       if(raw && (!/^\d{1,10}$/.test(raw)||!Number.isSafeInteger(amount)||amount>100000000000)){
         status.textContent='Введите целое число рублей или оставьте поле пустым.';return;
       }
-      const payload={state,dealValueMinor:amount,expectedVersion:item.version};
+      const payload={state,dealValueMinor:amount,expectedVersion:item.version,nextActionAt:newDue,nextActionKind:kind,lossReasonCode:lossReason};
       save.disabled=true;
       try{
         await request('/cinema/leads/'+item.id,{method:'PATCH',payload});
@@ -153,7 +216,7 @@ function renderLeads(filter=''){
         const summary=document.createElement('summary');summary.textContent='История изменений';
         const content=element('div','');
         for(const x of response.items||[]){
-          content.append(element('p','',(new Date(x.occurred_at).toLocaleString('ru-RU'))+' · '+x.event_type+' · '+(x.new_state||'')));
+          content.append(element('p','',(new Date(x.occurred_at).toLocaleString('ru-RU'))+' · '+x.event_type+' · '+(x.new_state||'')+(x.next_action_kind?' · '+x.next_action_kind:'')+(x.loss_reason_code?' · '+x.loss_reason_code:'')));
         }
         detail.replaceChildren(summary,content);detail.open=true;if(!detail.parentNode)card.append(detail);
       }catch(err){status.textContent=err.message;}
@@ -171,6 +234,17 @@ function renderLeads(filter=''){
   if(!leads.length)container.append(element('p','hint','Заявок с выбранным статусом нет.'));
 }
 byId('state').addEventListener('change',e=>renderLeads(e.target.value));
+byId('r4-followup-window').addEventListener('change',()=>reload().catch(e=>byId('leads-status').textContent=e.message));
+byId('r4-link-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const name=byId('r4-campaign-name').value,story=byId('r4-campaign-story').value;
+  if(!/^[a-z0-9][a-z0-9_-]{0,39}$/.test(name)){byId('r4-link-status').textContent='Введите безопасный код кампании.';return;}
+  const url=new URL('https://osmanx.world/assets/stories/cinema.html');
+  url.searchParams.set('story',story);url.searchParams.set('utm_campaign',name);url.hash='episodes';
+  const input=byId('r4-created-link');input.value=url.href;input.hidden=false;input.focus();input.select();
+  try{await navigator.clipboard.writeText(url.href);byId('r4-link-status').textContent='Ссылка скопирована.';}
+  catch{byId('r4-link-status').textContent='Ссылка выделена — скопируйте её вручную.';}
+});
 byId('csv').addEventListener('click',exportCsv);
 byId('reload').addEventListener('click',()=>reload().catch(err=>byId('leads-status').textContent=err.message));
 byId('login-form').addEventListener('submit',async e=>{

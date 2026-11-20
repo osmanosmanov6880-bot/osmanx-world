@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily OSMANX CINEMA consented-data retention
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+Persistent=true
+RandomizedDelaySec=25m
+Unit=osmanx-cinema-retention.service
+
+[Install]
+WantedBy=timers.target
