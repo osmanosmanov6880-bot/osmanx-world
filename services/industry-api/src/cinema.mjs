@@ -5,6 +5,7 @@ import { withTenant } from './database.mjs';
 import {campaignCode,planFollowup,followupWindow} from './cinema-r4.mjs';
 import {sweepCinemaRows} from './cinema-retention.mjs';
 import {assigneeValue,registerCinemaR5Routes} from './cinema-r5.mjs';
+import {registerCinemaR6Routes} from './cinema-r6.mjs';
 
 const STATES=['new','contacted','qualified','proposal','won','lost'];
 const PATHS={
@@ -259,6 +260,10 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     const id=requireUUID(req.params.id);
     const row=await db.query('DELETE FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2 RETURNING id',[s.tenant_id,id]);
     if(!row.rowCount)throw error(404,'Заявка не найдена');
+    // No lead ID or email is retained in deletion receipts.
+    await db.query(
+      "INSERT INTO industry.cinema_access_events(tenant_id,actor_id,action,result_count) VALUES($1,$2,'lead_deleted',1)",
+      [s.tenant_id,s.account_id]);
     return {erased:true,id};
   }));
   app.post(base+'/retention',req=>protectOwner(req,['owner'],async(db,s)=>{
@@ -267,4 +272,5 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     return sweepCinemaRows(db,s.tenant_id);
   }));
   registerCinemaR5Routes(app,{base,protectOwner});
+  registerCinemaR6Routes(app,{base,protectOwner});
 }
