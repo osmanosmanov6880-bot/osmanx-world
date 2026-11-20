@@ -13,7 +13,7 @@ const showAmount=v=>{
   if(v===null||v===undefined)return '—';
   return (Number(v)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';
 };
-let rows=[],currentRole=null;
+let rows=[],currentRole=null,staff=[],r5Online=false;
 const csrf=()=>{
   for(const name of ['__Host-osmanx_industry_csrf','osmanx_industry_csrf']){
     const cookie=document.cookie.split('; ').find(row=>row.startsWith(name+'='));
@@ -46,6 +46,7 @@ function present(bool){
   byId('login').hidden=bool;
   byId('workspace').hidden=!bool;
   byId('signout').hidden=!bool;
+  byId('r5-subject').hidden=!(bool&&currentRole==='owner'&&r5Online);
 }
 function fail(message){
   present(false);
@@ -57,8 +58,18 @@ async function reload(){
     request('/cinema/metrics'),
     request('/cinema/followups?window='+encodeURIComponent(byId('r4-followup-window').value))
   ]);
+  // Static R5 may precede server activation: optional calls never break the R4 operator desk.
+  const optional=await Promise.allSettled([
+    request('/cinema/assignees'),
+    request('/cinema/performance?days='+byId('r5-report-days').value)
+  ]);
+  r5Online=optional.every(x=>x.status==='fulfilled');
+  staff=r5Online?(optional[0].value.items||[]):[];
+  if(r5Online)renderPerformance(optional[1].value);
+  else byId('r5-report').textContent='Серверный модуль R5 ещё не подключён. Возможности R4 остаются доступными.';
   rows=data.items||[];
   currentRole=currentRole||'manager';
+  byId('r5-subject').hidden=!(currentRole==='owner'&&r5Online);
   const stage=byId('state').value;
   renderLeads(stage);
   renderMetrics(metricData);
@@ -95,6 +106,25 @@ function renderMetrics(data){
   const follow=data.followups||{};
   box.append(metric('Просроченные действия',Number(follow.overdue||0)));
   box.append(metric('Следующие сегодня (UTC)',Number(follow.due_today||0)));
+}
+function renderPerformance(report){
+  const box=byId('r5-report');box.replaceChildren();
+  const list=element('div','r5-report-list');
+  const totals=Object.fromEntries((report.actions||[]).map(row=>[row.campaign_code+':'+row.event_type,Number(row.actions||0)]));
+  for(const row of report.campaigns||[]){
+    const card=element('article','r5-performance-card');
+    card.append(element('strong','',row.campaign_code));
+    card.append(element('div','r5-numbers',row.leads+' обращений'));
+    const agreed=Number(row.agreed||0),leads=Number(row.leads||0);
+    card.append(element('small','',agreed+' согласованных вручную · '+(leads?Math.round(100*agreed/leads):0)+'% от заявок в этой кампании'));
+    card.append(element('small','',row.with_attempt+' с попыткой контакта · '+row.connected+' отмечены как состоявшийся контакт'));
+    card.append(element('small','',String(row.attempts||0)+' попыток · среднее до первого отмеченного контакта '+(row.avg_hours_to_connection===null?'не определено':row.avg_hours_to_connection+' ч')));
+    card.append(element('small','',String(totals[row.campaign_code+':film_started']||0)+' запусков фильма · '+String(totals[row.campaign_code+':brief_created']||0)+' действий с брифом (не уникальные люди)'));
+    list.append(card);
+  }
+  box.append(list);
+  if(!(report.campaigns||[]).length)box.append(element('p','hint','За выбранный период обращений ещё нет.'));
+  box.append(element('p','hint','Данные считаются раздельно: событие просмотра нельзя интерпретировать как уникального посетителя, а статус сделки — как платёж.'));
 }
 function renderFollowups(data){
   const box=byId('r4-followup-items');box.replaceChildren();
@@ -173,6 +203,17 @@ function renderLeads(filter=''){
     loss.value=item.loss_reason_code||'';
     lossLabel.append(loss);
     actionFields.append(actionKindLabel,dueLabel,lossLabel);card.append(actionFields);
+    const staffRow=element('div','r5-staff');
+    const assignedLabel=element('label','','Ответственный менеджер');
+    const assignedSelect=element('select');assignedSelect.setAttribute('aria-label','Ответственный менеджер');
+    const nobody=element('option','','Не назначен');nobody.value='';assignedSelect.append(nobody);
+    for(const person of staff){
+      const option=element('option','',person.email+' ('+person.role+')');
+      option.value=person.id;assignedSelect.append(option);
+    }
+    assignedSelect.value=item.assigned_to||'';
+    assignedLabel.append(assignedSelect);staffRow.append(assignedLabel);
+    if(r5Online)card.append(staffRow);
     function refreshActionState(){
       const closed=['won','lost'].includes(selector.value);
       due.disabled=closed;actionKind.disabled=closed;loss.disabled=selector.value!=='lost';
@@ -184,6 +225,38 @@ function renderLeads(filter=''){
     const erase=element('button','danger','Удалить данные');erase.type='button';erase.hidden=!canDelete;
     const history=element('button','','История');history.type='button';
     tools.append(selector,label,save,history,erase);card.append(tools,status);
+    if(r5Online&&!['won','lost'].includes(item.state)){
+      const contactForm=element('form','r5-contact');
+      contactForm.append(element('p','r5-contact-head','Зафиксировать реальную попытку связи'));
+      const fields=element('div','r5-contact-fields');
+      const channelLabel=element('label','','Канал связи');
+      const channel=element('select');channel.setAttribute('aria-label','Канал попытки контакта');
+      for(const [v,title] of Object.entries({email:'Email',phone:'Телефон',whatsapp:'WhatsApp',in_person:'Личная встреча'})){
+        const option=element('option','',title);option.value=v;channel.append(option);
+      }
+      channelLabel.append(channel);
+      const outcomeLabel=element('label','','Результат — отмечает менеджер');
+      const outcome=element('select');outcome.setAttribute('aria-label','Результат контакта');
+      for(const [v,title] of Object.entries({attempted:'Попытались связаться',connected:'Контакт состоялся',no_reply:'Не ответили',invalid_contact:'Неверный контакт'})){
+        const option=element('option','',title);option.value=v;outcome.append(option);
+      }
+      outcomeLabel.append(outcome);fields.append(channelLabel,outcomeLabel);contactForm.append(fields);
+      const checkboxLabel=element('label','r5-check');
+      const completed=element('input');completed.type='checkbox';completed.checked=Boolean(item.next_action_at);
+      checkboxLabel.append(completed,element('span','','Отметить запланированное действие выполненным и убрать срок'));contactForm.append(checkboxLabel);
+      const saveContact=element('button','','Записать действие');saveContact.type='submit';
+      contactForm.append(saveContact,element('p','hint','Факт контакта записывается вручную; звонки и сообщения автоматически не отправляются.'));
+      contactForm.addEventListener('submit',async event=>{
+        event.preventDefault();saveContact.disabled=true;
+        try{
+          await request('/cinema/leads/'+item.id+'/contacts',{method:'POST',payload:{
+            expectedVersion:item.version,channel:channel.value,outcome:outcome.value,completeFollowup:completed.checked
+          }});
+          await reload();
+        }catch(err){status.textContent=err.message;saveContact.disabled=false;}
+      });
+      card.append(contactForm);
+    }
     save.addEventListener('click',async()=>{
       const state=selector.value,raw=price.value.trim();
       const kind=['won','lost'].includes(state)?null:(actionKind.value||null);
@@ -191,7 +264,8 @@ function renderLeads(filter=''){
       const lossReason=state==='lost'?loss.value||null:null;
       const oldDue=item.next_action_at?new Date(item.next_action_at).toISOString():null;
       if(state===item.state && raw===(item.deal_value_minor===null?'':String(Number(item.deal_value_minor)/100)) &&
-         kind===(item.next_action_kind||null) && newDue===oldDue && lossReason===(item.loss_reason_code||null)){
+         kind===(item.next_action_kind||null) && newDue===oldDue && lossReason===(item.loss_reason_code||null) &&
+         (!r5Online||(assignedSelect.value||null)===(item.assigned_to||null))){
         status.textContent='Нет изменений.';return;
       }
       if(state==='lost'&&!lossReason){status.textContent='Выберите причину отказа.';loss.focus();return;}
@@ -201,6 +275,7 @@ function renderLeads(filter=''){
         status.textContent='Введите целое число рублей или оставьте поле пустым.';return;
       }
       const payload={state,dealValueMinor:amount,expectedVersion:item.version,nextActionAt:newDue,nextActionKind:kind,lossReasonCode:lossReason};
+      if(r5Online)payload.assignedTo=assignedSelect.value||null;
       save.disabled=true;
       try{
         await request('/cinema/leads/'+item.id,{method:'PATCH',payload});
@@ -216,7 +291,7 @@ function renderLeads(filter=''){
         const summary=document.createElement('summary');summary.textContent='История изменений';
         const content=element('div','');
         for(const x of response.items||[]){
-          content.append(element('p','',(new Date(x.occurred_at).toLocaleString('ru-RU'))+' · '+x.event_type+' · '+(x.new_state||'')+(x.next_action_kind?' · '+x.next_action_kind:'')+(x.loss_reason_code?' · '+x.loss_reason_code:'')));
+          content.append(element('p','',(new Date(x.occurred_at).toLocaleString('ru-RU'))+' · '+x.event_type+' · '+(x.new_state||'')+(x.next_action_kind?' · '+x.next_action_kind:'')+(x.loss_reason_code?' · '+x.loss_reason_code:'')+(x.contact_channel?' · '+x.contact_channel+'/'+x.contact_outcome:'')+(x.assigned_to?' · ответственный '+x.assigned_to:'')));
         }
         detail.replaceChildren(summary,content);detail.open=true;if(!detail.parentNode)card.append(detail);
       }catch(err){status.textContent=err.message;}
@@ -233,8 +308,67 @@ function renderLeads(filter=''){
   }
   if(!leads.length)container.append(element('p','hint','Заявок с выбранным статусом нет.'));
 }
+function subjectVerified(){return currentRole==='owner'&&r5Online&&byId('r5-identity-verified').checked;}
+async function downloadSubjectRecord(id){
+  if(!subjectVerified())throw Error('Сначала подтвердите проверку личности заявителя.');
+  const data=await request('/cinema/leads/'+encodeURIComponent(id)+'/export');
+  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}));
+  try{
+    const a=element('a');a.href=url;a.download='osmanx-subject-'+id+'.json';
+    document.body.append(a);a.click();a.remove();
+  }finally{setTimeout(()=>URL.revokeObjectURL(url),1500);}
+  if(data.truncated)byId('r5-subject-status').textContent='Экспорт содержит не всю историю. Обратитесь к администратору.';
+}
+function subjectRows(data){
+  const box=byId('r5-subject-results');box.replaceChildren();
+  const buttons=[];
+  for(const item of data.items||[]){
+    const row=element('article','r5-subject-item'),meta=element('div');
+    meta.append(element('strong','',new Date(item.created_at).toLocaleString('ru-RU')),
+      element('div','hint',item.state+' · '+item.id));
+    const actions=element('div','r5-subject-actions');
+    const exportButton=element('button','','Экспорт JSON');exportButton.type='button';
+    const eraseButton=element('button','r5-danger','Удалить запись');eraseButton.type='button';
+    exportButton.disabled=eraseButton.disabled=!subjectVerified();
+    buttons.push(exportButton,eraseButton);
+    exportButton.addEventListener('click',async()=>{
+      exportButton.disabled=true;
+      try{
+        await downloadSubjectRecord(item.id);
+      }catch(err){byId('r5-subject-status').textContent=err.message;}
+      finally{exportButton.disabled=!subjectVerified();}
+    });
+    eraseButton.addEventListener('click',async()=>{
+      if(!subjectVerified())return;
+      if(!window.confirm('Подтверждаете проверку личности и безвозвратное удаление обращения '+item.id+'?'))return;
+      eraseButton.disabled=true;
+      try{
+        await request('/cinema/leads/'+item.id,{method:'DELETE'});
+        byId('r5-subject-status').textContent='Запись и её журнал удалены.';
+        row.remove();await reload();
+      }catch(err){byId('r5-subject-status').textContent=err.message;eraseButton.disabled=false;}
+    });
+    actions.append(exportButton,eraseButton);row.append(meta,actions);box.append(row);
+  }
+  if(!(data.items||[]).length)box.textContent='Записей с таким точным email не найдено.';
+  const refresh=()=>{for(const button of buttons)button.disabled=!subjectVerified();};
+  byId('r5-identity-verified').onchange=refresh;
+}
+byId('r5-subject-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  if(currentRole!=='owner'||!r5Online)return;
+  byId('r5-identity-verified').checked=false;
+  byId('r5-subject-results').replaceChildren();
+  byId('r5-subject-status').textContent='Ищем обращения…';
+  try{
+    const found=await request('/cinema/privacy/search?email='+encodeURIComponent(byId('r5-subject-email').value.trim()));
+    subjectRows(found);
+    byId('r5-subject-status').textContent='Перед экспортом или удалением подтвердите проверку личности.';
+  }catch(err){byId('r5-subject-status').textContent=err.message;}
+});
 byId('state').addEventListener('change',e=>renderLeads(e.target.value));
 byId('r4-followup-window').addEventListener('change',()=>reload().catch(e=>byId('leads-status').textContent=e.message));
+byId('r5-report-days').addEventListener('change',()=>reload().catch(e=>byId('r5-report').textContent=e.message));
 byId('r4-link-form').addEventListener('submit',async event=>{
   event.preventDefault();
   const name=byId('r4-campaign-name').value,story=byId('r4-campaign-story').value;
@@ -262,7 +396,7 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;rows=[];byId('metrics').replaceChildren();byId('leads').replaceChildren();
+  currentRole=null;rows=[];staff=[];r5Online=false;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){

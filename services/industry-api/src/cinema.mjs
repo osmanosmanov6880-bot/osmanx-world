@@ -4,6 +4,7 @@ import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { withTenant } from './database.mjs';
 import {campaignCode,planFollowup,followupWindow} from './cinema-r4.mjs';
 import {sweepCinemaRows} from './cinema-retention.mjs';
+import {assigneeValue,registerCinemaR5Routes} from './cinema-r5.mjs';
 
 const STATES=['new','contacted','qualified','proposal','won','lost'];
 const PATHS={
@@ -173,7 +174,7 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     if(state!==undefined&&!STATES.includes(state))throw error(400,'Некорректный статус');
     const campaign=query.campaign===undefined?null:campaignCode(query.campaign);
     const records=await db.query(
-      "SELECT id,contact_name,contact_email,organization,story_id,observation,goal,source,campaign_code,state,deal_value_minor::text,version,next_action_at,next_action_kind,loss_reason_code,created_at,updated_at FROM industry.cinema_leads WHERE tenant_id=$1 AND ($2::text IS NULL OR state=$2) AND ($5::text IS NULL OR campaign_code=$5) ORDER BY created_at DESC,id DESC LIMIT $3 OFFSET $4",
+      "SELECT id,contact_name,contact_email,organization,story_id,observation,goal,source,campaign_code,state,deal_value_minor::text,version,next_action_at,next_action_kind,loss_reason_code,assigned_to,contact_count,first_contact_at,last_contact_at,created_at,updated_at FROM industry.cinema_leads WHERE tenant_id=$1 AND ($2::text IS NULL OR state=$2) AND ($5::text IS NULL OR campaign_code=$5) ORDER BY created_at DESC,id DESC LIMIT $3 OFFSET $4",
       [session.tenant_id,state??null,limit,offset,campaign]
     );
     return {items:records.rows,limit,offset};
@@ -203,7 +204,7 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
   }));
   app.patch(base+'/leads/:id',req=>protectOwner(req,['owner','manager'],async(db,s)=>{
     const id=requireUUID(req.params.id);
-    const b=only(req.body,['expectedVersion','state','dealValueMinor','nextActionAt','nextActionKind','lossReasonCode']);
+    const b=only(req.body,['expectedVersion','state','dealValueMinor','nextActionAt','nextActionKind','lossReasonCode','assignedTo']);
     const version=b.expectedVersion;
     if(!Number.isSafeInteger(version)||version<1)throw error(400,'Некорректная версия');
     if(!Object.keys(b).some(k=>k!=='expectedVersion'))throw error(400,'Нет изменений');
@@ -211,7 +212,7 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     if(b.dealValueMinor!==undefined && b.dealValueMinor!==null &&
        (!Number.isSafeInteger(b.dealValueMinor)||b.dealValueMinor<0||b.dealValueMinor>100000000000))
        throw error(400,'Некорректная стоимость сделки');
-    const old=(await db.query('SELECT state,version,deal_value_minor,next_action_at,next_action_kind,loss_reason_code FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2 FOR UPDATE',[s.tenant_id,id])).rows[0];
+    const old=(await db.query('SELECT state,version,deal_value_minor,next_action_at,next_action_kind,loss_reason_code,assigned_to FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2 FOR UPDATE',[s.tenant_id,id])).rows[0];
     if(!old)throw error(404,'Заявка не найдена');
     if(old.version!==version)throw error(409,'Заявка изменена другим пользователем');
     const plan=planFollowup(old,b);
@@ -225,15 +226,25 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     const changedValue=String(amount)!==String(old.deal_value_minor);
     const changedFollowup=plan.nextActionAt!==oldDue||plan.nextActionKind!==old.next_action_kind;
     const changedReason=plan.lossReasonCode!==old.loss_reason_code;
-    if(!changedState&&!changedValue&&!changedFollowup&&!changedReason)throw error(409,'Изменения отсутствуют');
+    const assigned=b.assignedTo===undefined?old.assigned_to:assigneeValue(b.assignedTo);
+    if(assigned!==null){
+      const person=await db.query(
+        "SELECT 1 FROM industry.memberships m JOIN industry.accounts a ON a.id=m.account_id WHERE m.tenant_id=$1 AND m.account_id=$2 AND m.role IN ('owner','manager') AND NOT a.disabled",
+        [s.tenant_id,assigned]
+      );
+      if(!person.rowCount)throw error(400,'Назначить можно только действующего менеджера своей компании');
+    }
+    const changedAssignment=String(assigned)!==String(old.assigned_to);
+    if(!changedState&&!changedValue&&!changedFollowup&&!changedReason&&!changedAssignment)
+      throw error(409,'Изменения отсутствуют');
     const row=await db.query(
-      'UPDATE industry.cinema_leads SET state=$3,deal_value_minor=$4,next_action_at=$5,next_action_kind=$6,loss_reason_code=$7,version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING id,state,deal_value_minor::text,version,next_action_at,next_action_kind,loss_reason_code,updated_at',
-      [s.tenant_id,id,plan.state,amount,plan.nextActionAt,plan.nextActionKind,plan.lossReasonCode]
+      'UPDATE industry.cinema_leads SET state=$3,deal_value_minor=$4,next_action_at=$5,next_action_kind=$6,loss_reason_code=$7,assigned_to=$8,version=version+1,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING id,state,deal_value_minor::text,version,next_action_at,next_action_kind,loss_reason_code,assigned_to,updated_at',
+      [s.tenant_id,id,plan.state,amount,plan.nextActionAt,plan.nextActionKind,plan.lossReasonCode,assigned]
     );
-    const eventType=changedState?'state_changed':changedValue?'value_changed':changedFollowup?'followup_changed':'outcome_coded';
+    const eventType=changedState?'state_changed':changedValue?'value_changed':changedFollowup?'followup_changed':changedReason?'outcome_coded':'assigned_changed';
     await db.query(
-      'INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version,next_action_at,next_action_kind,loss_reason_code) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
-      [s.tenant_id,id,s.account_id,eventType,old.state,plan.state,row.rows[0].version,plan.nextActionAt,plan.nextActionKind,plan.lossReasonCode]
+      'INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version,next_action_at,next_action_kind,loss_reason_code,assigned_to) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
+      [s.tenant_id,id,s.account_id,eventType,old.state,plan.state,row.rows[0].version,plan.nextActionAt,plan.nextActionKind,plan.lossReasonCode,assigned]
     );
     return {item:row.rows[0]};
   }));
@@ -241,7 +252,7 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     const id=requireUUID(req.params.id);
     const exists=await db.query('SELECT 1 FROM industry.cinema_leads WHERE tenant_id=$1 AND id=$2',[s.tenant_id,id]);
     if(!exists.rowCount)throw error(404,'Заявка не найдена');
-    const rows=await db.query('SELECT event_type,old_state,new_state,version,next_action_at,next_action_kind,loss_reason_code,occurred_at FROM industry.cinema_lead_events WHERE tenant_id=$1 AND lead_id=$2 ORDER BY version ASC LIMIT 100',[s.tenant_id,id]);
+    const rows=await db.query('SELECT event_type,old_state,new_state,version,next_action_at,next_action_kind,loss_reason_code,assigned_to,contact_channel,contact_outcome,occurred_at FROM industry.cinema_lead_events WHERE tenant_id=$1 AND lead_id=$2 ORDER BY version ASC LIMIT 100',[s.tenant_id,id]);
     return {items:rows.rows};
   }));
   app.delete(base+'/leads/:id',req=>protectOwner(req,['owner'],async(db,s)=>{
@@ -255,4 +266,5 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     if(b.confirm!=='ERASE_EXPIRED')throw error(400,'Требуется подтверждение удаления');
     return sweepCinemaRows(db,s.tenant_id);
   }));
+  registerCinemaR5Routes(app,{base,protectOwner});
 }

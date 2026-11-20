@@ -51,3 +51,31 @@ footer{display:flex;justify-content:space-between;gap:20px;border-top:1px solid 
 .r4-campaign-card strong{display:block;color:#e9d1a9;font-weight:590}
 .r4-campaign-card small{display:block;color:#aebecb;margin-top:2px}
 @media(max-width:650px){.r4-followup-board{padding:18px}.r4-followup-board .panel-head{flex-direction:column;align-items:start}.r4-followup-board .panel-head label{width:100%}.r4-fields{grid-template-columns:1fr}}
+
+
+/* R5: lead ownership, auditable contacts, conversion evidence, private subject rights */
+.r5-performance,.r5-subject{margin:0 0 20px}
+.r5-performance .panel-head{margin-bottom:12px}
+.r5-performance .panel-head label{min-width:170px}
+.r5-report-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin:19px 0}
+.r5-performance-card{padding:16px;background:#0b1722;border:1px solid #455362;min-width:0}
+.r5-performance-card strong{color:#e7ca97;display:block;overflow-wrap:anywhere}
+.r5-performance-card .r5-numbers{font-size:21px;letter-spacing:-.03em;margin:8px 0}
+.r5-performance-card small{color:#b9c9d2;display:block;line-height:1.6}
+.r5-activity{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:#abc1ca}
+.r5-staff label,.r5-contact label{font-size:12px}
+.r5-staff{margin:12px 0}.r5-staff select{max-width:400px}
+.r5-contact{border-top:1px solid #3a4b59;margin:18px 0 4px;padding:16px 0 0}
+.r5-contact .r5-contact-head{font-size:13px;font-weight:570;color:#e3c99b;margin:0 0 10px}
+.r5-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.r5-contact label.r5-check{display:flex;align-items:flex-start;flex-direction:row;gap:10px;margin:10px 0}
+.r5-contact .r5-check input{width:18px;height:18px;flex-shrink:0}
+.r5-contact button,.r5-subject button{background:#263340;border:1px solid #aa926e;color:#e8d0a9;padding:12px 16px}
+.r5-contact button{margin-top:10px}
+.r5-subject-form{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.r5-subject-form label{min-width:260px;flex:1}
+#r5-subject-status{font-size:12px;color:#c4d1d8}
+.r5-subject-item{margin-top:12px;padding:12px;border:1px solid #485866;background:#0c1823;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.r5-subject-item .r5-subject-actions{display:flex;flex-wrap:wrap;gap:10px}
+.r5-subject-item .r5-danger{color:#ffbaba;border-color:#b77777}
+@media(max-width:650px){.r5-contact-fields{grid-template-columns:1fr}.r5-performance .panel-head{flex-direction:column;align-items:start}.r5-performance .panel-head label{width:100%}}
