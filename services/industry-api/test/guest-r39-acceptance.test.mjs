@@ -94,6 +94,8 @@ test('R39 DB snapshot rejects public relations, other sessions, nulls, wrong ser
   // inside PostgreSQL. This is accepted only with a local client URL.
   assert.equal(checkR39TargetSnapshot({...snapshot(),server_ip:'172.18.0.2'},{
     expectedDb:'industry_dr_r36_trial123'}).valid,true);
+  assert.equal(checkR39TargetSnapshot({...snapshot(),server_ip:'::ffff:172.18.0.2'},{
+    expectedDb:'industry_dr_r36_trial123'}).valid,true);
   for(const x of [
     {...snapshot(),non_system_relations:1},
     {...snapshot(),non_system_relations:null},
