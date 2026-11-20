@@ -61,6 +61,9 @@ export default {
     if(path===ROOT+'/leads')return await writeLead(req,env,fetch,conf);
     return await writeSubscriber(req,env,fetch,conf);
   }catch{return reply({ok:false,error:'Временная ошибка сервера. Попробуйте позже.'},500);}},
-  async scheduled(_event,env){if(!env.DB)return;try{await env.DB.prepare("DELETE FROM lead_reviews WHERE lead_id IN (SELECT id FROM leads WHERE created_at < datetime('now','-180 days'))").run();}catch{}await env.DB.prepare("DELETE FROM leads WHERE created_at < datetime('now','-180 days')").run();await env.DB.prepare("DELETE FROM subscriptions WHERE status <> 'subscribed' AND created_at < datetime('now','-30 days')").run();if(env.DIGEST_DELIVERY_ENABLED==='true'){try{await sendDigestBatch(env,fetch,{batchSize:10});}catch{}}}
+  async scheduled(event,env){if(!env.DB)return;
+    if(event?.cron==='0 3 * * *'){try{await env.DB.prepare("DELETE FROM lead_reviews WHERE lead_id IN (SELECT id FROM leads WHERE created_at < datetime('now','-180 days'))").run();}catch{}await env.DB.prepare("DELETE FROM leads WHERE created_at < datetime('now','-180 days')").run();await env.DB.prepare("DELETE FROM subscriptions WHERE status <> 'subscribed' AND created_at < datetime('now','-30 days')").run();}
+    if(event?.cron==='*/5 * * * *'&&env.DIGEST_DELIVERY_ENABLED==='true'){try{await sendDigestBatch(env,fetch,{batchSize:10});}catch{}}
+  }
 };
 export const helpers={config,validEmail,verifyChallenge,hash,token,parse};
