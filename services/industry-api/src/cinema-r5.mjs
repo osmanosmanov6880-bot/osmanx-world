@@ -2,7 +2,7 @@
 // and sales performance without cookies or unique-visitor tracking.
 const fail=(status,message)=>Object.assign(new Error(message),{statusCode:status});
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const EMAIL=/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+const EMAIL=/^[^\s@<>/?#]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i;
 const CHANNELS=new Set(['email','phone','whatsapp','in_person']);
 const OUTCOMES=new Set(['attempted','connected','no_reply','invalid_contact']);
 const only=(value,keys)=>{
