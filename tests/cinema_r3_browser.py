@@ -29,7 +29,7 @@ def main():
                     off.on("pageerror",lambda e:errors.append(str(e)))
                     off.goto(BASE,wait_until="domcontentloaded")
                     off.locator("#r3-intake").wait_for(timeout=15000)
-                    off.locator("#r3-availability").get_by_text("Онлайн-приём временно недоступен",exact=False).wait_for(timeout=10000)
+                    off.wait_for_function("document.querySelector('#r3-availability')?.textContent.includes('Онлайн-приём временно недоступен')",timeout=10000)
                     assert off.locator("#r3-lead-form").is_hidden()
                     assert off.locator("#r3-offline").is_visible()
                     assert off.locator("#r2-email").get_attribute("href").startswith("mailto:")
@@ -71,7 +71,7 @@ def main():
                     page.locator("#r3-email").fill("maria@example.test")
                     page.locator("#r3-consent").check()
                     page.locator("#r3-submit").click()
-                    page.locator("#r3-result").get_by_text("Заявка принята сервером",exact=False).wait_for(timeout=10000)
+                    page.wait_for_function("document.querySelector('#r3-result')?.textContent.includes('Заявка принята сервером')",timeout=10000)
                     assert len(posts)==1
                     assert posts[0]["payload"]["consent"] is True
                     assert posts[0]["payload"]["storyId"]=="01-restaurant"
