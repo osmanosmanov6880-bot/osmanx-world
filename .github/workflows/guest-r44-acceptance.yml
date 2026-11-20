@@ -1,0 +1,82 @@
+name: OSMANX Guest R44 complete 30-PR review and strict advisory gate
+on:
+  pull_request:
+    branches: [feat/guest-r43-locked-supply-chain-review-smoke-20261120]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r44-acceptance.yml"
+  push:
+    branches: [feat/guest-r44-complete-review-offline-supply-proof-20261120]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  r44-offline-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax and negative source review regressions
+        working-directory: services/industry-api
+        run: |
+          node --check src/guest-r44-full-chain.mjs
+          node --check src/guest-r44-npm-audit.mjs
+          node --check scripts/r44-review-full-chain.mjs
+          node --test test/guest-r44-acceptance.test.mjs
+      - name: Verify committed R43 lock and repeatable npm ci
+        working-directory: services/industry-api
+        run: |
+          node scripts/r43-supply-verify.mjs --lock
+          npm ci --ignore-scripts --no-audit --no-fund
+          rm -rf node_modules
+          npm ci --ignore-scripts --offline --no-audit --no-fund
+      - name: Read current npm audit and reconcile severity counts
+        working-directory: services/industry-api
+        run: |
+          npm audit --json --omit=dev > "$RUNNER_TEMP/r44-audit.json" || true
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            import {verifyR44NpmAudit} from "./src/guest-r44-npm-audit.mjs";
+            const report=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            const result=verifyR44NpmAudit(report);
+            console.log(JSON.stringify({valid:result.valid,blockers:result.blockers,
+              counters:result.advisoryCounters,productionAuthorized:false}));
+            if(!result.valid)process.exit(2);
+          ' "$RUNNER_TEMP/r44-audit.json"
+  r44-live-human-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Fetch 30 pinned PRs using GET-only access
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: services/industry-api
+        run: |
+          node scripts/r44-review-full-chain.mjs --json > "$RUNNER_TEMP/r44-chain.json"
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            if(r.report.expectedPrs!==30||r.report.verifiedSourcePrs!==30||
+              r.githubMutationCalls!==0||r.productionAuthorized!==false)
+              process.exit(2);
+            console.log(JSON.stringify({checked:r.report.expectedPrs,
+              matching:r.report.verifiedSourcePrs,firstManualBlocker:r.firstBlockingPr,
+              mainProtectionReadable:r.report.mainProtectionReadable,
+              blockers:r.report.blockers,productionAuthorized:false}));
+          ' "$RUNNER_TEMP/r44-chain.json"
+      - name: Save review packet without customer data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guest-r44-complete-review
+          path: ${{ runner.temp }}/r44-chain.json
+          if-no-files-found: warn
+          retention-days: 7
