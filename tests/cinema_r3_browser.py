@@ -28,7 +28,11 @@ def main():
                     errors=[]
                     off.on("pageerror",lambda e:errors.append(str(e)))
                     off.goto(BASE,wait_until="domcontentloaded")
-                    off.locator("#r3-intake").wait_for(timeout=15000)
+                    off.locator("#r3-intake").wait_for(state="attached",timeout=15000)
+                    off.select_option("#r2-story","01-restaurant")
+                    off.locator("#r2-observation").fill("Клиенты уходят без покупки после ожидания")
+                    off.locator('#r2-form button[type="submit"]').click()
+                    assert off.locator("#r2-result").is_visible()
                     off.wait_for_function("document.querySelector('#r3-availability')?.textContent.includes('Онлайн-приём временно недоступен')",timeout=10000)
                     assert off.locator("#r3-lead-form").is_hidden()
                     assert off.locator("#r3-offline").is_visible()
@@ -56,7 +60,7 @@ def main():
                     page.route("**/api/industry/v1/cinema/public/leads",fake_lead)
                     page.route("**/api/industry/v1/cinema/public/events",fake_event)
                     page.goto(BASE,wait_until="domcontentloaded")
-                    page.locator("#r3-lead-form").wait_for(state="visible",timeout=15000)
+                    page.locator("#r3-lead-form").wait_for(state="attached",timeout=15000)
                     assert page.locator("#episode-grid .episode").count()==12
                     assert page.locator("#r3-consent").is_checked() is False
                     assert len(posts)==0
@@ -66,6 +70,7 @@ def main():
                     page.locator("#r2-goal").fill("Проверить причину ухода")
                     page.locator('#r2-form button[type="submit"]').click()
                     assert page.locator("#r2-result").is_visible()
+                    page.locator("#r3-lead-form").wait_for(state="visible",timeout=15000)
                     assert len(posts)==0
                     page.locator("#r3-name").fill("Мария")
                     page.locator("#r3-email").fill("maria@example.test")
