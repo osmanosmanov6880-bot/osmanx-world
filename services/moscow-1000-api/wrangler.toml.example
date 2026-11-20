@@ -1,9 +1,9 @@
 name = "osmanx-moscow-1000-api"
 main = "index.mjs"
-compatibility_date = "2026-11-19"
+compatibility_date = "2026-11-20"
 workers_dev = false
 
-# Deploy ONLY after Cloudflare orange-cloud DNS and explicit owner approval.
+# Do not deploy until Cloudflare zone is proxied and API scope is explicitly approved.
 [[routes]]
 pattern = "osmanx.world/moscow-1000/api/*"
 zone_name = "osmanx.world"
@@ -11,16 +11,30 @@ zone_name = "osmanx.world"
 [[d1_databases]]
 binding = "DB"
 database_name = "osmanx-moscow-1000"
-database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+database_id = "REPLACE_WITH_REAL_DATABASE_ID"
 
 [vars]
-TURNSTILE_SITE_KEY = "REPLACE_WITH_PUBLIC_SITE_KEY"
+TURNSTILE_SITE_KEY = "REPLACE_WITH_REAL_PUBLIC_SITE_KEY"
 EMAIL_FROM = "OSMANX <updates@osmanx.world>"
 NOTIFY_EMAIL = "hello@osmanx.world"
+# Explicit allowed HTTPS hostname for this environment. Stage: https://staging.osmanx.world
+SITE_ORIGIN = "https://osmanx.world"
+ACCESS_TEAM_DOMAIN = "https://REPLACE_WITH_TEAM.cloudflareaccess.com"
+ACCESS_AUD = "REPLACE_WITH_ACCESS_APP_AUD"
+# Explicit allowlists; only emails verified by Access can acquire these roles.
+EDITOR_EMAILS = "REPLACE_WITH_EDITOR_EMAIL"
+APPROVER_EMAILS = "REPLACE_WITH_APPROVER_EMAIL"
+MODERATOR_EMAILS = "REPLACE_WITH_MODERATOR_EMAIL"
+REQUIRE_TWO_PERSON_REVIEW = "true"
+# The scheduled Worker will not send a digest until an approver explicitly queues it AND this flag is enabled.
+DIGEST_DELIVERY_ENABLED = "false"
 
 [triggers]
 crons = ["0 3 * * *"]
 
-# NEVER commit secrets; configure with `wrangler secret put`:
+# NEVER commit secrets. Set with `wrangler secret put` on the exact staging/production Worker:
 # TURNSTILE_SECRET
 # RESEND_API_KEY
+# UNSUB_SIGNING_KEY (at least 32 random characters, keep stable for persistent unsubscribe URLs)
+# Also install Cloudflare Access policy on the /moscow-1000/editor/* STATIC path
+# and on the /moscow-1000/api/admin/* API routes.
