@@ -88,6 +88,7 @@ function showAuth(){
   $('r35Panel').hidden=true;
   $('r36Panel').hidden=true;
   $('r37Panel').hidden=true;
+  $('r38Panel').hidden=true;
 }
 function showWorkspace(){
   $('loginPanel').hidden=true;$('workPanel').hidden=false;
@@ -446,6 +447,7 @@ async function openPilot(id){
   await loadR35Acceptance();
   await loadR36Acceptance();
   await loadR37Acceptance();
+  await loadR38Acceptance();
 }
 const R19_LABELS={
   signedTenantAndPilot:'Разрешение подписано именно для этой компании и пилота',
@@ -1464,6 +1466,50 @@ async function loadR37Acceptance(){
     $('r37Dr').textContent='—';$('r37Expiry').textContent='Отчёт до: —';
   }
 }
+const R38_GAPS={
+  R38_PR47_DRAFT_NO_INDEPENDENT_APPROVAL:'Первый PR #47 ещё Draft без независимого review',
+  R38_TWENTY_FOUR_PRS_NOT_MERGED:'24 PR не объединены в main после ручного ревью',
+  R38_RENDERED_COMPOSE_OPERATOR_INSPECTION_MISSING:'Не проверена итоговая конфигурация Docker Compose',
+  R38_PUBLIC_SCHEMA_DISPOSABLE_RESTORE_UNWITNESSED:'Нет операторского свидетельства пустоты public и восстановления industry',
+  R38_CURRENT_SHA_GITHUB_REVIEW_UNVERIFIED:'Нет действующего одобрения актуального SHA первого PR',
+  R38_LOCAL_IMAGE_VERSION_NOT_WITNESSED:'Запущенный образ не проверен независимым оператором',
+  R38_REMOTE_STAGING_NOT_VALIDATED:'Не подтверждён удалённый staging',
+  R38_OFFSITE_RECOVERY_LEGAL_AND_MAIN_CI_MISSING:'Ожидаются offsite, юридический допуск и финальный main CI'
+};
+async function loadR38Acceptance(){
+  const panel=$('r38Panel'),list=$('r38Blockers');
+  panel.hidden=!manage();list.replaceChildren();
+  if(!manage()||!model.selected?.item)return;
+  try{
+    const x=await api('/guest/pilots/'+model.selected.item.id+'/r38/readiness');
+    if(x.schema!=='osmanx.guest.r38.runtime-policy-readiness.v1'||
+      x.pilotId!==model.selected.item.id||
+      x.source?.requiredPrs!==24||
+      x.source?.mergeVerifiedInApi!==false||
+      x.runtime?.liveDockerCallsInApi!==0||
+      x.recovery?.localRestoresInApi!==0||
+      x.productionAuthorized!==false||x.customerGo!==false||
+      x.stopLifted!==false||x.guestWritesEnabled!==false||
+      !Array.isArray(x.blockers)||
+      !x.blockers.includes('R38_TWENTY_FOUR_PRS_NOT_MERGED'))
+      throw Error('R38 fail-closed operator report required');
+    $('r38Status').textContent='NO-GO — операторские доказательства не представлены';
+    $('r38Reviews').textContent='0 / 24 подтверждено в API';
+    $('r38Runtime').textContent='Оператор не проверил';
+    $('r38Recovery').textContent='Не проводилось в API';
+    $('r38Expiry').textContent='Отчёт до: '+new Date(x.expiresAt)
+      .toLocaleString('ru-RU',{year:'numeric',month:'2-digit',
+        day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    for(const code of x.blockers)
+      appendText(list,'li',R38_GAPS[code]||R37_GAPS[code]||
+        R36_GAPS[code]||R35_GAPS[code]||R34_GAPS[code]||
+        R33_GAPS[code]||R32_GAPS[code]||code,'small');
+  }catch{
+    $('r38Status').textContent='NO-GO — R38 не подтверждён';
+    $('r38Reviews').textContent='—';$('r38Runtime').textContent='—';
+    $('r38Recovery').textContent='—';$('r38Expiry').textContent='Срок отчёта: —';
+  }
+}
 async function loadReport(){
   if(!model.selected)return;
   model.report=await api('/guest/pilots/'+model.selected.item.id+'/report');
@@ -1956,6 +2002,13 @@ $('r21Refresh').addEventListener('click',()=>safely(()=>loadR21Posture()));
 $('r22Refresh').addEventListener('click',()=>safely(()=>loadR22LaunchReview()));
 $('r23Refresh').addEventListener('click',()=>safely(()=>loadR23Handoff()));
 $('r24Refresh').addEventListener('click',()=>safely(()=>loadR24Intelligence()));
+$('r38Refresh').addEventListener('click',()=>safely(()=>loadR38Acceptance()));
+$('r38Download').addEventListener('click',()=>safely(async()=>{
+  if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');
+  await downloadCsv('/guest/pilots/'+model.selected.item.id+'/r38/report.csv',
+    'osmanx-guest-r38-operator.csv');
+  setStatus('R38: NO-GO CSV сохранён. Production не разрешён.');
+}));
 $('r37Refresh').addEventListener('click',()=>safely(()=>loadR37Acceptance()));
 $('r37Download').addEventListener('click',()=>safely(async()=>{
   if(!manage()||!model.selected?.item)throw Error('Выберите пилот.');

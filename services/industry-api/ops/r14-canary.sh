@@ -24,6 +24,11 @@ node "$ROOT/scripts/preflight.mjs" "$envfile" >/dev/null
 project="osmanx-guest-r14-canary"
 compose=(docker compose -p "$project" --env-file "$envfile" -f "$ROOT/ops/compose.r14.yml")
 "${compose[@]}" config --quiet
+# R38: inspect the rendered Compose JSON, NOT only static YAML patterns.
+# Do not print Docker config because interpolated passwords are present.
+node "$ROOT/scripts/r38-check-compose.mjs" "$envfile" >/dev/null || {
+  echo "R38 resolved Compose policy refused" >&2; exit 2;
+}
 if [[ "$mode" == plan ]]; then
   echo "R14 plan: isolated canary, loopback 3150, encrypted offsite DR required before customer launch"
   echo "Writes disabled; Nginx, production services and DNS unchanged"

@@ -6,6 +6,7 @@
 import {createHash} from 'node:crypto';
 import {inspectR36DisposableTarget,verifyR36RestoreApproval}
   from './guest-r36-disposable-restore.mjs';
+import {inspectR38DbState} from './guest-r38-dr-safety.mjs';
 export const R37_DR_SCHEMA='osmanx.guest.r37.verified-disposable-postgres.v1';
 const DB=/^industry_dr_r36_[a-z0-9]{6,16}$/;
 const SHA=/^[a-f0-9]{64}$/;
@@ -69,9 +70,11 @@ export async function runR37VerifiedRestore({
   if(typeof inspectDatabase!=='function'||
     typeof executeR36Restore!=='function')
     throw TypeError('Database introspection and restore functions required');
+  const initial=await inspectDatabase({dbUrl,expectedName:allowed.db,phase:'before'});
   const before=evaluateR37DatabaseInspection({
-    row:await inspectDatabase({dbUrl,expectedName:allowed.db,phase:'before'}),
-    expectedName:allowed.db,phase:'before'});
+    row:initial,expectedName:allowed.db,phase:'before'});
+  const beforeR38=inspectR38DbState(initial,{expectedName:allowed.db,phase:'before'});
+  if(!beforeR38.valid)throw Error('R38: public/extra relations present: '+beforeR38.blockers.join(','));
   if(!before.valid)throw Error('Existing or remote database refused: '+before.blockers.join(','));
   if(!verifyR36RestoreApproval(plan,{now:clock()}).valid)
     throw Error('Restore approval expired after real preflight');
@@ -83,9 +86,13 @@ export async function runR37VerifiedRestore({
     performed?.productionAuthorized!==false||
     !SHA.test(performed?.sha256||''))
     throw Error('R36 restore did not return positive disposable evidence');
+  const final=await inspectDatabase({dbUrl,expectedName:allowed.db,phase:'after'});
   const after=evaluateR37DatabaseInspection({
-    row:await inspectDatabase({dbUrl,expectedName:allowed.db,phase:'after'}),
-    expectedName:allowed.db,phase:'after'});
+    row:final,expectedName:allowed.db,phase:'after'});
+  const afterR38=inspectR38DbState(final,{
+    expectedName:allowed.db,phase:'after',initialServer:initial
+  });
+  if(!afterR38.valid)throw Error('R38: restored target drift: '+afterR38.blockers.join(','));
   if(!after.valid)throw Error('Local restore validation failed: '+after.blockers.join(','));
   const body={schema:'osmanx.guest.r37.local-restore-verified.v1',
     pilotId:plan.pilotId,sourceTreeSha:plan.sourceTreeSha,

@@ -407,6 +407,16 @@ if grep -Fq '"verifiedCanaryRestoreImageMainR37":true' "$root/RELEASE.json"; the
     test -f "$root/$f" || { echo "Missing R37 operator component $f" >&2; exit 3; }
   done
 fi
+# R38 local operator-only rendered Compose and full public-schema DR guards.
+if grep -Fq '"resolvedComposeAndDbReviewR38":true' "$root/RELEASE.json"; then
+  grep -Fq '"verifiedCanaryRestoreImageMainR37":true' "$root/RELEASE.json" || exit 3
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || exit 3
+  for f in src/guest-r38-compose-runtime.mjs scripts/r38-check-compose.mjs \
+    src/guest-r38-dr-safety.mjs src/guest-r38-review-policy.mjs \
+    src/guest-r38-rollout-evidence.mjs scripts/r38-github-review.mjs; do
+    test -f "$root/$f" || { echo "Missing R38 file $f" >&2; exit 3; }
+  done
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

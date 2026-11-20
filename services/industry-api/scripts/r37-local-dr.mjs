@@ -10,6 +10,7 @@ import {R35_PIN} from '../src/guest-r36-source.mjs';
 import {R36_RESTORE_SCHEMA} from '../src/guest-r36-disposable-restore.mjs';
 import {R37_DB_QUERY,runR37VerifiedRestore}
   from '../src/guest-r37-dr-verified.mjs';
+import {R38_DB_QUERY} from '../src/guest-r38-dr-safety.mjs';
 import {runApprovedR36LocalRestore}
   from './r36-disposable-restore.mjs';
 export async function inspectR37LocalPg({dbUrl,phase}){
@@ -18,10 +19,12 @@ export async function inspectR37LocalPg({dbUrl,phase}){
     query_timeout:5000,application_name:'osmanx_r37_local_dr_readonly'});
   try{
     await client.connect();
-    const r=await client.query(R37_DB_QUERY);
+    const r=await client.query(R38_DB_QUERY);
     if(r.rowCount!==1)throw Error('Unexpected local database metadata count');
     const row=r.rows[0];
     row.migration_count=0;
+    row.industry_schema_count=Number(row.industry_relation_count)>0?1:0;
+    row.unexpected_relation_count=Number(row.user_relation_count)-Number(row.industry_relation_count);
     if(phase==='after'&&Number(row.industry_schema_count)===1){
       const count=await client.query(
         'SELECT count(*)::int AS count FROM industry.schema_migrations');
