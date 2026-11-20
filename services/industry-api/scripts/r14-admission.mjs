@@ -6,6 +6,7 @@
 import {createHash,createPublicKey,verify} from 'node:crypto';
 import {resolve} from 'node:path';
 import {readR40Regular} from '../src/guest-r40-secure-files.mjs';
+import {verifyR41KeyPins} from '../src/guest-r41-key-pins.mjs';
 import {validateR40ApprovalTimeline,canonicalR40Utc}
   from '../src/guest-r40-admission-timeline.mjs';
 import {fileURLToPath} from 'node:url';
@@ -111,6 +112,15 @@ if(direct){
     const owner=await readRegular(args[1]);
     const manager=await readRegular(args[2]);
     result=evaluateAdmission(record,{owner,manager});
+    // Pins must originate from an independently trusted operator channel.
+    const pins=verifyR41KeyPins({owner,manager,
+      ownerPin:process.env.GUEST_OWNER_PUBLIC_KEY_SHA256,
+      managerPin:process.env.GUEST_MANAGER_PUBLIC_KEY_SHA256
+    });
+    if(!pins.valid)result={...result,operatorGo:false,
+      blockers:[...new Set([...result.blockers,...pins.blockers])]};
+    result={...result,trustAnchorsPinned:pins.valid,
+      productionWritesEnabled:false};
   }catch{
     result={schema:'osmanx.guest.r14.admission.report.v1',operatorGo:false,
       blockers:['invalid_private_inputs'],productionWritesEnabled:false};

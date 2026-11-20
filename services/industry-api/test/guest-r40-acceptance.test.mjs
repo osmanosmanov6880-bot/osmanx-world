@@ -207,7 +207,7 @@ test('R40 PR47 packet refuses truncated patch even when list has exactly ten fil
 });
 test('R40 restore always verifies snapshotted ciphertext, not unchecked original path',async()=>{
   const script=await readFile(new URL('../ops/restore-dr.sh',import.meta.url),'utf8');
-  assert.match(script,/cp -P -- "\$archive" "\$tmp\/\$name"/);
+  assert.match(script,/r41-snapshot-age\.mjs/);
   assert.match(script,/r40-archive-check\.mjs/);
   assert.match(script,/age -d -i "\$AGE_IDENTITY_FILE" -o "\$tmp\/industry\.dump" "\$tmp\/\$name"/);
   assert.match(script,/pg_restore --single-transaction --exit-on-error/);
