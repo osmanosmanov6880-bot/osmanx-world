@@ -6,8 +6,18 @@
 export const R39_COMPOSE_SCHEMA='osmanx.guest.r39.resolved-sandbox-policy.v1';
 const SERVICES=['db','provision','migrate','bootstrap','api'];
 const own=x=>x&&typeof x==='object'&&!Array.isArray(x);
-export function inspectR39ComposePrivileges(config){
+const nonempty=v=>v!=null&&(
+  Array.isArray(v)?v.length>0:
+  own(v)?Object.keys(v).length>0:true
+);
+export function inspectR39ComposePrivileges(config,{
+  expectedProvisionPath
+}={}){
   const blockers=[];
+  if(typeof expectedProvisionPath!=='string'||
+    !expectedProvisionPath.startsWith('/')||
+    expectedProvisionPath.includes('..'))
+    blockers.push('TRUSTED_PROVISION_SOURCE_NOT_PINNED');
   const services=config?.services;
   if(!own(services)||Object.keys(services).sort().join(',')!==
       SERVICES.slice().sort().join(','))
@@ -16,14 +26,18 @@ export function inspectR39ComposePrivileges(config){
     const svc=services?.[name];
     if(!own(svc)){blockers.push('MISSING_'+name.toUpperCase());continue}
     if(svc.privileged===true||
-      (Array.isArray(svc.cap_add)&&svc.cap_add.length>0)||
-      (Array.isArray(svc.devices)&&svc.devices.length>0)||
-      (Array.isArray(svc.volumes_from)&&svc.volumes_from.length>0)||
+      nonempty(svc.cap_add)||nonempty(svc.devices)||
+      nonempty(svc.volumes_from)||nonempty(svc.extra_hosts)||
+      nonempty(svc.sysctls)||nonempty(svc.external_links)||
+      nonempty(svc.links)||nonempty(svc.dns)||
+      svc.container_name!=null||
+      !Array.isArray(svc.security_opt)||
+      !svc.security_opt.includes('no-new-privileges:true')||
       svc.pid==='host'||svc.ipc==='host'||
       svc.network_mode==='host'||svc.cgroup==='host'||
       svc.userns_mode==='host'||svc.uts==='host'||
-      svc.security_opt?.some?.(x=>/seccomp:unconfined|apparmor:unconfined/i.test(x))||
-      svc.extra_hosts?.length>0||
+      svc.security_opt.some(x=>typeof x!=='string'||
+        /seccomp:unconfined|apparmor:unconfined/i.test(x))||
       svc.deploy?.mode==='global')
       blockers.push('ESCALATION_OR_HOST_ACCESS_'+name);
     // No arbitrary bind mounts; the only permitted one is the readonly
@@ -39,7 +53,7 @@ export function inspectR39ComposePrivileges(config){
       }else if(name==='provision'){
         if(m.type!=='bind'||m.target!=='/ops/provision-roles.sh'||
           m.read_only!==true||typeof m.source!=='string'||
-          !m.source.endsWith('/ops/provision-roles.sh'))
+          m.source!==expectedProvisionPath)
           blockers.push('UNEXPECTED_PROVISION_MOUNT');
       }else{
         blockers.push('UNEXPECTED_RUNTIME_BIND_OR_VOLUME_'+name);
