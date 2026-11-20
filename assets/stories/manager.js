@@ -203,6 +203,17 @@ function renderLeads(filter=''){
     loss.value=item.loss_reason_code||'';
     lossLabel.append(loss);
     actionFields.append(actionKindLabel,dueLabel,lossLabel);card.append(actionFields);
+    const staffRow=element('div','r5-staff');
+    const assignedLabel=element('label','','Ответственный менеджер');
+    const assignedSelect=element('select');assignedSelect.setAttribute('aria-label','Ответственный менеджер');
+    const nobody=element('option','','Не назначен');nobody.value='';assignedSelect.append(nobody);
+    for(const person of staff){
+      const option=element('option','',person.email+' ('+person.role+')');
+      option.value=person.id;assignedSelect.append(option);
+    }
+    assignedSelect.value=item.assigned_to||'';
+    assignedLabel.append(assignedSelect);staffRow.append(assignedLabel);
+    if(r5Online)card.append(staffRow);
     function refreshActionState(){
       const closed=['won','lost'].includes(selector.value);
       due.disabled=closed;actionKind.disabled=closed;loss.disabled=selector.value!=='lost';
@@ -214,6 +225,38 @@ function renderLeads(filter=''){
     const erase=element('button','danger','Удалить данные');erase.type='button';erase.hidden=!canDelete;
     const history=element('button','','История');history.type='button';
     tools.append(selector,label,save,history,erase);card.append(tools,status);
+    if(r5Online&&!['won','lost'].includes(item.state)){
+      const contactForm=element('form','r5-contact');
+      contactForm.append(element('p','r5-contact-head','Зафиксировать реальную попытку связи'));
+      const fields=element('div','r5-contact-fields');
+      const channelLabel=element('label','','Канал связи');
+      const channel=element('select');channel.setAttribute('aria-label','Канал попытки контакта');
+      for(const [v,title] of Object.entries({email:'Email',phone:'Телефон',whatsapp:'WhatsApp',in_person:'Личная встреча'})){
+        const option=element('option','',title);option.value=v;channel.append(option);
+      }
+      channelLabel.append(channel);
+      const outcomeLabel=element('label','','Результат — отмечает менеджер');
+      const outcome=element('select');outcome.setAttribute('aria-label','Результат контакта');
+      for(const [v,title] of Object.entries({attempted:'Попытались связаться',connected:'Контакт состоялся',no_reply:'Не ответили',invalid_contact:'Неверный контакт'})){
+        const option=element('option','',title);option.value=v;outcome.append(option);
+      }
+      outcomeLabel.append(outcome);fields.append(channelLabel,outcomeLabel);contactForm.append(fields);
+      const checkboxLabel=element('label','r5-check');
+      const completed=element('input');completed.type='checkbox';completed.checked=Boolean(item.next_action_at);
+      checkboxLabel.append(completed,element('span','','Отметить запланированное действие выполненным и убрать срок'));contactForm.append(checkboxLabel);
+      const saveContact=element('button','','Записать действие');saveContact.type='submit';
+      contactForm.append(saveContact,element('p','hint','Факт контакта записывается вручную; звонки и сообщения автоматически не отправляются.'));
+      contactForm.addEventListener('submit',async event=>{
+        event.preventDefault();saveContact.disabled=true;
+        try{
+          await request('/cinema/leads/'+item.id+'/contacts',{method:'POST',payload:{
+            expectedVersion:item.version,channel:channel.value,outcome:outcome.value,completeFollowup:completed.checked
+          }});
+          await reload();
+        }catch(err){status.textContent=err.message;saveContact.disabled=false;}
+      });
+      card.append(contactForm);
+    }
     save.addEventListener('click',async()=>{
       const state=selector.value,raw=price.value.trim();
       const kind=['won','lost'].includes(state)?null:(actionKind.value||null);
@@ -221,7 +264,8 @@ function renderLeads(filter=''){
       const lossReason=state==='lost'?loss.value||null:null;
       const oldDue=item.next_action_at?new Date(item.next_action_at).toISOString():null;
       if(state===item.state && raw===(item.deal_value_minor===null?'':String(Number(item.deal_value_minor)/100)) &&
-         kind===(item.next_action_kind||null) && newDue===oldDue && lossReason===(item.loss_reason_code||null)){
+         kind===(item.next_action_kind||null) && newDue===oldDue && lossReason===(item.loss_reason_code||null) &&
+         (!r5Online||(assignedSelect.value||null)===(item.assigned_to||null))){
         status.textContent='Нет изменений.';return;
       }
       if(state==='lost'&&!lossReason){status.textContent='Выберите причину отказа.';loss.focus();return;}
@@ -231,6 +275,7 @@ function renderLeads(filter=''){
         status.textContent='Введите целое число рублей или оставьте поле пустым.';return;
       }
       const payload={state,dealValueMinor:amount,expectedVersion:item.version,nextActionAt:newDue,nextActionKind:kind,lossReasonCode:lossReason};
+      if(r5Online)payload.assignedTo=assignedSelect.value||null;
       save.disabled=true;
       try{
         await request('/cinema/leads/'+item.id,{method:'PATCH',payload});
@@ -246,7 +291,7 @@ function renderLeads(filter=''){
         const summary=document.createElement('summary');summary.textContent='История изменений';
         const content=element('div','');
         for(const x of response.items||[]){
-          content.append(element('p','',(new Date(x.occurred_at).toLocaleString('ru-RU'))+' · '+x.event_type+' · '+(x.new_state||'')+(x.next_action_kind?' · '+x.next_action_kind:'')+(x.loss_reason_code?' · '+x.loss_reason_code:'')));
+          content.append(element('p','',(new Date(x.occurred_at).toLocaleString('ru-RU'))+' · '+x.event_type+' · '+(x.new_state||'')+(x.next_action_kind?' · '+x.next_action_kind:'')+(x.loss_reason_code?' · '+x.loss_reason_code:'')+(x.contact_channel?' · '+x.contact_channel+'/'+x.contact_outcome:'')+(x.assigned_to?' · ответственный '+x.assigned_to:'')));
         }
         detail.replaceChildren(summary,content);detail.open=true;if(!detail.parentNode)card.append(detail);
       }catch(err){status.textContent=err.message;}
