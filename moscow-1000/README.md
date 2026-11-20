@@ -45,3 +45,8 @@ R4 adds a Media Studio tab for creator uploads directly to Cloudflare Stream (MP
 Release Calendar offers ten editable days, evidence/consent checkboxes, independent approval and UTC scheduling; future approved Stream videos stay inaccessible until scheduled publication. Editorial-only backups are AES-GCM encrypted into private R2 and can restore a draft with optimistic versioning without changing public data. Historic public snapshots can be reapproved as new versions after renewed media checks.
 
 This repository carries a dedicated staging-only Wrangler template and a read-only staging probe. **No real infrastructure is connected by this branch.** Do not claim live forms, email, Stream playback or scheduled publication without separate real-account testing. See `services/moscow-1000-api/README_R4.md` and `TECH_REPORT_R4.md`.
+
+
+## R5 — Upload/release readiness
+
+R5 adds a private tus uploader, interrupted-transfer resume **within one open tab**, durable D1→Stream visibility repair queue, isolated D1 export restore drill, and strictly read-only HTTPS staging gate. Full setup in `services/moscow-1000-api/README_R5.md`. Public episodes and confidential leads remain separate. Real Cloudflare deployment and physical phone acceptance are NOT yet performed.
