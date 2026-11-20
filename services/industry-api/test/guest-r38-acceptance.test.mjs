@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash,randomUUID} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 import {inspectR38RenderedCompose}
   from '../src/guest-r38-compose-runtime.mjs';
 import {checkR38Compose}
@@ -33,13 +34,14 @@ const HASH='a'.repeat(64);
 function compose(){
   const services={};
   for(const name of ['db','provision','migrate','bootstrap','api']){
-    services[name]={networks:{r14_private:{}},ports:[]};
+    services[name]={networks:{r14_private:{}},ports:[],
+      security_opt:['no-new-privileges:true']};
   }
   services.db.volumes=[{type:'volume',
     source:'osmanx-guest-r14-canary_guest_r14_data',
     target:'/var/lib/postgresql/data'}];
   services.provision.volumes=[{type:'bind',
-    source:'/tmp/project/ops/provision-roles.sh',
+    source:fileURLToPath(new URL('../ops/provision-roles.sh',import.meta.url)),
     target:'/ops/provision-roles.sh',read_only:true}];
   for(const name of ['migrate','bootstrap']){
     services[name].read_only=true;
