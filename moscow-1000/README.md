@@ -31,3 +31,9 @@ For visual checks run an HTTP static server from the package root (`python3 -m h
 Only public day-area anchors are hardcoded. Private CRM, contact persons, client lists, exact live user locations and actual visit records are **never** read or synced. OpenStreetMap attribution is visible; publicly hosted OSM tiles are loaded for the current viewport only (no prefetch/download). Attribution and provider policies apply. Before large public traffic, choose a provider with a traffic SLA and compatible terms.
 
 10 days and 1,000 businesses are goals; no personal conversations, pilots, deals or independent media publications are invented.
+
+## R3 — Private editor, verified map markers, inbox, digest
+
+R3 adds a static, access-dependent operator front end at `/moscow-1000/editor/` plus an authenticated Worker backend outside this public directory. Editing and approving content requires a signed Cloudflare Access JWT and configured role. With no Worker, the editor correctly refuses to work. Public results stay `Нет данных` until an approved D1 snapshot is accessible. Approved marker coordinates are rounded to three decimals and never pulled from private CRM.
+
+See `services/moscow-1000-api/README_R3.md` for configuration, manual production gates, confirmed-subscriber newsletter, live video verification, security and staging testing.

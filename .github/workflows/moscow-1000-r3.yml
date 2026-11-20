@@ -1,0 +1,42 @@
+name: OSMANX MOSCOW 1000 R3 QA
+on:
+  pull_request:
+    paths:
+      - 'moscow-1000/**'
+      - 'services/moscow-1000-api/**'
+      - 'editorial/moscow-1000/**'
+      - 'tests/moscow-1000-*.mjs'
+      - 'tests/smoke_r3_browser.py'
+      - 'scripts/check_r3_staging.mjs'
+      - '.github/workflows/moscow-1000-r3.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression-and-operator-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation for all R3 modules
+        run: |
+          set -euo pipefail
+          for f in moscow-1000/{app,content,geo,publication,map,public-r2,public-r3,intake}.js moscow-1000/editor/editor.js services/moscow-1000-api/{index,access,editorial,admin,digest}.mjs scripts/check_r3_staging.mjs; do
+            node --check "$f"
+          done
+      - name: R1–R3 regression with real temporary SQLite database
+        run: node --test tests/moscow-1000-r1.test.mjs tests/moscow-1000-r2.test.mjs tests/moscow-1000-api.test.mjs tests/moscow-1000-r3.test.mjs
+      - name: Verify no private operator API is deployed as static document
+        run: |
+          set -euo pipefail
+          test -s services/moscow-1000-api/migrations/0002_r3_editorial.sql
+          test -s moscow-1000/editor/index.html
+          test -s moscow-1000/editor/editor.css
+          test -s moscow-1000/editor/editor.js
+          grep -Fq 'DIGEST_DELIVERY_ENABLED = "false"' services/moscow-1000-api/wrangler.toml.example
+          grep -Fq 'verifiedActor' services/moscow-1000-api/index.mjs
+          grep -Fq 'Cloudflare Access' services/moscow-1000-api/README_R3.md
+          test ! -e moscow-1000/private-crm.json
