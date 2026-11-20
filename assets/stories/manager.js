@@ -401,14 +401,51 @@ function renderLeads(filter=''){
 function subjectVerified(){return currentRole==='owner'&&r5Online&&byId('r5-identity-verified').checked;}
 async function downloadSubjectRecord(id){
   if(!subjectVerified())throw Error('Сначала подтвердите проверку личности заявителя.');
-  const data=await request('/cinema/leads/'+encodeURIComponent(id)+'/export');
+  let cursor=0,lead=null,all=[],complete=false;
+  // Never quietly provide a truncated subject-data export.
+  for(let page=0;page<50;page++){
+    const response=await request('/cinema/leads/'+encodeURIComponent(id)+'/export'+
+      (cursor?'?afterVersion='+encodeURIComponent(cursor):''));
+    if(!response.lead||response.lead.id!==id)throw Error('Выгрузка не соответствует заявке.');
+    if(!lead)lead=response.lead;
+    const events=response.events||[];
+    for(const event of events){
+      if(!Number.isSafeInteger(event.version)||(all.length&&event.version<=all[all.length-1].version))
+        throw Error('Нарушен порядок версий событий в выгрузке.');
+      all.push(event);
+    }
+    if(!response.truncated){complete=true;break;}
+    if(!Number.isSafeInteger(response.nextAfterVersion)||response.nextAfterVersion<=cursor||
+       !all.length||response.nextAfterVersion!==all[all.length-1].version)
+      throw Error('Сервер не поддерживает полную постраничную выгрузку; файл не создан.');
+    cursor=response.nextAfterVersion;
+  }
+  if(!complete)throw Error('История слишком большая для безопасной выгрузки одним файлом; файл не создан.');
+  const data={schema:'osmanx.cinema.subject-export.complete.v1',complete:true,lead,events:all,
+    operatorIdentityVerification:'human_confirmed_outside_the_system'};
   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}));
   try{
     const a=element('a');a.href=url;a.download='osmanx-subject-'+id+'.json';
     document.body.append(a);a.click();a.remove();
   }finally{setTimeout(()=>URL.revokeObjectURL(url),1500);}
-  if(data.truncated)byId('r5-subject-status').textContent='Экспорт содержит не всю историю. Обратитесь к администратору.';
+  byId('r5-subject-status').textContent='Сформирована полная выгрузка: '+all.length+' событий.';
 }
+async function refreshAccessAudit(){
+  if(currentRole!=='owner'||!r6Online)return;
+  const status=byId('r6-audit-items');status.textContent='Запрашиваем журнал…';
+  try{
+    const response=await request('/cinema/privacy/access-log');
+    status.replaceChildren();
+    for(const item of response.items||[]){
+      const row=element('div','r6-access-event',
+        new Date(item.created_at).toLocaleString('ru-RU')+' · '+item.action+
+        ' · исполнитель '+(item.actor_id||'неизвестен')+' · записей '+item.result_count);
+      status.append(row);
+    }
+    if(!(response.items||[]).length)status.textContent='Пока нет зарегистрированных операций.';
+  }catch(err){status.textContent=err.message;}
+}
+byId('r6-audit-refresh').addEventListener('click',refreshAccessAudit);
 function subjectRows(data){
   const box=byId('r5-subject-results');box.replaceChildren();
   const buttons=[];
