@@ -188,6 +188,19 @@ test('R47 independent human review still requires current source, no bot/self',(
  assert.equal(handoff({patchPr:p,humanTrust:reviewers,
    reviews:stale}).humanReviewedApproved,false);
 });
+test('R47 later Compose candidate differences require explicit human signoff',()=>{
+ const h=assessR47FirstHandoff({
+   pr:pr(),reviews:[],sourcePins:pins(),
+   canary:assessR47ResolvedCanary(compose()),checks:checks(),
+   compareProof:comp(),mergeProof:merge(),mainFinal:main,
+   currentComposeMatchesFirstPr:false,currentComposeSha:'d'.repeat(40),
+   branchProtectionStatus:403
+ });
+ assert.equal(h.realCanaryTopologyValidated,true);
+ assert.equal(h.candidateComposeMatchesHistorical,false);
+ assert.ok(h.blockers.includes('LATER_BRANCH_CANARY_COMPOSE_DIFF_NEEDS_HUMAN_REVIEW'));
+ assert.equal(h.productionAuthorized,false);
+});
 test('R47 GET-only live reviewer script refuses dirty input and exports NO-GO',async()=>{
  let calls=0;
  const localEvidence={
