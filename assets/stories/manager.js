@@ -14,7 +14,7 @@ const showAmount=v=>{
   return (Number(v)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';
 };
 let rows=[],currentRole=null,staff=[],r5Online=false,r6Online=false,r6Cursor=null,r6Total=0,r6Generation=0;
-let r6Signals=new Map(),r7Online=false,currentAccountId=null;
+let r6Signals=new Map(),r7Online=false,r8Online=false,currentAccountId=null;
 const csrf=()=>{
   for(const name of ['__Host-osmanx_industry_csrf','osmanx_industry_csrf']){
     const cookie=document.cookie.split('; ').find(row=>row.startsWith(name+'='));
@@ -51,11 +51,53 @@ function present(bool){
   byId('r6-workqueue').hidden=!(bool&&r6Online);
   byId('r6-access-audit').hidden=!(bool&&currentRole==='owner'&&r6Online);
   byId('r7-workload').hidden=!(bool&&r7Online);
+  byId('r8-ops').hidden=!(bool&&r8Online&&currentRole==='owner');
+  updateCsvPermission();
 }
 function fail(message){
   present(false);
   byId('login-status').textContent=message;
 }
+function updateCsvPermission(){
+  byId('csv').disabled=!(r8Online&&currentRole==='owner'&&rows.length>0);
+}
+async function refreshR8(){
+  const status=byId('r8-runtime-status'),pane=status.closest('.r8-runtime');
+  try{
+    const data=await request('/cinema/public/runtime');
+    if(data.apiRelease!=='r8'||data.capabilities?.ownerCsvApproval!==true)throw Error('R8 не подтверждён');
+    r8Online=true;pane.dataset.connected='true';
+    status.textContent=data.onlineIntakeEnabled?
+      'Industry API R8 доступен. Онлайн-приём включён на сервере; необходимо проверить допуск оператора.':
+      'Industry API R8 доступен. Онлайн-приём выключен до проверки оператора и резервного восстановления.';
+    if(data.aggregateActionsEnabled)status.textContent+=' Сбор событий включён.';
+  }catch{
+    r8Online=false;pane.dataset.connected='false';
+    status.textContent='API R8 не подтверждён. Публичный сайт доступен, но новые операции кабинета закрыты до запуска сервера.';
+  }
+  byId('r8-ops').hidden=!(r8Online&&currentRole==='owner');
+  updateCsvPermission();
+}
+async function refreshR8Ops(){
+  const box=byId('r8-ops-result');
+  if(currentRole!=='owner'||!r8Online){box.textContent='Нет доступа или API не подключён.';return;}
+  const button=byId('r8-refresh');button.disabled=true;box.textContent='Проверяем PostgreSQL…';
+  try{
+    const info=await request('/cinema/ops/preflight');
+    box.replaceChildren();
+    for(const [title,description] of [
+      ['Приём обращений',info.intakeEnabled?'Включён; требуется проверка допуска':'Выключен'],
+      ['Данные',info.leads.total+' записей · '+info.leads.expired+' старше 90 дней'],
+      ['Последняя очистка',info.retention.assessment.explanation+
+        (info.retention.lastExecution?' · '+new Date(info.retention.lastExecution.executed_at).toLocaleString('ru-RU'):'')]
+    ]){
+      const card=element('article','r8-ops-card');
+      card.append(element('strong','',title),element('span','',description));box.append(card);
+    }
+  }catch(err){box.textContent='Отчёт недоступен: '+err.message;}
+  finally{button.disabled=false;}
+}
+byId('r8-refresh').addEventListener('click',refreshR8Ops);
 function queueParams(cursor=null){
   const query=new URLSearchParams({limit:'50',view:byId('r6-view').value,assignedTo:byId('r6-assigned').value});
   if(byId('state').value)query.set('state',byId('state').value);
@@ -145,6 +187,8 @@ async function reload(){
     }catch{r7Online=false;}
   }
   currentRole=currentRole||'manager';
+  await refreshR8();
+  if(generation!==r6Generation)return;
   byId('r7-workload').hidden=!r7Online;
   byId('r5-subject').hidden=!(currentRole==='owner'&&r5Online);
   byId('r6-workqueue').hidden=!r6Online;
@@ -170,7 +214,7 @@ async function loadMoreQueue(){
     for(const signal of page.itemsWithTriage||[])r6Signals.set(signal.id,signal);
     r6Cursor=page.nextCursor||null;
     r6Total=page.total||r6Total;
-    renderLeads(byId('state').value);queueStatus();
+    renderLeads(byId('state').value);queueStatus();updateCsvPermission();
   }catch(err){byId('r6-queue-status').textContent=err.message;button.disabled=false;}
 }
 function renderMetrics(data){
@@ -613,7 +657,7 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;currentAccountId=null;rows=[];staff=[];r5Online=false;r6Online=false;r7Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  currentRole=null;currentAccountId=null;rows=[];staff=[];r5Online=false;r6Online=false;r7Online=false;r8Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
@@ -624,5 +668,6 @@ async function restore(){
     await reload();present(true);
   }catch(err){present(false);}
 }
+refreshR8();
 restore();
 })();
