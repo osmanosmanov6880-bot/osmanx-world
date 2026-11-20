@@ -35,6 +35,8 @@ test('R9 mobile dashboard uses server CSV, visual 409 recovery and truthful deno
     'Client should not serialize sensitive lead records into a CSV');
   assert.doesNotMatch(js,/localStorage|sessionStorage|innerHTML\s*=\s*item\./i);
   assert(read('assets/stories/manager.css').includes('@media(max-width:650px)'));
+  assert(read('assets/stories/manager.css').includes('.r9-conflict[hidden]{display:none!important}'),
+    'A hidden conflict banner must not be forced visible by its flex styling');
 });
 test('R9 staging release is gated and never enables writes or remote canary addresses',()=>{
   const gate=read('services/industry-api/scripts/cinema-r9-readiness.mjs'),
