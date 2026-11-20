@@ -13,7 +13,7 @@ test('R8 migration protects approval and retention evidence with forced tenant R
   assert.doesNotMatch(sql,/DISABLE ROW LEVEL SECURITY|DROP TABLE industry\.cinema_leads/);
   const keep=read('services/industry-api/src/cinema-retention.mjs');
   assert(keep.includes('INSERT INTO industry.cinema_retention_runs'));
-  assert(keep.includes('interval \\'180 days\\''));
+  assert(keep.includes("interval '180 days'"));
 });
 test('R8 owner-only CSV authorization with strict tenant and UUID validation',()=>{
   const src=read('services/industry-api/src/cinema-r8.mjs');
