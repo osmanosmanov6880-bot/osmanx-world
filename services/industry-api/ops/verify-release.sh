@@ -444,6 +444,21 @@ if grep -Fq '"safeAdmissionArchivePatchR40":true' "$root/RELEASE.json"; then
   grep -Fq 'r40-archive-check.mjs' "$root/ops/restore-dr.sh" || exit 3
   grep -Fq 'inspectR40UnifiedPatch' "$root/src/guest-r39-review-packet.mjs" || exit 3
 fi
+# R41 hardens the actual R14 signed admission, AGE restore, Compose and
+# independent PR47 read-only review routes.
+if grep -Fq '"trustedOperatorAndReviewR41":true' "$root/RELEASE.json"; then
+  grep -Fq '"safeAdmissionArchivePatchR40":true' "$root/RELEASE.json" || exit 3
+  grep -Fq '"guestWritesDefault":false' "$root/RELEASE.json" || exit 3
+  for f in src/guest-r41-key-pins.mjs \
+    src/guest-r41-age-snapshot.mjs scripts/r41-snapshot-age.mjs \
+    src/guest-r41-git-tree.mjs \
+    src/guest-r41-review-gate.mjs scripts/r41-first-pr-gate.mjs; do
+    test -f "$root/$f" || { echo "Missing R41 source $f" >&2; exit 3; }
+  done
+  grep -Fq 'verifyR41KeyPins' "$root/scripts/r14-admission.mjs" || exit 3
+  grep -Fq 'r41-snapshot-age.mjs' "$root/ops/restore-dr.sh" || exit 3
+  grep -Fq 'openR40Regular' "$root/scripts/r38-check-compose.mjs" || exit 3
+fi
 if find "$root" -type l -print -quit | grep -q .; then
   echo "Archive contains links" >&2; exit 3
 fi

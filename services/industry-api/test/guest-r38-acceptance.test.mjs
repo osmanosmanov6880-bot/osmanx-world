@@ -105,6 +105,7 @@ test('R38 rendered Compose tool does not leak resolved env passwords',async()=>{
   f.services.db.environment={POSTGRES_PASSWORD:password};
   let calls=0;
   const result=await checkR38Compose({envFile:'/tmp/operator.env',
+    privateEnvPreflight:async()=>true,
     runner:async args=>{
       calls++;
       assert.equal(args.at(-3),'config');
