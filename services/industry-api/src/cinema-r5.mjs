@@ -19,10 +19,11 @@ export function assigneeValue(value){
   return checkedUuid(value);
 }
 export function parseContactActivity(value){
-  const b=only(value,['expectedVersion','channel','outcome']);
+  const b=only(value,['expectedVersion','channel','outcome','completeFollowup']);
   if(!Number.isSafeInteger(b.expectedVersion)||b.expectedVersion<1)throw fail(400,'Некорректная версия');
   if(!CHANNELS.has(b.channel)||!OUTCOMES.has(b.outcome))throw fail(400,'Выберите канал и результат');
-  return b;
+  if(b.completeFollowup!==undefined && typeof b.completeFollowup!=='boolean')throw fail(400,'Недопустимое подтверждение выполнения');
+  return {...b,completeFollowup:b.completeFollowup===true};
 }
 export function exactEmail(value){
   if(typeof value!=='string'||value.length>254||value.length<5||!EMAIL.test(value.trim()))
@@ -51,12 +52,12 @@ export function registerCinemaR5Routes(app,{base,protectOwner}){
     if(row.version!==activity.expectedVersion)throw fail(409,'Карточка изменена другим менеджером');
     if(['won','lost'].includes(row.state))throw fail(409,'Нельзя записать контакт по закрытой заявке');
     const changed=await db.query(
-      "UPDATE industry.cinema_leads SET version=version+1,contact_count=contact_count+1,last_contact_at=now(),first_contact_at=CASE WHEN $3='connected' THEN COALESCE(first_contact_at,now()) ELSE first_contact_at END,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING id,version,contact_count,first_contact_at,last_contact_at",
-      [session.tenant_id,id,activity.outcome]);
+      "UPDATE industry.cinema_leads SET version=version+1,contact_count=contact_count+1,last_contact_at=now(),first_contact_at=CASE WHEN $3='connected' THEN COALESCE(first_contact_at,now()) ELSE first_contact_at END,next_action_at=CASE WHEN $4 THEN NULL ELSE next_action_at END,next_action_kind=CASE WHEN $4 THEN NULL ELSE next_action_kind END,updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING id,version,contact_count,first_contact_at,last_contact_at,next_action_at,next_action_kind",
+      [session.tenant_id,id,activity.outcome,activity.completeFollowup]);
     const saved=changed.rows[0];
     await db.query(
-      "INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version,contact_channel,contact_outcome) VALUES($1,$2,$3,'contact_logged',$4,$4,$5,$6,$7)",
-      [session.tenant_id,id,session.account_id,row.state,saved.version,activity.channel,activity.outcome]);
+      "INSERT INTO industry.cinema_lead_events(tenant_id,lead_id,actor_id,event_type,old_state,new_state,version,contact_channel,contact_outcome,next_action_at,next_action_kind) VALUES($1,$2,$3,'contact_logged',$4,$4,$5,$6,$7,$8,$9)",
+      [session.tenant_id,id,session.account_id,row.state,saved.version,activity.channel,activity.outcome,saved.next_action_at,saved.next_action_kind]);
     return {item:saved,recorded:true,verification:'manual_manager_record'};
   }));
   app.get(base+'/performance',req=>protectOwner(req,['owner','manager'],async(db,session)=>{
