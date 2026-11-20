@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
-import {CASES,GROUPS,CHAPTERS,caseById,casesByGroup,currentChapter,tidy,storyURL,buildBrief,mailtoBrief} from '../assets/stories/story-engine.mjs';
+import {CASES,GROUPS,CHAPTERS,caseById,casesByGroup,currentChapter,tidy,storyURL,buildBrief,mailtoBrief} from '../assets/stories/story-engine.js';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const read=p=>readFileSync(join(root,p),'utf8');
 
@@ -61,7 +61,7 @@ test('R2: share links whitelist known ids, never copy injected query strings',()
 
 test('R2: frontend has opt-in player, 12 story brief links, safe model imports and low-data controls',()=>{
   const page=read('assets/stories/cinema.html');
-  const module=read('assets/stories/cinema-r2.mjs');
+  const module=read('assets/stories/cinema-r2.js');
   const css=read('assets/stories/cinema-r2.css');
   assert.match(page,/src="\/assets\/stories\/cinema-r2\.mjs"/);
   assert.match(page,/href="\/assets\/stories\/cinema-r2\.css"/);
