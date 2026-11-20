@@ -158,8 +158,10 @@ jobs:
           grep -Fq 'osmanx-cinema-experience-r1' /tmp/osmanx-cinema-live.html
           grep -Fq 'cinema-r2.js' /tmp/osmanx-cinema-live.html
           grep -Fq 'cinema-r3.js' /tmp/osmanx-cinema-live.html
-          curl --fail --silent --show-error --max-time 15 https://osmanx.world/assets/stories/manager.html | grep -Fq 'r4-followup-window'
-          curl --fail --silent --show-error --max-time 15 https://osmanx.world/assets/stories/cinema-r3.js | grep -Fq 'utm_campaign'
+          curl --fail --silent --show-error --max-time 15 https://osmanx.world/assets/stories/manager.html -o /tmp/osmanx-r4-manager.html
+          grep -Fq 'r4-followup-window' /tmp/osmanx-r4-manager.html
+          curl --fail --silent --show-error --max-time 15 https://osmanx.world/assets/stories/cinema-r3.js -o /tmp/osmanx-r4-campaign.js
+          grep -Fq 'utm_campaign' /tmp/osmanx-r4-campaign.js
           echo 'Cinema page and all 13 MP4 files available on public HTTPS.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify Guest Intelligence public HTTPS release and CDN transformations
