@@ -1,6 +1,7 @@
 """OSMANX Industry OS R3 operations suite browser acceptance."""
 from __future__ import annotations
 import http.server, subprocess, sys, time, socket
+import shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
@@ -15,7 +16,7 @@ def main():
             except OSError: time.sleep(.2)
         else: raise RuntimeError("Static server unavailable")
         with sync_playwright() as p:
-            browser=p.chromium.launch(headless=True,args=["--disable-dev-shm-usage"])
+            browser=p.chromium.launch(headless=True,executable_path=shutil.which("google-chrome") or shutil.which("chromium") or None,args=["--disable-dev-shm-usage"])
             try:
                 page=browser.new_page(viewport={"width":1440,"height":960},accept_downloads=True)
                 errors=[]

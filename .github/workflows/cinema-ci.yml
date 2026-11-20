@@ -6,6 +6,13 @@ on:
       - "assets/stories/**"
       - "tests/cinema-media.test.mjs"
       - "tests/stories-gallery.test.mjs"
+      - "tests/cinema-r2.test.mjs"
+      - "tests/cinema_r2_browser.py"
+      - "assets/industry/index.html"
+      - "assets/catalog/index.html"
+      - "assets/guest/offer.html"
+      - "robots.txt"
+      - "sitemap.xml"
       - "index.html"
       - "assets/catalog/index.html"
       - "assets/guest/offer.html"
@@ -19,6 +26,10 @@ on:
       - "tests/cinema-media.test.mjs"
       - "tests/stories-gallery.test.mjs"
       - ".github/workflows/cinema-ci.yml"
+      - "tests/cinema-r2.test.mjs"
+      - "tests/cinema_r2_browser.py"
+      - "robots.txt"
+      - "sitemap.xml"
 
 permissions:
   contents: read
@@ -33,9 +44,11 @@ jobs:
       - name: Check scripts
         run: |
           node --check assets/stories/cinema.js
+          node --check assets/stories/cinema-r2.js
+          node --check assets/stories/story-engine.js
           node --check assets/sovereign/site.js
       - name: Confirm all media, page links and SHA-256
-        run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs
+        run: node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs
       - name: Check playable MP4 containers
         run: |
           set -euo pipefail
@@ -55,3 +68,26 @@ jobs:
         run: |
           set -euo pipefail
           ! grep -R -E '(_jwt=|dnznrvs05pmza\.cloudfront\.net)' assets/stories --include='*.html' --include='*.js' --include='*.css'
+
+  browser-r2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser driver and verify preinstalled Chrome
+        run: |
+          python -m pip install playwright==1.56.0
+          command -v google-chrome || command -v chromium
+          (google-chrome --version || chromium --version)
+      - name: Run mobile and desktop cinematic conversion tests
+        run: python tests/cinema_r2_browser.py
+      - name: Upload cinematic browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osmanx-cinema-r2-browser
+          path: qa/cinema-r2/*.png
+          if-no-files-found: ignore

@@ -1,0 +1,45 @@
+/* OSMANX CINEMA R2: intentional, accessible interactions over the R1 design. */
+.r2-visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.r2-chapters{padding:29px 0 35px;max-width:1020px;margin:0 auto}
+.r2-overline{margin:0 0 14px;color:#d8b981;letter-spacing:.22em;font-size:10px;font-weight:650}
+.r2-chapter-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.r2-chapter{min-height:52px;text-align:center;padding:10px 7px;background:#0f1c29;color:#aebdca;border:1px solid #3a485b;cursor:pointer;font-size:12px;letter-spacing:.02em;transition:background .2s,border-color .2s}
+.r2-chapter:hover,.r2-chapter.r2-current{border-color:#d4b381;color:#f1d8ad;background:#302920}
+.r2-chapter:focus-visible,.r2-text-button:focus-visible,.r2-guide:focus-visible,.r2-secondary:focus-visible,.r2-diagnostic :focus-visible{outline:2px solid #e5c58a;outline-offset:3px}
+.r2-progress{margin-top:12px;height:3px;width:100%;background:#222e3b;overflow:hidden}
+.r2-progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,#9a7448,#e9c897);transition:width .18s linear}
+.r2-film-end{position:absolute;inset:auto 11px 10px;padding:22px 17px;z-index:5;background:linear-gradient(145deg,#121e2afa,#07101cfa);border:1px solid #c9a66c;box-shadow:0 9px 44px #000a;text-align:center}
+.r2-film-end[hidden],.r2-result[hidden],.r2-share-fallback[hidden]{display:none!important}
+.r2-film-end strong{font-size:17px;line-height:1.28;font-weight:560;color:#f3d9ab;display:block}
+.r2-film-end p{font-size:12px;color:#b8c8cf;line-height:1.55;margin:10px 0}
+.r2-end-link{font-size:13px!important;color:#e9c897!important;display:inline-block;margin-top:8px;text-decoration:underline;text-underline-offset:4px}
+.r2-guide{font-size:12px;line-height:1.35;padding:11px 15px;min-height:42px;cursor:pointer;background:#192332;border:1px solid #a08b69;color:#e4c791;order:2}
+.presentation-tools{flex-wrap:wrap}.r2-guide:hover{background:#292b2b}.r2-guide[aria-pressed=true]{background:#332a1b;color:#f7dfb3}
+.r2-story-actions{margin-top:17px;width:100%;display:flex;flex-wrap:wrap;gap:8px 13px;padding-top:13px;border-top:1px solid #384451}
+.r2-text-button{border:0;padding:7px 0;background:transparent;color:#e4c38d;cursor:pointer;font-size:12px;text-align:left;text-underline-offset:4px}
+.r2-text-button:hover{text-decoration:underline;color:#f2d7b4}
+.r2-diagnostic{margin:105px 0 0;border:1px solid #766349;background:linear-gradient(145deg,#131e2c,#0c121d);padding:clamp(22px,4vw,56px);text-align:left;scroll-margin-top:16px;box-shadow:0 14px 80px #0006}
+.r2-work-intro{max-width:760px}.r2-work-intro h3{font-size:clamp(32px,4.7vw,57px);letter-spacing:-.055em;font-weight:350;line-height:1.1;margin:17px 0}.r2-work-intro em{color:#e7c99a;font-style:normal}
+.r2-work-intro p{font-size:15px;color:#b7c4d1;line-height:1.7;margin-bottom:31px}
+.r2-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:21px 20px}
+.r2-fields label{display:flex;flex-direction:column;gap:8px;color:#d9dce0;font-size:13px;font-weight:520;min-width:0}
+.r2-fields label:nth-child(n+4){grid-column:span 1}
+.r2-fields input,.r2-fields select,.r2-fields textarea{width:100%;min-width:0;border:1px solid #516073;background:#080f18;color:#f3f1ed;font:inherit;font-size:15px;line-height:1.4;padding:13px 14px;border-radius:0;appearance:auto}
+.r2-fields textarea{resize:vertical;min-height:112px}.r2-fields input::placeholder,.r2-fields textarea::placeholder{color:#8294a2}
+.r2-fields input:invalid{border-color:#e1a069}
+.r2-actions{display:flex;flex-wrap:wrap;align-items:center;gap:15px;margin-top:28px}
+.r2-actions .btn{font-size:12px;line-height:1.4;min-height:46px;text-align:center;cursor:pointer}
+.r2-secondary{background:transparent;border:1px solid #5d6a79;color:#d0d8df;padding:11px 17px;min-height:46px;cursor:pointer;font:inherit;font-size:12px}
+.r2-secondary:hover{border-color:#d7b789;color:#e6c997}
+.r2-privacy{font-size:12px;color:#99aab6;max-width:800px;line-height:1.6;margin-top:19px}
+.r2-result{margin-top:29px;padding:22px;background:#0c1721;border:1px solid #506376}
+.r2-result pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#070d14;padding:20px;max-height:420px;overflow:auto;color:#dfe8ee;font:13px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace}
+.r2-link{color:#e8c797;text-decoration:underline;text-underline-offset:4px;font-size:13px}
+#r2-feedback{font-size:12px;color:#9cccb5;margin-top:15px}.r2-share-fallback{display:block;width:100%;margin-top:18px;padding:13px;border:1px solid #d7b789;background:#0b1520;color:#e5d1aa}
+.r2-transcript{margin:20px auto 0;border:1px solid #33404f;background:#101a25;max-width:790px;text-align:left}
+.r2-transcript summary{cursor:pointer;color:#e1c394;letter-spacing:.02em;padding:17px 19px;font-size:13px}
+.r2-transcript div{padding:0 20px 20px;color:#b7c3cd;font-size:13px;line-height:1.75}
+.r2-transcript p{margin:8px 0}
+@media(max-width:800px){.r2-fields{grid-template-columns:1fr}.r2-diagnostic{margin-top:75px}.r2-chapter-track{grid-template-columns:repeat(2,minmax(0,1fr))}.r2-chapters{padding:20px 0 25px}.r2-guide{order:0;margin-left:auto}.presentation-tools .slide-status{margin-right:auto}}
+@media(max-width:390px){.r2-diagnostic{padding:19px}.r2-chapter{font-size:11px;min-height:45px}.r2-work-intro h3{font-size:32px}.r2-actions{flex-direction:column;align-items:stretch}.r2-actions button,.r2-actions .btn{text-align:center;justify-content:center}}
+@media(prefers-reduced-motion:reduce){.r2-chapter,.r2-progress span{transition:none!important}}

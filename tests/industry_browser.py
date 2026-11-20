@@ -5,6 +5,7 @@ import socketserver
 import subprocess
 import sys
 import time
+import shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -27,7 +28,7 @@ def main():
         else:
             raise RuntimeError("Static server unavailable")
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=["--disable-dev-shm-usage"])
+            browser = p.chromium.launch(headless=True, executable_path=shutil.which("google-chrome") or shutil.which("chromium") or None, args=["--disable-dev-shm-usage"])
             try:
                 for width, height in [(1440, 900), (390, 844)]:
                     page = browser.new_page(viewport={"width": width, "height": height}, accept_downloads=True)
