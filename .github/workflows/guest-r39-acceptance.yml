@@ -325,6 +325,9 @@ jobs:
           archive="$(find "$RUNNER_TEMP/r19-archives" -name '*.age' -print -quit)"
           for target in first second; do
             createdb -h 127.0.0.1 -U postgres "industry_dr_r19_$target"
+            if [ "$target" = first ]; then
+              echo "Synthetic CI Postgres address/port/recovery: $(psql -h 127.0.0.1 -U postgres -d "industry_dr_r19_$target" -Atc 'SELECT inet_server_addr()::text, inet_server_port()::text, pg_is_in_recovery()::text')"
+            fi
             key="$RUNNER_TEMP/r19-first.key"
             if [ "$target" = second ]; then key="$RUNNER_TEMP/r19-second.key"; fi
             DR_RESTORE_DB_URL="postgresql://postgres:postgres@127.0.0.1:5432/industry_dr_r19_$target" AGE_IDENTITY_FILE="$key" sh ops/restore-dr.sh "$archive"
