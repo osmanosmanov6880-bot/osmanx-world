@@ -37,3 +37,11 @@ Only public day-area anchors are hardcoded. Private CRM, contact persons, client
 R3 adds a static, access-dependent operator front end at `/moscow-1000/editor/` plus an authenticated Worker backend outside this public directory. Editing and approving content requires a signed Cloudflare Access JWT and configured role. With no Worker, the editor correctly refuses to work. Public results stay `Нет данных` until an approved D1 snapshot is accessible. Approved marker coordinates are rounded to three decimals and never pulled from private CRM.
 
 See `services/moscow-1000-api/README_R3.md` for configuration, manual production gates, confirmed-subscriber newsletter, live video verification, security and staging testing.
+
+## R4 — Media Studio, release calendar and encrypted editorial recovery
+
+R4 adds a Media Studio tab for creator uploads directly to Cloudflare Stream (MP4/WebM <=200 MB), verified encoding status, rights reviews, captions and chapters. A second operator approves documentary video references before the publication engine can release them. All filmed-day materials remain planned until the workflow passes; demo assets from OSMANX STORIES are not represented as documentary footage.
+
+Release Calendar offers ten editable days, evidence/consent checkboxes, independent approval and UTC scheduling; future approved Stream videos stay inaccessible until scheduled publication. Editorial-only backups are AES-GCM encrypted into private R2 and can restore a draft with optimistic versioning without changing public data. Historic public snapshots can be reapproved as new versions after renewed media checks.
+
+This repository carries a dedicated staging-only Wrangler template and a read-only staging probe. **No real infrastructure is connected by this branch.** Do not claim live forms, email, Stream playback or scheduled publication without separate real-account testing. See `services/moscow-1000-api/README_R4.md` and `TECH_REPORT_R4.md`.
