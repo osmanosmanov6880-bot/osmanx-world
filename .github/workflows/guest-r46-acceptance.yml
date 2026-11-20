@@ -1,0 +1,141 @@
+name: OSMANX Guest R46 32-PR virtual merge and independent review proof
+on:
+  pull_request:
+    branches: [feat/guest-r45-commit-proof-merge-preview-ci-review-20261120]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r46-acceptance.yml"
+  push:
+    branches: [feat/guest-r46-virtual-merge-review-proof-20261120]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+jobs:
+  r46-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check R46 syntax, exact R43 npm graph and clean installation
+        working-directory: services/industry-api
+        run: |
+          for f in src/guest-r46-*.mjs scripts/r46-*.mjs; do node --check "$f"; done
+          node scripts/r43-supply-verify.mjs --lock > /dev/null
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: All R43-R46 safety and negative regression tests
+        working-directory: services/industry-api
+        run: |
+          node --test test/guest-r43-acceptance.test.mjs test/guest-r44-acceptance.test.mjs test/guest-r45-acceptance.test.mjs test/guest-r46-acceptance.test.mjs
+      - name: Live npm advisory counts and high-critical supply gate
+        working-directory: services/industry-api
+        run: |
+          npm audit --omit=dev --json > "$RUNNER_TEMP/r46-npm-audit.json" || true
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            import {verifyR44NpmAudit} from "./src/guest-r44-npm-audit.mjs";
+            const r=verifyR44NpmAudit(JSON.parse(readFileSync(process.argv[1],"utf8")));
+            console.log(JSON.stringify({valid:r.valid,counters:r.advisoryCounters,
+              blockers:r.blockers,customerGo:false}));
+            if(!r.valid)process.exit(2);
+          ' "$RUNNER_TEMP/r46-npm-audit.json"
+  r46-disposable-git-32-stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Refresh only runner origin main tracking ref
+        run: git fetch --no-tags origin main
+      - name: Prove source PR47 ten-file patch and changed main overlap
+        working-directory: services/industry-api
+        run: |
+          node scripts/r46-first-drift.mjs --json > "$RUNNER_TEMP/r46-drift.json"
+      - name: Rehearse all 32 PR merges in unreachable synthetic Git objects
+        working-directory: services/industry-api
+        run: |
+          node scripts/r46-virtual-merge.mjs --json > "$RUNNER_TEMP/r46-virtual.json"
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const drift=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            const v=JSON.parse(readFileSync(process.argv[2],"utf8"));
+            if(!drift.valid||!v.valid||v.branchRefsModified||
+              drift.mainSha!==v.mainSha||v.actualGitBranchMergesExecuted!==0||
+              v.productionAuthorized!==false)
+              process.exit(2);
+            console.log(JSON.stringify({main:v.mainSha,
+              pr47MainOverlap:drift.overlapCount,
+              gitSteps:v.evaluatedPrs,gitRehearsed:v.successfullyRehearsed,
+              firstConflict:v.firstBlockedPr,conflictPaths:v.firstBlockedPaths,
+              branchRefsChanged:false,productionAuthorized:false}));
+          ' "$RUNNER_TEMP/r46-drift.json" "$RUNNER_TEMP/r46-virtual.json"
+      - name: Upload disposable Git provenance only (no source contents)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: guest-r46-git-rehearsal
+          path: |
+            ${{ runner.temp }}/r46-drift.json
+            ${{ runner.temp }}/r46-virtual.json
+          if-no-files-found: warn
+          retention-days: 7
+  r46-live-independent-handoff:
+    needs: [r46-disposable-git-32-stage]
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: guest-r46-git-rehearsal
+          path: ${{ runner.temp }}/r46-git-proof
+      - name: Inspect 32 pinned PRs, current checks and separate humans using GET only
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          R46_TRUSTED_HUMANS: ${{ vars.GUEST_R46_TRUSTED_HUMANS }}
+        working-directory: services/industry-api
+        run: |
+          node scripts/r46-live-handoff.mjs --json "$RUNNER_TEMP/r46-git-proof/r46-drift.json" "$RUNNER_TEMP/r46-git-proof/r46-virtual.json" > "$RUNNER_TEMP/r46-handoff.json"
+          node --input-type=module -e '
+            import {readFileSync,writeFileSync} from "node:fs";
+            import {renderR46ReviewerPacket} from "./src/guest-r46-reviewer-gate.mjs";
+            const d=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            const p=d.report;
+            if(d.graph.matchingSourceHeads!==32||d.githubMutationCalls!==0||
+              p.actions.productionAuthorized!==false)
+              process.exit(2);
+            writeFileSync(process.argv[2],renderR46ReviewerPacket(p));
+            console.log(JSON.stringify({verified:p.pinnedPrsVerified,
+              currentSourceCi:p.sourceCIGreen,firstHumanPr:p.firstManualBlockerPr,
+              doubleReviews:p.doubleIndependentApprovals,
+              virtuallyMerged:p.virtualRehearsedPrs,
+              gitConflictPr:p.firstVirtualConflictPr,
+              firstPrMainOverlap:p.firstPrMainOverlapCount,
+              blockers:p.blockers,productionAuthorized:false}));
+          ' "$RUNNER_TEMP/r46-handoff.json" "$RUNNER_TEMP/r46-handoff.md"
+      - name: Save read-only 32-PR independent reviewer packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guest-r46-independent-human-review
+          path: |
+            ${{ runner.temp }}/r46-handoff.json
+            ${{ runner.temp }}/r46-handoff.md
+          if-no-files-found: warn
+          retention-days: 7
