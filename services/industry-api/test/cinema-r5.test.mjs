@@ -87,8 +87,8 @@ test('R5 routes remain private and assign only currently active same-tenant staf
   assert(people.some(x=>x.id===users.manager.id));
   assert(!people.some(x=>x.id===users.viewer.id));
   let version=1;
-  expect(await send('PATCH','/cinema/leads/'+leadId,users.manager,{expectedVersion:version,assignedTo:users.viewer.id}),400);
-  expect(await send('PATCH','/cinema/leads/'+leadId,users.manager,{expectedVersion:version,assignedTo:users.outsider.id}),400);
+  expect(await send('PATCH','/cinema/leads/'+leadId,users.manager,{expectedVersion:version,assignedTo:users.viewer.id}),403);
+  expect(await send('PATCH','/cinema/leads/'+leadId,users.manager,{expectedVersion:version,assignedTo:users.outsider.id}),403);
   const set=expect(await send('PATCH','/cinema/leads/'+leadId,users.manager,{expectedVersion:version,assignedTo:users.manager.id}),200);
   assert.equal(set.item.assigned_to,users.manager.id);version=set.item.version;
   expect(await send('PATCH','/cinema/leads/'+leadId,users.owner,{expectedVersion:version-1,assignedTo:null}),409);
