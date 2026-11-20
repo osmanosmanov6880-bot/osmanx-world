@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import socket
+import shutil
 import subprocess
 import sys
 import time
@@ -36,7 +37,8 @@ def run():
     server = open_server()
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, args=["--disable-dev-shm-usage"])
+            chrome = shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser")
+            browser = playwright.chromium.launch(headless=True, executable_path=chrome, args=["--disable-dev-shm-usage"])
             try:
                 for width, height in [(1440, 900), (390, 844)]:
                     page = browser.new_page(
