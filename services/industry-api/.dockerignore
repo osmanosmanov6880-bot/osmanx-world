@@ -1,0 +1,27 @@
+# R43: explicit Docker build context allowlist. Avoid sending backups,
+# live operator files, credentials, git metadata or CI test fixtures to daemon.
+*
+!Dockerfile
+!.dockerignore
+!package.json
+!package-lock.json
+!src/
+!src/**
+!shared/
+!shared/**
+!scripts/
+!scripts/**
+!migrations/
+!migrations/**
+# Re-exclude secrets even inside allowlisted trees.
+**/.env
+**/.env.*
+**/*.key
+**/*.pem
+**/*.age
+**/*.dump
+**/*.p12
+**/*.pfx
+**/*-secret.json
+**/node_modules
+**/.git

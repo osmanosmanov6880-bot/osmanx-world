@@ -24,7 +24,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT INT HUP TERM
 dst="$tmp/industry-api"
 mkdir -p "$dst"/{src,shared,migrations,scripts,ops}
-for name in Dockerfile compose.yml package.json; do
+for name in Dockerfile compose.yml package.json package-lock.json .dockerignore; do
   cp -- "$ROOT/$name" "$dst/$name"
 done
 for name in src shared migrations scripts; do
@@ -47,7 +47,7 @@ if find "$dst" -type f \( -name '.env' -o -name '*.key' -o -name '*.pem' -o -nam
 fi
 
 # Machine-readable, non-secret release contract; pinned to this exact Git tree.
-printf '{"schema":"osmanx.industry.r14.release.v1","commit":"%s","fullCommit":"%s","migration":"011_guest_pilot_safety.sql","latestMigration":"016_guest_r26_source_reviews.sql","r19Migration":"014_guest_single_pilot_rollout.sql","externalAnchorRequiredForR18":true,"singlePilotScopeSupportedR19":true,"releaseReviewSupportedR20":true,"hostPostureSupportedR21":true,"independentReadinessSupportedR22":true,"manualStagingSupportedR23":true,"decisionIntelligenceSupportedR24":true,"operationalHypothesesSupportedR25":true,"sourceReliabilitySupportedR26":true,"firstClientRehearsalSupportedR27":true,"independentReleaseReviewSupportedR28":true,"stagingMergeReviewSupportedR29":true,"independentEvidenceReviewSupportedR30":true,"manualStagingOperatorSupportedR31":true,"humanCutoverPreflightSupportedR32":true,"independentReviewBundleSupportedR33":true,"operatorReleaseReviewSupportedR34":true,"byteEvidenceAndHumanReviewSupportedR35":true,"manualCodeReviewAndSemanticStagingR36":true,"verifiedCanaryRestoreImageMainR37":true,"resolvedComposeAndDbReviewR38":true,"operatorDrAndPrReviewR39":true,"safeAdmissionArchivePatchR40":true,"trustedOperatorAndReviewR41":true,"readOnlyMergeAndSignedBackupReviewR42":true,"guestWritesDefault":false}\n' "$VERSION" "$FULL_SHA" > "$dst/RELEASE.json"
+printf '{"schema":"osmanx.industry.r14.release.v1","commit":"%s","fullCommit":"%s","migration":"011_guest_pilot_safety.sql","latestMigration":"016_guest_r26_source_reviews.sql","r19Migration":"014_guest_single_pilot_rollout.sql","externalAnchorRequiredForR18":true,"singlePilotScopeSupportedR19":true,"releaseReviewSupportedR20":true,"hostPostureSupportedR21":true,"independentReadinessSupportedR22":true,"manualStagingSupportedR23":true,"decisionIntelligenceSupportedR24":true,"operationalHypothesesSupportedR25":true,"sourceReliabilitySupportedR26":true,"firstClientRehearsalSupportedR27":true,"independentReleaseReviewSupportedR28":true,"stagingMergeReviewSupportedR29":true,"independentEvidenceReviewSupportedR30":true,"manualStagingOperatorSupportedR31":true,"humanCutoverPreflightSupportedR32":true,"independentReviewBundleSupportedR33":true,"operatorReleaseReviewSupportedR34":true,"byteEvidenceAndHumanReviewSupportedR35":true,"manualCodeReviewAndSemanticStagingR36":true,"verifiedCanaryRestoreImageMainR37":true,"resolvedComposeAndDbReviewR38":true,"operatorDrAndPrReviewR39":true,"safeAdmissionArchivePatchR40":true,"trustedOperatorAndReviewR41":true,"readOnlyMergeAndSignedBackupReviewR42":true,"committedDependencyLockAndImageSmokeR43":true,"guestWritesDefault":false}\n' "$VERSION" "$FULL_SHA" > "$dst/RELEASE.json"
 # Only the output artifact name references a commit SHA. No data from the live environment.
 (
   cd "$dst"

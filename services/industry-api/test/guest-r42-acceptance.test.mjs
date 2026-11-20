@@ -56,7 +56,7 @@ function custodian(){
   return {receipt,publicKeyPem,
     trustedKeySha:r41PublicKeyFingerprint(publicKeyPem),
     expectedSha:sha64,expectedName:receipt.archiveName,expectedBytes:128,
-    now:new Date('2026-11-20T11:00:00.000Z')};
+    now:new Date()};
 }
 function lock(){
   const dependencies={'@fastify/cookie':'11.1.5',fastify:'5.12.8',
