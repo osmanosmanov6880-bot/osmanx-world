@@ -1,0 +1,59 @@
+name: OSMANX GLOBAL G1
+
+"on":
+  pull_request:
+    paths:
+      - "assets/global/**"
+      - "assets/stories/manifest.json"
+      - "assets/stories/media/**"
+      - "assets/stories/posters/**"
+      - "assets/stories/cards/**"
+      - "assets/stories/captions-ru.vtt"
+      - "scripts/build-global.mjs"
+      - "tests/global-*.test.mjs"
+      - "README_GLOBAL_G1.md"
+      - ".github/workflows/global-g1-ci.yml"
+      - "index.html"
+  push:
+    branches: [main]
+    paths:
+      - "assets/global/**"
+      - "assets/stories/manifest.json"
+      - "assets/stories/media/**"
+      - "assets/stories/posters/**"
+      - "assets/stories/cards/**"
+      - "assets/stories/captions-ru.vtt"
+      - "scripts/build-global.mjs"
+      - "tests/global-*.test.mjs"
+      - "README_GLOBAL_G1.md"
+      - ".github/workflows/global-g1-ci.yml"
+      - "index.html"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Syntax, build and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/build-global.mjs
+          for file in assets/global/*.js; do
+            node --check "$file"
+          done
+      - name: Build RU and EN pages
+        run: node scripts/build-global.mjs
+      - name: Test GLOBAL G1
+        run: node --test tests/global-*.test.mjs
