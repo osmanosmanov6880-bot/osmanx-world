@@ -70,10 +70,14 @@ test('R3 public routes are disabled by default and reject missing tenant secret'
   const bad=cinemaConfig({CINEMA_TENANT_ID:tenantId,CINEMA_RATE_SECRET:'tiny',CINEMA_PUBLIC_WRITE_ENABLED:'true'});
   assert.equal(bad.enabled,false);
   config(false);
-  expect(await send('GET','/cinema/public/config',null),200);
-  const status=expect(await send('POST','/cinema/public/leads',null,payload(),{'idempotency-key':'r3-safe-test-disabled-0001'}),503);
-  assert.match(status.error,/отключён/);
-  config(true);
+  try {
+    const status=expect(await send('GET','/cinema/public/config',null),200);
+    assert.equal(status.intakeEnabled,false);
+    // The platform intentionally masks 5xx error strings; status code is the public contract.
+    expect(await send('POST','/cinema/public/leads',null,payload(),{'idempotency-key':'r3-safe-test-disabled-0001'}),503);
+  } finally {
+    config(true);
+  }
 });
 test('R3 input validation rejects unknown stories, missing consent and unexpected fields',()=>{
   assert.equal(parseLead(payload(),'r3-safe-test-valid-0001').storyId,'01-restaurant');
