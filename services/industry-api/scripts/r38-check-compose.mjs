@@ -29,7 +29,9 @@ export async function checkR38Compose({
   const inspection=inspectR38RenderedCompose(JSON.parse(raw));
   if(!inspection.valid)throw Error('Canary rendered Compose refused: '+
     inspection.blockers.join(','));
-  const sandbox=inspectR39ComposePrivileges(JSON.parse(raw));
+  const sandbox=inspectR39ComposePrivileges(JSON.parse(raw),{
+    expectedProvisionPath:root+'/ops/provision-roles.sh'
+  });
   if(!sandbox.valid)throw Error('R39 rendered privileges refused: '+
     sandbox.blockers.join(','));
   return {...inspection,r39SandboxVerified:true,
