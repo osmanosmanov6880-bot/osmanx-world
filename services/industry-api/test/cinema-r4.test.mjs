@@ -54,17 +54,13 @@ before(async()=>{
   process.env.CINEMA_AGGREGATE_EVENTS_ENABLED='true';
   app=await buildApp(pool);
   for(const user of Object.values(users)){
-    const login=expect(await send('POST','/auth/login',null,{
+    const response=await send('POST','/auth/login',null,{
       tenantSlug:user.slug,email:user.email,password
-    }),200);
-    user.cookie=cookies(login).cookie;
-    const retry=login;
-    const pairs=[].concat(retry.headers?.['set-cookie']||[]); // no-op, all session cookies from first login
-  }
-  // CSRF cookie was deliberately made available to each authenticated session.
-  for(const user of Object.values(users)){
-    const matches=user.cookie.split('; ').find(x=>x.startsWith('osmanx_industry_csrf='));
-    user.csrf=matches?.split('=')[1];
+    });
+    expect(response,200);
+    const session=cookies(response);
+    user.cookie=session.cookie;
+    user.csrf=session.csrf;
   }
 });
 after(async()=>{
