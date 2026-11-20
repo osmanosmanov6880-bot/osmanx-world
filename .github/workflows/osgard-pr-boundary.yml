@@ -1,0 +1,43 @@
+name: OSGARD PR Boundary Audit
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osgard-pr-boundary-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  full-pr-diff:
+    name: Full PR review boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact PR head with full Git history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify stdlib-only boundary tests
+        run: python3 -m unittest discover -s .github/release-audit/tests -p 'test_*.py' -v
+      - name: Compare merge base to PR head (all commits)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 .github/release-audit/analyze.py \
+            --repo . --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" \
+            --output "$RUNNER_TEMP/osgard-pr-boundary.json" --enforce
+      - name: Preserve read-only scope evidence, even on NO-GO
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osgard-pr-boundary-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/osgard-pr-boundary.json
+          if-no-files-found: warn
+          retention-days: 30
