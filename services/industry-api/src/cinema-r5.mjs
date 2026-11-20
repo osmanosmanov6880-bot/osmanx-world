@@ -117,16 +117,31 @@ export function registerCinemaR5Routes(app,{base,protectOwner}){
         campaign:'Атрибуция по ссылке, не доказательство влияния рекламы'
       }};
   }));
-  app.get(base+'/privacy/search',req=>protectOwner(req,['owner'],async(db,session)=>{
-    const qs=only(req.query||{},['email']),email=exactEmail(qs.email);
+  async function findSubject(db,session,email){
     const rows=await db.query(
       'SELECT id,contact_email,created_at,state FROM industry.cinema_leads WHERE tenant_id=$1 AND contact_email=$2 ORDER BY created_at DESC LIMIT 50',
-      [session.tenant_id,email]);
-    // Receipt includes neither the searched email nor its hash.
+      [session.tenant_id,exactEmail(email)]);
+    // Receipt contains no email or derivative of the searched email.
     await db.query(
       "INSERT INTO industry.cinema_access_events(tenant_id,actor_id,action,result_count) VALUES($1,$2,'subject_search',$3)",
       [session.tenant_id,session.account_id,rows.rowCount]);
-    return {items:rows.rows,requiresIdentityVerification:true};
+    return {items:rows.rows,requiresIdentityVerification:true,
+      note:'Перед выдачей информации оператор должен проверить право заявителя.'};
+  }
+  // R7 primary path: email in a CSRF-protected POST body, not in proxy/browser URL logs.
+  app.post(base+'/privacy/search',(req,reply)=>protectOwner(req,['owner'],async(db,session)=>{
+    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+       Object.keys(req.body).length!==1||!Object.hasOwn(req.body,'email'))
+      throw fail(400,'Ожидается только точный email');
+    reply.header('Cache-Control','private, no-store, max-age=0');
+    return findSubject(db,session,req.body.email);
+  }));
+  // Legacy endpoint preserved only until older static R5/R6 clients are retired.
+  app.get(base+'/privacy/search',(req,reply)=>protectOwner(req,['owner'],async(db,session)=>{
+    const qs=only(req.query||{},['email']);
+    reply.header('Cache-Control','private, no-store, max-age=0');
+    reply.header('Deprecation','true');
+    return findSubject(db,session,qs.email);
   }));
   app.get(base+'/leads/:id/export',(req,reply)=>protectOwner(req,['owner'],async(db,session)=>{
     const id=checkedUuid(req.params.id);
