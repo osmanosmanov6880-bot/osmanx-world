@@ -4,6 +4,10 @@ on:
     paths:
       - "index.html"
       - "assets/stories/cinema.html"
+      - "assets/stories/cinema.js"
+      - "assets/stories/index.html"
+      - "assets/guest/offer.html"
+      - "assets/guest/order.html"
       - "tests/marcosa-invite.test.mjs"
       - ".github/workflows/marcosa-invite-contract.yml"
 permissions:
