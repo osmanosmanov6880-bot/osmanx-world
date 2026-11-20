@@ -97,14 +97,18 @@ def main():
                     assert page.locator(".r5-performance-card").inner_text().find("запусков фильма")>=0
                     page.locator(".r5-staff select").select_option(MANAGER)
                     page.locator(".lead-tools button").first.click()
-                    page.wait_for_function("""() => document.querySelector('.r5-staff select')?.value==="""+json.dumps(MANAGER),timeout=15000)
+                    # Old select already shows the option before network save finishes.
+                    # Wait for the disabled Save button to be replaced by the refreshed card.
+                    page.wait_for_function("() => document.querySelector('.lead-tools button')?.disabled===false && document.querySelector('.r5-staff select')?.value==="+json.dumps(MANAGER),timeout=15000)
                     assert len(state["patches"])==1,state["patches"]
                     assert state["patches"][0]["assignedTo"]==MANAGER
                     assert state["patches"][0]["expectedVersion"]==1
                     page.locator(".r5-contact select").first.select_option("email")
                     page.locator(".r5-contact select").nth(1).select_option("connected")
                     page.locator(".r5-contact button").click()
-                    page.wait_for_function("() => document.querySelector('.lead .r5-contact')!==null",timeout=12000)
+                    for _ in range(50):
+                        if len(state["contacts"])>=1:break
+                        page.wait_for_timeout(100)
                     assert len(state["contacts"])==1,state["contacts"]
                     assert state["contacts"][0]["outcome"]=="connected"
                     assert state["contacts"][0]["expectedVersion"]==2
