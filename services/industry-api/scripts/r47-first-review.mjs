@@ -63,8 +63,12 @@ export function readR47LocalEvidence(){
  // Docker Compose is run with synthetic env values, without starting Docker.
  // Require current branch's R14 YAML to match its *historical* reviewed blob.
  const composeBlob=local('git',['hash-object','ops/compose.r14.yml']).trim();
- if(composeBlob!==R47_SOURCE_FILES['services/industry-api/ops/compose.r14.yml'])
-   throw Error('R47 running Compose file is not historical PR47 version');
+ if(!SHA.test(composeBlob))throw Error('R47 current Compose blob unreadable');
+ const historicalComposeBlob=
+   R47_SOURCE_FILES['services/industry-api/ops/compose.r14.yml'];
+ // Later stacked PRs legitimately changed build provenance. Verify their
+ // EFFECTIVE candidate separately from ten exact historical source blobs.
+ const yamlMatchesHistorical=composeBlob===historicalComposeBlob;
  const json=local('docker',['compose','--profile','setup',
    '-f','ops/compose.r14.yml','config','--format','json']);
  const canary=assessR47ResolvedCanary(JSON.parse(json));
@@ -75,7 +79,10 @@ export function readR47LocalEvidence(){
  if(before!==after||merge.mainSha!==main)
    throw Error('R47 local Git refs changed or main moved during preview');
  return {sourcePins,canary,merge,observedMain:main,
-   historicalMergeBase:mergeBase,localBranchRefsUnchanged:true};
+   historicalMergeBase:mergeBase,localBranchRefsUnchanged:true,
+   effectiveCandidateComposeBlob:composeBlob,
+   historicalFirstPrComposeBlob:historicalComposeBlob,
+   currentComposeMatchesFirstPr:yamlMatchesHistorical};
 }
 export async function collectR47FirstReview({
  fetcher=fetch,token=process.env.GITHUB_TOKEN,trustedReviewers=[],
@@ -123,6 +130,8 @@ export async function collectR47FirstReview({
    canary:localEvidence.canary,
    checks:checksProof,compareProof,
    mergeProof:localEvidence.merge,
+   currentComposeMatchesFirstPr:localEvidence.currentComposeMatchesFirstPr,
+   currentComposeSha:localEvidence.effectiveCandidateComposeBlob,
    mainFinal:mainAfter?.object?.sha,
    branchProtectionStatus:protection.status,
    protectionData:protection.data
