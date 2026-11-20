@@ -4,8 +4,10 @@
  * independent operator-owned Ed25519 PUBLIC keys outside the source checkout.
  */
 import {createHash,createPublicKey,verify} from 'node:crypto';
-import {readFile,lstat} from 'node:fs/promises';
-import {resolve,sep} from 'node:path';
+import {resolve} from 'node:path';
+import {readR40Regular} from '../src/guest-r40-secure-files.mjs';
+import {validateR40ApprovalTimeline,canonicalR40Utc}
+  from '../src/guest-r40-admission-timeline.mjs';
 import {fileURLToPath} from 'node:url';
 
 export const ADMISSION_SCHEMA='osmanx.guest.r14.admission.v1';
@@ -28,8 +30,7 @@ export function attestationMessage({role,actorId,releaseCommit,evidenceDigest:sh
     evidenceDigest:sha,acceptedAt,expiresAt});
 }
 function isValidDate(s){
-  return typeof s==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(s)&&
-    Number.isFinite(Date.parse(s));
+  return canonicalR40Utc(s);
 }
 function keyInfo(pem){
   const key=createPublicKey(pem);
@@ -63,6 +64,8 @@ export function evaluateAdmission(record,{owner,manager},now=new Date()){
     entries.filter(x=>x?.role==='manager').length!==1){
     issues.push('two_distinct_roles_required');
   }
+  const chronology=validateR40ApprovalTimeline(record,{now});
+  issues.push(...chronology.blockers);
   const signingDigest=evidenceDigest(record||{});
   for(const role of ['owner','manager']){
     const entry=Array.isArray(entries)?entries.find(x=>x?.role===role):null;
@@ -95,14 +98,7 @@ export function evaluateAdmission(record,{owner,manager},now=new Date()){
     disclaimer:'Подписи подтверждают решение операторов, но не заменяют договор и законные основания. Этот отчёт НЕ меняет режим записи, VPS, DNS или Nginx.'};
 }
 async function readRegular(path,privateFile=false){
-  if(!path.startsWith('/'))throw Error('Use absolute file paths');
-  const target=resolve(path),st=await lstat(target);
-  if(!st.isFile()||st.isSymbolicLink())throw Error('Refuse symlink or non-regular file');
-  if(privateFile&&(st.mode&0o077)!==0)throw Error('Admission record must be chmod 600');
-  const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
-  if(target===root||target.startsWith(root+sep))
-    throw Error('Admission evidence and keys must not be stored inside the checkout');
-  return readFile(target,'utf8');
+  return readR40Regular(path,{privateFile,maxBytes:privateFile?131072:16384});
 }
 const direct=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(direct){
