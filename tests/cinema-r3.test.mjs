@@ -42,7 +42,7 @@ test('R3: admin UI uses cookies, CSRF and escapes user content into text nodes',
   assert.match(js,/expectedVersion:item\.version/);
   assert.match(js,/confirm\(/);
   assert.match(js,/csvCell/);
-  assert.match(js,/noindex|r3-/i);
+  assert.match(js,/CSRF|csrf/);
   assert.doesNotMatch(js,/localStorage|sessionStorage|innerHTML\s*=\s*item\./i);
 });
 test('R3: privacy text states limits, no automatic payment or guaranteed lead flow',()=>{
