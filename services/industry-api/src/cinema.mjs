@@ -215,6 +215,8 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
     if(!old)throw error(404,'Заявка не найдена');
     if(old.version!==version)throw error(409,'Заявка изменена другим пользователем');
     const plan=planFollowup(old,b);
+    if(plan.state!==old.state&&!permittedTransition(old.state,plan.state))
+      throw error(409,'Недопустимый переход статуса');
     if(b.dealValueMinor!==undefined && !['qualified','proposal','won'].includes(plan.state))
       throw error(409,'Сумма возможна только для квалифицированной или согласованной сделки');
     const amount=b.dealValueMinor===undefined?old.deal_value_minor:b.dealValueMinor;
