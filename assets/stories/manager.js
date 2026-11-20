@@ -248,6 +248,13 @@ function renderLeads(filter=''){
     head.append(who,date);card.append(head);
     const contact=element('p','contact');const link=element('a','',item.contact_email);link.href='mailto:'+encodeURIComponent(item.contact_email);contact.append('Email: ',link);card.append(contact);
     card.append(element('p','',item.observation),element('p','',item.goal||'Цель не указана'),element('p','hint','Кампания: '+(item.campaign_code||'direct')));
+    const risk=r6Signals.get(item.id);
+    if(r6Online&&risk&&risk.signals?.length){
+      const detail=element('div','r6-triage '+risk.priority);
+      detail.append(element('strong','','Сигналы: '+(risk.priority==='urgent'?'срочно':'проверить')));
+      for(const signal of risk.signals)detail.append(element('p','',signal.description));
+      card.append(detail);
+    }
     const tools=element('div','lead-tools');
     const selector=element('select');
     selector.setAttribute('aria-label','Следующий статус заявки '+item.contact_name);
@@ -322,12 +329,19 @@ function renderLeads(filter=''){
       checkboxLabel.append(completed,element('span','','Отметить запланированное действие выполненным и убрать срок'));contactForm.append(checkboxLabel);
       const saveContact=element('button','','Записать действие');saveContact.type='submit';
       contactForm.append(saveContact,element('p','hint','Факт контакта записывается вручную; звонки и сообщения автоматически не отправляются.'));
+      let lastContactBody='',lastContactKey='';
       contactForm.addEventListener('submit',async event=>{
         event.preventDefault();saveContact.disabled=true;
+        const payload={expectedVersion:item.version,channel:channel.value,
+          outcome:outcome.value,completeFollowup:completed.checked};
+        const fingerprint=JSON.stringify(payload);
+        if(fingerprint!==lastContactBody){
+          lastContactBody=fingerprint;lastContactKey=crypto.randomUUID();
+        }
         try{
-          await request('/cinema/leads/'+item.id+'/contacts',{method:'POST',payload:{
-            expectedVersion:item.version,channel:channel.value,outcome:outcome.value,completeFollowup:completed.checked
-          }});
+          await request('/cinema/leads/'+item.id+'/contacts',{
+            method:'POST',payload,headers:{'idempotency-key':lastContactKey}
+          });
           await reload();
         }catch(err){status.textContent=err.message;saveContact.disabled=false;}
       });
@@ -442,7 +456,13 @@ byId('r5-subject-form').addEventListener('submit',async event=>{
     byId('r5-subject-status').textContent='Перед экспортом или удалением подтвердите проверку личности.';
   }catch(err){byId('r5-subject-status').textContent=err.message;}
 });
-byId('state').addEventListener('change',e=>renderLeads(e.target.value));
+byId('r6-view').addEventListener('change',()=>reload().catch(e=>byId('r6-queue-status').textContent=e.message));
+byId('r6-assigned').addEventListener('change',()=>reload().catch(e=>byId('r6-queue-status').textContent=e.message));
+byId('r6-more').addEventListener('click',loadMoreQueue);
+byId('state').addEventListener('change',e=>{
+  if(r6Online)reload().catch(err=>byId('leads-status').textContent=err.message);
+  else renderLeads(e.target.value);
+});
 byId('r4-followup-window').addEventListener('change',()=>reload().catch(e=>byId('leads-status').textContent=e.message));
 byId('r5-report-days').addEventListener('change',()=>reload().catch(e=>byId('r5-report').textContent=e.message));
 byId('r4-link-form').addEventListener('submit',async event=>{
@@ -472,7 +492,7 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;rows=[];staff=[];r5Online=false;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  currentRole=null;rows=[];staff=[];r5Online=false;r6Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
