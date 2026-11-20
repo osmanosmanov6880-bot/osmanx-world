@@ -1,6 +1,8 @@
 // OSMANX CINEMA R3: explicit, consent-based lead handoff with fail-safe email fallback.
 import {caseById} from './story-engine.js';
 const API='/api/industry/v1/cinema';
+const rawCampaign=new URLSearchParams(location.search).get('utm_campaign');
+const campaignCode=rawCampaign&&/^[a-z0-9][a-z0-9_-]{0,39}$/.test(rawCampaign)?rawCampaign:'direct';
 function el(tag,cls,text=''){const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;}
 function boot(){
   const existing=document.querySelector('#r3-intake');
@@ -53,7 +55,7 @@ function boot(){
     if(!metrics)return;
     // Anonymous aggregate click counter: no cookies, IP, contact details, device IDs or user IDs sent.
     void fetch(API+'/public/events',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({eventType,storyId}),keepalive:true}).catch(()=>{});
+      body:JSON.stringify({eventType,storyId,campaignCode}),keepalive:true}).catch(()=>{});
   }
   const film=get('hero-film');
   let filmStart=false,filmEnd=false,briefCreated=false;
@@ -85,7 +87,7 @@ function boot(){
     const payload={
       storyId:item.id,contactName:get('r3-name').value,contactEmail:get('r3-email').value,
       organization:get('r2-company').value,observation:observation,
-      goal:get('r2-goal').value,source:'cinema',consent:true,website:get('r3-website').value
+      goal:get('r2-goal').value,source:'cinema',campaignCode,consent:true,website:get('r3-website').value
     };
     send.disabled=true;feedback.textContent='Отправляем запрос…';
     try{
