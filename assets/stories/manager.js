@@ -14,7 +14,7 @@ const showAmount=v=>{
   return (Number(v)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';
 };
 let rows=[],currentRole=null,staff=[],r5Online=false,r6Online=false,r6Cursor=null,r6Total=0,r6Generation=0;
-let r6Signals=new Map(),r7Online=false,r8Online=false,currentAccountId=null;
+let r6Signals=new Map(),r7Online=false,r8Online=false,r9Online=false,currentAccountId=null;
 const csrf=()=>{
   for(const name of ['__Host-osmanx_industry_csrf','osmanx_industry_csrf']){
     const cookie=document.cookie.split('; ').find(row=>row.startsWith(name+'='));
@@ -30,8 +30,14 @@ async function request(path,{method='GET',payload,headers={}}={}){
   }
   const response=await fetch(API+path,options);
   const body=await response.json().catch(()=>({}));
+  if(response.status===409)showConflict(body.error||'Конфликт версии или изменение записи.');
   if(!response.ok)throw new Error(body.error||('HTTP '+response.status));
   return body;
+}
+function showConflict(message){
+  byId('r9-conflict-message').textContent=message+
+    ' Получите актуальные записи перед повтором операции; не нажимайте повторно вслепую.';
+  byId('r9-conflict').hidden=false;
 }
 function line(container,label,number){
   const row=element('div','line');
@@ -52,6 +58,7 @@ function present(bool){
   byId('r6-access-audit').hidden=!(bool&&currentRole==='owner'&&r6Online);
   byId('r7-workload').hidden=!(bool&&r7Online);
   byId('r8-ops').hidden=!(bool&&r8Online&&currentRole==='owner');
+  byId('r9-response').hidden=!(bool&&r9Online);
   updateCsvPermission();
 }
 function fail(message){
@@ -59,7 +66,7 @@ function fail(message){
   byId('login-status').textContent=message;
 }
 function updateCsvPermission(){
-  byId('csv').disabled=!(r8Online&&currentRole==='owner'&&rows.length>0);
+  byId('csv').disabled=!(r9Online&&currentRole==='owner'&&rows.length>0);
 }
 async function refreshR8(){
   const status=byId('r8-runtime-status'),pane=status.closest('.r8-runtime');
@@ -75,9 +82,55 @@ async function refreshR8(){
     r8Online=false;pane.dataset.connected='false';
     status.textContent='API R8 не подтверждён. Публичный сайт доступен, но новые операции кабинета закрыты до запуска сервера.';
   }
+  r9Online=false;
+  if(r8Online){
+    try{
+      const release=await request('/cinema/public/r9-runtime');
+      r9Online=release.apiRelease==='r9'&&release.capabilities?.serverCsvSnapshot===true;
+      if(r9Online)status.textContent+=' Подтверждён R9: серверный CSV и отчёт о скорости реакции.';
+    }catch{
+      status.textContent+=' R9 ещё не подключён: CSV будет закрыт до обновления API.';
+    }
+  }
+  byId('r9-response').hidden=!(r9Online&&currentRole);
   byId('r8-ops').hidden=!(r8Online&&currentRole==='owner');
   updateCsvPermission();
 }
+function renderR9Response(data){
+  const box=byId('r9-response-cards');box.replaceChildren();
+  const c=data.counts||{},p=data.percentages||{};
+  for(const [label,main,details] of [
+    ['Обращения за период',c.total??0,'По дате получения'],
+    ['Первая попытка',p.everAttempted===null?'Нет данных':p.everAttempted+'%',(c.with_attempt??0)+' с зарегистрированным событием'],
+    ['До 60 минут',p.respondedWithin1h===null?'Нет базы':p.respondedWithin1h+'%',(c.responded_within_1h??0)+' из '+(c.eligible_1h??0)+' достаточно старых заявок'],
+    ['Без попытки 24 часа',c.without_attempt_24h??0,'Только ручные записи контактов'],
+    ['Просрочено',c.overdue_active??0,'Открытые заявки с просроченным действием'],
+    ['Среднее до попытки',c.avg_minutes_to_first_attempt===null?'Нет данных':c.avg_minutes_to_first_attempt+' мин','По фактически записанным событиям']
+  ]){
+    const card=element('article','r9-response-card');
+    card.append(element('strong','',String(main)),element('span','',label),element('small','',details));box.append(card);
+  }
+  byId('r9-response-status').textContent='Срез на '+new Date(data.asOf).toLocaleString('ru-RU')+
+    '. Контакты зарегистрированы людьми; факты разговора и оплаты не подтверждаются автоматически.';
+}
+async function refreshR9Response(){
+  if(!r9Online||!currentRole)return;
+  const status=byId('r9-response-status');status.textContent='Загружаем показатели…';
+  try{
+    const data=await request('/cinema/ops/response-review?days='+byId('r9-review-days').value);
+    if(data.schema!=='osmanx.cinema.response-review.v1')throw Error('Неподходящий формат отчёта');
+    renderR9Response(data);
+  }catch(err){status.textContent='Отчёт недоступен: '+err.message;}
+}
+byId('r9-review-days').addEventListener('change',refreshR9Response);
+byId('r9-conflict-reload').addEventListener('click',async()=>{
+  const button=byId('r9-conflict-reload');button.disabled=true;
+  try{
+    await reload();
+    byId('r9-conflict').hidden=true;
+  }catch(err){byId('r9-conflict-message').textContent='Обновление не удалось: '+err.message;}
+  finally{button.disabled=false;}
+});
 async function refreshR8Ops(){
   const box=byId('r8-ops-result');
   if(currentRole!=='owner'||!r8Online){box.textContent='Нет доступа или API не подключён.';return;}
@@ -188,6 +241,8 @@ async function reload(){
   }
   currentRole=currentRole||'manager';
   await refreshR8();
+  if(generation!==r6Generation)return;
+  if(r9Online)await refreshR9Response();
   if(generation!==r6Generation)return;
   byId('r7-workload').hidden=!r7Online;
   byId('r5-subject').hidden=!(currentRole==='owner'&&r5Online);
@@ -684,7 +739,8 @@ byId('login-form').addEventListener('submit',async e=>{
 });
 byId('signout').addEventListener('click',async()=>{
   try{await request('/auth/logout',{method:'POST',payload:{}});}catch(err){}
-  currentRole=null;currentAccountId=null;rows=[];staff=[];r5Online=false;r6Online=false;r7Online=false;r8Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  currentRole=null;currentAccountId=null;rows=[];staff=[];r5Online=false;r6Online=false;r7Online=false;r8Online=false;r9Online=false;r6Cursor=null;r6Total=0;r6Signals.clear();++r6Generation;byId('metrics').replaceChildren();byId('leads').replaceChildren();byId('r5-report').replaceChildren();byId('r5-subject-results').replaceChildren();byId('r5-identity-verified').checked=false;byId('r5-subject-email').value='';
+  byId('r9-conflict').hidden=true;byId('r9-response-cards').replaceChildren();
   present(false);byId('login-status').textContent='Вы вышли.';
 });
 async function restore(){
