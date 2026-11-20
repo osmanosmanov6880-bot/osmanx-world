@@ -1,38 +1,33 @@
-# OSMANX ORIGINALS / MOSCOW 1000 · R1
+# OSMANX ORIGINALS — 1000 ДВЕРЕЙ (R2)
 
-Полностью статический отдельный раздел существующего osmanx.world, **не заменяет** OSMANX STORIES и не обращается к закрытой CRM.
+Extends R1 without replacing the existing OSMANX STORIES staged film or the closed personal CRM.
 
-## Запуск
+## Public site
 
-Для локального просмотра запустите HTTP-сервер из корня репозитория, а не из папки раздела:
+- `/moscow-1000/`: cinema page, 10 documentary episode cards (initially planned, no fake video), public map, approved metrics, existing clearly labeled staged OSMANX STORIES MP4, partner/business/research outreach.
+- `/moscow-1000/episodes/01/` … `/10/`: individual searchable planned episode pages, public day-area link, factual notes only after approval.
+- `/moscow-1000/geo.js` + `map.js`: 10 day clusters, two approximate public geographical anchors per day, interactive OSM tiles, pan, zoom, keyboard controls, day filters, accessible list, OSM attribution. **No private locations, no fake businesses, no walking route calculations.** Map list works when network imagery does not.
+- `publication.js` + `public-r2.js`: explicit published status, seven funnel indicators, editable day notes after an independent manual approval gate. Initial display is **No data**.
+- `intake.js`: same-origin `/moscow-1000/api/health` capability check; if unavailable, HTML forms remain hidden and clearly labeled `mailto:` alternatives remain usable. Never claims a successful send without a Worker response.
 
-```bash
-python3 -m http.server 8080
-```
+## Private form service (NOT live yet)
 
-Откройте `http://localhost:8080/moscow-1000/`. Для полноценного видео в локальной тестовой копии понадобится существующий из основного репозитория файл `assets/stories/media/00-osmanx-film.mp4`; раздел не включает его в дистрибутив повторно.
+`services/moscow-1000-api/` is intentionally outside the static deployment whitelist. It contains a Cloudflare Worker with separate D1 storage, server-side Turnstile validation, Resend notification, email double opt-in, safe GET/POST confirmation and unsubscribe flow, and retention cleanup. Real forms require separately deploying the Worker, database migrations, a Turnstile widget and mail provider credentials. See service README.
 
-## Реальное содержимое
+**No** user data is sent to this prototype unless the Worker is explicitly deployed with all bindings and website proxy/route configured. No live status or delivery is claimed.
 
-- `moscow-1000/content.js` — редакционные данные без CRM, реальные результаты только при явном `approvedStatistics.approved === true`.
-- `moscow-1000/episodes/01..10/index.html` — отдельные SEO-маршруты для 10 выпусков.
-- Фильм из OSMANX STORIES обозначен постановочным и **не является** документальными кадрами экспедиции.
-- Все 10 документальных выпусков пока имеют статус `planned` и не показывают фальшивых кнопок Play.
-- Единственное контактное действие R1 — `mailto:hello@osmanx.world` (адрес из основного сайта, приём почты отдельно не проверен). Серверные формы, комментарии и подписка — R2/R3.
-- Опциональное сохранение позиции видео происходит только на устройстве пользователя при включённой настройке.
+## Local preview
 
-## Публикация
+For visual checks run an HTTP static server from the package root (`python3 -m http.server 8080`) then open `/moscow-1000/`. The map needs Internet access for OSM imagery. The included QA script runs Chromium with source injection because its sandbox blocks HTTP/file navigations; its tile backdrop is a test stub, not a live tile QA.
 
-Текущий VPS/GitHub Actions выкладывает лишь `index.html` и `assets/**`; для адреса `/moscow-1000/` требуется отдельное включение `moscow-1000/**` в `.github/workflows/deploy.yml` и проверка Nginx `try_files $uri $uri/ =404` (для каталога используется `index index.html`). Изменения должны проходить PR/CI и публиковаться только после review и merge. **В данной локальной сборке production не меняется.**
+## Tests
 
-## Добавление настоящего выпуска
+`node --test tests/moscow-1000-r1.test.mjs tests/moscow-1000-r2.test.mjs tests/moscow-1000-api.test.mjs`
 
-1. Получить все необходимые разрешения и проверить достоверность содержимого.
-2. Разместить видео на разрешённом видеохостинге или в `/assets/` с подходящей delivery-схемой; не добавлять тяжёлые файлы в JS.
-3. В `content.js` выставить конкретному эпизоду `status:'published'`, ISO `publishedAt`, и `video:{src:'/assets/...mp4',poster:'/assets/...webp',subtitles:[],chapters:[]}`.
-4. Проверить страницу, плеер, права и корректность размещения видео; только потом включить ссылку в навигацию.
-5. Для внешнего HLS-провайдера нужен отдельный адаптер, так как встроенный `<video>` в Chromium не поддерживает HLS без MSE-плеера.
+`python3 tests/smoke_r2_browser.py` (Chromium/Playwright preinstalled environment)
 
-## Ограничения
+## Privacy and ethical presentation
 
-Нет настоящих документальных записей, публичной статистики, карты R2, форм/голосований R2/R3, веб-аналитики или облачной синхронизации. Не выводите в публичную структуру реальные имена и номера телефонов из CRM.
+Only public day-area anchors are hardcoded. Private CRM, contact persons, client lists, exact live user locations and actual visit records are **never** read or synced. OpenStreetMap attribution is visible; publicly hosted OSM tiles are loaded for the current viewport only (no prefetch/download). Attribution and provider policies apply. Before large public traffic, choose a provider with a traffic SLA and compatible terms.
+
+10 days and 1,000 businesses are goals; no personal conversations, pilots, deals or independent media publications are invented.
