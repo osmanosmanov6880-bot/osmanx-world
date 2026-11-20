@@ -1,0 +1,149 @@
+name: OSMANX Guest R47 independent R14 first PR review and canary acceptance
+on:
+  pull_request:
+    branches: [feat/guest-r46-virtual-merge-review-proof-20261120]
+    paths:
+      - "services/industry-api/**"
+      - ".github/workflows/guest-r47-acceptance.yml"
+  push:
+    branches: [feat/guest-r47-pr47-independent-security-review-20261120]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+jobs:
+  r47-source-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify pinned R43 supply graph and install deterministic dependencies
+        working-directory: services/industry-api
+        run: |
+          node scripts/r43-supply-verify.mjs --lock > /dev/null
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: Syntax and R14/R43-R47 negative unit and source regressions
+        working-directory: services/industry-api
+        run: |
+          for path in src/guest-r47-*.mjs scripts/r47-*.mjs; do node --check "$path"; done
+          node --test test/guest-r14.test.mjs test/guest-r43-acceptance.test.mjs test/guest-r44-acceptance.test.mjs test/guest-r45-acceptance.test.mjs test/guest-r46-acceptance.test.mjs test/guest-r47-acceptance.test.mjs
+      - name: Current npm advisory feed strict high-critical policy
+        working-directory: services/industry-api
+        run: |
+          npm audit --omit=dev --json > "$RUNNER_TEMP/r47-audit.json" || true
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            import {verifyR44NpmAudit} from "./src/guest-r44-npm-audit.mjs";
+            const r=verifyR44NpmAudit(JSON.parse(readFileSync(process.argv[1],"utf8")));
+            console.log(JSON.stringify({valid:r.valid,counters:r.advisoryCounters,blockers:r.blockers}));
+            if(!r.valid)process.exit(2);
+          ' "$RUNNER_TEMP/r47-audit.json"
+  r47-disposable-git-compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Refresh disposable origin/main, no source change
+        run: git fetch --no-tags origin main
+      - name: Exact historical R14 source and effective canary Compose
+        working-directory: services/industry-api
+        env:
+          POSTGRES_ADMIN_PASSWORD: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          INDUSTRY_APP_PASSWORD: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          INDUSTRY_WORKER_PASSWORD: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+          BOOTSTRAP_EMAIL: ci-r47@invalid.local
+          BOOTSTRAP_PASSWORD: CI_ONLY_DO_NOT_USE_IN_PRODUCTION_12345
+          BOOTSTRAP_TENANT_SLUG: ci-synthetic
+          BOOTSTRAP_TENANT_NAME: CI Synthetic
+          BOOTSTRAP_VERTICAL: cafe
+        run: |
+          node --input-type=module -e '
+            import {writeFileSync} from "node:fs";
+            import {readR47LocalEvidence} from "./scripts/r47-first-review.mjs";
+            const r=readR47LocalEvidence();
+            if(!r.sourcePins.exactHistoricalBytesVerified||
+              !r.canary.canaryTopologySafe||!r.merge.valid||
+              !r.localBranchRefsUnchanged)process.exit(2);
+            writeFileSync(process.argv[1],JSON.stringify(r));
+            console.log(JSON.stringify({originalSourceBlobs:r.sourcePins.blobMatches,
+              currentCandidateEqualsOriginal:r.currentComposeMatchesFirstPr,
+              localCanaryIsolated:r.canary.canaryTopologySafe,
+              firstPrMergeConflicts:r.merge.actualConflictCount,
+              mainSha:r.observedMain,productionAuthorized:false}));
+          ' "$RUNNER_TEMP/r47-local-proof.json"
+      - name: Store safe local Git/Compose reviewer evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: guest-r47-original-source-and-canary
+          path: ${{ runner.temp }}/r47-local-proof.json
+          retention-days: 7
+          if-no-files-found: warn
+  r47-live-first-human-review:
+    needs: [r47-disposable-git-compose]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: guest-r47-original-source-and-canary
+          path: ${{ runner.temp }}/r47-local
+      - name: Check exact ops-contract and human approvals using GET only
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          R47_TRUSTED_HUMANS: ${{ vars.GUEST_R47_TRUSTED_HUMANS }}
+        working-directory: services/industry-api
+        run: |
+          node --input-type=module -e '
+            import {readFileSync,writeFileSync} from "node:fs";
+            import {collectR47FirstReview} from "./scripts/r47-first-review.mjs";
+            import {renderR47HumanPacket} from "./src/guest-r47-review-packet.mjs";
+            const localEvidence=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            const trustedReviewers=(process.env.R47_TRUSTED_HUMANS||"")
+              .split(",").map(x=>x.trim()).filter(Boolean);
+            const data=await collectR47FirstReview({
+              localEvidence,trustedReviewers
+            });
+            if(!data.source.exactHistoricalBytesVerified||
+              !data.canary.canaryTopologySafe||
+              !data.checks.requiredCheckPolicyPassed||
+              !data.compare.evidenceValid||
+              data.githubWriteCalls!==0||data.handoff.productionAuthorized!==false)
+              process.exit(2);
+            writeFileSync(process.argv[2],JSON.stringify(data));
+            writeFileSync(process.argv[3],renderR47HumanPacket(data.handoff));
+            console.log(JSON.stringify({exactPR47Blobs:data.source.blobMatches,
+              firstOpsContractGreen:data.checks.requiredCheckPolicyPassed,
+              mainBehind:data.handoff.firstPrBehindMain,
+              humansApproved:data.handoff.humanReviewedApproved,
+              historicComposeDifferent:data.handoff.candidateComposeMatchesHistorical===false,
+              blockers:data.handoff.blockers,productionAuthorized:false}));
+          ' "$RUNNER_TEMP/r47-local/r47-local-proof.json" "$RUNNER_TEMP/r47-review.json" "$RUNNER_TEMP/r47-review.md"
+      - name: Save exact PR #47 manual reviewer packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guest-r47-independent-first-pr-review
+          path: |
+            ${{ runner.temp }}/r47-review.json
+            ${{ runner.temp }}/r47-review.md
+          if-no-files-found: warn
+          retention-days: 7
