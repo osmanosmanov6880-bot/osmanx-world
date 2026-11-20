@@ -40,9 +40,14 @@ export function checkR39TargetSnapshot(snapshot,{expectedDb}={}){
   if(!snapshot||!DB.test(expectedDb||'')||
     snapshot.database_name!==expectedDb)
     problems.push('WRONG_DISPOSABLE_DATABASE');
-  if(!safeBackendIp(snapshot?.server_ip)||
-    Number(snapshot?.server_port)!==5432||snapshot?.in_recovery!==false)
-    problems.push('NOT_LOOPBACK_PRIMARY_POSTGRES');
+  const reportedIp=typeof snapshot?.server_ip==='string'?
+    snapshot.server_ip.replace(/^::ffff:/i,''):null;
+  if(!safeBackendIp(reportedIp))
+    problems.push('NON_PRIVATE_BACKEND_ADDRESS');
+  if(Number(snapshot?.server_port)!==5432)
+    problems.push('UNEXPECTED_SERVER_PORT');
+  if(snapshot?.in_recovery!==false)
+    problems.push('POSTGRES_STANDBY_NOT_ALLOWED');
   if(typeof snapshot?.server_started!=='string'||
     !Number.isFinite(Date.parse(snapshot.server_started)))
     problems.push('UNVERIFIED_POSTGRES_START_TIME');
