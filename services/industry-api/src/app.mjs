@@ -7,6 +7,7 @@ import { registerStaffRoutes } from './staff.mjs';
 import { registerScheduleRoutes, lockResource, assertBookable } from './schedule.mjs';
 import { registerIntegrationRoutes } from './integrations.mjs';
 import { registerGuestRoutes } from './guest.mjs';
+import { registerCinemaRoutes } from './cinema.mjs';
 import { probeGuestDatabase } from './readiness.mjs';
 
 const PREFIX='/api/industry/v1';
@@ -250,5 +251,6 @@ export async function buildApp(pool){
   registerScheduleRoutes(app,{prefix:PREFIX,forTenant,bodyOf,identifier});
   registerIntegrationRoutes(app,{prefix:PREFIX,forTenant});
   registerGuestRoutes(app,{prefix:PREFIX,forTenant,bodyOf});
+  registerCinemaRoutes(app,{prefix:PREFIX,pool,forTenant});
   return app;
 }
