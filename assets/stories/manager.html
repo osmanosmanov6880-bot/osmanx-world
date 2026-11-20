@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#080d14">
+<title>OSMANX CINEMA — закрытый кабинет заявок</title>
+<link rel="stylesheet" href="/assets/stories/manager.css">
+<script defer src="/assets/stories/manager.js"></script>
+</head><body>
+<header class="top"><a href="/assets/stories/cinema.html">OSMAN<span>X</span> <small>CINEMA</small></a><strong>КОММЕРЧЕСКИЙ КАБИНЕТ</strong><button id="signout" type="button" hidden>Выйти</button></header>
+<main>
+<section id="login" class="panel login" aria-labelledby="login-title">
+<p class="eyebrow">SECURE / AUTHENTICATED ACCESS</p><h1 id="login-title">Работа с обращениями</h1>
+<p>Только владелец или менеджер указанной компании. Вход использует защищённую сессию Industry OS; пароли не сохраняются в браузере.</p>
+<form id="login-form">
+<label>Компания (slug) <input id="tenant" required autocomplete="organization" minlength="2" maxlength="64"></label>
+<label>Рабочий email <input id="email" required type="email" autocomplete="username" maxlength="254"></label>
+<label>Пароль <input id="password" required type="password" autocomplete="current-password" maxlength="200"></label>
+<button type="submit" class="primary">Войти в кабинет</button>
+</form><p id="login-status" role="status" aria-live="polite"></p>
+</section>
+<section id="workspace" hidden aria-labelledby="work-title">
+<div class="hero"><div><p class="eyebrow">OSMANX / SALES OPERATIONS</p><h1 id="work-title">От интереса — к решению.</h1><p>Реальные обращения, статусы и вручную подтверждённые оценки сделок. Анонимные события просмотра не являются уникальными посетителями.</p></div><button id="reload" type="button">Обновить данные ↻</button></div>
+<section class="metrics" id="metrics" aria-label="Показатели заявок"></section>
+<section class="layout">
+<div class="panel"><div class="panel-head"><h2>Заявки и работа с ними</h2><button id="csv" type="button">Экспорт CSV</button></div>
+<div class="filter-row"><label for="state">Статус</label><select id="state"><option value="">Все</option><option value="new">Новые</option><option value="contacted">Связались</option><option value="qualified">Квалифицированы</option><option value="proposal">Предложение</option><option value="won">Согласованы</option><option value="lost">Не состоялись</option></select></div>
+<p id="leads-status" aria-live="polite" class="hint"></p>
+<div id="leads" class="leads"></div>
+</div>
+<aside class="panel stats"><h2>Динамика и источники</h2><p class="hint">Счётчики действий приблизительные и не являются числом уникальных зрителей. Денежные показатели — оценка согласованных сделок, а не поступления на счёт.</p><h3>Источники</h3><div id="sources"></div><h3>Сюжеты</h3><div id="stories"></div><h3>Последние 30 дней</h3><div id="events"></div>
+</aside>
+</section>
+<p class="hint privacy">Персональные данные доступны только авторизованным сотрудникам назначенной организации. Не сохраняйте CSV на общие устройства. Для удаления заявки используйте действие владельца или политику хранения.</p>
+</section>
+</main><footer><span>OSMANX WORLD · PRIVATE OPERATIONS</span><a href="/assets/stories/privacy.html">Политика обработки данных</a></footer>
+</body></html>

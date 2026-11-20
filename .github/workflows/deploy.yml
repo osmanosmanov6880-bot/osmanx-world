@@ -79,12 +79,18 @@ jobs:
           test -s assets/stories/media/00-osmanx-film.mp4
           node --check assets/stories/cinema.js
           node --check assets/stories/cinema-r2.js
+          node --check assets/stories/cinema-r3.js
+          node --check assets/stories/manager.js
+          test -s assets/stories/cinema-r3.css
+          test -s assets/stories/manager.html
+          test -s assets/stories/manager.css
+          test -s assets/stories/privacy.html
           node --check assets/stories/story-engine.js
           test -s assets/stories/cinema-r2.css
           test -s assets/stories/captions-ru.vtt
           test -s robots.txt
           test -s sitemap.xml
-          node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs
+          node --test tests/stories-gallery.test.mjs tests/cinema-media.test.mjs tests/cinema-r2.test.mjs tests/cinema-r3.test.mjs
 
       - name: Configure SSH
         env:
@@ -142,7 +148,7 @@ jobs:
       - name: Verify OSMANX CINEMA public HTTPS release
         run: |
           set -euo pipefail
-          for asset in assets/stories/cinema.html assets/stories/cinema.css assets/stories/cinema.js assets/stories/cinema-r2.js assets/stories/story-engine.js assets/stories/cinema-r2.css assets/stories/captions-ru.vtt assets/stories/slides/scene-1.webp assets/stories/media/00-osmanx-film.mp4 robots.txt sitemap.xml; do
+          for asset in assets/stories/cinema.html assets/stories/cinema.css assets/stories/cinema.js assets/stories/cinema-r2.js assets/stories/cinema-r3.js assets/stories/manager.html assets/stories/manager.js assets/stories/privacy.html assets/stories/story-engine.js assets/stories/cinema-r2.css assets/stories/captions-ru.vtt assets/stories/slides/scene-1.webp assets/stories/media/00-osmanx-film.mp4 robots.txt sitemap.xml; do
             curl -fIsSL --retry 3 --retry-delay 2 --connect-timeout 8 --max-time 40 "https://osmanx.world/$asset?release=$GITHUB_SHA" > /dev/null
           done
           for asset in assets/stories/media/*.mp4; do
@@ -151,6 +157,7 @@ jobs:
           curl -fsSL --connect-timeout 8 --max-time 35 "https://osmanx.world/assets/stories/cinema.html?release=$GITHUB_SHA" -o /tmp/osmanx-cinema-live.html
           grep -Fq 'osmanx-cinema-experience-r1' /tmp/osmanx-cinema-live.html
           grep -Fq 'cinema-r2.js' /tmp/osmanx-cinema-live.html
+          grep -Fq 'cinema-r3.js' /tmp/osmanx-cinema-live.html
           echo 'Cinema page and all 13 MP4 files available on public HTTPS.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify Guest Intelligence public HTTPS release and CDN transformations

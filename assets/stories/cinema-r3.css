@@ -1,0 +1,21 @@
+/* OSMANX CINEMA R3: consent-first lead capture, elegant and lightweight. */
+.r3-lead{padding:clamp(23px,3.3vw,38px);margin-top:28px;border:1px solid #a68b61;background:radial-gradient(ellipse at 84% 12%,#5f452221,transparent 54%),#101923;scroll-margin-top:18px}
+.r3-lead-head h3{font-size:clamp(28px,4.2vw,45px);font-weight:350;line-height:1.12;letter-spacing:-.05em;margin:13px 0 12px}.r3-lead-head em{color:#e5c18d;font-style:normal}
+.r3-lead-head p{font-size:13px;line-height:1.7;color:#aebbc6}
+.r3-status{color:#e8cea3;font-size:12px;padding:13px 0;margin-top:13px}
+.r3-lead label:not(.r3-consent){display:flex;flex-direction:column;gap:9px;font-size:13px;color:#dee3e8}
+.r3-input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin-top:14px}
+.r3-lead input:not([type=checkbox]){background:#080f18;border:1px solid #526176;color:#f6f1e8;padding:13px;font-size:15px;max-width:100%;min-width:0}
+.r3-lead input:focus-visible,.r3-lead button:focus-visible{outline:2px solid #ecd2a4;outline-offset:3px}
+.r3-honey{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.r3-consent{display:flex;align-items:flex-start;gap:12px;font-size:12px;line-height:1.55;color:#bdc9d3;margin-top:22px;cursor:pointer}
+.r3-consent input{width:20px;height:20px;margin:1px 0 0;accent-color:#d4b381;flex-shrink:0}
+.r3-consent a{color:#efd3a4;text-decoration:underline;text-underline-offset:4px}
+.r3-buttons{display:flex;align-items:center;flex-wrap:wrap;gap:20px;margin-top:20px}.r3-buttons .btn{cursor:pointer}
+.r3-buttons button:disabled{opacity:.55;cursor:wait}
+.r3-alt{color:#d7bd91;font-size:12px;text-decoration:underline}
+.r3-result{font-size:13px;color:#dce1e5;margin-top:14px;overflow-wrap:anywhere}
+.r3-result[data-state=success]{color:#b4e1be}.r3-result[data-state=error]{color:#f2bbad}
+#r3-offline{font-size:12px;line-height:1.7;color:#b6c3c9}
+@media(max-width:650px){.r3-input-grid{grid-template-columns:1fr}.r3-lead{padding:19px}.r3-buttons{flex-direction:column;align-items:stretch}.r3-buttons .btn{text-align:center}}
+@media(prefers-reduced-motion:reduce){.r3-lead *{transition:none!important}}
