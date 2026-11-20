@@ -22,8 +22,16 @@ export async function sweepCinemaRows(db,tenant){
   const access=await db.query(
     "DELETE FROM industry.cinema_access_events WHERE tenant_id=$1 AND created_at<now()-interval '90 days'",[tenant]
   );
+  await db.query(
+    "DELETE FROM industry.cinema_retention_runs WHERE tenant_id=$1 AND executed_at<now()-interval '180 days'",[tenant]
+  );
+  // Evidence is inserted in the same transaction. Failed receipts roll back the entire sweep.
+  await db.query(
+    'INSERT INTO industry.cinema_retention_runs(tenant_id,erased_leads,expired_metrics,expired_rate_buckets,expired_access_receipts) VALUES($1,$2,$3,$4,$5)',
+    [tenant,leads.rowCount,events.rowCount,buckets.rowCount,access.rowCount]
+  );
   return {erasedLeads:leads.rowCount,expiredMetrics:events.rowCount,expiredRateBuckets:buckets.rowCount,
-    expiredAccessReceipts:access.rowCount,retentionDays:90};
+    expiredAccessReceipts:access.rowCount,retentionRecorded:true,retentionDays:90};
 }
 export function sweepCinemaTenant(pool,tenant) {
   return withTenant(pool,tenant,db=>sweepCinemaRows(db,tenant));

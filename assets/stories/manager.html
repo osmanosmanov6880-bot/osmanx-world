@@ -9,6 +9,12 @@
 </head><body>
 <header class="top"><a href="/assets/stories/cinema.html">OSMAN<span>X</span> <small>CINEMA</small></a><strong>КОММЕРЧЕСКИЙ КАБИНЕТ</strong><button id="signout" type="button" hidden>Выйти</button></header>
 <main>
+<section class="r8-runtime panel" aria-labelledby="r8-runtime-heading">
+<div class="r8-status-head"><div><p class="eyebrow">R8 · VERIFIED CONNECTION</p>
+<h2 id="r8-runtime-heading">Статус серверного кабинета</h2></div>
+<span class="r8-dot" aria-hidden="true"></span></div>
+<p id="r8-runtime-status" aria-live="polite">Проверяем доступность Industry API…</p>
+</section>
 <section id="login" class="panel login" aria-labelledby="login-title">
 <p class="eyebrow">SECURE / AUTHENTICATED ACCESS</p><h1 id="login-title">Работа с обращениями</h1>
 <p>Только владелец или менеджер указанной компании. Вход использует защищённую сессию Industry OS; пароли не сохраняются в браузере.</p>
@@ -53,8 +59,14 @@
 <p class="hint">Учитываются только назначенные открытые заявки. Количество не является оценкой качества работы сотрудника.</p>
 <div id="r7-staff-overview" aria-live="polite"></div>
 </section>
+<section id="r8-ops" class="r8-ops panel" hidden aria-labelledby="r8-ops-heading">
+<div class="panel-head"><div><p class="eyebrow">R8 · OWNER CONTROL</p><h2 id="r8-ops-heading">Проверка готовности и хранения данных</h2></div>
+<button id="r8-refresh" type="button">Проверить сейчас</button></div>
+<p class="hint">Доступно только владельцу. Отчёт показывает факты из базы; это не подтверждение работы таймера и не юридический допуск.</p>
+<div id="r8-ops-result" aria-live="polite">Данные доступны после входа владельца.</div>
+</section>
 <section class="layout">
-<div class="panel"><div class="panel-head"><h2>Заявки и работа с ними</h2><button id="csv" type="button">CSV загруженных записей</button></div>
+<div class="panel"><div class="panel-head"><h2>Заявки и работа с ними</h2><button id="csv" type="button" disabled title="Только владелец после проверки API R8">Экспорт CSV с разрешением владельца</button></div>
 <div class="filter-row"><label for="state">Статус</label><select id="state"><option value="">Все</option><option value="new">Новые</option><option value="contacted">Связались</option><option value="qualified">Квалифицированы</option><option value="proposal">Предложение</option><option value="won">Согласованы</option><option value="lost">Не состоялись</option></select></div>
 <p id="leads-status" aria-live="polite" class="hint"></p>
 <div id="leads" class="leads"></div>

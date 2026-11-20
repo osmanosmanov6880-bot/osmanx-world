@@ -7,6 +7,7 @@ import {sweepCinemaRows} from './cinema-retention.mjs';
 import {assigneeValue,registerCinemaR5Routes} from './cinema-r5.mjs';
 import {registerCinemaR6Routes} from './cinema-r6.mjs';
 import {registerCinemaR7Routes} from './cinema-r7.mjs';
+import {registerCinemaR8Routes} from './cinema-r8.mjs';
 
 const STATES=['new','contacted','qualified','proposal','won','lost'];
 const PATHS={
@@ -279,4 +280,5 @@ export function registerCinemaRoutes(app,{prefix,pool,forTenant}){
   registerCinemaR5Routes(app,{base,protectOwner});
   registerCinemaR6Routes(app,{base,protectOwner});
   registerCinemaR7Routes(app,{base,protectOwner});
+  registerCinemaR8Routes(app,{base,protectOwner,config});
 }

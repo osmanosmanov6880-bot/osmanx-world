@@ -118,3 +118,21 @@ footer{display:flex;justify-content:space-between;gap:20px;border-top:1px solid 
 .r7-ops .r7-duplicate p{margin:5px 0}
 .r7-ops .r7-integrity{font-size:12px;margin-top:12px;color:#cbd8e5}
 @media(max-width:650px){#r7-staff-overview{grid-template-columns:1fr}.r7-ops .r7-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* CINEMA R8: verifiable operator state, no aspirational "connected" animation. */
+.r8-runtime,.r8-ops{margin-bottom:18px}
+.r8-runtime{border:1px solid #4a5a68;background:linear-gradient(135deg,#0c1927,#111b26)}
+.r8-runtime p[aria-live],.r8-ops p[aria-live]{font-size:13px;line-height:1.6;color:#c5d2db}
+.r8-status-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.r8-status-head h2{font-size:20px;font-weight:500}
+.r8-dot{width:9px;height:9px;border:1px solid #c59e76;border-radius:50%;opacity:.75;flex:0 0 9px}
+.r8-runtime[data-connected="true"] .r8-dot{background:#83bba4;border-color:#83bba4}
+.r8-runtime[data-connected="false"] .r8-dot{background:#cb9984;border-color:#cb9984}
+#r8-ops-result{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:16px}
+.r8-ops-card{padding:16px;border:1px solid #526274;background:#101b29}
+.r8-ops-card strong{display:block;color:#edd0a4;font-size:15px;font-weight:550;margin-bottom:6px}
+.r8-ops-card span{color:#c1d0dc;font-size:12px;line-height:1.55;display:block}
+#r8-refresh{border:1px solid #ae9170;color:#eed4ad;background:#233243;padding:10px 14px;min-height:44px}
+#csv:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:650px){#r8-ops-result{grid-template-columns:1fr}.r8-status-head h2{font-size:17px}.r8-ops .panel-head{flex-direction:column;align-items:start}}
